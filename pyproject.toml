@@ -1,0 +1,38 @@
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dynamic.grid.calculation@alliander.com>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "power_grid_model_io"
+description = "Power Grid Moel Input/Output"
+authors = [{"name" = "Alliander Dynamic Grid Calculation", "email" = "dynamic.grid.calculation@alliander.com"}]
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = ["power grid model", "input/output", "conversions"]
+license = {text = "MPL-2.0"}
+classifiers=[
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = [
+    "power_grid_model",
+    "numpy",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = ["pre-commit", "isort", "black", "mypy"]
+xlsx = ["pandas"]
