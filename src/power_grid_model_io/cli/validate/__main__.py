@@ -14,24 +14,7 @@ from power_grid_model_io import ExcelConverter, PgmConverter
 app = typer.Typer(pretty_exceptions_show_locals=False)
 
 
-@app.command()
-def info():
-    log = structlog.getLogger("info")
-    log.info("This client can be used to validate data, without storing the result.")
-
-
-@app.command()
-def pgm(excel_file: Path, mapping_file: Path, verbose: bool = True) -> None:
-    log = structlog.getLogger("pgm")
-
-    structlog.configure(
-        wrapper_class=structlog.make_filtering_bound_logger(logging.DEBUG if verbose else logging.INFO),
-    )
-
-    excel_converter = ExcelConverter()
-    excel_converter.set_mapping_file(mapping_file)
-    input_data, extra_info = excel_converter.load_input_file(excel_file)
-
+def validate_input_data(input_data):
     # Validate data
     log.debug("Validating Power Grid Model data")
     errors = validate_input_data(input_data, symmetric=False)
@@ -47,6 +30,26 @@ def pgm(excel_file: Path, mapping_file: Path, verbose: bool = True) -> None:
                 info = ", ".join(f"{key}={val}" for key, val in extra_info[obj_id].items())
                 debug_str += f"{obj_id:>6}. {sheet}: {info}\n"
         log.debug(debug_str)
+
+
+@app.command()
+def info():
+    log = structlog.getLogger("info")
+    log.info("This client can be used to validate data, without storing the result.")
+
+
+@app.command()
+def excel(excel_file: Path, mapping_file: Path, verbose: bool = True) -> None:
+    log = structlog.getLogger("excel")
+
+    structlog.configure(
+        wrapper_class=structlog.make_filtering_bound_logger(logging.DEBUG if verbose else logging.INFO),
+    )
+
+    excel_converter = ExcelConverter()
+    excel_converter.set_mapping_file(mapping_file)
+    input_data, _extra_info = excel_converter.load_input_file(excel_file)
+    validate_input_data(input_data)
 
 
 if __name__ == "__main__":

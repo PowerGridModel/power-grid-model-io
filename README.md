@@ -17,13 +17,13 @@ Usage:
 validate COMMAND [ARGS]
 convert COMMAND [ARGS]
 ```
-Currently, the only available command is `excel2pgm`.
+Currently, the only validate command is `excel` and the only convert command is `excel2pgm`.
 
 ### Excel conversion (work in progress)
 
 Usage:
 ```bash
-validate excel2pgm myfile.xlsx mapping.yaml
+validate excel myfile.xlsx mapping.yaml
 convert excel2pgm myfile.xlsx mapping.yaml
 ```
 
