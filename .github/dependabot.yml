@@ -2,17 +2,10 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-# Generated files
-*.egg-info
 
-# temporary_files
-__pycache__/
-.mypy_cache/
-.pytest_cache/
-.coverage
-
-# Virtual environment
-venv/
-
-# IDE
-.idea/
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

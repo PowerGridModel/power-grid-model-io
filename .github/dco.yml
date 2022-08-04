@@ -2,17 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-# Generated files
-*.egg-info
+allowRemediationCommits:
+  individual: true
+  thirdParty: true
 
-# temporary_files
-__pycache__/
-.mypy_cache/
-.pytest_cache/
-.coverage
-
-# Virtual environment
-venv/
-
-# IDE
-.idea/

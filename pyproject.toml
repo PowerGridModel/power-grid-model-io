@@ -34,5 +34,39 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-dev = ["pre-commit", "isort", "black", "mypy"]
+dev = [
+    "pre-commit",
+    "pylint",
+    "pytest",
+    "pytest-cov",
+]
 xlsx = ["pandas"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = false
+
+[tool.setuptools.dynamic]
+version = {file = "PYPI_VERSION"}
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit"]
+addopts = ["--cov=power_grid_model_io", "--cov-report", "term", "--cov-fail-under=95"]
+
+[tool.black]
+line-length = 120
+target-version = ['py38']
+
+[tool.isort]
+profile = "black"
+line_length = 120
+
+[tool.pylint]
+max-line-length = 120
+
+[tool.mypy]
+follow_imports = "silent"
+ignore_missing_imports = true
+show_column_numbers = true
+non_interactive = true
+install_types = true

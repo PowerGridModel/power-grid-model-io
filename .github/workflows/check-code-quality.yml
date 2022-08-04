@@ -1,0 +1,45 @@
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+
+name: Check Code Quality
+
+on:
+  push:
+
+jobs:
+  check-code-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+
+      - name: Upgrade pip
+        run: pip install --upgrade pip
+
+      - name: Install and run isort
+        run: |
+          pip install isort
+          isort .
+
+      - name: Install and run black
+        run: |
+          pip install black
+          black .
+
+      - name: Install and run mypy
+        run: |
+          pip install mypy
+          mypy .
+
+      - name: Install and run pylint
+        run: |
+          pip install pylint .
+          pylint power_grid_model_io
