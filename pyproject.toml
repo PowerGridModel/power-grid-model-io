@@ -52,6 +52,7 @@ cli = [
 
 [project.scripts]
 convert = "power_grid_model_io.cli.convert.__main__:app"
+validate = "power_grid_model_io.cli.validate.__main__:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]
