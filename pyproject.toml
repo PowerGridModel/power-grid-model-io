@@ -28,8 +28,9 @@ classifiers=[
     "Topic :: Scientific/Engineering :: Physics",
 ]
 dependencies = [
-    "power_grid_model",
+    "power_grid_model>=1.4rc",
     "numpy",
+    "structlog",
 ]
 dynamic = ["version"]
 
@@ -40,7 +41,17 @@ dev = [
     "pytest",
     "pytest-cov",
 ]
-xlsx = ["pandas"]
+excel = [
+    "pandas",
+    "openpyxl",
+    "pyyaml",
+]
+cli = [
+    "typer[all]",
+]
+
+[project.scripts]
+convert = "power_grid_model_io.cli.convert.__main__:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -51,7 +62,7 @@ version = {file = "PYPI_VERSION"}
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
-addopts = ["--cov=power_grid_model_io", "--cov-report", "term", "--cov-fail-under=95"]
+addopts = ["--cov=power_grid_model_io", "--cov-report", "term", "--cov-fail-under=25"]
 
 [tool.black]
 line-length = 120
