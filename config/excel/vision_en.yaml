@@ -66,22 +66,22 @@ grid:
       uk: uk
       pk: Pk
       i0:
-        power_grid_model.conversion.filters.relative_no_load_current:
+        power_grid_model_io.converters.excel.filters.relative_no_load_current:
           - Io
           - Po
           - Snom
           - Unom2
       p0: Po
       winding_from:
-        power_grid_model.conversion.filters.get_winding_from:
+        power_grid_model_io.converters.excel.filters.get_winding_from:
           - Connection
           - N1
       winding_to:
-        power_grid_model.conversion.filters.get_winding_to:
+        power_grid_model_io.converters.excel.filters.get_winding_to:
           - Connection
           - N2
       clock:
-        power_grid_model.conversion.filters.get_clock:
+        power_grid_model_io.converters.excel.filters.get_clock:
           - Connection
       tap_side: Tap side
       tap_pos: Tap
@@ -113,7 +113,7 @@ grid:
       uk: uknom
       pk: Pknom
       i0:
-        power_grid_model.conversion.filters.relative_no_load_current:
+        power_grid_model_io.converters.excel.filters.relative_no_load_current:
           - Io
           - Po
           - Snom
@@ -157,17 +157,17 @@ grid:
       pk: Pk
       p0: Po
       i0:
-        power_grid_model.conversion.filters.relative_no_load_current:
+        power_grid_model_io.converters.excel.filters.relative_no_load_current:
           - 0
           - Po
           - Snom
           - Unom2
       winding_from:
-        power_grid_model.conversion.filters.get_winding_from: Connection
+        power_grid_model_io.converters.excel.filters.get_winding_from: Connection
       winding_to:
-        power_grid_model.conversion.filters.get_winding_to: Connection
+        power_grid_model_io.converters.excel.filters.get_winding_to: Connection
       clock:
-        power_grid_model.conversion.filters.get_clock: Connection
+        power_grid_model_io.converters.excel.filters.get_clock: Connection
       tap_side: Tap side
       tap_pos: Tap
       tap_min: Tap min
@@ -201,11 +201,11 @@ grid:
       status: Switch state
       type: Behaviour
       p_specified:
-        power_grid_model.conversion.filters.multiply:
+        power_grid_model_io.converters.excel.filters.multiply:
           - Load.P
           - 'Nodes!Simultaneity[Number=Node.Number]'
       q_specified:
-        power_grid_model.conversion.filters.multiply:
+        power_grid_model_io.converters.excel.filters.multiply:
           - Load.Q
           - 'Nodes!Simultaneity[Number=Node.Number]'
       extra: 
@@ -233,7 +233,7 @@ grid:
         type: 0
         p_specified: PV.Pnom
         q_specified:
-          power_grid_model.conversion.filters.reactive_power_calculation:
+          power_grid_model_io.converters.excel.filters.reactive_power_calculation:
             - PV.Pnom
             - 1
             - 1
@@ -259,7 +259,7 @@ grid:
       type: 0
       p_specified: Pref
       q_specified:
-        power_grid_model.conversion.filters.reactive_power_calculation:
+        power_grid_model_io.converters.excel.filters.reactive_power_calculation:
           - Pref
           - cos phi
           - Q
@@ -273,13 +273,13 @@ grid:
       status: Switch state
       type: 1
       p_specified:
-        power_grid_model.conversion.filters.power_wind_speed:
+        power_grid_model_io.converters.excel.filters.power_wind_speed:
           - Pref
           - Pnom
           - Wind speed
       q_specified:
-        power_grid_model.conversion.filters.reactive_power_calculation:
-          - power_grid_model.conversion.filters.power_wind_speed:
+        power_grid_model_io.converters.excel.filters.reactive_power_calculation:
+          - power_grid_model_io.converters.excel.filters.power_wind_speed:
               - Pref
               - Pnom
               - Wind speed
@@ -295,11 +295,11 @@ grid:
       status: Switch state
       type: Behaviour
       p_specified:
-        power_grid_model.conversion.filters.multiply:
+        power_grid_model_io.converters.excel.filters.multiply:
           - P
           - 'Nodes!Simultaneity[Number=Node.Number]'
       q_specified:
-        power_grid_model.conversion.filters.multiply:
+        power_grid_model_io.converters.excel.filters.multiply:
           - Q
           - 'Nodes!Simultaneity[Number=Node.Number]'
       extra: 
@@ -315,11 +315,11 @@ grid:
       g1: 0
       b1: 0
       g0:
-        power_grid_model.conversion.filters.complex_inverse_real_part:
+        power_grid_model_io.converters.excel.filters.complex_inverse_real_part:
           - R0
           - X0
       b0:
-        power_grid_model.conversion.filters.complex_inverse_imaginary_part:
+        power_grid_model_io.converters.excel.filters.complex_inverse_imaginary_part:
           - R0
           - X0
       extra: 
@@ -338,7 +338,7 @@ grid:
           - Pnom
           - Inverter.Pnom | Inverter.Snom
       q_specified:
-        power_grid_model.conversion.filters.reactive_power_calculation:
+        power_grid_model_io.converters.excel.filters.reactive_power_calculation:
           - min:
               - Pnom
               - Inverter.Pnom | Inverter.Snom

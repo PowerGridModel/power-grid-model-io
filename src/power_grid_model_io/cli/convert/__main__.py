@@ -21,9 +21,7 @@ def info():
 
 
 @app.command()
-def excel2pgm(
-    excel_file: Path, mapping_file: Path, pgm_json_file: Optional[Path] = None, verbose: bool = False
-) -> None:
+def excel2pgm(excel_file: Path, mapping_file: Path, pgm_json_file: Optional[Path] = None, verbose: bool = True) -> None:
     log = structlog.getLogger("excel2pgm")
 
     structlog.configure(

@@ -14,12 +14,12 @@ from power_grid_model_io import ExcelConverter, PgmConverter
 app = typer.Typer(pretty_exceptions_show_locals=False)
 
 
-def validate_input_data(input_data):
+def validate(input_data, log):
     # Validate data
     log.debug("Validating Power Grid Model data")
     errors = validate_input_data(input_data, symmetric=False)
     if not errors:
-        log.info("Conversion OK")
+        log.info("Validation OK")
     else:
         log.error(errors_to_string(errors))
         debug_str = "Error(s):\n"
@@ -49,7 +49,7 @@ def excel(excel_file: Path, mapping_file: Path, verbose: bool = True) -> None:
     excel_converter = ExcelConverter()
     excel_converter.set_mapping_file(mapping_file)
     input_data, _extra_info = excel_converter.load_input_file(excel_file)
-    validate_input_data(input_data)
+    validate(input_data, log)
 
 
 if __name__ == "__main__":
