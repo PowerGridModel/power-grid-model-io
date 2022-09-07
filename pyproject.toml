@@ -77,7 +77,7 @@ addopts = ["--cov=src/power_grid_model_io", "--cov-report", "term", "--cov-fail-
 
 [tool.black]
 line-length = 120
-target-version = ['py39', 'py310', 'py311']
+target-version = ["py39", "py310", "py311"]
 
 [tool.isort]
 profile = "black"
@@ -85,6 +85,15 @@ line_length = 120
 
 [tool.pylint]
 max-line-length = 120
+disable = ["fixme"]
+good-names=[
+    "ex",   # exception
+    "i",    # iterator or current
+    "p",    # active power
+    "q",    # reactive power
+    "s",    # power (p + q)
+    "v",    # voltage
+]
 
 [tool.mypy]
 follow_imports = "silent"

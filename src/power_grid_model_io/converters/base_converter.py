@@ -1,7 +1,9 @@
 # SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
-
+"""
+Abstract converter class
+"""
 from abc import ABC, abstractmethod
 from typing import Generic, Optional, Tuple, TypeVar
 
@@ -11,36 +13,68 @@ from power_grid_model.data_types import Dataset, SingleDataset
 from power_grid_model_io.data_stores.base_data_store import BaseDataStore
 from power_grid_model_io.data_types import ExtraInfoLookup
 
-DataType = TypeVar("DataType")
+T = TypeVar("T")
 
 
-class BaseConverter(Generic[DataType], ABC):
+class BaseConverter(Generic[T], ABC):
+    """
+    Abstract converter class
+    """
+
     def __init__(self):
+        """
+        Initialize a logger
+        """
         self._log = structlog.get_logger(type(self).__name__)
 
-    def load_input_data(self, store: BaseDataStore[DataType]) -> Tuple[SingleDataset, ExtraInfoLookup]:
+    def load_input_data(self, store: BaseDataStore[T]) -> Tuple[SingleDataset, ExtraInfoLookup]:
+        """
+        Load input data and extra info
+
+        Note: You shouldn't have to overwrite this method. Check _parse_data() instead.
+        """
         extra_info: ExtraInfoLookup = {}
         data = self._parse_data(data=store.load(), data_type="input", extra_info=extra_info)
         if isinstance(data, list):
             raise TypeError("Input data can not be batch data")
         return data, extra_info
 
-    def load_update_data(self, store: BaseDataStore[DataType]) -> Dataset:
+    def load_update_data(self, store: BaseDataStore[T]) -> Dataset:
+        """
+        Load update data
+
+        Note: You shouldn't have to overwrite this method. Check _parse_data() instead.
+        """
         return self._parse_data(data=store.load(), data_type="update")
 
-    def load_sym_output_data(self, store: BaseDataStore[DataType]) -> Dataset:
+    def load_sym_output_data(self, store: BaseDataStore[T]) -> Dataset:
+        """
+        Load symmetric output data
+
+        Note: You shouldn't have to overwrite this method. Check _parse_data() instead.
+        """
         return self._parse_data(data=store.load(), data_type="sym_output")
 
-    def load_asym_output_data(self, store: BaseDataStore[DataType]) -> Dataset:
+    def load_asym_output_data(self, store: BaseDataStore[T]) -> Dataset:
+        """
+        Load asymmetric output data
+
+        Note: You shouldn't have to overwrite this method. Check _parse_data() instead.
+        """
         return self._parse_data(data=store.load(), data_type="asym_output")
 
-    def save_data(self, store: BaseDataStore[DataType], data: Dataset, extra_info: Optional[ExtraInfoLookup] = None):
+    def save_data(self, store: BaseDataStore[T], data: Dataset, extra_info: Optional[ExtraInfoLookup] = None):
+        """
+        Save input/update/(a)sym_output data and optionally extra info.
+
+        Note: You shouldn't have to overwrite this method. Check _serialize_data() instead.
+        """
         store.save(data=self._serialize_data(data=data, extra_info=extra_info))
 
     @abstractmethod  # pragma: nocover
-    def _parse_data(self, data: DataType, data_type: str, extra_info: Optional[ExtraInfoLookup] = None) -> Dataset:
+    def _parse_data(self, data: T, data_type: str, extra_info: Optional[ExtraInfoLookup] = None) -> Dataset:
         pass
 
     @abstractmethod  # pragma: nocover
-    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup] = None) -> DataType:
+    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup] = None) -> T:
         pass

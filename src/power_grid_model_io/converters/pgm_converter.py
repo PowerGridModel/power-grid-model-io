@@ -5,22 +5,13 @@
 Power Grid Model 'Converter': Load and store power grid model data in the native PGM JSON format.
 """
 
-from pathlib import Path
-from typing import Optional, Union, cast
+from typing import Optional, cast
 
 import numpy as np
-from power_grid_model.data_types import (
-    BatchDataset,
-    ComponentList,
-    Dataset,
-    PythonDataset,
-    SingleDataset,
-    SinglePythonDataset,
-)
+from power_grid_model.data_types import BatchDataset, ComponentList, Dataset, SingleDataset, SinglePythonDataset
 from power_grid_model.utils import (
     convert_batch_dataset_to_batch_list,
     convert_list_to_batch_data,
-    convert_single_dataset_to_python_single_dataset,
     initialize_array,
     is_nan,
 )
@@ -32,7 +23,7 @@ from power_grid_model_io.data_types import ExtraInfoLookup, StructuredData
 class PgmConverter(BaseConverter[StructuredData]):
     """
     A 'converter' class to load and store power grid model data in the native PGM JSON format. The methods are simmilar
-    to the utils in power_grid_model, with the addition of storing and loading 'extra info'. Extra info is the set of are
+    to the utils in power_grid_model, with the addition of storing and loading 'extra info'. Extra info is the set of
     attributes that don't match the power grid model's internal structure, but are important to keep close to the data.
     The most common example is the original object ID, if the original IDs are not numeric, or not unique oover all
     components.

@@ -1,6 +1,10 @@
 # SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
+"""
+Excel File Store
+"""
+
 import re
 from pathlib import Path
 from typing import Dict, Hashable, List, Set
@@ -13,15 +17,27 @@ from power_grid_model_io.utils.modules import assert_dependencies
 
 
 class ExcelFileStore(BaseDataStore[TabularData]):
+    """
+    Excel File Store
+
+    The first row of each sheet is expected to contain the column names, unless specified differently by an extension
+    of this class. Columns with duplicate names (on the same sheet) are either removed (if they contain exactly the
+    same values) or renamed.
+    """
+
     __slots__ = ("_file_paths", "_header_rows")
+
+    _unnamed_pattern: re.Pattern = re.compile(r"Unnamed: \d+_level_\d+")
 
     def __init__(self, *file_paths: Path):
         super().__init__()
         self._file_paths: List[Path] = list(file_paths)
         self._header_rows: List[int] = [0]
-        self._unnamed_pattern = re.compile(r"Unnamed: \d+_level_\d+")
 
     def load(self) -> TabularData:
+        """
+        Load one or more Excel file as tabular data.
+        """
         assert_dependencies("excel")
         data: Dict[str, pd.DataFrame] = {}
         for path in self._file_paths:
@@ -38,6 +54,9 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         return TabularData(**data)
 
     def save(self, data: TabularData) -> None:
+        """
+        TODO: Test and finalize this method
+        """
         assert_dependencies("excel")
         if len(self._file_paths) != 1:
             raise ValueError(f"ExcelFileStore can only write to a single .xlsx file, {len(self._file_paths)} provided.")
@@ -51,8 +70,11 @@ class ExcelFileStore(BaseDataStore[TabularData]):
     def _empty_unnamed_column_indexes(self, data: pd.DataFrame) -> None:
         if data.empty:
             return
-        match = lambda x: self._unnamed_pattern.fullmatch(str(x))
-        columns = (tuple("" if match(idx) else idx for idx in col_idx) for col_idx in data.columns.values)
+
+        def is_unnamed(col_name):
+            return self._unnamed_pattern.fullmatch(str(col_name))
+
+        columns = (tuple("" if is_unnamed(idx) else idx for idx in col_idx) for col_idx in data.columns.values)
         data.columns = pd.MultiIndex.from_tuples(columns)
 
     def _remove_duplicate_columns(self, sheet_name: str, data: pd.DataFrame) -> None:
@@ -71,12 +93,12 @@ class ExcelFileStore(BaseDataStore[TabularData]):
                     same_values = same_values and data.iloc[:, i].equals(data.iloc[:, other_i])
                 if same_values:
                     self._log.warning(
-                        f"Found duplicate column name, with same data", sheet_name=sheet_name, column=column
+                        "Found duplicate column name, with same data", sheet_name=sheet_name, column=column
                     )
                     to_remove.add(i)
                 else:
                     self._log.error(
-                        f"Found duplicate column name, with different data", sheet_name=sheet_name, column=column
+                        "Found duplicate column name, with different data", sheet_name=sheet_name, column=column
                     )
                 for idx, other_i in enumerate(unique[column][1:] + [i]):
                     to_remove -= {other_i}
@@ -85,11 +107,11 @@ class ExcelFileStore(BaseDataStore[TabularData]):
                 unique[column] = []
             unique[column].append(i)
 
-        for i in to_rename:
-            self._log.warning(f"Column is renamed", sheet_name=sheet_name, col_name=columns[i], new_name=to_rename[i])
-            columns[i] = to_rename[i]
+        for i, new_name in to_rename.items():
+            self._log.warning("Column is renamed", sheet_name=sheet_name, col_name=columns[i], new_name=new_name)
+            columns[i] = new_name
         data.columns = pd.MultiIndex.from_tuples(columns)
 
         for i in to_remove:
-            self._log.debug(f"Column is removed", sheet_name=sheet_name, col_name=columns[i])
+            self._log.debug("Column is removed", sheet_name=sheet_name, col_name=columns[i])
         data.drop(data.iloc[:, list(to_remove)], axis=1, inplace=True)

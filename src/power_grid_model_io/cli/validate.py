@@ -1,21 +1,29 @@
 # SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
+"""
+Command Line Interface to convert files from one type to another
+"""
+# pylint: disable=duplicate-code
+
 import logging
 from pathlib import Path
 
 import structlog
-import typer
 from power_grid_model.validation import errors_to_string, validate_input_data
 
 from power_grid_model_io.converters.pgm_converter import PgmConverter
 from power_grid_model_io.data_stores.json_file_store import JsonFileStore
+from power_grid_model_io.utils.modules import import_optional_module
 
+typer = import_optional_module("cli", "typer")
 app = typer.Typer(pretty_exceptions_show_locals=False)
 
 
-def _validate(input_data, extra_info, symmetric, log):
-    # Validate data
+def _validate(input_data, symmetric, log):
+    """
+    Helper function to validate data and show the issues in a log
+    """
     log.debug("Validating Power Grid Model data")
     errors = validate_input_data(input_data, symmetric=symmetric)
     if not errors:
@@ -26,12 +34,19 @@ def _validate(input_data, extra_info, symmetric, log):
 
 @app.command()
 def info():
+    """
+    Dummy function, we need at least two commands for the typer app
+    TODO: Remove this info command.
+    """
     log = structlog.get_logger("info")
     log.info("This client can be used to validate data, without storing the result.")
 
 
 @app.command()
 def pgm_json(pgm_json_file: Path, symmetric: bool = True, verbose: bool = False) -> None:
+    """
+    Validate a Power Grid Model JSON file
+    """
     log = structlog.get_logger("pgm")
 
     structlog.configure(
@@ -40,5 +55,5 @@ def pgm_json(pgm_json_file: Path, symmetric: bool = True, verbose: bool = False)
 
     pgm_converter = PgmConverter()
     input_file = JsonFileStore(pgm_json_file)
-    input_data, extra_info = pgm_converter.load_input_data(input_file)
-    _validate(input_data, extra_info, symmetric, log)
+    input_data, _extra_info = pgm_converter.load_input_data(input_file)
+    _validate(input_data, symmetric, log)

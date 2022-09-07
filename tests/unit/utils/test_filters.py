@@ -5,7 +5,7 @@
 import pytest
 from power_grid_model.enum import WindingType
 
-from power_grid_model_io.converters.excel.filters import get_clock, get_winding_from, get_winding_to
+from power_grid_model_io.utils.filters import get_clock, get_winding_from, get_winding_to
 
 
 def test_get_winding_from():

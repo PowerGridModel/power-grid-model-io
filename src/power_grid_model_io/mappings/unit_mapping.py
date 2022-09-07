@@ -29,13 +29,13 @@ class UnitMapping:
                         f"Multiple mapping for {unit}; " f"1 {unit} = {multiplier_} {si_unit_} = {multiplier} {si_unit}"
                     )
                 self._mapping[unit] = (multiplier, si_unit)
-            if unit == si_unit:
-                if multiplier != 1.0:
-                    raise ValueError(f"Invalid mapping for {unit}; " f"1 {unit} = {multiplier} {si_unit}")
-                continue
+                if unit == si_unit:
+                    if multiplier != 1.0:
+                        raise ValueError(f"Invalid mapping for {unit}; " f"1 {unit} = {multiplier} {si_unit}")
+                    continue
             self._mapping[unit] = (multiplier, si_unit)
         self._log.debug(
-            f"Set unit definitions", n_units=len(self._si_units | self._mapping.keys()), n_si_units=len(self._si_units)
+            "Set unit definitions", n_units=len(self._si_units | self._mapping.keys()), n_si_units=len(self._si_units)
         )
 
     def get_unit_multiplier(self, unit: str) -> Tuple[float, str]:

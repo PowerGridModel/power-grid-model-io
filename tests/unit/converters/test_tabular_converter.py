@@ -6,7 +6,7 @@ from typing import Optional, Tuple
 
 import pytest
 
-from power_grid_model_io.converters.excel.functions import COL_REF_RE
+from power_grid_model_io.converters.tabular_converter import COL_REF_RE
 
 
 def cases():

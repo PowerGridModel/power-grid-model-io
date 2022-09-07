@@ -1,12 +1,17 @@
 # SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
+"""
+Command Line Interface to convert files from one type to another
+"""
+
+# pylint: disable=duplicate-code
+
 import logging
 from pathlib import Path
 from typing import Optional
 
 import structlog
-import typer
 from power_grid_model.validation import errors_to_string, validate_input_data
 
 from power_grid_model_io.converters.pgm_converter import PgmConverter
@@ -14,12 +19,16 @@ from power_grid_model_io.converters.tabular_converter import TabularConverter
 from power_grid_model_io.data_stores.gaia_excel_file_store import GaiaExcelFileStore
 from power_grid_model_io.data_stores.json_file_store import JsonFileStore
 from power_grid_model_io.data_stores.vision_excel_file_store import VisionExcelFileStore
+from power_grid_model_io.utils.modules import import_optional_module
 
+typer = import_optional_module("cli", "typer")
 app = typer.Typer(pretty_exceptions_show_locals=False)
 
 
 def _validate(input_data, extra_info, symmetric, log):
-    # Validate data
+    """
+    Helper function to validate data and show the issues in a log
+    """
     log.debug("Validating Power Grid Model data")
     errors = validate_input_data(input_data, symmetric=symmetric)
     if not errors:
@@ -31,18 +40,13 @@ def _validate(input_data, extra_info, symmetric, log):
             debug_str += f"{type(error).__name__}: {error}\n"
             for obj_id in error.ids:
                 obj_info = extra_info.get(obj_id, {"component": error.component, "field": error.field, "id": error.ids})
-                info = ", ".join(f"{key}={val}" for key, val in obj_info.items())
-                debug_str += f"{obj_id:>6}. {info}\n"
+                info_str = ", ".join(f"{key}={val}" for key, val in obj_info.items())
+                debug_str += f"{obj_id:>6}. {info_str}\n"
         log.debug(debug_str)
 
 
 @app.command()
-def info():
-    log = structlog.getLogger("info")
-    log.info("This client can be used to convert one filetype into another.")
-
-
-@app.command()
+# pylint: disable=too-many-arguments
 def vision2pgm(
     excel_file: Path,
     mapping_file: Path,
@@ -51,6 +55,9 @@ def vision2pgm(
     validate: bool = False,
     verbose: bool = False,
 ) -> None:
+    """
+    Convert a Vision Excel export to a Power Grid Model JSON file
+    """
     log = structlog.getLogger("vision2pgm")
 
     structlog.configure(
@@ -73,6 +80,7 @@ def vision2pgm(
 
 
 @app.command()
+# pylint: disable=too-many-arguments
 def gaia(
     excel_file: Path,
     mapping_file: Path,
@@ -82,6 +90,9 @@ def gaia(
     validate: bool = False,
     verbose: bool = False,
 ) -> None:
+    """
+    Convert a Gaia Excel export to a Power Grid Model JSON file
+    """
     log = structlog.get_logger("gaia")
 
     structlog.configure(
