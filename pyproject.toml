@@ -7,18 +7,17 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "power_grid_model_io"
-description = "Power Grid Moel Input/Output"
-authors = [{"name" = "Alliander Dynamic Grid Calculation", "email" = "dynamic.grid.calculation@alliander.com"}]
+name = "power-grid-model-io"
+authors = [{name = "Alliander Dynamic Grid Calculation", email = "dynamic.grid.calculation@alliander.com"}]
+description = "Power Grid Model Input/Output"
 readme = "README.md"
-requires-python = ">=3.8"
 keywords = ["power grid model", "input/output", "conversions"]
 license = {text = "MPL-2.0"}
 classifiers=[
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
@@ -27,9 +26,11 @@ classifiers=[
     "Operating System :: MacOS",
     "Topic :: Scientific/Engineering :: Physics",
 ]
+requires-python = ">=3.9"
 dependencies = [
-    "power_grid_model>=1.4rc",
     "numpy",
+    "pandas",
+    "power_grid_model>=1.4rc",
     "structlog",
 ]
 dynamic = ["version"]
@@ -41,18 +42,27 @@ dev = [
     "pytest",
     "pytest-cov",
 ]
-excel = [
-    "pandas",
-    "openpyxl",
+tabular = [
     "pyyaml",
+]
+excel = [
+    "openpyxl",
 ]
 cli = [
     "typer[all]",
 ]
+all = [
+    "openpyxl",
+    "pyyaml",
+    "typer[all]",
+]
+
+[project.urls]
+Home-page = "https://github.com/alliander-opensource/power-grid-model-io"
 
 [project.scripts]
-convert = "power_grid_model_io.cli.convert.__main__:app"
-validate = "power_grid_model_io.cli.validate.__main__:app"
+convert = "power_grid_model_io.cli.convert:app"
+validate = "power_grid_model_io.cli.validate:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -63,11 +73,11 @@ version = {file = "PYPI_VERSION"}
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
-addopts = ["--cov=power_grid_model_io", "--cov-report", "term", "--cov-fail-under=25"]
+addopts = ["--cov=src/power_grid_model_io", "--cov-report", "term", "--cov-fail-under=20"]
 
 [tool.black]
 line-length = 120
-target-version = ['py38']
+target-version = ['py39', 'py310', 'py311']
 
 [tool.isort]
 profile = "black"

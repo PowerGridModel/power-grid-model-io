@@ -2,5 +2,5 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from power_grid_model_io.converters.excel_converter import ExcelConverter
 from power_grid_model_io.converters.pgm_converter import PgmConverter
+from power_grid_model_io.converters.tabular_converter import TabularConverter

@@ -4,61 +4,20 @@
 
 import re
 from importlib import import_module
-from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-import yaml
 from power_grid_model import initialize_array
 
+from power_grid_model_io.data_types import TabularData
 from power_grid_model_io.utils.auto_id import AutoID
 
 COL_REF_RE = re.compile(r"([^!]+)!([^\[]+)\[(([^!]+)!)?([^=]+)=(([^!]+)!)?([^\]]+)\]")
 
 
-def read_excel_file(
-    input_file: Path, units: Optional[Dict[str, float]] = None, enums: Optional[Dict[str, Dict[str, Any]]] = None
-) -> Dict[str, pd.DataFrame]:
-    # Read the vision Excel file and assume that the first row contains the column name and the second row is the unit.
-    sheets = pd.read_excel(io=input_file, sheet_name=None, header=[0, 1])
-
-    if units is None:
-        units = {}
-
-    if enums is None:
-        enums = {}
-
-    for sheet_name, sheet_data in sheets.items():
-        for col_idx in sheet_data.columns:
-            col_name, col_unit = col_idx
-            base_col_name = str(col_name).split(".").pop()
-            if base_col_name in enums:
-                sheet_data[col_idx] = sheet_data[col_idx].map(lambda x: enums[base_col_name].get(str(x), x))
-            if col_unit in units:
-                multiplier = float(units[col_unit])
-                try:
-                    sheet_data[col_idx] *= multiplier
-                except TypeError as ex:
-                    print(
-                        f"WARNING: The column '{col_name}' on sheet '{sheet_name}' does not seem to be numerical "
-                        f"while trying to apply a multiplier ({multiplier}) for unit '{col_unit}': {ex}"
-                    )
-
-        # Let's extract the column names and units from the column indexes
-        column_names = [col_idx[0] for col_idx in sheet_data.columns]
-        sheet_data.columns = column_names
-
-    return sheets
-
-
-def read_mapping_file(mapping_file: Path) -> Dict[str, Dict[str, Any]]:
-    with open(mapping_file, "r", encoding="utf-8") as mapping_stream:
-        return yaml.safe_load(mapping_stream)
-
-
 def convert_excel_to_pgm(
-    workbook: Dict[str, pd.DataFrame], mapping: Dict[str, Dict[str, Any]]
+    workbook: TabularData, mapping: Dict[str, Dict[str, Any]]
 ) -> Tuple[Dict[str, np.ndarray], Dict[int, Dict[str, Any]]]:
     pgm_data: Dict[str, List[np.ndarray]] = {}
     extra_info: Dict[int, Dict[str, Any]] = {}
@@ -98,7 +57,7 @@ def _merge_pgm_data(pgm_data: Dict[str, List[np.ndarray]]) -> Dict[str, np.ndarr
 
 
 def _convert_vision_sheet_to_pgm_component(
-    workbook: Dict[str, pd.DataFrame],
+    workbook: TabularData,
     sheet_name: str,
     component_name: str,
     instances: Union[List[Dict[str, str]], Dict[str, str]],
@@ -168,7 +127,7 @@ def _convert_vision_sheet_to_pgm_component(
     return pgm_data, extra_info
 
 
-def _parse_col_def(workbook: Dict[str, pd.DataFrame], sheet_name: str, col_def: Any) -> pd.DataFrame:
+def _parse_col_def(workbook: TabularData, sheet_name: str, col_def: Any) -> pd.DataFrame:
     if isinstance(col_def, (int, float)):
         return _parse_col_def_const(workbook=workbook, sheet_name=sheet_name, col_def=col_def)
     elif isinstance(col_def, str) and "!" in col_def:
@@ -183,21 +142,19 @@ def _parse_col_def(workbook: Dict[str, pd.DataFrame], sheet_name: str, col_def: 
         raise TypeError(f"Invalid column definition: {col_def}")
 
 
-def _parse_col_def_const(
-    workbook: Dict[str, pd.DataFrame], sheet_name: str, col_def: Union[int, float]
-) -> pd.DataFrame:
+def _parse_col_def_const(workbook: TabularData, sheet_name: str, col_def: Union[int, float]) -> pd.DataFrame:
     assert isinstance(col_def, (int, float))
     return pd.DataFrame([col_def] * len(workbook[sheet_name]))
 
 
-def _parse_col_def_column_name(workbook: Dict[str, pd.DataFrame], sheet_name: str, col_def: str) -> pd.DataFrame:
+def _parse_col_def_column_name(workbook: TabularData, sheet_name: str, col_def: str) -> pd.DataFrame:
     assert isinstance(col_def, str)
     sheet = workbook[sheet_name]
 
     columns = [col_name.strip() for col_name in col_def.split("|")]
     for col_name in columns:
         if col_name in sheet:
-            return pd.DataFrame(sheet[col_name])
+            return pd.DataFrame(workbook.get_column(table=sheet_name, field=col_name))
 
     try:  # Maybe it is not a column name, but a float value like 'inf'
         const_value = float(col_def)
@@ -208,7 +165,7 @@ def _parse_col_def_column_name(workbook: Dict[str, pd.DataFrame], sheet_name: st
     return _parse_col_def_const(workbook=workbook, sheet_name=sheet_name, col_def=const_value)
 
 
-def _parse_col_def_column_reference(workbook: Dict[str, pd.DataFrame], sheet_name: str, col_def: str) -> pd.DataFrame:
+def _parse_col_def_column_reference(workbook: TabularData, sheet_name: str, col_def: str) -> pd.DataFrame:
     assert isinstance(col_def, str)
     match = COL_REF_RE.fullmatch(col_def)
     if match is None:
@@ -233,9 +190,7 @@ def _parse_col_def_column_reference(workbook: Dict[str, pd.DataFrame], sheet_nam
     return result[value_col_name]
 
 
-def _parse_col_def_function(
-    workbook: Dict[str, pd.DataFrame], sheet_name: str, col_def: Dict[str, str]
-) -> pd.DataFrame:
+def _parse_col_def_function(workbook: TabularData, sheet_name: str, col_def: Dict[str, str]) -> pd.DataFrame:
     assert isinstance(col_def, dict)
     data = []
     for fn_name, sub_def in col_def.items():
@@ -245,7 +200,7 @@ def _parse_col_def_function(
     return pd.concat(data, axis=1)
 
 
-def _parse_col_def_composite(workbook: Dict[str, pd.DataFrame], sheet_name: str, col_def: list) -> pd.DataFrame:
+def _parse_col_def_composite(workbook: TabularData, sheet_name: str, col_def: list) -> pd.DataFrame:
     assert isinstance(col_def, list)
     columns = [_parse_col_def(workbook=workbook, sheet_name=sheet_name, col_def=sub_def) for sub_def in col_def]
     return pd.concat(columns, axis=1)

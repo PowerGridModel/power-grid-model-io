@@ -19,16 +19,15 @@ repos:
     rev: v0.971
     hooks:
       - id: mypy
-        files: ^(src|tests|scripts)/.+\.py$
   - repo: local
     hooks:
-      - id: pylint
-        name: pylint
-        entry: pylint
-        files: ^src/.+\.py$
-        language: system
-        types: [ python ]
-        args: [ "--rcfile=pyproject.toml" ]
+#      - id: pylint
+#        name: pylint
+#        entry: pylint
+#        files: ^src/.+\.py$
+#        language: system
+#        types: [ python ]
+#        args: [ "--rcfile=pyproject.toml" ]
       - id: pytest
         name: pytest
         entry: pytest

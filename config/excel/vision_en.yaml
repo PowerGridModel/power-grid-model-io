@@ -24,7 +24,7 @@ grid:
       c0: C0
       tan0: 0
       i_n: Inom'
-      extra: 
+      extra:
         - Name
         - ID
   Links:
@@ -50,9 +50,9 @@ grid:
       c0: 0
       tan0: 0
       i_n: Inom
-      extra: 
+      extra:
         - Name
-        - ID      
+        - ID
   Transformers:
     transformer:
       id: Number
@@ -97,9 +97,9 @@ grid:
       x_grounding_from: Xe1
       r_grounding_to: Re2
       x_grounding_to: Xe2
-      extra: 
+      extra:
         - Name
-        - ID      
+        - ID
   Special transformers:
     transformer:
       id: Number
@@ -136,7 +136,7 @@ grid:
       x_grounding_from: 0
       r_grounding_to: 0
       x_grounding_to: 0
-      extra: 
+      extra:
         - Name
         - ID
   Transformer loads:
@@ -182,7 +182,7 @@ grid:
       x_grounding_from: 0
       r_grounding_to: 0
       x_grounding_to: 0
-      extra: 
+      extra:
         - Name
         - ID
     node:
@@ -208,7 +208,7 @@ grid:
         power_grid_model_io.converters.excel.filters.multiply:
           - Load.Q
           - 'Nodes!Simultaneity[Number=Node.Number]'
-      extra: 
+      extra:
         - Name
         - ID
     sym_gen:
@@ -302,7 +302,7 @@ grid:
         power_grid_model_io.converters.excel.filters.multiply:
           - Q
           - 'Nodes!Simultaneity[Number=Node.Number]'
-      extra: 
+      extra:
         - Name
         - ID
   Zigzag transformers:
@@ -322,7 +322,7 @@ grid:
         power_grid_model_io.converters.excel.filters.complex_inverse_imaginary_part:
           - R0
           - X0
-      extra: 
+      extra:
         - Name
         - ID
   Pvs:
@@ -345,10 +345,34 @@ grid:
           - Inverter.cos phi
           - 1
       extra: Name
-enums:
-  Switch state:
-    'off': 0
-    in: 1
+units:
+  A:
+  F:
+    µF: 0.000001
+  V:
+    kV: 1000.0
+  VA:
+    MVA: 1000000.0
+  VAR:
+    Mvar: 1000000.0
+  W:
+    kW: 1000.0
+    MW: 1000000.0
+  Wp:
+    MWp: 1000000.0
+  m/s:
+  ohm:
+    Ohm: 1.0
+  ohm/m:
+    ohm/km: 0.001
+  one:
+    pu: 1.0
+    "%": 0.01
+
+substitutions:
+  ".*Switch state":
+    "off": 0
+    "in": 1
   N1:
     none: false
     own: true
@@ -366,22 +390,8 @@ enums:
     Residential: 0
     Living: 0
   Tap side:
-    '1': 0
-    '2': 1
-  Q:
+    1: 0
+    2: 1
+  Synchronous generators.Q:
     absorb: -1
     supply: 1
-units:
-  pu: 1
-  Ohm: 1
-  A: 1
-  µF: 0.000001
-  kV: 1000
-  kA: 1000
-  kW: 1000
-  MVA: 1000000
-  Mvar: 1000000
-  MW: 1000000
-  MWp: 1000000
-  '%': 0.01
-

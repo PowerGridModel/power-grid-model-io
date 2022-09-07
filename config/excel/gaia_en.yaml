@@ -128,7 +128,7 @@ grid:
 #        - Name
 #        - ID     # niet gevonden
 
-enums: #met bram doorlopen
+substitutions: #met bram doorlopen
   Switch state:
     'off': 'off'    #checken
     in: 'in'        #checken
@@ -156,17 +156,3 @@ enums: #met bram doorlopen
     supply: 1
   Short type:
     4x50A: 50AL+25
-units:
-  pu: 1
-  Ohm: 1
-  A: 1
-  µF: 0.000001
-  kV: 1000
-  kA: 1000
-  kW: 1000
-  MVA: 1000000
-  Mvar: 1000000
-  MW: 1000000
-  MWp: 1000000
-  ohm/km: 0.001
-  '%': 0.01
