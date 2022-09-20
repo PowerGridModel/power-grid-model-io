@@ -55,5 +55,5 @@ def pgm_json(pgm_json_file: Path, symmetric: bool = True, verbose: bool = False)
 
     pgm_converter = PgmConverter()
     input_file = JsonFileStore(pgm_json_file)
-    input_data, _extra_info = pgm_converter.load_input_data(input_file)
+    input_data, _extra_info = pgm_converter.load_input_data(input_file.load())
     _validate(input_data, symmetric, log)

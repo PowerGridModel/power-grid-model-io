@@ -72,8 +72,8 @@ def vision2pgm(
     tabular_converter = TabularConverter(mapping_file=mapping_file)
     pgm_converter = PgmConverter()
 
-    input_data, extra_info = tabular_converter.load_input_data(store=source)
-    pgm_converter.save_data(store=destination, data=input_data, extra_info=extra_info)
+    input_data, extra_info = tabular_converter.load_input_data(data=source.load())
+    destination.save(pgm_converter.convert(data=input_data, extra_info=extra_info))
 
     if validate:
         _validate(input_data=input_data, extra_info=extra_info, symmetric=symmetric, log=log)
@@ -107,8 +107,8 @@ def gaia(
     tabular_converter = TabularConverter(mapping_file=mapping_file)
     pgm_converter = PgmConverter()
 
-    input_data, extra_info = tabular_converter.load_input_data(store=source)
-    pgm_converter.save_data(store=destination, data=input_data, extra_info=extra_info)
+    input_data, extra_info = tabular_converter.load_input_data(data=source.load())
+    destination.save(pgm_converter.convert(data=input_data, extra_info=extra_info))
 
     if validate:
         _validate(input_data=input_data, extra_info=extra_info, symmetric=symmetric, log=log)

@@ -27,49 +27,49 @@ class BaseConverter(Generic[T], ABC):
         """
         self._log = structlog.get_logger(type(self).__name__)
 
-    def load_input_data(self, store: BaseDataStore[T]) -> Tuple[SingleDataset, ExtraInfoLookup]:
+    def load_input_data(self, data: T) -> Tuple[SingleDataset, ExtraInfoLookup]:
         """
         Load input data and extra info
 
         Note: You shouldn't have to overwrite this method. Check _parse_data() instead.
         """
         extra_info: ExtraInfoLookup = {}
-        data = self._parse_data(data=store.load(), data_type="input", extra_info=extra_info)
+        data = self._parse_data(data=data, data_type="input", extra_info=extra_info)
         if isinstance(data, list):
             raise TypeError("Input data can not be batch data")
         return data, extra_info
 
-    def load_update_data(self, store: BaseDataStore[T]) -> Dataset:
+    def load_update_data(self, data: T) -> Dataset:
         """
         Load update data
 
         Note: You shouldn't have to overwrite this method. Check _parse_data() instead.
         """
-        return self._parse_data(data=store.load(), data_type="update")
+        return self._parse_data(data=data, data_type="update", extra_info=None)
 
-    def load_sym_output_data(self, store: BaseDataStore[T]) -> Dataset:
+    def load_sym_output_data(self, data: T) -> Dataset:
         """
         Load symmetric output data
 
         Note: You shouldn't have to overwrite this method. Check _parse_data() instead.
         """
-        return self._parse_data(data=store.load(), data_type="sym_output")
+        return self._parse_data(data=data, data_type="sym_output", extra_info=None)
 
-    def load_asym_output_data(self, store: BaseDataStore[T]) -> Dataset:
+    def load_asym_output_data(self, data: T) -> Dataset:
         """
         Load asymmetric output data
 
         Note: You shouldn't have to overwrite this method. Check _parse_data() instead.
         """
-        return self._parse_data(data=store.load(), data_type="asym_output")
+        return self._parse_data(data=data, data_type="asym_output", extra_info=None)
 
-    def save_data(self, store: BaseDataStore[T], data: Dataset, extra_info: Optional[ExtraInfoLookup] = None):
+    def convert(self, data: Dataset, extra_info: Optional[ExtraInfoLookup] = None) -> T:
         """
-        Save input/update/(a)sym_output data and optionally extra info.
+        Convert input/update/(a)sym_output data and optionally extra info.
 
         Note: You shouldn't have to overwrite this method. Check _serialize_data() instead.
         """
-        store.save(data=self._serialize_data(data=data, extra_info=extra_info))
+        return self._serialize_data(data=data, extra_info=extra_info)
 
     @abstractmethod  # pragma: nocover
     def _parse_data(self, data: T, data_type: str, extra_info: Optional[ExtraInfoLookup] = None) -> Dataset:
