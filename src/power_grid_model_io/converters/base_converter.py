@@ -10,7 +10,6 @@ from typing import Generic, Optional, Tuple, TypeVar
 import structlog
 from power_grid_model.data_types import Dataset, SingleDataset
 
-from power_grid_model_io.data_stores.base_data_store import BaseDataStore
 from power_grid_model_io.data_types import ExtraInfoLookup
 
 T = TypeVar("T")

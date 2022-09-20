@@ -5,6 +5,11 @@ SPDX-License-Identifier: MPL-2.0
 -->
 # Power Grid Model Input/Output
 
+## Documentation:
+  * Converters
+    * [Tabular Converter](docs/converters/tabular_converter.md)
+
+
 ## Client tools
 
 Installation:

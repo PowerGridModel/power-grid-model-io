@@ -6,10 +6,10 @@ from typing import Optional, Tuple
 
 import pytest
 
-from power_grid_model_io.converters.tabular_converter import COL_REF_RE
+from power_grid_model_io.converters.tabular_converter import COL_REF_RE, OPT_COL_RE
 
 
-def cases():
+def ref_cases():
     yield "OtherSheet!ValueColumn[IdColumn=RefColumn]", (
         "OtherSheet",
         "ValueColumn",
@@ -37,7 +37,7 @@ def cases():
     yield "OtherSheet![IdColumn=RefColumn]", None
 
 
-@pytest.mark.parametrize("value,groups", cases())
+@pytest.mark.parametrize("value,groups", ref_cases())
 def test_col_ref_pattern(value: str, groups: Optional[Tuple[Optional[str]]]):
     match = COL_REF_RE.fullmatch(value)
     if groups is None:

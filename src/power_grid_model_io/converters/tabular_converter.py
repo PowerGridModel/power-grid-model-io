@@ -17,7 +17,7 @@ from power_grid_model.data_types import Dataset
 
 from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_types import ExtraInfoLookup, TabularData
-from power_grid_model_io.mappings.tabular_mapping import Tables, TabularMapping
+from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes, Tables, TabularMapping
 from power_grid_model_io.mappings.unit_mapping import UnitMapping, Units
 from power_grid_model_io.mappings.value_mapping import ValueMapping, Values
 from power_grid_model_io.utils.auto_id import AutoID
@@ -25,6 +25,7 @@ from power_grid_model_io.utils.modules import import_optional_module
 
 yaml = import_optional_module("tabular", "yaml")
 
+OPT_COL_RE = re.compile(r"")
 COL_REF_RE = re.compile(r"([^!]+)!([^\[]+)\[(([^!]+)!)?([^=]+)=(([^!]+)!)?([^\]]+)\]")
 
 
@@ -36,6 +37,9 @@ class TabularConverter(BaseConverter[TabularData]):
     def __init__(self, mapping_file: Optional[Path] = None):
         """
         Prepare some member variables and optionally load a mapping file
+
+        Args:
+            mapping_file: A yaml file containing the mapping.
         """
         super().__init__()
         self._mapping: TabularMapping = TabularMapping(mapping={})
@@ -69,130 +73,93 @@ class TabularConverter(BaseConverter[TabularData]):
         )
 
     def _parse_data(self, data: TabularData, data_type: str, extra_info: Optional[ExtraInfoLookup] = None) -> Dataset:
+
+        # Apply units and substitutions to the data. Note that the conversions are 'lazy', i.e. the units and
+        # substitutions will be applied the first time .get_column(table, field) is called.
         data.set_units(self._units)
         data.set_substitutions(self._substitutions)
-        input_data, extra = convert_excel_to_pgm(
-            workbook=data, mapping=self._mapping.get_mapping() if self._mapping else {}
-        )
-        if extra_info is not None:
-            extra_info.update(extra)
-        self._log.debug("Converted tabular data to power grid model data")
 
+        # Initialize some empty data structures
+        pgm: Dict[str, List[np.ndarray]] = {}
+        extra: Dict[int, Dict[str, Any]] = {}
+        lookup = AutoID()
+
+        # For each table in the mapping
+        for table in self._mapping.tables():
+            for component, attributes in self._mapping.instances(table=table):
+                component_data = self._convert_table_to_component(
+                    data=data,
+                    data_type=data_type,
+                    table=table,
+                    component=component,
+                    attributes=attributes,
+                    lookup=lookup,
+                    extra_info=extra_info,
+                )
+                if component_data is not None:
+                    if component not in pgm:
+                        pgm[component] = []
+                    pgm[component].append(component_data)
+
+        input_data = self._merge_pgm_data(data=pgm, data_type=data_type)
+        self._log.debug(
+            "Converted tabular data to power grid model data",
+            n_components=len(input_data),
+            n_instances=sum(len(table) for table in input_data.values()),
+        )
         return input_data
 
-    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup] = None) -> TabularData:
-        if extra_info is not None:
-            raise NotImplementedError("Extra info can not (yet) be stored for tabular data")
-        if isinstance(data, list):
-            raise NotImplementedError("Batch data can not(yet) be stored for tabular data")
-        return data
+    def _convert_table_to_component(
+        self,
+        data: TabularData,
+        data_type: str,
+        table: str,
+        component: str,
+        attributes: InstanceAttributes,
+        lookup: AutoID,
+        extra_info: Optional[ExtraInfoLookup],
+    ) -> Optional[np.ndarray]:
+        if table not in data:
+            return None, {}
 
+        n_records = len(data[table])
 
-def convert_excel_to_pgm(
-    workbook: TabularData, mapping: Dict[str, Dict[str, Any]]
-) -> Tuple[Dict[str, np.ndarray], Dict[int, Dict[str, Any]]]:
-    """
-    TODO: Revise this function and add it to TabularConverter
-    """
-    pgm_data: Dict[str, List[np.ndarray]] = {}
-    extra_info: Dict[int, Dict[str, Any]] = {}
-    lookup = AutoID()
-    for sheet_name, components in mapping.items():
-        for component_name, attributes in components.items():
-            sheet_pgm_data, sheet_extra_info = _convert_vision_sheet_to_pgm_component(
-                workbook=workbook,
-                sheet_name=sheet_name,
-                component_name=component_name,
-                instances=attributes,
-                lookup=lookup,
-            )
-            if sheet_pgm_data is not None:
-                if component_name not in pgm_data:
-                    pgm_data[component_name] = []
-                extra_info.update(sheet_extra_info)
-                pgm_data[component_name].append(sheet_pgm_data)
-    return _merge_pgm_data(pgm_data), extra_info
+        try:
+            pgm_data = initialize_array(data_type=data_type, component_type=component, shape=n_records)
+        except KeyError as ex:
+            raise KeyError(f"Invalid component type '{component}'") from ex
 
-
-def _merge_pgm_data(pgm_data: Dict[str, List[np.ndarray]]) -> Dict[str, np.ndarray]:
-    """
-    TODO: Revise this function and add it to TabularConverter
-    """
-    merged = {}
-    for component_name, data_set in pgm_data.items():
-        if len(data_set) == 1:
-            merged[component_name] = data_set[0]
-        elif len(data_set) > 1:
-            idx_ptr = [0]
-            for arr in data_set:
-                idx_ptr.append(idx_ptr[-1] + len(arr))
-            merged[component_name] = initialize_array(
-                data_type="input", component_type=component_name, shape=idx_ptr[-1]
-            )
-            for i, arr in enumerate(data_set):
-                merged[component_name][idx_ptr[i] : idx_ptr[i + 1]] = arr
-    return merged
-
-
-# pylint: disable=too-many-locals, too-many-branches
-def _convert_vision_sheet_to_pgm_component(
-    workbook: TabularData,
-    sheet_name: str,
-    component_name: str,
-    instances: Union[List[Dict[str, str]], Dict[str, str]],
-    lookup: AutoID,
-) -> Tuple[Optional[np.ndarray], Dict[int, Dict[str, Any]]]:
-    """
-    TODO: Revise this function and add it to TabularConverter
-    """
-    if sheet_name not in workbook:
-        return None, {}
-
-    n_records = len(workbook[sheet_name])
-
-    try:
-        pgm_data = initialize_array(data_type="input", component_type=component_name, shape=n_records)
-    except KeyError as ex:
-        raise KeyError(f"Invalid component type '{component_name}'") from ex
-
-    extra_info = {}
-
-    if not isinstance(instances, list):
-        instances = [instances]
-
-    for instance_attributes in instances:
-        for attr, col_def in instance_attributes.items():
+        for attr, col_def in attributes.items():
 
             if attr not in pgm_data.dtype.names and attr != "extra":
                 attrs = ", ".join(pgm_data.dtype.names)
-                raise KeyError(f"Could not find attribute '{attr}' for '{component_name}'. (choose from: {attrs})")
+                raise KeyError(f"Could not find attribute '{attr}' for '{component}'. (choose from: {attrs})")
 
-            col_data = _parse_col_def(workbook=workbook, sheet_name=sheet_name, col_def=col_def)
+            col_data = _parse_col_def(table=data, sheet_name=table, col_def=col_def)
             if attr == "extra":
                 # Extra info is added when processing the id column
                 continue
             if attr == "id":
                 extra = col_data.to_dict(orient="records")
-                col_data = col_data.apply(lambda row: _id_lookup(lookup, component_name, row), axis=1)
-                for i, xtr in zip(col_data, extra):
-                    extra_info[i] = {"sheet": sheet_name}
-                    extra_info[i].update(xtr)
-                if "extra" in instance_attributes:
-                    extra = _parse_col_def(
-                        workbook=workbook, sheet_name=sheet_name, col_def=instance_attributes["extra"]
-                    )
-                    if not extra.columns.is_unique:
-                        extra = extra.loc[:, ~extra.columns.duplicated()]
-                    extra = extra.to_dict(orient="records")
+                col_data = col_data.apply(lambda row: _id_lookup(lookup, component, row), axis=1)
+                if extra_info is not None:
                     for i, xtr in zip(col_data, extra):
-                        extra_info[i].update(
-                            {k: v for k, v in xtr.items() if not isinstance(v, (int, float)) or not np.isnan(v)}
-                        )
+                        extra_info[i] = {"table": table}
+                        extra_info[i].update(xtr)
+                    if "extra" in attributes:
+                        extra = _parse_col_def(table=data, sheet_name=table, col_def=attributes["extra"])
+                        if not extra.columns.is_unique:
+                            extra = extra.loc[:, ~extra.columns.duplicated()]
+                        extra = extra.to_dict(orient="records")
+                        for i, xtr in zip(col_data, extra):
+                            extra_info[i].update(
+                                {k: v for k, v in xtr.items() if not isinstance(v, (int, float)) or not np.isnan(v)}
+                            )
             elif attr.endswith("node"):
                 col_data = col_data.apply(lambda row: _id_lookup(lookup, "node", row), axis=1)
             elif len(col_data.columns) != 1:
                 raise ValueError(
-                    f"DataFrame for {component_name}.{attr} should contain a single column " f"({col_data.columns})"
+                    f"DataFrame for {component}.{attr} should contain a single column " f"({col_data.columns})"
                 )
             else:
                 col_data = col_data.iloc[:, 0]
@@ -201,27 +168,56 @@ def _convert_vision_sheet_to_pgm_component(
             except ValueError as ex:
                 if "invalid literal" in str(ex) and isinstance(col_def, str):
                     raise ValueError(
-                        f"Possibly missing enum value for '{col_def}' column on '{sheet_name}' sheet: {ex}"
+                        f"Possibly missing enum value for '{col_def}' column on '{table}' sheet: {ex}"
                     ) from ex
                 raise
 
-    return pgm_data, extra_info
+        return pgm_data
+
+    def _merge_pgm_data(self, data: Dict[str, List[np.ndarray]], data_type: str) -> Dict[str, np.ndarray]:
+        """
+        During the conversion, multiple numpy arrays can be produced for the same type of componnent. These arrays
+        should be concatenated to form one large table.
+
+        Args:
+            data: For each component, one or more numpy structured arrays
+            data_type: The data_type defines the attributs in the numpy array (input, update, sym_output, asym_output).
+        """
+        merged = {}
+        for component_name, data_set in data.items():
+
+            # If there is only one array, use it as is
+            if len(data_set) == 1:
+                merged[component_name] = data_set[0]
+
+            # If there are numtiple arrays, concatenate them
+            elif len(data_set) > 1:
+                merged[component_name] = np.concatenate(data_set)
+
+        return merged
+
+    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup] = None) -> TabularData:
+        if extra_info is not None:
+            raise NotImplementedError("Extra info can not (yet) be stored for tabular data")
+        if isinstance(data, list):
+            raise NotImplementedError("Batch data can not(yet) be stored for tabular data")
+        return TabularData(**data)
 
 
-def _parse_col_def(workbook: TabularData, sheet_name: str, col_def: Any) -> pd.DataFrame:
+def _parse_col_def(table: TabularData, sheet_name: str, col_def: Any) -> pd.DataFrame:
     """
     TODO: Revise this function and add it to TabularConverter
     """
     if isinstance(col_def, (int, float)):
-        return _parse_col_def_const(workbook=workbook, sheet_name=sheet_name, col_def=col_def)
-    if isinstance(col_def, str) and "!" in col_def:
-        return _parse_col_def_column_reference(workbook=workbook, sheet_name=sheet_name, col_def=col_def)
+        return _parse_col_def_const(workbook=table, sheet_name=sheet_name, col_def=col_def)
+    if isinstance(col_def, str) and COL_REF_RE.fullmatch(col_def) is not None:
+        return _parse_col_def_column_reference(workbook=table, sheet_name=sheet_name, col_def=col_def)
     if isinstance(col_def, str):
-        return _parse_col_def_column_name(workbook=workbook, sheet_name=sheet_name, col_def=col_def)
+        return _parse_col_def_column_name(workbook=table, sheet_name=sheet_name, col_def=col_def)
     if isinstance(col_def, dict):
-        return _parse_col_def_function(workbook=workbook, sheet_name=sheet_name, col_def=col_def)
+        return _parse_col_def_function(workbook=table, sheet_name=sheet_name, col_def=col_def)
     if isinstance(col_def, list):
-        return _parse_col_def_composite(workbook=workbook, sheet_name=sheet_name, col_def=col_def)
+        return _parse_col_def_composite(workbook=table, sheet_name=sheet_name, col_def=col_def)
     raise TypeError(f"Invalid column definition: {col_def}")
 
 
@@ -290,7 +286,7 @@ def _parse_col_def_function(workbook: TabularData, sheet_name: str, col_def: Dic
     data = []
     for fn_name, sub_def in col_def.items():
         function = _get_function(fn_name)
-        col_data = _parse_col_def(workbook=workbook, sheet_name=sheet_name, col_def=sub_def)
+        col_data = _parse_col_def(table=workbook, sheet_name=sheet_name, col_def=sub_def)
         col_data = col_data.apply(lambda row: function(*row), axis=1, raw=True)  # pylint: disable=cell-var-from-loop
         data.append(col_data)
     return pd.concat(data, axis=1)
@@ -301,7 +297,7 @@ def _parse_col_def_composite(workbook: TabularData, sheet_name: str, col_def: li
     TODO: Revise this function and add it to TabularConverter
     """
     assert isinstance(col_def, list)
-    columns = [_parse_col_def(workbook=workbook, sheet_name=sheet_name, col_def=sub_def) for sub_def in col_def]
+    columns = [_parse_col_def(table=workbook, sheet_name=sheet_name, col_def=sub_def) for sub_def in col_def]
     return pd.concat(columns, axis=1)
 
 
