@@ -6,12 +6,12 @@ from typing import Optional, Tuple
 
 import pytest
 
-from power_grid_model_io.converters.tabular_converter import COL_REF_RE, OPT_COL_RE
+from power_grid_model_io.converters.tabular_converter import COL_REF_RE
 
 
 def ref_cases():
-    yield "OtherSheet!ValueColumn[IdColumn=RefColumn]", (
-        "OtherSheet",
+    yield "OtherTable!ValueColumn[IdColumn=RefColumn]", (
+        "OtherTable",
         "ValueColumn",
         None,
         None,
@@ -21,20 +21,20 @@ def ref_cases():
         "RefColumn",
     )
 
-    yield "OtherSheet!ValueColumn[OtherSheet!IdColumn=ThisSheet!RefColumn]", (
-        "OtherSheet",
+    yield "OtherTable!ValueColumn[OtherTable!IdColumn=ThisTable!RefColumn]", (
+        "OtherTable",
         "ValueColumn",
-        "OtherSheet!",
-        "OtherSheet",
+        "OtherTable!",
+        "OtherTable",
         "IdColumn",
-        "ThisSheet!",
-        "ThisSheet",
+        "ThisTable!",
+        "ThisTable",
         "RefColumn",
     )
 
-    yield "OtherSheet.ValueColumn[IdColumn=RefColumn]", None
+    yield "OtherTable.ValueColumn[IdColumn=RefColumn]", None
     yield "ValueColumn[IdColumn=RefColumn]", None
-    yield "OtherSheet![IdColumn=RefColumn]", None
+    yield "OtherTable![IdColumn=RefColumn]", None
 
 
 @pytest.mark.parametrize("value,groups", ref_cases())

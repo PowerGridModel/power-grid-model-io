@@ -25,7 +25,25 @@ from power_grid_model_io.utils.modules import import_optional_module
 
 yaml = import_optional_module("tabular", "yaml")
 
-OPT_COL_RE = re.compile(r"")
+"""
+Regular expressions to match patterns like:
+  OtherTable!ValueColumn[IdColumn=RefColumn]
+and:
+  OtherTable!ValueColumn[OtherTable!IdColumn=ThisTable!RefColumn]
+  
+([^!]+)     OtherTable
+!           separator
+([^\[]+)    ValueColumn
+[           separator
+([^\[]+)    ValueColumn
+(([^!]+)!)? OtherTable + separator! (optional)
+([^=]+)     IdColumn
+=           separator
+(([^!]+)!)? ThisTable + separator! (optional)
+=           separator
+([^\]]+)
+]           separator
+"""
 COL_REF_RE = re.compile(r"([^!]+)!([^\[]+)\[(([^!]+)!)?([^=]+)=(([^!]+)!)?([^\]]+)\]")
 
 
