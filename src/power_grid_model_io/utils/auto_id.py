@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from typing import Any, Dict, Hashable, Optional
+from typing import Any, Dict, Hashable, List, Optional
 
 
 class AutoID:

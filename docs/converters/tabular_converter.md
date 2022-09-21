@@ -145,3 +145,42 @@ The definitions above can be interpreted as:
   * In all columns called "N1",
     the word "none" should be replaced with the boolean `false`
     and the word "own" should be replaced with the value boolean `true`.
+
+# AutoID
+The `id` field is special in the sense that each object should have a unique numerical id in power grid model. 
+Therefore, each id definition is mapped to a numerical ID.
+Also each field name that ends with `node` is converted into the matching numerical ID.
+
+```python
+from power_grid_model_io.utils.auto_id import AutoID
+
+auto_id = AutoID()
+a = auto_id("Alpha")   # a = 0
+b = auto_id("Bravo")   # b = 1
+c = auto_id("Alpha")   # c = 0 (because key "Alpha" already existed)
+item = auto_id[1]      # item = "Bravo"
+ ```
+  
+See also [AutoID](/src/power_grid_model_io/utils/auto_id.py).
+
+## Vision and Gaia
+For Vision and Gaia files, an extra trick is applied. Let's assume this mapping:
+
+```yaml
+grid:
+  Nodes:
+    node:
+      id: Number
+      ...
+  Cables:
+    line:
+      id: Number
+      from_node: From.Number
+      ...
+```
+
+The PGM `node["id"]` will be a number, based on the values in the `Nodes!Number` column.
+The PGM `line["from_node"]` (which ends with `node`) will be based on the values in the `Nodes!From.Number`.
+Originally this didn't work, due to the hashing function, as the column names differ: `"Number" != "From.Number"`.
+Therefore, the Vision and Gaia converters overload the `_id_lookup()` method.
+They split the column name on `.` so that the `Number` matches `From.Number`.

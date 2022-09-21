@@ -1,6 +1,10 @@
 # SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
+"""
+Unit mapping helper class
+"""
+
 from typing import Dict, Set, Tuple
 
 import structlog
@@ -10,6 +14,18 @@ Units = Dict[str, Dict[str, float]]
 
 
 class UnitMapping:
+    """
+    Unit mapping helper class.
+    The input data is expected to be of the form:
+    {
+        "A" : None,
+        "W": {
+            "kW": 1000.0,
+            "MW": 1000000.0
+        }
+     }
+    """
+
     def __init__(self, mapping: Units):
         self._log = structlog.get_logger(type(self).__name__)
         self._si_units: Set[str] = set()
@@ -17,6 +33,16 @@ class UnitMapping:
         self.set_mapping(mapping)
 
     def set_mapping(self, mapping: Units):
+        """
+        Creates an internal mapping lookup table based on input data of the form:
+        mapping = {
+            "A" : None,
+            "W": {
+                "kW": 1000.0,
+                "MW": 1000000.0
+            }
+         }
+        """
         self._si_units = set(mapping.keys())
         self._mapping = {}
         for si_unit, multipliers in mapping.items():
@@ -33,16 +59,13 @@ class UnitMapping:
                     if multiplier != 1.0:
                         raise ValueError(f"Invalid mapping for {unit}; " f"1 {unit} = {multiplier} {si_unit}")
                     continue
-            self._mapping[unit] = (multiplier, si_unit)
+                self._mapping[unit] = (multiplier, si_unit)
         self._log.debug(
             "Set unit definitions", n_units=len(self._si_units | self._mapping.keys()), n_si_units=len(self._si_units)
         )
 
     def get_unit_multiplier(self, unit: str) -> Tuple[float, str]:
+        """
+        Find the correct unit multiplier and the corresponding SI unit
+        """
         return (1.0, unit) if unit in self._si_units else self._mapping[unit]
-
-    def to_si_unit(self, value: float, unit: str) -> Tuple[float, str]:
-        if unit in self._si_units:
-            return value, unit
-        multiplier, unit = self._mapping[unit]
-        return value, unit

@@ -26,12 +26,12 @@ from power_grid_model_io.utils.modules import import_optional_module
 
 yaml = import_optional_module("tabular", "yaml")
 
-"""
+r"""
 Regular expressions to match patterns like:
   OtherTable!ValueColumn[IdColumn=RefColumn]
 and:
   OtherTable!ValueColumn[OtherTable!IdColumn=ThisTable!RefColumn]
-  
+
 ([^!]+)     OtherTable
 !           separator
 ([^\[]+)    ValueColumn
@@ -71,6 +71,7 @@ class TabularConverter(BaseConverter[TabularData]):
         self._substitution: Optional[ValueMapping] = None
         if mapping_file is not None:
             self.set_mapping_file(mapping_file=mapping_file)
+        self._lookup = AutoID()
 
     def set_mapping_file(self, mapping_file: Path) -> None:
         """
@@ -100,13 +101,13 @@ class TabularConverter(BaseConverter[TabularData]):
 
         # Apply units and substitutions to the data. Note that the conversions are 'lazy', i.e. the units and
         # substitutions will be applied the first time .get_column(table, field) is called.
-        data.set_units(self._units)
-        data.set_substitutions(self._substitutions)
+        if self._units is not None:
+            data.set_unit_multipliers(self._units)
+        if self._substitutions is not None:
+            data.set_substitutions(self._substitutions)
 
         # Initialize some empty data structures
         pgm: Dict[str, List[np.ndarray]] = {}
-        extra: Dict[int, Dict[str, Any]] = {}
-        lookup = AutoID()
 
         # For each table in the mapping
         for table in self._mapping.tables():
@@ -117,7 +118,6 @@ class TabularConverter(BaseConverter[TabularData]):
                     table=table,
                     component=component,
                     attributes=attributes,
-                    lookup=lookup,
                     extra_info=extra_info,
                 )
                 if component_data is not None:
@@ -125,7 +125,7 @@ class TabularConverter(BaseConverter[TabularData]):
                         pgm[component] = []
                     pgm[component].append(component_data)
 
-        input_data = self._merge_pgm_data(data=pgm, data_type=data_type)
+        input_data = self._merge_pgm_data(data=pgm)
         self._log.debug(
             "Converted tabular data to power grid model data",
             n_components=len(input_data),
@@ -133,6 +133,7 @@ class TabularConverter(BaseConverter[TabularData]):
         )
         return input_data
 
+    # pylint: disable = too-many-arguments, too-many-locals, too-many-branches
     def _convert_table_to_component(
         self,
         data: TabularData,
@@ -140,7 +141,6 @@ class TabularConverter(BaseConverter[TabularData]):
         table: str,
         component: str,
         attributes: InstanceAttributes,
-        lookup: AutoID,
         extra_info: Optional[ExtraInfoLookup],
     ) -> Optional[np.ndarray]:
         if table not in data:
@@ -165,7 +165,7 @@ class TabularConverter(BaseConverter[TabularData]):
                 continue
             if attr == "id":
                 extra = col_data.to_dict(orient="records")
-                col_data = col_data.apply(lambda row: _id_lookup(lookup, component, row), axis=1)
+                col_data = col_data.apply(lambda row: self._id_lookup(component, row), axis=1)
                 if extra_info is not None:
                     for i, xtr in zip(col_data, extra):
                         extra_info[i] = {"table": table}
@@ -180,7 +180,7 @@ class TabularConverter(BaseConverter[TabularData]):
                                 {k: v for k, v in xtr.items() if not isinstance(v, (int, float)) or not np.isnan(v)}
                             )
             elif attr.endswith("node"):
-                col_data = col_data.apply(lambda row: _id_lookup(lookup, "node", row), axis=1)
+                col_data = col_data.apply(lambda row: self._id_lookup("node", row), axis=1)
             elif len(col_data.columns) != 1:
                 raise ValueError(
                     f"DataFrame for {component}.{attr} should contain a single column " f"({col_data.columns})"
@@ -198,7 +198,7 @@ class TabularConverter(BaseConverter[TabularData]):
 
         return pgm_data
 
-    def _merge_pgm_data(self, data: Dict[str, List[np.ndarray]], data_type: str) -> Dict[str, np.ndarray]:
+    def _merge_pgm_data(self, data: Dict[str, List[np.ndarray]]) -> Dict[str, np.ndarray]:
         """
         During the conversion, multiple numpy arrays can be produced for the same type of componnent. These arrays
         should be concatenated to form one large table.
@@ -226,6 +226,11 @@ class TabularConverter(BaseConverter[TabularData]):
         if isinstance(data, list):
             raise NotImplementedError("Batch data can not(yet) be stored for tabular data")
         return TabularData(**data)
+
+    def _id_lookup(self, component: str, row: pd.Series) -> int:
+        data = dict(sorted(row.to_dict().items(), key=lambda x: x[0]))
+        key = component + ":" + ",".join(f"{k}={v}" for k, v in data.items())
+        return self._lookup(item={"component": component, "row": data}, key=key)
 
 
 def _parse_col_def(table: TabularData, sheet_name: str, col_def: Any) -> pd.DataFrame:
@@ -341,12 +346,3 @@ def _get_function(fn_name: str) -> Callable:
     except AttributeError as ex:
         raise AttributeError(f"Function: {function_name} does not exist in {module_path}") from ex
     return function
-
-
-def _id_lookup(lookup: AutoID, component: str, row: pd.Series) -> int:
-    """
-    TODO: Revise this function and add it to TabularConverter
-    """
-    data = {col.split(".").pop(): val for col, val in sorted(row.to_dict().items(), key=lambda x: x[0])}
-    key = component + ":" + ",".join(f"{k}={v}" for k, v in data.items())
-    return lookup(item={"component": component, "row": data}, key=key)

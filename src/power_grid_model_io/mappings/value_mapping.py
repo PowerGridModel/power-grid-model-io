@@ -1,6 +1,10 @@
 # SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
+"""
+Value substitution helper class
+"""
+
 import re
 from functools import lru_cache
 from itertools import chain
@@ -16,6 +20,10 @@ ValuesRe = Dict[re.Pattern, Dict[Value, Value]]
 
 
 class ValueMapping:
+    """
+    Value substitution helper class
+    """
+
     def __init__(self, mapping: Optional[Values] = None):
         self._log = structlog.get_logger(type(self).__name__)
         self._values: Values = mapping or {}

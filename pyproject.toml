@@ -71,6 +71,9 @@ namespaces = false
 [tool.setuptools.dynamic]
 version = {file = "PYPI_VERSION"}
 
+[tool.setuptools.package-data]
+power_grid_model_io = ["*.yaml"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
 addopts = ["--cov=src/power_grid_model_io", "--cov-report", "term", "--cov-fail-under=20"]
