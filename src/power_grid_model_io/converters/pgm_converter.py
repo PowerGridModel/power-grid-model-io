@@ -88,19 +88,9 @@ class PgmConverter(BaseConverter[StructuredData]):
     def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup] = None) -> StructuredData:
         # Check if the dataset is a single dataset or batch dataset
         # It is batch dataset if it is 2D array or a indptr/data structure
-        is_batch: Optional[bool] = None
-        for component, array in data.items():
-            is_dense_batch = isinstance(array, np.ndarray) and array.ndim == 2
-            is_sparse_batch = isinstance(array, dict) and "indptr" in array and "data" in array
-            if is_batch is not None and is_batch != (is_dense_batch or is_sparse_batch):
-                raise ValueError(
-                    f"Mixed {'' if is_batch else 'non-'}batch data "
-                    f"with {'non-' if is_batch else ''}batch data ({component})."
-                )
-            is_batch = is_dense_batch or is_sparse_batch
 
         # If it is a batch, convert the batch data to a list of batches, then convert each batch individually.
-        if is_batch:
+        if self._is_batch(data=data):
             if extra_info is not None:
                 self._log.warning("Extra info is not supported for batch data export")
             # We have established that this is batch data, so let's tell the type checker that this is a BatchDataset
@@ -111,6 +101,19 @@ class PgmConverter(BaseConverter[StructuredData]):
         # We have established that this is not batch data, so let's tell the type checker that this is a BatchDataset
         data = cast(SingleDataset, data)
         return self._serialize_dataset(data=data, extra_info=extra_info)
+
+    def _is_batch(self, data: Dataset) -> bool:
+        is_batch: Optional[bool] = None
+        for component, array in data.items():
+            is_dense_batch = isinstance(array, np.ndarray) and array.ndim == 2
+            is_sparse_batch = isinstance(array, dict) and "indptr" in array and "data" in array
+            if is_batch is not None and is_batch != (is_dense_batch or is_sparse_batch):
+                raise ValueError(
+                    f"Mixed {'' if is_batch else 'non-'}batch data "
+                    f"with {'non-' if is_batch else ''}batch data ({component})."
+                )
+            is_batch = is_dense_batch or is_sparse_batch
+        return bool(is_batch)
 
     def _serialize_dataset(
         self, data: SingleDataset, extra_info: Optional[ExtraInfoLookup] = None
