@@ -13,9 +13,11 @@ from power_grid_model_io.converters.base_converter import BaseConverter
 
 class DummyConverter(BaseConverter[Dict[str, List[Dict[str, int]]]]):
     def _parse_data(self, data, data_type, extra_info=None):
+        # No need to implement _parse_data() for testing purposes
         pass
 
     def _serialize_data(self, data, extra_info=None):
+        # No need to implement _serialize_data() for testing purposes
         pass
 
 

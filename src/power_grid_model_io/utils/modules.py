@@ -1,6 +1,9 @@
 # SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
+"""
+Module utilities, expecially useful for loading optional dependencies
+"""
 import importlib.util
 import sys
 from pathlib import Path
@@ -11,31 +14,45 @@ DEPENDENCIES = {"tabular": {"yaml": "pyyaml"}, "excel": {"openpyxl": "openpyxl"}
 
 
 def running_from_conda_env() -> bool:
+    """
+    Check if the conda is used
+    """
     return Path(sys.prefix, "conda-meta").exists()
 
 
 def module_loaded(module: str) -> bool:
+    """
+    Check if the module is already loaded
+    """
     return hasattr(sys, module)
 
 
 def module_installed(module: str) -> bool:
+    """
+    Check if the module is installed
+    """
     return importlib.util.find_spec(module) is not None
 
 
 def import_optional_module(extra: str, module: str):
+    """
+    Check if the required module is installed and load it
+    """
     assert_dependencies(extra=extra, modules=[module])
     if module_loaded(module):
         return getattr(sys, module)
-    else:
-        return importlib.import_module(module)
+    return importlib.import_module(module)
 
 
 def assert_dependencies(extra: str, modules: Optional[List[str]] = None):
+    """
+    Check if the required module is installed, or raise a human readable errormessage with instructions if it doesn't.
+    """
     # Get the dependencies for the given extra
     try:
         dependencies = DEPENDENCIES[extra]
-    except KeyError:
-        raise KeyError(f"Extra requirements '{extra}' is not defined.")
+    except KeyError as ex:
+        raise KeyError(f"Extra requirements '{extra}' is not defined.") from ex
 
     # Get, or validate the modules
     if modules is not None:
@@ -51,7 +68,7 @@ def assert_dependencies(extra: str, modules: Optional[List[str]] = None):
         return
 
     # Define the main module name
-    module_name = __name__.split(".")[0]
+    module_name = __name__.split(".", maxsplit=1)[0]
 
     # Atempt to guess the package manager
     if running_from_conda_env():

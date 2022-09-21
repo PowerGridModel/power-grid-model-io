@@ -183,7 +183,7 @@ class TabularConverter(BaseConverter[TabularData]):
                 col_data = col_data.apply(lambda row: self._id_lookup("node", row), axis=1)
             elif len(col_data.columns) != 1:
                 raise ValueError(
-                    f"DataFrame for {component}.{attr} should contain a single column " f"({col_data.columns})"
+                    f"DataFrame for {component}.{attr} should contain a single column ({col_data.columns})"
                 )
             else:
                 col_data = col_data.iloc[:, 0]
@@ -314,9 +314,9 @@ def _parse_col_def_function(workbook: TabularData, sheet_name: str, col_def: Dic
     assert isinstance(col_def, dict)
     data = []
     for fn_name, sub_def in col_def.items():
-        function = _get_function(fn_name)
+        fn_ptr = _get_function(fn_name)
         col_data = _parse_col_def(table=workbook, sheet_name=sheet_name, col_def=sub_def)
-        col_data = col_data.apply(lambda row: function(*row), axis=1, raw=True)  # pylint: disable=cell-var-from-loop
+        col_data = col_data.apply(lambda row, fn=fn_ptr: fn(*row), axis=1, raw=True)
         data.append(col_data)
     return pd.concat(data, axis=1)
 
@@ -342,7 +342,7 @@ def _get_function(fn_name: str) -> Callable:
     except ModuleNotFoundError as ex:
         raise AttributeError(f"Function: {fn_name} does not exist") from ex
     try:
-        function = getattr(module, function_name)
+        fn_ptr = getattr(module, function_name)
     except AttributeError as ex:
         raise AttributeError(f"Function: {function_name} does not exist in {module_path}") from ex
-    return function
+    return fn_ptr

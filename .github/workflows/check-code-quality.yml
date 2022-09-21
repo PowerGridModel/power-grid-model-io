@@ -39,7 +39,7 @@ jobs:
           pip install mypy
           mypy .
 
-#      - name: Install and run pylint
-#        run: |
-#          pip install pylint .
-#          pylint power_grid_model_io
+      - name: Install and run pylint
+        run: |
+          pip install pylint .
+          pylint power_grid_model_io

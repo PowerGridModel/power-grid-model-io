@@ -12,7 +12,7 @@ from typing import Any, Optional, Tuple, TypeVar, cast
 import numpy as np
 from power_grid_model import WindingType
 
-CONNECTION_PATTERN = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)([0-9]|1[0-2])")
+CONNECTION_PATTERN = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(\d|1[0-2])")
 
 # TODO: Implement Z winding
 WINDING_TYPES = {

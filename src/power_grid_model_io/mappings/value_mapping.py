@@ -7,7 +7,6 @@ Value substitution helper class
 
 import re
 from functools import lru_cache
-from itertools import chain
 from typing import Dict, Optional, Union
 
 import structlog
@@ -19,6 +18,7 @@ Values = Dict[str, Dict[Value, Value]]
 ValuesRe = Dict[re.Pattern, Dict[Value, Value]]
 
 
+# pylint: disable=too-few-public-methods
 class ValueMapping:
     """
     Value substitution helper class
@@ -29,12 +29,21 @@ class ValueMapping:
         self._values: Values = mapping or {}
         self._values_re: ValuesRe = {re.compile(pattern): value for pattern, value in self._values.items()}
         if mapping is not None:
-            self._log.debug(f"Set value mapping", n_fields=len(mapping), n_mappings=len(list(chain(*mapping.values()))))
+            self._log.debug(
+                "Set value mapping", n_fields=len(mapping), n_mappings=sum(len(m) for m in mapping.values())
+            )
 
     @lru_cache
     def get_substitutions(self, field: str) -> Dict[Value, Value]:
+        """
+        Find the substitutions for a given field.
+        """
+
+        # First check if there is an exact match
         if field in self._values:
             return self._values[field]
+
+        # Otherwise, use the values as regular expressions
         for pattern in self._values_re.keys():
             if pattern.fullmatch(field):
                 return self._values_re[pattern]

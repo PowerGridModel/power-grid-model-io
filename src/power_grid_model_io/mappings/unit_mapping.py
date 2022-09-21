@@ -52,12 +52,12 @@ class UnitMapping:
                 if unit in self._mapping:
                     multiplier_, si_unit_ = self._mapping[unit]
                     raise ValueError(
-                        f"Multiple mapping for {unit}; " f"1 {unit} = {multiplier_} {si_unit_} = {multiplier} {si_unit}"
+                        f"Multiple mapping for {unit}; 1 {unit} = {multiplier_} {si_unit_} = {multiplier} {si_unit}"
                     )
                 self._mapping[unit] = (multiplier, si_unit)
                 if unit == si_unit:
                     if multiplier != 1.0:
-                        raise ValueError(f"Invalid mapping for {unit}; " f"1 {unit} = {multiplier} {si_unit}")
+                        raise ValueError(f"Invalid mapping for {unit}; 1 {unit} = {multiplier} {si_unit}")
                     continue
                 self._mapping[unit] = (multiplier, si_unit)
         self._log.debug(
