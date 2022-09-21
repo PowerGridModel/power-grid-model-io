@@ -8,7 +8,7 @@ Tabular Data Converter: Load data from multiple tables and use a mapping file to
 import re
 from importlib import import_module
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Union, cast
+from typing import Any, Callable, Dict, List, Literal, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -16,6 +16,7 @@ from power_grid_model import initialize_array
 from power_grid_model.data_types import Dataset
 
 from power_grid_model_io.converters.base_converter import BaseConverter
+from power_grid_model_io.data_stores.base_data_store import BaseDataStore
 from power_grid_model_io.data_types import ExtraInfoLookup, TabularData
 from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes, Tables, TabularMapping
 from power_grid_model_io.mappings.unit_mapping import UnitMapping, Units
@@ -52,14 +53,19 @@ class TabularConverter(BaseConverter[TabularData]):
     Tabular Data Converter: Load data from multiple tables and use a mapping file to convert the data to PGM
     """
 
-    def __init__(self, mapping_file: Optional[Path] = None):
+    def __init__(
+        self,
+        mapping_file: Optional[Path] = None,
+        source: Optional[BaseDataStore[TabularData]] = None,
+        destination: Optional[BaseDataStore[TabularData]] = None,
+    ):
         """
         Prepare some member variables and optionally load a mapping file
 
         Args:
             mapping_file: A yaml file containing the mapping.
         """
-        super().__init__()
+        super().__init__(source=source, destination=destination)
         self._mapping: TabularMapping = TabularMapping(mapping={})
         self._units: Optional[UnitMapping] = None
         self._substitution: Optional[ValueMapping] = None

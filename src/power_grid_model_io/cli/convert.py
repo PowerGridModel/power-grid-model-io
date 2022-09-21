@@ -14,11 +14,9 @@ from typing import Optional
 import structlog
 from power_grid_model.validation import errors_to_string, validate_input_data
 
+from power_grid_model_io.converters.gaia_excel_converter import GaiaExcelConverter
 from power_grid_model_io.converters.pgm_converter import PgmConverter
-from power_grid_model_io.converters.tabular_converter import TabularConverter
-from power_grid_model_io.data_stores.gaia_excel_file_store import GaiaExcelFileStore
-from power_grid_model_io.data_stores.json_file_store import JsonFileStore
-from power_grid_model_io.data_stores.vision_excel_file_store import VisionExcelFileStore
+from power_grid_model_io.converters.vision_excel_converter import VisionExcelConverter
 from power_grid_model_io.utils.modules import import_optional_module
 
 typer = import_optional_module("cli", "typer")
@@ -49,7 +47,6 @@ def _validate(input_data, extra_info, symmetric, log):
 # pylint: disable=too-many-arguments
 def vision2pgm(
     excel_file: Path,
-    mapping_file: Path,
     pgm_json_file: Optional[Path] = None,
     symmetric: bool = True,
     validate: bool = False,
@@ -58,33 +55,29 @@ def vision2pgm(
     """
     Convert a Vision Excel export to a Power Grid Model JSON file
     """
-    log = structlog.getLogger("vision2pgm")
 
-    structlog.configure(
-        wrapper_class=structlog.make_filtering_bound_logger(logging.DEBUG if verbose else logging.INFO),
-    )
+    log_level = logging.DEBUG if verbose else logging.INFO
+    structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(log_level))
 
     if pgm_json_file is None:
         pgm_json_file = excel_file.with_suffix(".json")
 
-    source = VisionExcelFileStore(file_path=excel_file)
-    destination = JsonFileStore(file_path=pgm_json_file)
-    tabular_converter = TabularConverter(mapping_file=mapping_file)
-    pgm_converter = PgmConverter()
+    vision_converter = VisionExcelConverter(source_file=excel_file)
+    input_data, extra_info = vision_converter.load_input_data()
 
-    input_data, extra_info = tabular_converter.load_input_data(data=source.load())
-    destination.save(pgm_converter.convert(data=input_data, extra_info=extra_info))
+    pgm_converter = PgmConverter(destination_file=pgm_json_file)
+    pgm_converter.save(data=input_data, extra_info=extra_info)
 
     if validate:
+        log = structlog.get_logger("vision2pgm")
         _validate(input_data=input_data, extra_info=extra_info, symmetric=symmetric, log=log)
 
 
 @app.command()
 # pylint: disable=too-many-arguments
-def gaia(
+def gaia2pgm(
     excel_file: Path,
-    mapping_file: Path,
-    cable_types_file: Optional[Path] = None,
+    types_file: Optional[Path] = None,
     pgm_json_file: Optional[Path] = None,
     symmetric: bool = True,
     validate: bool = False,
@@ -93,22 +86,19 @@ def gaia(
     """
     Convert a Gaia Excel export to a Power Grid Model JSON file
     """
-    log = structlog.get_logger("gaia")
 
-    structlog.configure(
-        wrapper_class=structlog.make_filtering_bound_logger(logging.DEBUG if verbose else logging.INFO),
-    )
+    log_level = logging.DEBUG if verbose else logging.INFO
+    structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(log_level))
 
     if pgm_json_file is None:
         pgm_json_file = excel_file.with_suffix(".json")
 
-    source = GaiaExcelFileStore(file_path=excel_file, types_file=cable_types_file)
-    destination = JsonFileStore(file_path=pgm_json_file)
-    tabular_converter = TabularConverter(mapping_file=mapping_file)
-    pgm_converter = PgmConverter()
+    gaia_converter = GaiaExcelConverter(source_file=excel_file, types_file=types_file)
+    input_data, extra_info = gaia_converter.load_input_data()
 
-    input_data, extra_info = tabular_converter.load_input_data(data=source.load())
-    destination.save(pgm_converter.convert(data=input_data, extra_info=extra_info))
+    pgm_converter = PgmConverter(destination_file=pgm_json_file)
+    pgm_converter.save(data=input_data, extra_info=extra_info)
 
     if validate:
+        log = structlog.get_logger("gaia2pgm")
         _validate(input_data=input_data, extra_info=extra_info, symmetric=symmetric, log=log)

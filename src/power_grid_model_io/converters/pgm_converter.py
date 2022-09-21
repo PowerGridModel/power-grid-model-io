@@ -5,6 +5,7 @@
 Power Grid Model 'Converter': Load and store power grid model data in the native PGM JSON format.
 """
 
+from pathlib import Path
 from typing import Optional, cast
 
 import numpy as np
@@ -17,6 +18,7 @@ from power_grid_model.utils import (
 )
 
 from power_grid_model_io.converters.base_converter import BaseConverter
+from power_grid_model_io.data_stores.json_file_store import JsonFileStore
 from power_grid_model_io.data_types import ExtraInfoLookup, StructuredData
 
 
@@ -28,6 +30,11 @@ class PgmConverter(BaseConverter[StructuredData]):
     The most common example is the original object ID, if the original IDs are not numeric, or not unique oover all
     components.
     """
+
+    def __init__(self, source_file: Optional[Path] = None, destination_file: Optional[Path] = None):
+        source = JsonFileStore(file_path=source_file) if source_file else None
+        destination = JsonFileStore(file_path=destination_file) if destination_file else None
+        super().__init__(source=source, destination=destination)
 
     def _parse_data(
         self, data: StructuredData, data_type: str, extra_info: Optional[ExtraInfoLookup] = None
