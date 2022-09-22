@@ -133,7 +133,7 @@ class TabularConverter(BaseConverter[TabularData]):
         )
         return input_data
 
-    # pylint: disable = too-many-arguments, too-many-locals, too-many-branches
+    # pylint: disable = too-many-arguments
     def _convert_table_to_component(
         self,
         data: TabularData,
@@ -153,42 +153,46 @@ class TabularConverter(BaseConverter[TabularData]):
         except KeyError as ex:
             raise KeyError(f"Invalid component type '{component}'") from ex
 
-        for attr, col_def in attributes.items():
+        if "id" not in attributes:
+            raise KeyError(f"No mapping for the attribute 'id' for '{component}s'!")
 
+        # Make sure that the "id" column is always parsed first (at least before "extra" is parsed)
+        sorted_attributes = sorted(attributes.items(), key=lambda x: "" if x[0] == "id" else x[0])
+
+        for attr, col_def in sorted_attributes:
+
+            # To avoid mistakes, the attributes in the mapping should exist. There is one extra attribute called
+            # 'extra' in which extra information can be captured.
             if attr not in pgm_data.dtype.names and attr != "extra":
                 attrs = ", ".join(pgm_data.dtype.names)
-                raise KeyError(f"Could not find attribute '{attr}' for '{component}'. (choose from: {attrs})")
+                raise KeyError(f"Could not find attribute '{attr}' for '{component}s'. (choose from: {attrs})")
 
-            col_data = _parse_col_def(table=data, sheet_name=table, col_def=col_def)
-            if attr == "extra":
-                # Extra info is added when processing the id column
-                continue
             if attr == "id":
-                extra = col_data.to_dict(orient="records")
-                col_data = col_data.apply(lambda row: self._id_lookup(component, row), axis=1)
-                if extra_info is not None:
-                    for i, xtr in zip(col_data, extra):
-                        extra_info[i] = {"table": table}
-                        extra_info[i].update(xtr)
-                    if "extra" in attributes:
-                        extra = _parse_col_def(table=data, sheet_name=table, col_def=attributes["extra"])
-                        if not extra.columns.is_unique:
-                            extra = extra.loc[:, ~extra.columns.duplicated()]
-                        extra = extra.to_dict(orient="records")
-                        for i, xtr in zip(col_data, extra):
-                            extra_info[i].update(
-                                {k: v for k, v in xtr.items() if not isinstance(v, (int, float)) or not np.isnan(v)}
-                            )
-            elif attr.endswith("node"):
-                col_data = col_data.apply(lambda row: self._id_lookup("node", row), axis=1)
-            elif len(col_data.columns) != 1:
-                raise ValueError(
-                    f"DataFrame for {component}.{attr} should contain a single column ({col_data.columns})"
+                # The column definition for the id attribute is used to generate universally unique ids.
+                # The ids are also needed to store the extra info.
+                attr_data = self._handle_id_column(
+                    data=data, table=table, component=component, col_def=col_def, extra_info=extra_info
                 )
+            elif attr.endswith("node"):
+                # Atributes that end with "node" are refences to nodes. Currently this is the only type of reference
+                # that is supported.
+                attr_data = self._handle_node_ref_column(data=data, table=table, col_def=col_def)
+            elif attr.endswith("object"):
+                # Atributes that end with "object" can be references to different types of objects, as used by sensors.
+                raise NotImplementedError(f"{component}s are not implemented, because of the '{attr}' reference...")
+            elif attr == "extra":
+                # Extra info must be linked to the object IDs, therefore the uuids should be known before extra info can
+                # be parsed. Before this for loop, it is checked that "id" exists and it is placed at the front.
+                self._handle_extra_info(
+                    data=data, table=table, col_def=col_def, uuids=pgm_data["id"], extra_info=extra_info
+                )
+                # Extra info should not be added to the numpy arrays, so let's continue to the next attribute
+                continue
             else:
-                col_data = col_data.iloc[:, 0]
+                attr_data = self._handle_column(data=data, table=table, component=component, attr=attr, col_def=col_def)
+
             try:
-                pgm_data[attr] = col_data
+                pgm_data[attr] = attr_data
             except ValueError as ex:
                 if "invalid literal" in str(ex) and isinstance(col_def, str):
                     # pylint: disable=raise-missing-from
@@ -196,6 +200,43 @@ class TabularConverter(BaseConverter[TabularData]):
                 raise
 
         return pgm_data
+
+    def _handle_column(self, data: TabularData, table: str, component: str, attr: str, col_def: Any) -> pd.DataFrame:
+        attr_data = _parse_col_def(data=data, table=table, col_def=col_def)
+        if len(attr_data.columns) != 1:
+            raise ValueError(f"DataFrame for {component}.{attr} should contain a single column ({attr_data.columns})")
+        return attr_data.iloc[:, 0]
+
+    def _handle_id_column(
+        self, data: TabularData, table: str, component: str, col_def: Any, extra_info: Optional[ExtraInfoLookup]
+    ) -> pd.DataFrame:
+
+        attr_data = _parse_col_def(data=data, table=table, col_def=col_def)
+        uuids = attr_data.apply(lambda row: self._id_lookup(component, row), axis=1)
+
+        if extra_info is not None:
+            extra = attr_data.to_dict(orient="records")
+
+            for i, xtr in zip(uuids, extra):
+                extra_info[i] = {"table": table}
+                extra_info[i].update(xtr)
+
+        return uuids
+
+    def _handle_extra_info(
+        self, data: TabularData, table: str, col_def: Any, uuids: np.ndarray, extra_info: Optional[ExtraInfoLookup]
+    ) -> None:
+        if extra_info is None:
+            return
+
+        extra = _parse_col_def(data=data, table=table, col_def=col_def).to_dict(orient="records")
+        for i, xtr in zip(uuids, extra):
+            extra_info[i].update({k: v for k, v in xtr.items() if not isinstance(v, float) or not np.isnan(v)})
+
+    def _handle_node_ref_column(self, data: TabularData, table: str, col_def: Any) -> pd.DataFrame:
+        attr_data = _parse_col_def(data=data, table=table, col_def=col_def)
+        attr_data = attr_data.apply(lambda row: self._id_lookup("node", row), axis=1)
+        return attr_data
 
     def _merge_pgm_data(self, data: Dict[str, List[np.ndarray]]) -> Dict[str, np.ndarray]:
         """
@@ -232,54 +273,54 @@ class TabularConverter(BaseConverter[TabularData]):
         return self._lookup(item={"component": component, "row": data}, key=key)
 
 
-def _parse_col_def(table: TabularData, sheet_name: str, col_def: Any) -> pd.DataFrame:
+def _parse_col_def(data: TabularData, table: str, col_def: Any) -> pd.DataFrame:
     """
     TODO: Revise this function and add it to TabularConverter
     """
     if isinstance(col_def, (int, float)):
-        return _parse_col_def_const(workbook=table, sheet_name=sheet_name, col_def=col_def)
+        return _parse_col_def_const(data=data, table=table, col_def=col_def)
     if isinstance(col_def, str) and COL_REF_RE.fullmatch(col_def) is not None:
-        return _parse_col_def_column_reference(workbook=table, sheet_name=sheet_name, col_def=col_def)
+        return _parse_col_def_column_reference(data=data, table=table, col_def=col_def)
     if isinstance(col_def, str):
-        return _parse_col_def_column_name(workbook=table, sheet_name=sheet_name, col_def=col_def)
+        return _parse_col_def_column_name(data=data, table=table, col_def=col_def)
     if isinstance(col_def, dict):
-        return _parse_col_def_function(workbook=table, sheet_name=sheet_name, col_def=col_def)
+        return _parse_col_def_function(data=data, table=table, col_def=col_def)
     if isinstance(col_def, list):
-        return _parse_col_def_composite(workbook=table, sheet_name=sheet_name, col_def=col_def)
+        return _parse_col_def_composite(data=data, table=table, col_def=col_def)
     raise TypeError(f"Invalid column definition: {col_def}")
 
 
-def _parse_col_def_const(workbook: TabularData, sheet_name: str, col_def: Union[int, float]) -> pd.DataFrame:
+def _parse_col_def_const(data: TabularData, table: str, col_def: Union[int, float]) -> pd.DataFrame:
     """
     TODO: Revise this function and add it to TabularConverter
     """
     assert isinstance(col_def, (int, float))
-    return pd.DataFrame([col_def] * len(workbook[sheet_name]))
+    return pd.DataFrame([col_def] * len(data[table]))
 
 
-def _parse_col_def_column_name(workbook: TabularData, sheet_name: str, col_def: str) -> pd.DataFrame:
+def _parse_col_def_column_name(data: TabularData, table: str, col_def: str) -> pd.DataFrame:
     """
     TODO: Revise this function and add it to TabularConverter
     """
     assert isinstance(col_def, str)
-    sheet = workbook[sheet_name]
+    sheet = data[table]
 
     columns = [col_name.strip() for col_name in col_def.split("|")]
     for col_name in columns:
         if col_name in sheet:
-            return pd.DataFrame(workbook.get_column(table=sheet_name, field=col_name))
+            return pd.DataFrame(data.get_column(table=table, field=col_name))
 
     try:  # Maybe it is not a column name, but a float value like 'inf', let's try to convert the string to a float
         const_value = float(col_def)
     except ValueError:
         # pylint: disable=raise-missing-from
         columns_str = " and ".join(f"'{col_name}'" for col_name in columns)
-        raise KeyError(f"Could not find column {columns_str} on sheet '{sheet_name}'")
+        raise KeyError(f"Could not find column {columns_str} on sheet '{table}'")
 
-    return _parse_col_def_const(workbook=workbook, sheet_name=sheet_name, col_def=const_value)
+    return _parse_col_def_const(data=data, table=table, col_def=const_value)
 
 
-def _parse_col_def_column_reference(workbook: TabularData, sheet_name: str, col_def: str) -> pd.DataFrame:
+def _parse_col_def_column_reference(data: TabularData, table: str, col_def: str) -> pd.DataFrame:
     """
     TODO: Revise this function and add it to TabularConverter
     """
@@ -289,44 +330,42 @@ def _parse_col_def_column_reference(workbook: TabularData, sheet_name: str, col_
         raise ValueError(
             f"Invalid column reference '{col_def}' " "(should be 'OtherSheet!ValueColumn[IdColumn=RefColumn])"
         )
-    other_sheet, value_col_name, _, other_sheet_, id_col_name, _, this_sheet_, ref_col_name = match.groups()
-    if (other_sheet_ is not None and other_sheet_ != other_sheet) or (
-        this_sheet_ is not None and this_sheet_ != sheet_name
-    ):
+    other_table, value_col_name, _, other_table_, id_col_name, _, this_table_, ref_col_name = match.groups()
+    if (other_table_ is not None and other_table_ != other_table) or (this_table_ is not None and this_table_ != table):
         raise ValueError(
             f"Invalid column reference '{col_def}'.\n"
             "It should be something like "
-            f"{other_sheet}!{value_col_name}[{other_sheet}!{{id_column}}={sheet_name}!{{ref_column}}] "
-            f"or simply {other_sheet}!{value_col_name}[{{id_column}}={{ref_column}}]"
+            f"{other_table}!{value_col_name}[{other_table}!{{id_column}}={table}!{{ref_column}}] "
+            f"or simply {other_table}!{value_col_name}[{{id_column}}={{ref_column}}]"
         )
-    ref_column = _parse_col_def_column_name(workbook=workbook, sheet_name=sheet_name, col_def=ref_col_name)
-    id_column = _parse_col_def_column_name(workbook=workbook, sheet_name=other_sheet, col_def=id_col_name)
-    val_column = _parse_col_def_column_name(workbook=workbook, sheet_name=other_sheet, col_def=value_col_name)
+    ref_column = _parse_col_def_column_name(data=data, table=table, col_def=ref_col_name)
+    id_column = _parse_col_def_column_name(data=data, table=other_table, col_def=id_col_name)
+    val_column = _parse_col_def_column_name(data=data, table=other_table, col_def=value_col_name)
     other = pd.concat([id_column, val_column], axis=1)
     result = ref_column.merge(other, how="left", left_on=ref_col_name, right_on=id_col_name)
     return result[value_col_name]
 
 
-def _parse_col_def_function(workbook: TabularData, sheet_name: str, col_def: Dict[str, str]) -> pd.DataFrame:
+def _parse_col_def_function(data: TabularData, table: str, col_def: Dict[str, str]) -> pd.DataFrame:
     """
     TODO: Revise this function and add it to TabularConverter
     """
     assert isinstance(col_def, dict)
-    data = []
+    data_frame = []
     for fn_name, sub_def in col_def.items():
         fn_ptr = _get_function(fn_name)
-        col_data = _parse_col_def(table=workbook, sheet_name=sheet_name, col_def=sub_def)
+        col_data = _parse_col_def(data=data, table=table, col_def=sub_def)
         col_data = col_data.apply(lambda row, fn=fn_ptr: fn(*row), axis=1, raw=True)
-        data.append(col_data)
-    return pd.concat(data, axis=1)
+        data_frame.append(col_data)
+    return pd.concat(data_frame, axis=1)
 
 
-def _parse_col_def_composite(workbook: TabularData, sheet_name: str, col_def: list) -> pd.DataFrame:
+def _parse_col_def_composite(data: TabularData, table: str, col_def: list) -> pd.DataFrame:
     """
     TODO: Revise this function and add it to TabularConverter
     """
     assert isinstance(col_def, list)
-    columns = [_parse_col_def(table=workbook, sheet_name=sheet_name, col_def=sub_def) for sub_def in col_def]
+    columns = [_parse_col_def(data=data, table=table, col_def=sub_def) for sub_def in col_def]
     return pd.concat(columns, axis=1)
 
 
