@@ -160,46 +160,66 @@ class TabularConverter(BaseConverter[TabularData]):
         sorted_attributes = sorted(attributes.items(), key=lambda x: "" if x[0] == "id" else x[0])
 
         for attr, col_def in sorted_attributes:
-
-            # To avoid mistakes, the attributes in the mapping should exist. There is one extra attribute called
-            # 'extra' in which extra information can be captured.
-            if attr not in pgm_data.dtype.names and attr != "extra":
-                attrs = ", ".join(pgm_data.dtype.names)
-                raise KeyError(f"Could not find attribute '{attr}' for '{component}s'. (choose from: {attrs})")
-
-            if attr == "id":
-                # The column definition for the id attribute is used to generate universally unique ids.
-                # The ids are also needed to store the extra info.
-                attr_data = self._handle_id_column(
-                    data=data, table=table, component=component, col_def=col_def, extra_info=extra_info
-                )
-            elif attr.endswith("node"):
-                # Atributes that end with "node" are refences to nodes. Currently this is the only type of reference
-                # that is supported.
-                attr_data = self._handle_node_ref_column(data=data, table=table, col_def=col_def)
-            elif attr.endswith("object"):
-                # Atributes that end with "object" can be references to different types of objects, as used by sensors.
-                raise NotImplementedError(f"{component}s are not implemented, because of the '{attr}' reference...")
-            elif attr == "extra":
-                # Extra info must be linked to the object IDs, therefore the uuids should be known before extra info can
-                # be parsed. Before this for loop, it is checked that "id" exists and it is placed at the front.
-                self._handle_extra_info(
-                    data=data, table=table, col_def=col_def, uuids=pgm_data["id"], extra_info=extra_info
-                )
-                # Extra info should not be added to the numpy arrays, so let's continue to the next attribute
-                continue
-            else:
-                attr_data = self._handle_column(data=data, table=table, component=component, attr=attr, col_def=col_def)
-
-            try:
-                pgm_data[attr] = attr_data
-            except ValueError as ex:
-                if "invalid literal" in str(ex) and isinstance(col_def, str):
-                    # pylint: disable=raise-missing-from
-                    raise ValueError(f"Possibly missing enum value for '{col_def}' column on '{table}' sheet: {ex}")
-                raise
+            self._convert_col_def_to_attribute(
+                data=data,
+                pgm_data=pgm_data,
+                table=table,
+                component=component,
+                attr=attr,
+                col_def=col_def,
+                extra_info=extra_info,
+            )
 
         return pgm_data
+
+    # pylint: disable = too-many-arguments
+    def _convert_col_def_to_attribute(
+        self,
+        data: TabularData,
+        pgm_data: np.ndarray,
+        table: str,
+        component: str,
+        attr: str,
+        col_def: Any,
+        extra_info: Optional[ExtraInfoLookup],
+    ):
+        # To avoid mistakes, the attributes in the mapping should exist. There is one extra attribute called
+        # 'extra' in which extra information can be captured.
+        if attr not in pgm_data.dtype.names and attr != "extra":
+            attrs = ", ".join(pgm_data.dtype.names)
+            raise KeyError(f"Could not find attribute '{attr}' for '{component}s'. (choose from: {attrs})")
+
+        if attr == "id":
+            # The column definition for the id attribute is used to generate universally unique ids.
+            # The ids are also needed to store the extra info.
+            attr_data = self._handle_id_column(
+                data=data, table=table, component=component, col_def=col_def, extra_info=extra_info
+            )
+        elif attr.endswith("node"):
+            # Atributes that end with "node" are refences to nodes. Currently this is the only type of reference
+            # that is supported.
+            attr_data = self._handle_node_ref_column(data=data, table=table, col_def=col_def)
+        elif attr.endswith("object"):
+            # Atributes that end with "object" can be references to different types of objects, as used by sensors.
+            raise NotImplementedError(f"{component}s are not implemented, because of the '{attr}' reference...")
+        elif attr == "extra":
+            # Extra info must be linked to the object IDs, therefore the uuids should be known before extra info can
+            # be parsed. Before this for loop, it is checked that "id" exists and it is placed at the front.
+            self._handle_extra_info(
+                data=data, table=table, col_def=col_def, uuids=pgm_data["id"], extra_info=extra_info
+            )
+            # Extra info should not be added to the numpy arrays, so let's continue to the next attribute
+            return
+        else:
+            attr_data = self._handle_column(data=data, table=table, component=component, attr=attr, col_def=col_def)
+
+        try:
+            pgm_data[attr] = attr_data
+        except ValueError as ex:
+            if "invalid literal" in str(ex) and isinstance(col_def, str):
+                # pylint: disable=raise-missing-from
+                raise ValueError(f"Possibly missing enum value for '{col_def}' column on '{table}' sheet: {ex}")
+            raise
 
     def _handle_column(self, data: TabularData, table: str, component: str, attr: str, col_def: Any) -> pd.DataFrame:
         attr_data = _parse_col_def(data=data, table=table, col_def=col_def)
