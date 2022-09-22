@@ -14,7 +14,9 @@ from power_grid_model import WindingType
 
 CONNECTION_PATTERN = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(\d|1[0-2])")
 
-# TODO: Implement Z winding
+"""
+TODO: Implement Z winding
+"""
 WINDING_TYPES = {
     "Y": WindingType.wye,
     "YN": WindingType.wye_n,

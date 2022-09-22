@@ -11,13 +11,13 @@ from power_grid_model import PowerGridModel
 
 from power_grid_model_io.converters.pgm_converter import PgmConverter
 
-ROOT = Path(__file__).parent.parent
+DATA_DIR = Path(__file__).parent / "data"
 
 if __name__ == "__main__":
     structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(logging.DEBUG))
 
-    input_file = ROOT / "data" / "1os2msr" / "input.json"
-    output_file = ROOT / "data" / "1os2msr" / "sym_output.json"
+    input_file = DATA_DIR / "1os2msr" / "input.json"
+    output_file = DATA_DIR / "1os2msr" / "sym_output.json"
 
     converter = PgmConverter(source_file=input_file, destination_file=output_file)
     input_data, extra_info = converter.load_input_data()

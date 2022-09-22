@@ -88,7 +88,14 @@ line_length = 120
 
 [tool.pylint]
 max-line-length = 120
-disable = ["fixme"]
+ignore-paths = [
+    "examples/",
+    "tests/",
+    "setup.py",
+]
+disable = [
+    "fixme", # allow todos
+]
 good-names=[
     "ex",   # exception
     "i",    # iterator or current

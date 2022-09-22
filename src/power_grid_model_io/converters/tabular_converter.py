@@ -144,7 +144,7 @@ class TabularConverter(BaseConverter[TabularData]):
         extra_info: Optional[ExtraInfoLookup],
     ) -> Optional[np.ndarray]:
         if table not in data:
-            return None, {}
+            return None
 
         n_records = len(data[table])
 
@@ -191,9 +191,8 @@ class TabularConverter(BaseConverter[TabularData]):
                 pgm_data[attr] = col_data
             except ValueError as ex:
                 if "invalid literal" in str(ex) and isinstance(col_def, str):
-                    raise ValueError(
-                        f"Possibly missing enum value for '{col_def}' column on '{table}' sheet: {ex}"
-                    ) from ex
+                    # pylint: disable=raise-missing-from
+                    raise ValueError(f"Possibly missing enum value for '{col_def}' column on '{table}' sheet: {ex}")
                 raise
 
         return pgm_data
@@ -270,11 +269,12 @@ def _parse_col_def_column_name(workbook: TabularData, sheet_name: str, col_def: 
         if col_name in sheet:
             return pd.DataFrame(workbook.get_column(table=sheet_name, field=col_name))
 
-    try:  # Maybe it is not a column name, but a float value like 'inf'
+    try:  # Maybe it is not a column name, but a float value like 'inf', let's try to convert the string to a float
         const_value = float(col_def)
-    except ValueError as ex:
+    except ValueError:
+        # pylint: disable=raise-missing-from
         columns_str = " and ".join(f"'{col_name}'" for col_name in columns)
-        raise KeyError(f"Could not find column {columns_str} on sheet '{sheet_name}'") from ex
+        raise KeyError(f"Could not find column {columns_str} on sheet '{sheet_name}'")
 
     return _parse_col_def_const(workbook=workbook, sheet_name=sheet_name, col_def=const_value)
 

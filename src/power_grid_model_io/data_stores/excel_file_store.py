@@ -7,7 +7,7 @@ Excel File Store
 
 import re
 from pathlib import Path
-from typing import Dict, Hashable, List, Set
+from typing import Dict, List, Set, Tuple
 
 import pandas as pd
 
@@ -49,7 +49,7 @@ class ExcelFileStore(BaseDataStore[TabularData]):
 
         for sheet_name, sheet_data in data.items():
             self._empty_unnamed_column_indexes(data=sheet_data)
-            self._remove_duplicate_columns(sheet_name=sheet_name, data=sheet_data)
+            data[sheet_name] = self._handle_duplicate_columns(sheet_name=sheet_name, data=sheet_data)
 
         return TabularData(**data)
 
@@ -77,41 +77,77 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         columns = (tuple("" if is_unnamed(idx) else idx for idx in col_idx) for col_idx in data.columns.values)
         data.columns = pd.MultiIndex.from_tuples(columns)
 
-    def _remove_duplicate_columns(self, sheet_name: str, data: pd.DataFrame) -> None:
+    def _handle_duplicate_columns(self, sheet_name: str, data: pd.DataFrame) -> pd.DataFrame:
         if data.empty:
-            return
+            return data
 
-        unique: Dict[Hashable, List[int]] = {}
-        to_remove: Set[int] = set()
-        to_rename: Dict[int, str] = {}
+        grouped = self._group_columns_by_index(data=data)
+        to_remove, to_rename = self._check_duplicate_values(sheet_name=sheet_name, data=data, grouped=grouped)
+
         columns = data.columns.values
-        for i, column in enumerate(columns):
-            column = (column,) if not isinstance(column, tuple) else column
-            if column in unique:
-                same_values = True
-                for other_i in unique[column]:
-                    same_values = same_values and data.iloc[:, i].equals(data.iloc[:, other_i])
-                if same_values:
-                    self._log.warning(
-                        "Found duplicate column name, with same data", sheet_name=sheet_name, column=column
-                    )
-                    to_remove.add(i)
-                else:
-                    self._log.error(
-                        "Found duplicate column name, with different data", sheet_name=sheet_name, column=column
-                    )
-                for idx, other_i in enumerate(unique[column][1:] + [i]):
-                    to_remove -= {other_i}
-                    to_rename[other_i] = (f"{column[0]}_{idx + 1}",) + column[1:]
+        if to_rename:
+            for col_idx, new_name in to_rename.items():
+                self._log.warning(
+                    "Column is renamed",
+                    sheet_name=sheet_name,
+                    col_name=columns[col_idx],
+                    new_name=new_name,
+                    col_idx=col_idx,
+                )
+                columns[col_idx] = new_name
+            data.columns = pd.MultiIndex.from_tuples(columns)
+
+        for col_idx in to_remove:
+            self._log.debug("Column is removed", sheet_name=sheet_name, col_name=columns[col_idx], col_idx=col_idx)
+        all_columns = set(range(len(data.columns)))
+        to_keep = all_columns - to_remove
+        return data.iloc[:, sorted(to_keep)]
+
+    def _group_columns_by_index(self, data: pd.DataFrame) -> Dict[Tuple[str, ...], Set[int]]:
+        grouped: Dict[Tuple[str, ...], Set[int]] = {}
+        columns = data.columns.values
+        for col_idx, col_name in enumerate(columns):
+            col_name = (col_name,) if not isinstance(col_name, tuple) else col_name
+            if col_name not in grouped:
+                grouped[col_name] = set()
+            grouped[col_name].add(col_idx)
+        return grouped
+
+    def _check_duplicate_values(
+        self, sheet_name: str, data: pd.DataFrame, grouped: Dict[Tuple[str, ...], Set[int]]
+    ) -> Tuple[Set[int], Dict[int, Tuple[str, ...]]]:
+
+        to_remove: Set[int] = set()
+        to_rename: Dict[int, Tuple[str, ...]] = {}
+
+        for col_name, col_idxs in grouped.items():
+
+            # No duplicate column names
+            if len(col_idxs) == 1:
+                continue
+            # Select the first column as a reference
+            ref_idx = min(col_idxs)
+
+            # Select the rest as duplicates
+            dup_idxs = col_idxs - {ref_idx}
+
+            same_values = all(data.iloc[:, dup_idx].equals(data.iloc[:, ref_idx]) for dup_idx in dup_idxs)
+            if same_values:
+                self._log.warning(
+                    "Found duplicate column names, with same data",
+                    sheet_name=sheet_name,
+                    column=col_name,
+                    col_idx=sorted(col_idxs),
+                )
+                to_remove |= dup_idxs
             else:
-                unique[column] = []
-            unique[column].append(i)
+                self._log.error(
+                    "Found duplicate column names, with different data",
+                    sheet_name=sheet_name,
+                    column=col_name,
+                    col_idx=sorted(col_idxs),
+                )
+                for counter, dup_idx in enumerate(sorted(dup_idxs), start=2):
+                    to_rename[dup_idx] = (f"{col_name[0]}_{counter}",) + col_name[1:]
 
-        for i, new_name in to_rename.items():
-            self._log.warning("Column is renamed", sheet_name=sheet_name, col_name=columns[i], new_name=new_name)
-            columns[i] = new_name
-        data.columns = pd.MultiIndex.from_tuples(columns)
-
-        for i in to_remove:
-            self._log.debug("Column is removed", sheet_name=sheet_name, col_name=columns[i])
-        data.drop(data.iloc[:, list(to_remove)], axis=1, inplace=True)
+        return to_remove, to_rename
