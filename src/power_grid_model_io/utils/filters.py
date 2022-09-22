@@ -149,3 +149,10 @@ def _split_connection_string(conn_str: str) -> Tuple[str, str, int]:
     if not match:
         raise ValueError(f"Invalid transformer connection string: '{conn_str}'")
     return match.group(1), match.group(2), int(match.group(3))
+
+
+def positive_sequence_conductance(power: float, voltage: float) -> float:
+    """
+    Calculate positive sequence conductance as used in shunts
+    """
+    return power / (voltage * voltage)
