@@ -1,0 +1,61 @@
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dynamic.grid.calculation@alliander.com>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+
+name: Build python
+
+on:
+  push:
+    branches:
+      - main
+  # run pipeline on pull request
+  pull_request:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build-python:
+    permissions:
+      contents: write
+    env:
+      TWINE_USERNAME: ${{ secrets.PYPI_USER }}
+      TWINE_PASSWORD: ${{ secrets.PYPI_PASS }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+
+      - name: build
+        run: pip wheel -v --no-deps -w wheelhouse .
+
+      - name: save version
+        id: version
+        run: |
+          echo "::set-output name=version::$(cat PYPI_VERSION)"
+
+      - name: test
+        run: |
+          pip install power-grid-model-io[all,dev]==${{ steps.version.outputs.version }} --find-links=wheelhouse
+          pytest
+      
+      - name: Upload wheels
+        if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
+        run: |
+          pip install twine
+          echo "Publish to PyPI..."
+          twine upload --verbose wheelhouse/*
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
+        with:
+          files: |
+            ./wheelhouse/*.whl
+          tag_name: v${{ steps.version.outputs.version }}
+          prerelease: ${{ contains(steps.version.outputs.version, 'rc') || contains(steps.version.outputs.version, 'a') }}
+          generate_release_notes: true
+          target_commitish: ${{ github.sha }}
