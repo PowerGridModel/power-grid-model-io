@@ -81,7 +81,7 @@ addopts = ["--cov=power_grid_model_io", "--cov-report", "term", "--cov-report", 
 
 [tool.black]
 line-length = 120
-target-version = ["py39"]
+target-version = ["py39", "py310", "py311"]
 
 [tool.isort]
 profile = "black"
