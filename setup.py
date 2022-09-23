@@ -83,7 +83,7 @@ def get_new_version(major, minor, latest_major, latest_minor, latest_patch):
         )
 
 
-def prepare_pkg(setup_file: Path) -> dict:
+def prepare_pkg(setup_file: Path):
     """
 
     Args:
