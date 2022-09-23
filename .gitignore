@@ -139,7 +139,7 @@ data/
 .idea/
 
 # coverage
-python_coverage.xml
-python_cov_html/
+coverage.xml
+cov_html/
 
 PYPI_VERSION
