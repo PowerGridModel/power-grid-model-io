@@ -3,7 +3,11 @@
 # SPDX-License-Identifier: MPL-2.0
 
 [build-system]
-requires = ["setuptools"]
+requires = [
+    "setuptools", 
+    "wheel", 
+    "requests"
+]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -15,9 +19,6 @@ keywords = ["power grid model", "input/output", "conversions"]
 license = {text = "MPL-2.0"}
 classifiers=[
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
@@ -30,7 +31,7 @@ requires-python = ">=3.9"
 dependencies = [
     "numpy",
     "pandas",
-    "power_grid_model>=1.4rc",
+    "power_grid_model>=1.4",
     "structlog",
 ]
 dynamic = ["version"]
@@ -76,11 +77,11 @@ power_grid_model_io = ["*.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
-addopts = ["--cov=src/power_grid_model_io", "--cov-report", "term", "--cov-fail-under=20"]
+addopts = ["--cov=src/power_grid_model_io", "--cov-report", "term", "--cov-report", "html:python_cov_html", "--cov-report", "xml:python_coverage.xml", "--cov-fail-under=20"]
 
 [tool.black]
 line-length = 120
-target-version = ["py39", "py310", "py311"]
+target-version = ["py39"]
 
 [tool.isort]
 profile = "black"

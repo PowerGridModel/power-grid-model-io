@@ -137,3 +137,7 @@ data/
 
 # IDE
 .idea/
+
+# coverage
+python_coverage.xml
+python_cov_html/
