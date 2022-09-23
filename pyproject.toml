@@ -8,7 +8,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "power_grid_model_io"
-description = "Power Grid Moel Input/Output"
+description = "Power Grid Model Input/Output"
 authors = [{"name" = "Alliander Dynamic Grid Calculation", "email" = "dynamic.grid.calculation@alliander.com"}]
 readme = "README.md"
 requires-python = ">=3.8"
