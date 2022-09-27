@@ -12,6 +12,7 @@ from typing import Any, Callable, Dict, List, Literal, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
+import yaml
 from power_grid_model import initialize_array
 from power_grid_model.data_types import Dataset
 
@@ -22,10 +23,8 @@ from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes, Tab
 from power_grid_model_io.mappings.unit_mapping import UnitMapping, Units
 from power_grid_model_io.mappings.value_mapping import ValueMapping, Values
 from power_grid_model_io.utils.auto_id import AutoID
-from power_grid_model_io.utils.modules import import_optional_module
 
-yaml = import_optional_module("yaml", extra="tabular")
-
+COL_REF_RE = re.compile(r"([^!]+)!([^\[]+)\[(([^!]+)!)?([^=]+)=(([^!]+)!)?([^\]]+)\]")
 r"""
 Regular expressions to match patterns like:
   OtherTable!ValueColumn[IdColumn=RefColumn]
@@ -45,7 +44,6 @@ and:
 ([^\]]+)
 ]           separator
 """
-COL_REF_RE = re.compile(r"([^!]+)!([^\[]+)\[(([^!]+)!)?([^=]+)=(([^!]+)!)?([^\]]+)\]")
 
 
 class TabularConverter(BaseConverter[TabularData]):

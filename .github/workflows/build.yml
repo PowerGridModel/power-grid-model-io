@@ -39,7 +39,7 @@ jobs:
 
       - name: test
         run: |
-          pip install power-grid-model-io[all,dev]==${{ steps.version.outputs.version }} --find-links=wheelhouse
+          pip install power-grid-model-io[dev]==${{ steps.version.outputs.version }} --find-links=wheelhouse
           pytest
       
       - name: Upload wheels

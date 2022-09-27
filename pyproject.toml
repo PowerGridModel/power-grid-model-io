@@ -30,8 +30,10 @@ classifiers=[
 requires-python = ">=3.9"
 dependencies = [
     "numpy",
+    "openpyxl",
     "pandas",
     "power_grid_model>=1.4",
+    "pyyaml",
     "structlog",
 ]
 dynamic = ["version"]
@@ -43,18 +45,7 @@ dev = [
     "pytest",
     "pytest-cov",
 ]
-tabular = [
-    "pyyaml",
-]
-excel = [
-    "openpyxl",
-]
 cli = [
-    "typer[all]",
-]
-all = [
-    "openpyxl",
-    "pyyaml",
     "typer[all]",
 ]
 
