@@ -4,6 +4,7 @@
 
 # Generated files
 *.egg-info
+PYPI_VERSION
 
 # temporary_files
 __pycache__/
@@ -19,11 +20,4 @@ data/
 
 # IDE
 .idea/
-
-# coverage
-coverage.xml
-cov_html/
-
-PYPI_VERSION
-
 .vscode/
