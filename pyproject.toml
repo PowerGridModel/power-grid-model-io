@@ -68,7 +68,7 @@ power_grid_model_io = ["*.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
-addopts = ["--cov", "power_grid_model_io", "--cov-report", "term", "--cov-fail-under", "20"]
+addopts = ["--cov=power_grid_model_io", "--cov-report=term", "--cov-fail-under=20"]
 
 [tool.black]
 line-length = 120

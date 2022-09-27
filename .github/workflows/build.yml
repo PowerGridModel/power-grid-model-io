@@ -40,7 +40,7 @@ jobs:
       - name: Test and Coverage
         run: |
           pip install power-grid-model-io[dev]==${{ steps.version.outputs.version }} --find-links=wheelhouse
-          pytest --cov power_grid_model_io --cov-report xml:coverage.xml
+          pytest --cov=power_grid_model_io --cov-report=xml:coverage.xml
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
