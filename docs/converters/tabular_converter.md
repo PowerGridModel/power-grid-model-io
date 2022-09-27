@@ -5,7 +5,7 @@ SPDX-License-Identifier: MPL-2.0
 -->
 # Tabular converter
 Tabular data can come from Excel files, a set of CSV files, GNF files, databases, pandas DataFrames, etc etc.
-The similarity between all tabular data is that it contains multiple `tabled`,
+The similarity between all tabular data is that it contains multiple `tables`,
 each with multiple `columns`, possibly with a specific `unit`.
 Others may have a categorical value which needs to be mapped (i.e. open: 0, closed: 1); in general we'll call these 
 `substitutions`.
@@ -42,7 +42,7 @@ substitutions:
 
 ## Grid
 For each `table`, the target PGM `component` is listed (e.g. Nodes: node, Cables: line).
-The for each PFM `column` the source column is supplied (e.g. u_rated: Unom, from_status: From.SwitchStatus).
+The for each PGM `column` the source column is supplied (e.g. u_rated: Unom, from_status: From.SwitchStatus).
 
 ## Field Definitions
 If the `column` definition is a one on one mapping,
@@ -56,7 +56,7 @@ You can use the following `column` definitions:
     ```
   * First matching column name `str`
     ```yaml
-    from_node: Inverter.Pnom | Inverter.Snom
+    p_specified: Inverter.Pnom | Inverter.Snom
     ```
   * Reference to a column on another sheet (using `!` notation as in Excel) `str`
     ```yaml
@@ -104,7 +104,7 @@ You can use the following `column` definitions:
 ## Units
 Power Grid Model uses SI units (e.g. "W" for Watts),
 but source data may be supplied in different units (e.g. "MW" for Mega Watts).
-Iff units are supplied in the tabular data,
+If units are supplied in the tabular data,
 the pandas DataFrame storing the data is expected to have `MultiIndexes` for the columns.
 For our application, a `MultiIndex` can be interpreted as a tuple; the first element is the column name, the second 
 element is the column unit. For example: `("C0", "µF")`.
