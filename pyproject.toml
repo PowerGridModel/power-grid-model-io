@@ -6,7 +6,7 @@
 requires = [
     "setuptools", 
     "wheel", 
-    "requests"
+    "requests",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -62,8 +62,8 @@ all = [
 Home-page = "https://github.com/alliander-opensource/power-grid-model-io"
 
 [project.scripts]
-convert = "power_grid_model_io.cli.convert:app"
-validate = "power_grid_model_io.cli.validate:app"
+pgm_convert = "power_grid_model_io.cli.convert:app"
+pgm_validate = "power_grid_model_io.cli.validate:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]

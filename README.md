@@ -19,24 +19,24 @@ pip install -e .[cli,excel]
 
 Usage:
 ```bash
-validate DATA_FORMAT [ARGS]
-convert CONVERSION [ARGS]
+pgm_validate DATA_FORMAT [ARGS]
+pgm_convert CONVERSION [ARGS]
 ```
 
 ### Native Power Grid Model JSON format
 
 ```bash
-validate pgm_json input_data.json
+pgm_validate pgm_json input_data.json
 ```
 
 ### Vision Excel format
 
 ```bash
-convert vision2pgm myfile.xlsx mapping.yaml --validate
+pgm_convert vision2pgm myfile.xlsx --validate
 ```
 
 ### Gaia Excel format
 
 ```bash
-convert vision2pgm myfile.xlsx mapping.yaml --validate
+pgm_convert gaia2pgm myfile.xlsx types.xlsx --validate
 ```
