@@ -34,7 +34,7 @@ def module_installed(module: str) -> bool:
     return importlib.util.find_spec(module) is not None
 
 
-def import_optional_module(extra: str, module: str):
+def import_optional_module(module: str, extra: str):
     """
     Check if the required module is installed and load it
     """

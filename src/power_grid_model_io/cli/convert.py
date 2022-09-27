@@ -19,7 +19,7 @@ from power_grid_model_io.converters.pgm_converter import PgmConverter
 from power_grid_model_io.converters.vision_excel_converter import VisionExcelConverter
 from power_grid_model_io.utils.modules import import_optional_module
 
-typer = import_optional_module("cli", "typer")
+typer = import_optional_module("typer", extra="cli")
 app = typer.Typer(pretty_exceptions_show_locals=False)
 
 

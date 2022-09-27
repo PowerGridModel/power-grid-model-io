@@ -24,7 +24,7 @@ from power_grid_model_io.mappings.value_mapping import ValueMapping, Values
 from power_grid_model_io.utils.auto_id import AutoID
 from power_grid_model_io.utils.modules import import_optional_module
 
-yaml = import_optional_module("tabular", "yaml")
+yaml = import_optional_module("yaml", extra="tabular")
 
 r"""
 Regular expressions to match patterns like:
