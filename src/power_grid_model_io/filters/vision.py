@@ -2,15 +2,16 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 """
-These functions can be used in the mapping files to apply functions to tabular data
+These functions can be used in the mapping files to apply functions to vision data
 """
 
 import math
 import re
-from typing import Any, Optional, Tuple, TypeVar, cast
+from typing import Optional, Tuple, cast
 
-import numpy as np
 from power_grid_model import WindingType
+
+from power_grid_model_io.filters import has_value
 
 CONNECTION_PATTERN = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(\d|1[0-2])")
 
@@ -25,8 +26,6 @@ WINDING_TYPES = {
     "ZN": WindingType.wye_n,
 }
 
-T = TypeVar("T")
-
 
 def relative_no_load_current(i: float, p: float, s_nom: float, u_nom: float) -> float:
     """
@@ -35,39 +34,11 @@ def relative_no_load_current(i: float, p: float, s_nom: float, u_nom: float) -> 
     return i / (s_nom / u_nom / math.sqrt(3)) if i > p / s_nom else p / s_nom
 
 
-def multiply(*args: float):
-    """
-    Multiply all arguments.
-    """
-    return math.prod(args)
-
-
 def reactive_power_calculation(pref: float, cosphi: float, scale: float) -> float:
     """
     Calculate the reactive power, based on Pref, cosine Phy and a scaling factor.
     """
     return scale * pref * math.sqrt((1 - math.pow(cosphi, 2) / cosphi))
-
-
-def has_value(value: Any) -> bool:
-    """
-    Return True if the value is not None or NaN.
-    """
-    return value is not None and not np.isnan(value)
-
-
-def value_or_default(value: Optional[T], default: T) -> T:
-    """
-    Return the value, or a default value if no value was supplied.
-    """
-    return cast(T, value) if has_value(value) else default
-
-
-def value_or_zero(value: Optional[float]) -> float:
-    """
-    Return the value, or a zero value if no value was supplied.
-    """
-    return value_or_default(value=value, default=0.0)
 
 
 def power_wind_speed(pref: Optional[float], pnom: float, v: float) -> float:
@@ -86,20 +57,6 @@ def power_wind_speed(pref: Optional[float], pnom: float, v: float) -> float:
     if v < 30:
         return pnom * (1 - (v - 25) / (30 - 25))
     return 0.0
-
-
-def complex_inverse_real_part(real: float, imag: float) -> float:
-    """
-    Return the real part of the inverse of a complex number
-    """
-    return (1.0 / (real + 1j * imag)).real
-
-
-def complex_inverse_imaginary_part(real: float, imag: float) -> float:
-    """
-    Return the imaginary part of the inverse of a complex number
-    """
-    return (1.0 / (real + 1j * imag)).imag
 
 
 def get_winding_from(conn_str: str, neutral_grounding: bool = True) -> WindingType:

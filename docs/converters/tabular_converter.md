@@ -81,7 +81,7 @@ You can use the following `column` definitions:
   * Nested definitions:
     ```yaml
     q_specified:
-      power_grid_model_io.utils.filters.reactive_power_calculation:
+      power_grid_model_io.filters.vision.reactive_power_calculation:
         - min:
             - Pnom
             - Inverter.Pnom | Inverter.Snom
@@ -90,7 +90,7 @@ You can use the following `column` definitions:
     ```
     Is similar to:
     ```python
-    from power_grid_model_io.utils.filters import reactive_power_calculation
+    from power_grid_model_io.filters.vision import reactive_power_calculation
     
     q_specified = reactive_power_calculation(
       min(
