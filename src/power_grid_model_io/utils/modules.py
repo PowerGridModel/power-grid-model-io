@@ -11,8 +11,6 @@ from typing import List, Optional
 
 # extra_key -> module -> pip_package
 DEPENDENCIES = {
-    "tabular": {"yaml": "pyyaml"},
-    "excel": {"openpyxl": "openpyxl", "yaml": "pyyaml"},
     "cli": {"typer": "typer[all]"},
 }
 
