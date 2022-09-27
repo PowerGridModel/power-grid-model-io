@@ -104,7 +104,7 @@ You can use the following `column` definitions:
 ## Units
 Power Grid Model uses SI units (e.g. "W" for Watts),
 but source data may be supplied in different units (e.g. "MW" for Mega Watts).
-Iff units are supplied in the tabular data,
+If units are supplied in the tabular data,
 the pandas DataFrame storing the data is expected to have `MultiIndexes` for the columns.
 For our application, a `MultiIndex` can be interpreted as a tuple; the first element is the column name, the second 
 element is the column unit. For example: `("C0", "µF")`.
