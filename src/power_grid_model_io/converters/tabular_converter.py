@@ -292,11 +292,14 @@ class TabularConverter(BaseConverter[TabularData]):
 
     @staticmethod
     def _parse_col_def(data: TabularData, table: str, col_def: Any) -> pd.DataFrame:
+        """
+        Interpret the column definition and extract/convert/create the data as a pandas DataFrame.
+        """
         if isinstance(col_def, (int, float)):
             return TabularConverter._parse_col_def_const(data=data, table=table, col_def=col_def)
-        if isinstance(col_def, str) and COL_REF_RE.fullmatch(col_def) is not None:
-            return TabularConverter._parse_col_def_column_reference(data=data, table=table, col_def=col_def)
         if isinstance(col_def, str):
+            if COL_REF_RE.fullmatch(col_def) is not None:
+                return TabularConverter._parse_col_def_column_reference(data=data, table=table, col_def=col_def)
             return TabularConverter._parse_col_def_column_name(data=data, table=table, col_def=col_def)
         if isinstance(col_def, dict):
             return TabularConverter._parse_col_def_function(data=data, table=table, col_def=col_def)
@@ -306,11 +309,18 @@ class TabularConverter(BaseConverter[TabularData]):
 
     @staticmethod
     def _parse_col_def_const(data: TabularData, table: str, col_def: Union[int, float]) -> pd.DataFrame:
+        """
+        Create a single column pandas DataFrame containing the const value.
+        """
         assert isinstance(col_def, (int, float))
         return pd.DataFrame([col_def] * len(data[table]))
 
     @staticmethod
     def _parse_col_def_column_name(data: TabularData, table: str, col_def: str) -> pd.DataFrame:
+        """
+        Extract a column from the data. If the column doesn't exist, check if the col_def is a special float value,
+        like 'inf'. If that's the case, create a single column pandas DataFrame containing the const value.
+        """
         assert isinstance(col_def, str)
         sheet = data[table]
 
@@ -330,6 +340,9 @@ class TabularConverter(BaseConverter[TabularData]):
 
     @staticmethod
     def _parse_col_def_column_reference(data: TabularData, table: str, col_def: str) -> pd.DataFrame:
+        """
+        Find and extract a column from a different table.
+        """
         assert isinstance(col_def, str)
         match = COL_REF_RE.fullmatch(col_def)
         if match is None:
@@ -355,6 +368,10 @@ class TabularConverter(BaseConverter[TabularData]):
 
     @staticmethod
     def _parse_col_def_function(data: TabularData, table: str, col_def: Dict[str, str]) -> pd.DataFrame:
+        """
+        Import the function by name and apply it to each row. The column definition may contain multiple functions,
+        a DataFrame with one column per function will be returned.
+        """
         assert isinstance(col_def, dict)
         data_frame = []
         for fn_name, sub_def in col_def.items():
@@ -366,6 +383,9 @@ class TabularConverter(BaseConverter[TabularData]):
 
     @staticmethod
     def _parse_col_def_composite(data: TabularData, table: str, col_def: list) -> pd.DataFrame:
+        """
+        Select multiple columns (each is created from a column definition) and return them as a new DataFrame.
+        """
         assert isinstance(col_def, list)
         columns = [TabularConverter._parse_col_def(data=data, table=table, col_def=sub_def) for sub_def in col_def]
         return pd.concat(columns, axis=1)
