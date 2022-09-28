@@ -39,11 +39,20 @@ jobs:
         run: |
           echo "::set-output name=version::$(cat PYPI_VERSION)"
 
-      - name: Test and Coverage
+      - name: Test and Coverage for built wheel file
         run: |
           pip install power-grid-model-io[dev]==${{ steps.version.outputs.version }} --find-links=wheelhouse
           pytest --cov=power_grid_model_io --cov-report=xml:coverage.xml
-      
+
+      - name: Test and Coverage for sonar cloud in develop mode
+        run: |
+          pip uninstall -y power-grid-model-io
+          pip install .[dev]
+          pytest --cov=power_grid_model_io --cov-report=xml:coverage.xml
+          # Fix relative paths in coverage file
+          # Known bug: https://community.sonarsource.com/t/sonar-on-github-actions-with-python-coverage-source-issue/36057
+          sed -i 's/\/home\/runner\/work\/power-grid-model-io\/power-grid-model-io\//\/github\/workspace\//g' coverage.xml
+    
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
