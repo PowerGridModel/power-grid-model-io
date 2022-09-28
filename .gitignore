@@ -11,9 +11,11 @@ __pycache__/
 .mypy_cache/
 .pytest_cache/
 .coverage
+cov_html/
 
 # Virtual environment
 venv/
+.venv/
 
 # Data:
 data/

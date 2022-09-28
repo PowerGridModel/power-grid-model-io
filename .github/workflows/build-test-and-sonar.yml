@@ -24,6 +24,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
 
       - uses: actions/setup-python@v3
         with:
@@ -41,7 +43,7 @@ jobs:
         run: |
           pip install power-grid-model-io[dev]==${{ steps.version.outputs.version }} --find-links=wheelhouse
           pytest --cov=power_grid_model_io --cov-report=xml:coverage.xml
-
+      
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
