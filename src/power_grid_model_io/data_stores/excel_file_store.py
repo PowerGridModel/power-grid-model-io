@@ -38,7 +38,6 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         """
         Load one or more Excel file as tabular data.
         """
-        assert_dependencies("excel")
         data: Dict[str, pd.DataFrame] = {}
         for path in self._file_paths:
             if path.suffix.lower() != ".xlsx":

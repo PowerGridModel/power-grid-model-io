@@ -6,7 +6,7 @@ Gaia Excel Converter: Load data from a Gaia Excel export file and use a mapping 
 """
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import pandas as pd
 
@@ -21,11 +21,20 @@ class GaiaExcelConverter(TabularConverter):
     Gaia Excel Converter: Load data from a Gaia Excel export file and use a mapping file to convert the data to PGM
     """
 
-    def __init__(self, source_file: Optional[Path] = None, types_file: Optional[Path] = None, language: str = "en"):
+    def __init__(
+        self,
+        source_file: Optional[Union[Path, str]] = None,
+        types_file: Optional[Union[Path, str]] = None,
+        language: str = "en",
+    ):
         mapping_file = Path(str(DEFAULT_MAPPING_FILE).format(language=language))
         if not mapping_file.exists():
             raise FileNotFoundError(f"No Gaia Excel mapping available for language '{language}'")
-        source = GaiaExcelFileStore(file_path=source_file, types_file=types_file) if source_file else None
+        source = (
+            GaiaExcelFileStore(file_path=Path(source_file), types_file=Path(types_file) if types_file else None)
+            if source_file
+            else None
+        )
         super().__init__(mapping_file=mapping_file, source=source)
 
     def _id_lookup(self, component: str, row: pd.Series) -> int:
