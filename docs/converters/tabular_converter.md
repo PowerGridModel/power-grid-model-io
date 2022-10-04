@@ -81,7 +81,7 @@ You can use the following `column` definitions:
   * Nested definitions:
     ```yaml
     q_specified:
-      power_grid_model_io.filters.vision.reactive_power_calculation:
+      power_grid_model_io.filters.phase_to_phase.reactive_power_calculation:
         - min:
             - Pnom
             - Inverter.Pnom | Inverter.Snom
