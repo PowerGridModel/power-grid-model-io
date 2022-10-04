@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 
-name: Build python
+name: Build, Test and Sonar
 
 on:
   push:
@@ -24,24 +24,43 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
 
       - uses: actions/setup-python@v3
         with:
           python-version: "3.10"
 
-      - name: build
+      - name: Build (Python 3.10)
         run: pip wheel -v --no-deps -w wheelhouse .
 
-      - name: save version
+      - name: Save version
         id: version
         run: |
           echo "::set-output name=version::$(cat PYPI_VERSION)"
 
-      - name: test
+      - name: Test and Coverage for built wheel file
         run: |
           pip install power-grid-model-io[dev]==${{ steps.version.outputs.version }} --find-links=wheelhouse
           pytest
-      
+
+      - name: Test and Coverage for sonar cloud in develop mode
+        run: |
+          pip uninstall -y power-grid-model-io
+          pip install -e .[dev]
+          pytest --cov-report=xml:coverage.xml
+          cat coverage.xml
+          # Fix relative paths in coverage file
+          # Known bug: https://community.sonarsource.com/t/sonar-on-github-actions-with-python-coverage-source-issue/36057
+          sed -i 's@/home/runner/work/power-grid-model-io/power-grid-model-io@/github/workspace@g' coverage.xml
+          cat coverage.xml
+    
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
       - name: Upload wheels
         if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
         run: |
