@@ -327,7 +327,7 @@ class TabularConverter(BaseConverter[TabularData]):
         columns = [col_name.strip() for col_name in col_def.split("|")]
         for col_name in columns:
             if col_name in sheet:
-                return pd.DataFrame(data.get_column(table=table, field=col_name))
+                return pd.DataFrame(data.get_column(table_name=table, column_name=col_name))
 
         try:  # Maybe it is not a column name, but a float value like 'inf', let's try to convert the string to a float
             const_value = float(col_def)

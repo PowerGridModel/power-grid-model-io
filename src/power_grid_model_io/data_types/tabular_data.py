@@ -45,27 +45,27 @@ class TabularData:
         """
         self._substitution = substitution
 
-    def get_column(self, table: str, field: str) -> pd.Series:
+    def get_column(self, table_name: str, column_name: str) -> pd.Series:
         """
         Select a column from a table, while applying unit conversions and value substitutions
         """
-        tbl_data = self._data[table]
-        col_data = tbl_data[field]
+        table_data = self._data[table_name]
+        column_data = table_data[column_name]
 
         # If unit information is available, convert the unit
-        if not isinstance(col_data, pd.Series):
-            col_data = self._apply_unit_conversion(tbl_data=tbl_data, table=table, field=field)
-            if not isinstance(col_data, pd.Series):
+        if not isinstance(column_data, pd.Series):
+            column_data = self._apply_unit_conversion(table_data=table_data, table=table_name, field=column_name)
+            if not isinstance(column_data, pd.Series):
                 raise TypeError(
-                    f"The '{field}' column should now be unitless, "
-                    f"but it still contains a unit: {col_data.columns.values}"
+                    f"The '{column_name}' column should now be unitless, "
+                    f"but it still contains a unit: {column_data.columns.values}"
                 )
-        return self._apply_value_substitution(col_data=col_data, table=table, field=field)
+        return self._apply_value_substitution(column_data=column_data, table=table_name, field=column_name)
 
-    def _apply_value_substitution(self, col_data: pd.Series, table: str, field: str) -> pd.Series:
+    def _apply_value_substitution(self, column_data: pd.Series, table: str, field: str) -> pd.Series:
 
         if self._substitution is None:  # No subtitution defined, at all
-            return col_data
+            return column_data
 
         # Find substitutions, ignore if none is found
         try:
@@ -74,10 +74,10 @@ class TabularData:
             try:
                 substitutions = self._substitution.get_substitutions(field=field)
             except KeyError:
-                return col_data
+                return column_data
 
         if substitutions is None:  # No subtitution defined, for this column
-            return col_data
+            return column_data
 
         def sub(value):
             try:
@@ -89,10 +89,10 @@ class TabularData:
 
         # Apply substitutions
         self._log.debug("Apply value substitutions", table=table, field=field, substitutions=substitutions)
-        return col_data.map(sub)
+        return column_data.map(sub)
 
-    def _apply_unit_conversion(self, tbl_data: pd.DataFrame, table: str, field: str) -> pd.Series:
-        unit = tbl_data[field].columns[0]
+    def _apply_unit_conversion(self, table_data: pd.DataFrame, table: str, field: str) -> pd.Series:
+        unit = table_data[field].columns[0]
 
         if unit:
             try:
@@ -111,7 +111,7 @@ class TabularData:
                 "Apply unit conversion", table=table, field=field, unit=unit, si_unit=si_unit, multiplier=multiplier
             )
             try:
-                tbl_data[field] *= multiplier
+                table_data[field] *= multiplier
             except TypeError as ex:
                 self._log.warning(
                     f"The column '{field}' on table '{table}' does not seem to be numerical "
@@ -119,10 +119,10 @@ class TabularData:
                 )
 
             # Replace the unit with the SI unit
-            tbl_data.columns = tbl_data.columns.values
-            tbl_data.columns = pd.MultiIndex.from_tuples(tbl_data.rename(columns={(field, unit): (field, si_unit)}))
+            table_data.columns = table_data.columns.values
+            table_data.columns = pd.MultiIndex.from_tuples(table_data.rename(columns={(field, unit): (field, si_unit)}))
 
-        return tbl_data[pd.MultiIndex.from_tuples([(field, si_unit)])[0]]
+        return table_data[pd.MultiIndex.from_tuples([(field, si_unit)])[0]]
 
     def __contains__(self, table_name: str) -> bool:
         """
