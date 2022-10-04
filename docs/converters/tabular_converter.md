@@ -90,7 +90,7 @@ You can use the following `column` definitions:
     ```
     Is similar to:
     ```python
-    from power_grid_model_io.filters.vision import reactive_power_calculation
+    from power_grid_model_io.filters.phase_to_phase import reactive_power_calculation
     
     q_specified = reactive_power_calculation(
       min(
