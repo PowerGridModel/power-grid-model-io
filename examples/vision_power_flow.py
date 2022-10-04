@@ -2,10 +2,15 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import logging
+
+import structlog
 from power_grid_model import PowerGridModel
 
 from power_grid_model_io.converters.pgm_json_converter import PgmJsonConverter
 from power_grid_model_io.converters.vision_excel_converter import VisionExcelConverter
+
+structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(logging.INFO))
 
 # Source and destination file
 src = "data/vision/example.xlsx"
