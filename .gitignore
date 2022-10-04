@@ -4,26 +4,22 @@
 
 # Generated files
 *.egg-info
+PYPI_VERSION
 
 # temporary_files
 __pycache__/
 .mypy_cache/
 .pytest_cache/
 .coverage
+cov_html/
 
 # Virtual environment
 venv/
+.venv/
 
 # Data:
 data/
 
 # IDE
 .idea/
-
-# coverage
-coverage.xml
-cov_html/
-
-PYPI_VERSION
-
 .vscode/
