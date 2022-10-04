@@ -273,14 +273,16 @@ grid:
       status: Switch state
       type: 1
       p_specified:
-        power_grid_model_io.filters.phase_to_phase.power_wind_speed:
+        power_grid_model_io.filters.value_or_default:
           - Pref
-          - Pnom
-          - Wind speed
+          - power_grid_model_io.filters.phase_to_phase.power_wind_speed:
+            - Pnom
+            - Wind speed
       q_specified:
         power_grid_model_io.filters.phase_to_phase.reactive_power_calculation:
-          - power_grid_model_io.filters.phase_to_phase.power_wind_speed:
-              - Pref
+          - power_grid_model_io.filters.value_or_default:
+            - Pref
+            - power_grid_model_io.filters.phase_to_phase.power_wind_speed:
               - Pnom
               - Wind speed
           - cos phi

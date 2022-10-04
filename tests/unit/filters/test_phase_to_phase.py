@@ -1,11 +1,30 @@
 # SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
-
 import pytest
 from power_grid_model.enum import WindingType
+from pytest import mark
 
-from power_grid_model_io.filters.phase_to_phase import get_clock, get_winding_from, get_winding_to
+from power_grid_model_io.filters.phase_to_phase import get_clock, get_winding_from, get_winding_to, power_wind_speed
+
+
+@mark.parametrize(
+    "wind_speed,expected",
+    [
+        (0.0, 0.0),
+        (1.5, 0.0),
+        (3.0, 0.0),  # cut-in
+        (8.5, 125000.0),
+        (14.0, 1000000.0),  # nominal
+        (19.5, 1000000.0),
+        (25.0, 1000000.0),  # cutting-out
+        (27.5, 500000.0),
+        (30.0, 0.0),  # cut-out
+        (100.0, 0.0),
+    ],
+)
+def test_power_wind_speed(wind_speed, expected):
+    assert power_wind_speed(p_nom=1e6, wind_speed_m_s=wind_speed) == expected
 
 
 def test_get_winding_from():
