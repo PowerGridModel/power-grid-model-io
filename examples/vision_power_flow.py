@@ -2,16 +2,14 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from pathlib import Path
-
 from power_grid_model import PowerGridModel
 
 from power_grid_model_io.converters.pgm_json_converter import PgmJsonConverter
 from power_grid_model_io.converters.vision_excel_converter import VisionExcelConverter
 
 # Source and destination file
-src = Path("data/vision/example.xlsx")
-dst = Path("data/vision/example_output.json")
+src = "data/vision/example.xlsx"
+dst = "data/vision/example_output.json"
 
 # Convert Vision file
 vision_converter = VisionExcelConverter(source_file=src)

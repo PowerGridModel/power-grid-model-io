@@ -42,6 +42,6 @@ class GaiaExcelConverter(TabularConverter):
         Overwrite the default id_lookup method.
         For Gaia files only the last part of a column name is used in the key, e.g. Node.Number becomes Number.
         """
-        data = {col.split(".").pop(): val for col, val in sorted(row.to_dict().items(), key=lambda x: x[0])}
+        data = {str(col).split(".").pop(): val for col, val in sorted(row.to_dict().items(), key=lambda x: str(x[0]))}
         key = component + ":" + ",".join(f"{k}={v}" for k, v in data.items())
         return self._lookup(item={"component": component, "row": data}, key=key)
