@@ -13,7 +13,6 @@ import pandas as pd
 
 from power_grid_model_io.data_stores.base_data_store import BaseDataStore
 from power_grid_model_io.data_types import TabularData
-from power_grid_model_io.utils.modules import assert_dependencies
 
 
 class ExcelFileStore(BaseDataStore[TabularData]):
@@ -38,7 +37,6 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         """
         Load one or more Excel file as tabular data.
         """
-        assert_dependencies("excel")
         data: Dict[str, pd.DataFrame] = {}
         for path in self._file_paths:
             if path.suffix.lower() != ".xlsx":
@@ -57,7 +55,6 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         """
         TODO: Test and finalize this method
         """
-        assert_dependencies("excel")
         if len(self._file_paths) != 1:
             raise ValueError(f"ExcelFileStore can only write to a single .xlsx file, {len(self._file_paths)} provided.")
         with self._file_paths[0].open(mode="wb") as file_pointer:
