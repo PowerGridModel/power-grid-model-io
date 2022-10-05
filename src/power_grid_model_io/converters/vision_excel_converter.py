@@ -6,7 +6,7 @@ Vision Excel Converter: Load data from a Vision Excel export file and use a mapp
 """
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import pandas as pd
 
@@ -21,11 +21,11 @@ class VisionExcelConverter(TabularConverter):
     Vision Excel Converter: Load data from a Vision Excel export file and use a mapping file to convert the data to PGM
     """
 
-    def __init__(self, source_file: Optional[Path] = None, language: str = "en"):
+    def __init__(self, source_file: Optional[Union[Path, str]] = None, language: str = "en"):
         mapping_file = Path(str(DEFAULT_MAPPING_FILE).format(language=language))
         if not mapping_file.exists():
             raise FileNotFoundError(f"No Vision Excel mapping available for language '{language}'")
-        source = VisionExcelFileStore(file_path=source_file) if source_file else None
+        source = VisionExcelFileStore(file_path=Path(source_file)) if source_file else None
         super().__init__(mapping_file=mapping_file, source=source)
 
     def _id_lookup(self, component: str, row: pd.Series) -> int:
@@ -33,6 +33,6 @@ class VisionExcelConverter(TabularConverter):
         Overwrite the default id_lookup method.
         For Vision files only the last part of a column name is used in the key, e.g. Node.Number becomes Number.
         """
-        data = {col.split(".").pop(): val for col, val in sorted(row.to_dict().items(), key=lambda x: x[0])}
+        data = {str(col).split(".").pop(): val for col, val in sorted(row.to_dict().items(), key=lambda x: str(x[0]))}
         key = component + ":" + ",".join(f"{k}={v}" for k, v in data.items())
         return self._lookup(item={"component": component, "row": data}, key=key)
