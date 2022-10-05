@@ -233,9 +233,8 @@ grid:
         type: 0
         p_specified: PV.Pnom
         q_specified:
-          power_grid_model_io.filters.phase_to_phase.reactive_power_calculation:
+          power_grid_model_io.filters.phase_to_phase.reactive_power:
             - PV.Pnom
-            - 1
             - 1
         extra: Name
   Sources:
@@ -259,9 +258,10 @@ grid:
       type: 0
       p_specified: Pref
       q_specified:
-        power_grid_model_io.filters.phase_to_phase.reactive_power_calculation:
-          - Pref
-          - cos phi
+        power_grid_model_io.filters.multiply:
+          - power_grid_model_io.filters.phase_to_phase.reactive_power:
+            - Pref
+            - cos phi
           - Q
       extra: Name
   Wind turbines:
@@ -279,14 +279,13 @@ grid:
             - Pnom
             - Wind speed
       q_specified:
-        power_grid_model_io.filters.phase_to_phase.reactive_power_calculation:
+        power_grid_model_io.filters.phase_to_phase.reactive_power:
           - power_grid_model_io.filters.value_or_default:
             - Pref
             - power_grid_model_io.filters.phase_to_phase.power_wind_speed:
               - Pnom
               - Wind speed
           - cos phi
-          - 1
       extra: Name
   Loads:
     sym_load:
@@ -340,12 +339,11 @@ grid:
           - Pnom
           - Inverter.Pnom | Inverter.Snom
       q_specified:
-        power_grid_model_io.filters.phase_to_phase.reactive_power_calculation:
+        power_grid_model_io.filters.phase_to_phase.reactive_power:
           - min:
               - Pnom
               - Inverter.Pnom | Inverter.Snom
           - Inverter.cos phi
-          - 1
       extra: Name
 units:
   A:

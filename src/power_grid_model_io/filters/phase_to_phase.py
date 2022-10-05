@@ -25,18 +25,21 @@ WINDING_TYPES = {
 }
 
 
-def relative_no_load_current(i: float, p: float, s_nom: float, u_nom: float) -> float:
+def relative_no_load_current(i_0: float, p_0: float, s_nom: float, u_nom: float) -> float:
     """
-    TODO: description
+    Calculate the relative no load current.
     """
-    return i / (s_nom / u_nom / math.sqrt(3)) if i > p / s_nom else p / s_nom
+    i_rel = max(i_0 / (s_nom / (u_nom / math.sqrt(3))), p_0 / s_nom)
+    if i_rel > 1.0:
+        raise ValueError(f"Relative current can't be more than 100% (got {i_rel * 100.0:.2f}%)")
+    return i_rel
 
 
-def reactive_power_calculation(pref: float, cosphi: float, scale: float) -> float:
+def reactive_power(p: float, cos_phi: float) -> float:
     """
-    Calculate the reactive power, based on Pref, cosine Phy and a scaling factor.
+    Calculate the reactive power, based on p, cosine phi.
     """
-    return scale * pref * math.sqrt((1 - math.pow(cosphi, 2) / cosphi))
+    return p * math.sqrt(1 - cos_phi**2) / cos_phi
 
 
 def power_wind_speed(  # pylint: disable=too-many-arguments
