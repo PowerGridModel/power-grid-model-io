@@ -81,7 +81,7 @@ You can use the following `column` definitions:
   * Nested definitions:
     ```yaml
     q_specified:
-      power_grid_model_io.filters.phase_to_phase.reactive_power_calculation:
+      power_grid_model_io.filters.phase_to_phase.reactive_power:
         - min:
             - Pnom
             - Inverter.Pnom | Inverter.Snom
@@ -90,9 +90,9 @@ You can use the following `column` definitions:
     ```
     Is similar to:
     ```python
-    from power_grid_model_io.filters.phase_to_phase import reactive_power_calculation
+    from power_grid_model_io.filters.phase_to_phase import reactive_power
     
-    q_specified = reactive_power_calculation(
+    q_specified = reactive_power(
       min(
         table["Pnom"],
         table["Inverter.Pnom"] if "Inverter.Pnom" in table else table["Inverter.Snom"]

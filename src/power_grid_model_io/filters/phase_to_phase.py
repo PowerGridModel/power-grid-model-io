@@ -7,11 +7,9 @@ These functions can be used in the mapping files to apply functions to vision da
 
 import math
 import re
-from typing import Optional, Tuple, cast
+from typing import Tuple
 
 from power_grid_model import WindingType
-
-from power_grid_model_io.filters import has_value
 
 CONNECTION_PATTERN = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(\d|1[0-2])")
 
@@ -27,35 +25,58 @@ WINDING_TYPES = {
 }
 
 
-def relative_no_load_current(i: float, p: float, s_nom: float, u_nom: float) -> float:
+def relative_no_load_current(i_0: float, p_0: float, s_nom: float, u_nom: float) -> float:
     """
-    TODO: description
+    Calculate the relative no load current.
     """
-    return i / (s_nom / u_nom / math.sqrt(3)) if i > p / s_nom else p / s_nom
+    i_rel = max(i_0 / (s_nom / (u_nom / math.sqrt(3))), p_0 / s_nom)
+    if i_rel > 1.0:
+        raise ValueError(f"Relative current can't be more than 100% (got {i_rel * 100.0:.2f}%)")
+    return i_rel
 
 
-def reactive_power_calculation(pref: float, cosphi: float, scale: float) -> float:
+def reactive_power(p: float, cos_phi: float) -> float:
     """
-    Calculate the reactive power, based on Pref, cosine Phy and a scaling factor.
+    Calculate the reactive power, based on p, cosine phi.
     """
-    return scale * pref * math.sqrt((1 - math.pow(cosphi, 2) / cosphi))
+    return p * math.sqrt(1 - cos_phi**2) / cos_phi
 
 
-def power_wind_speed(pref: Optional[float], pnom: float, v: float) -> float:
+def power_wind_speed(  # pylint: disable=too-many-arguments
+    p_nom: float,
+    wind_speed_m_s: float,
+    cut_in_wind_speed_m_s: float = 3.0,
+    nominal_wind_speed_m_s: float = 14.0,
+    cutting_out_wind_speed_m_s: float = 25.0,
+    cut_out_wind_speed_m_s: float = 30.0,
+) -> float:
     """
-    Return Pref is available, otherwise estimate Pref based on Pnom and v.
-    TODO: Add a reference for the calculations
+    Estimate p_ref based on p_nom and wind_speed.
+
+    See section "Wind turbine" in https://phasetophase.nl/pdf/VisionEN.pdf
     """
-    if has_value(pref):
-        return cast(float, pref)
-    if v < 3:
+
+    # At a wind speed below cut-in, the power is zero.
+    if wind_speed_m_s < cut_in_wind_speed_m_s:
         return 0.0
-    if v < 14:
-        return pnom * (math.pow(v, 3) / math.pow(14, 3))
-    if v < 25:
-        return pnom
-    if v < 30:
-        return pnom * (1 - (v - 25) / (30 - 25))
+
+    # At a wind speed between cut-in and nominal, the power is a third power function of the wind speed.
+    if wind_speed_m_s < nominal_wind_speed_m_s:
+        factor = wind_speed_m_s - cut_in_wind_speed_m_s
+        max_factor = nominal_wind_speed_m_s - cut_in_wind_speed_m_s
+        return ((factor / max_factor) ** 3) * p_nom
+
+    # At a wind speed between nominal and cutting-out, the power is the nominal power.
+    if wind_speed_m_s < cutting_out_wind_speed_m_s:
+        return p_nom
+
+    # At a wind speed between cutting-out and cut-out, the power decreases from nominal to zero.
+    if wind_speed_m_s < cut_out_wind_speed_m_s:
+        factor = wind_speed_m_s - cutting_out_wind_speed_m_s
+        max_factor = cut_out_wind_speed_m_s - cutting_out_wind_speed_m_s
+        return (1.0 - factor / max_factor) * p_nom
+
+    # Above cut-out speed, the power is zero.
     return 0.0
 
 

@@ -14,7 +14,7 @@ SPDX-License-Identifier: MPL-2.0
 
 Installation:
 ```bash
-pip install -e .[cli,excel]
+pip install -e .[cli]
 ```
 
 Usage:

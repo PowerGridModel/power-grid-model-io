@@ -23,9 +23,13 @@ def multiply(*args: float):
 
 def has_value(value: Any) -> bool:
     """
-    Return True if the value is not None or NaN.
+    Return True if the value is not None, NaN or empty string.
     """
-    return value is not None and not np.isnan(value)
+    if value is None:
+        return False
+    if isinstance(value, float):
+        return not np.isnan(value)
+    return value != ""
 
 
 def value_or_default(value: Optional[T], default: T) -> T:
