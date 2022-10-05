@@ -76,10 +76,36 @@ def test_power_wind_speed(wind_speed, expected):
         ("Dy7", WindingType.delta),
         ("Dyn8", WindingType.delta),
         ("Dd9", WindingType.delta),
+        ("Zy2", WindingType.wye),
+        ("Zy3", WindingType.delta),
+        ("ZNy4", WindingType.wye_n),
+        ("ZNy5", WindingType.delta),
     ],
 )
 def test_get_winding_from(code: str, winding_type: WindingType):
     assert get_winding_from(code) == winding_type
+
+
+@mark.parametrize(
+    ("code", "winding_type"),
+    [
+        ("Yy1", WindingType.wye),
+        ("Yyn2", WindingType.wye),
+        ("Yd3", WindingType.wye),
+        ("YNy4", WindingType.wye),
+        ("YNyn5", WindingType.wye),
+        ("YNd6", WindingType.wye),
+        ("Dy7", WindingType.delta),
+        ("Dyn8", WindingType.delta),
+        ("Dd9", WindingType.delta),
+        ("Zy2", WindingType.wye),
+        ("Zy3", WindingType.delta),
+        ("ZNy4", WindingType.wye),
+        ("ZNy5", WindingType.delta),
+    ],
+)
+def test_get_winding_from__no_neutral_grounding(code: str, winding_type: WindingType):
+    assert get_winding_from(code, False) == winding_type
 
 
 def test_get_winding_from__exception():
@@ -99,10 +125,36 @@ def test_get_winding_from__exception():
         ("Dy7", WindingType.wye),
         ("Dyn8", WindingType.wye_n),
         ("Dd9", WindingType.delta),
+        ("Yz2", WindingType.wye),
+        ("Yz3", WindingType.delta),
+        ("Yzn4", WindingType.wye_n),
+        ("Yzn5", WindingType.delta),
     ],
 )
 def test_get_winding_to(code: str, winding_type: WindingType):
     assert get_winding_to(code) == winding_type
+
+
+@mark.parametrize(
+    ("code", "winding_type"),
+    [
+        ("Yy1", WindingType.wye),
+        ("Yyn2", WindingType.wye),
+        ("Yd3", WindingType.delta),
+        ("YNy4", WindingType.wye),
+        ("YNyn5", WindingType.wye),
+        ("YNd6", WindingType.delta),
+        ("Dy7", WindingType.wye),
+        ("Dyn8", WindingType.wye),
+        ("Dd9", WindingType.delta),
+        ("Yz2", WindingType.wye),
+        ("Yz3", WindingType.delta),
+        ("Yzn4", WindingType.wye),
+        ("Yzn5", WindingType.delta),
+    ],
+)
+def test_get_winding_to__no_neutral_grounding(code: str, winding_type: WindingType):
+    assert get_winding_to(code, False) == winding_type
 
 
 def test_get_winding_to__exception():
