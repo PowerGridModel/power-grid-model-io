@@ -6,8 +6,9 @@ Module utilities, expecially useful for loading optional dependencies
 """
 import importlib.util
 import sys
+from importlib import import_module
 from pathlib import Path
-from typing import List, Optional
+from typing import Callable, List, Optional
 
 # extra_key -> module -> pip_package
 DEPENDENCIES = {
@@ -94,3 +95,21 @@ def assert_dependencies(extra: str, modules: Optional[List[str]] = None):
 
     # Raise the exception
     raise ModuleNotFoundError(msg)
+
+
+def get_function(fn_name: str) -> Callable:
+    """
+    Get a function pointer by name
+    """
+    parts = fn_name.split(".")
+    function_name = parts.pop()
+    module_path = ".".join(parts) if parts else "builtins"
+    try:
+        module = import_module(module_path)
+    except ModuleNotFoundError as ex:
+        raise AttributeError(f"Function: {fn_name} does not exist") from ex
+    try:
+        fn_ptr = getattr(module, function_name)
+    except AttributeError as ex:
+        raise AttributeError(f"Function: {function_name} does not exist in {module_path}") from ex
+    return fn_ptr
