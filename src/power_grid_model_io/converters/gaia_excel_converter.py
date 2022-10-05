@@ -30,11 +30,10 @@ class GaiaExcelConverter(TabularConverter):
         mapping_file = Path(str(DEFAULT_MAPPING_FILE).format(language=language))
         if not mapping_file.exists():
             raise FileNotFoundError(f"No Gaia Excel mapping available for language '{language}'")
-        source = (
-            GaiaExcelFileStore(file_path=Path(source_file), types_file=Path(types_file) if types_file else None)
-            if source_file
-            else None
-        )
+        source = None
+        if source_file:
+            types_file = Path(types_file) if types_file else None
+            source = GaiaExcelFileStore(file_path=Path(source_file), types_file=types_file)
         super().__init__(mapping_file=mapping_file, source=source)
 
     def _id_lookup(self, component: str, row: pd.Series) -> int:
