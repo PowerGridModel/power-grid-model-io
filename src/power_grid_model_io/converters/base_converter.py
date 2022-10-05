@@ -88,11 +88,11 @@ class BaseConverter(Generic[T], ABC):
 
         Note: You shouldn't have to overwrite this method. Check _serialize_data() instead.
         """
-        data = self.convert(data=data, extra_info=extra_info)
+        data_converted = self.convert(data=data, extra_info=extra_info)
         if destination is not None:
-            destination.save(data=data)
+            destination.save(data=data_converted)
         elif self._destination is not None:
-            self._destination.save(data=data)
+            self._destination.save(data=data_converted)
         else:
             raise ValueError("No destination supplied!")
 
