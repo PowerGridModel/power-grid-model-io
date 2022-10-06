@@ -119,7 +119,7 @@ def test_converter__save_data(converter: DummyConverter):
     with pytest.raises(ValueError, match="No destination supplied!"):
         converter.save(data={"foo": np.array([1])})
 
-    # # Destination supplied as argument
+    # Destination supplied as argument
     destination = MagicMock()
     converter.save(data={"foo": np.array([1])}, destination=destination)
     destination.save.assert_called_once_with(data={"node": [{"id": 1}, {"id": 2}]})
@@ -129,3 +129,18 @@ def test_converter__save_data(converter: DummyConverter):
     converter_2 = DummyConverter(destination=destination2)
     converter_2.save(data={"foo": np.array([1])})
     destination2.save.assert_called_once()
+
+
+def test_converter__load_data(converter: DummyConverter):
+    # No data supplied
+    with pytest.raises(ValueError, match="No data supplied!"):
+        converter._load_data(data=None)
+
+    data = converter._load_data(data={"node": [{"id": 1}, {"id": 2}]})
+    assert data == data
+
+    source = MagicMock()
+    converter_2 = DummyConverter(source=source)
+    converter_2._load_data(data=None)
+    source.load.assert_called_once()
+
