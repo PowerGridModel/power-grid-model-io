@@ -2,11 +2,13 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+from pathlib import Path
 from typing import Optional, Tuple
+from unittest.mock import MagicMock
 
 import pytest
 
-from power_grid_model_io.converters.tabular_converter import COL_REF_RE
+from power_grid_model_io.converters.tabular_converter import COL_REF_RE, TabularConverter
 
 
 def ref_cases():
@@ -45,3 +47,16 @@ def test_col_ref_pattern(value: str, groups: Optional[Tuple[Optional[str]]]):
     else:
         assert match is not None
         assert match.groups() == groups
+
+
+@pytest.fixture
+def converter():
+    converter = TabularConverter()
+    return converter
+
+
+def test_converter__set_mapping_file(converter: TabularConverter):
+    with pytest.raises(ValueError, match="Mapping file should be a .yaml file, .txt provided."):
+        converter.set_mapping_file(mapping_file=Path("dummy/path.txt"))
+
+    # TODO test other functionalities of set_mapping_file
