@@ -20,8 +20,8 @@ WINDING_TYPES = {
     "Y": WindingType.wye,
     "YN": WindingType.wye_n,
     "D": WindingType.delta,
-    "Z": WindingType.wye,
-    "ZN": WindingType.wye_n,
+    "Z": WindingType.zigzag,
+    "ZN": WindingType.zigzag_n,
 }
 
 
@@ -83,29 +83,17 @@ def power_wind_speed(  # pylint: disable=too-many-arguments
 def get_winding_from(conn_str: str, neutral_grounding: bool = True) -> WindingType:
     """
     Get the winding type, based on a textual encoding of the conn_str
-    TODO: use z winding when zigzag is implemented
     """
-    wfr, wto, clock = _split_connection_string(conn_str)
-    winding = WINDING_TYPES[wfr]
-    if winding == WindingType.wye_n and not neutral_grounding:
-        winding = WindingType.wye
-    if wfr[0] == "Z" and wto != "d" and clock % 2:
-        winding = WindingType.delta
-    return winding
+    winding_from, _, _ = _split_connection_string(conn_str)
+    return _get_winding(winding=winding_from, neutral_grounding=neutral_grounding)
 
 
 def get_winding_to(conn_str: str, neutral_grounding: bool = True) -> WindingType:
     """
     Get the winding type, based on a textual encoding of the conn_str
-    TODO: use z winding when zigzag is implemented
     """
-    wfr, wto, clock = _split_connection_string(conn_str)
-    winding = WINDING_TYPES[wto.upper()]
-    if winding == WindingType.wye_n and not neutral_grounding:
-        winding = WindingType.wye
-    if wfr != "D" and wto[0] == "z" and clock % 2:
-        winding = WindingType.delta
-    return winding
+    _, winding_to, _ = _split_connection_string(conn_str)
+    return _get_winding(winding=winding_to, neutral_grounding=neutral_grounding)
 
 
 def get_clock(conn_str: str) -> int:
@@ -127,3 +115,13 @@ def _split_connection_string(conn_str: str) -> Tuple[str, str, int]:
     if not match:
         raise ValueError(f"Invalid transformer connection string: '{conn_str}'")
     return match.group(1), match.group(2), int(match.group(3))
+
+
+def _get_winding(winding: str, neutral_grounding: bool) -> WindingType:
+    winding_type = WINDING_TYPES[winding.upper()]
+    if not neutral_grounding:
+        if winding_type == WindingType.wye_n:
+            return WindingType.wye
+        if winding_type == WindingType.zigzag_n:
+            return WindingType.zigzag
+    return winding_type
