@@ -98,10 +98,10 @@ def test_get_winding_from(code: str, winding_type: WindingType):
         ("Dy7", WindingType.delta),
         ("Dyn8", WindingType.delta),
         ("Dd9", WindingType.delta),
-        ("Zy2", WindingType.wye),
-        ("Zy3", WindingType.delta),
-        ("ZNy4", WindingType.wye),
-        ("ZNy5", WindingType.delta),
+        ("Zy2", WindingType.zigzag),
+        ("Zy3", WindingType.zigzag),
+        ("ZNy4", WindingType.zigzag_n),
+        ("ZNy5", WindingType.zigzag_n),
     ],
 )
 def test_get_winding_from__no_neutral_grounding(code: str, winding_type: WindingType):
@@ -125,10 +125,10 @@ def test_get_winding_from__exception():
         ("Dy7", WindingType.wye),
         ("Dyn11", WindingType.wye_n),
         ("Dd8", WindingType.delta),
-        ("Yz2", WindingType.wye),
-        ("Yz4", WindingType.delta),
-        ("Yzn4", WindingType.wye_n),
-        ("Yzn6", WindingType.delta),
+        ("Yz2", WindingType.zigzag),
+        ("Yz4", WindingType.zigzag_n),
+        ("Yzn4", WindingType.zigzag_n),
+        ("Yzn6", WindingType.zigzag_n),
     ],
 )
 def test_get_winding_to(code: str, winding_type: WindingType):
