@@ -116,19 +116,19 @@ def test_get_winding_from__exception():
 @mark.parametrize(
     ("code", "winding_type"),
     [
-        ("Yy1", WindingType.wye),
+        ("Yy0", WindingType.wye),
         ("Yyn2", WindingType.wye_n),
         ("Yd3", WindingType.delta),
         ("YNy4", WindingType.wye),
-        ("YNyn5", WindingType.wye_n),
-        ("YNd6", WindingType.delta),
+        ("YNyn6", WindingType.wye_n),
+        ("YNd7", WindingType.delta),
         ("Dy7", WindingType.wye),
-        ("Dyn8", WindingType.wye_n),
-        ("Dd9", WindingType.delta),
+        ("Dyn11", WindingType.wye_n),
+        ("Dd8", WindingType.delta),
         ("Yz2", WindingType.wye),
-        ("Yz3", WindingType.delta),
+        ("Yz4", WindingType.delta),
         ("Yzn4", WindingType.wye_n),
-        ("Yzn5", WindingType.delta),
+        ("Yzn6", WindingType.delta),
     ],
 )
 def test_get_winding_to(code: str, winding_type: WindingType):
@@ -138,19 +138,19 @@ def test_get_winding_to(code: str, winding_type: WindingType):
 @mark.parametrize(
     ("code", "winding_type"),
     [
-        ("Yy1", WindingType.wye),
+        ("Yy0", WindingType.wye),
         ("Yyn2", WindingType.wye),
         ("Yd3", WindingType.delta),
         ("YNy4", WindingType.wye),
-        ("YNyn5", WindingType.wye),
-        ("YNd6", WindingType.delta),
+        ("YNyn4", WindingType.wye),
+        ("YNd5", WindingType.delta),
         ("Dy7", WindingType.wye),
-        ("Dyn8", WindingType.wye),
-        ("Dd9", WindingType.delta),
+        ("Dyn9", WindingType.wye),
+        ("Dd8", WindingType.delta),
         ("Yz2", WindingType.wye),
-        ("Yz3", WindingType.delta),
+        ("Yz4", WindingType.delta),
         ("Yzn4", WindingType.wye),
-        ("Yzn5", WindingType.delta),
+        ("Yzn6", WindingType.delta),
     ],
 )
 def test_get_winding_to__no_neutral_grounding(code: str, winding_type: WindingType):
@@ -159,7 +159,7 @@ def test_get_winding_to__no_neutral_grounding(code: str, winding_type: WindingTy
 
 def test_get_winding_to__exception():
     with raises(ValueError):
-        get_winding_to("XNd11")
+        get_winding_to("YNx11")
 
 
 @mark.parametrize(
