@@ -66,3 +66,12 @@ def test_converter__set_mapping_file(converter: TabularConverter):
         converter.set_mapping_file(mapping_file=dummy_path)
 
     converter.set_mapping_file(mapping_file=MAPPING_FILE)
+
+
+def test_converter__parse_data(converter: TabularConverter):
+    data = MagicMock()
+    converter._parse_data(data=data, data_type="dummy")
+    data.set_unit_multipliers.assert_called_once()
+    data.set_substitutions.assert_called_once()
+
+    # TODO test other functionalities of _parse_data
