@@ -1,0 +1,18 @@
+grid:
+  Nodes:
+    node:
+      id: Number
+      u_rated: Unom
+      extra: ID
+
+units:
+  A:
+  F:
+    µF: 0.000001
+  V:
+    kV: 1000.0
+
+substitutions:
+  Tap side:
+    1: 0
+    2: 1
