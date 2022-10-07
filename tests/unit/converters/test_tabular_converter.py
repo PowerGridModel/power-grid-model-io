@@ -10,6 +10,8 @@ import pytest
 
 from power_grid_model_io.converters.tabular_converter import COL_REF_RE, TabularConverter
 
+MAPPING_FILE = Path(__file__).parent / "data/mapping.yaml"
+
 
 def ref_cases():
     yield "OtherTable!ValueColumn[IdColumn=RefColumn]", (
@@ -51,7 +53,7 @@ def test_col_ref_pattern(value: str, groups: Optional[Tuple[Optional[str]]]):
 
 @pytest.fixture
 def converter():
-    converter = TabularConverter()
+    converter = TabularConverter(mapping_file=MAPPING_FILE)
     return converter
 
 
@@ -59,4 +61,8 @@ def test_converter__set_mapping_file(converter: TabularConverter):
     with pytest.raises(ValueError, match="Mapping file should be a .yaml file, .txt provided."):
         converter.set_mapping_file(mapping_file=Path("dummy/path.txt"))
 
-    # TODO test other functionalities of set_mapping_file
+    dummy_path = Path(__file__).parent / "data/dummy_mapping.yaml"
+    with pytest.raises(KeyError, match="Missing 'grid' mapping in mapping_file"):
+        converter.set_mapping_file(mapping_file=dummy_path)
+
+    converter.set_mapping_file(mapping_file=MAPPING_FILE)

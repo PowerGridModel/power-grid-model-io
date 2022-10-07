@@ -143,4 +143,3 @@ def test_converter__load_data(converter: DummyConverter):
     converter_2 = DummyConverter(source=source)
     converter_2._load_data(data=None)
     source.load.assert_called_once()
-
