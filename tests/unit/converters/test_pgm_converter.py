@@ -63,3 +63,12 @@ def test_converter__parse_dataset(converter: PgmConverter, input_data: SinglePyt
     assert [400.0, 400.0] in pgm_data["node"]["u_rated"]
 
     # TODO include extra_info
+
+
+def test_converter__parse_component(converter: PgmConverter, input_data: SinglePythonDataset):
+    objects = list(input_data.values())
+    component = "node"
+    node_array = converter._parse_component(objects=objects[0], component=component, data_type="input")
+    assert (len(node_array)) == 2
+    assert [1, 2] in node_array["id"]
+    assert [400.0, 400.0] in node_array["u_rated"]

@@ -59,8 +59,9 @@ class PgmConverter(BaseConverter[StructuredData]):
             for component, objects in data.items()
         }
 
+    @staticmethod
     def _parse_component(
-        self, objects: ComponentList, component: str, data_type: str, extra_info: Optional[ExtraInfoLookup] = None
+        objects: ComponentList, component: str, data_type: str, extra_info: Optional[ExtraInfoLookup] = None
     ) -> np.ndarray:
         # We'll initialize an 1d-array with NaN values for all the objects of this component type
         array = initialize_array(data_type, component, len(objects))
