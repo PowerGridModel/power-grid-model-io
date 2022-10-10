@@ -45,6 +45,14 @@ dev = [
     "pytest",
     "pytest-cov",
 ]
+doc = [
+    "sphinx",
+    "myst-parser",
+    "sphinx_rtd_theme",
+    "readthedocs-sphinx-search",
+    "sphinx-hoverxref",
+    "numpydoc",
+]
 cli = [
     "typer[all]",
 ]

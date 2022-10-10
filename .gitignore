@@ -23,3 +23,10 @@ data/
 # IDE
 .idea/
 .vscode/
+
+# docs
+_build/
+_static/
+_templates/
+docs/make.bat
+docs/Makefile
