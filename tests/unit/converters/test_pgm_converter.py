@@ -3,6 +3,7 @@ import pytest
 from power_grid_model.data_types import BatchPythonDataset, SinglePythonDataset
 
 from power_grid_model_io.converters.pgm_converter import PgmConverter
+from power_grid_model_io.data_types import ExtraInfoLookup
 
 
 @pytest.fixture
@@ -68,7 +69,21 @@ def test_converter__parse_dataset(converter: PgmConverter, input_data: SinglePyt
 def test_converter__parse_component(converter: PgmConverter, input_data: SinglePythonDataset):
     objects = list(input_data.values())
     component = "node"
-    node_array = converter._parse_component(objects=objects[0], component=component, data_type="input")
-    assert (len(node_array)) == 2
-    assert [1, 2] in node_array["id"]
-    assert [400.0, 400.0] in node_array["u_rated"]
+    extra_node = {"id": 3, "u_rated": 400.0, "some_extra_info": 1}
+    objects[0].append(extra_node)
+    extra_info: ExtraInfoLookup = {}
+
+    node_array = converter._parse_component(
+        objects=objects[0], component=component, data_type="input", extra_info=extra_info
+    )
+    assert (len(node_array)) == 3
+    assert [1, 2, 3] in node_array["id"]
+    assert [400.0, 400.0, 400.0] in node_array["u_rated"]
+    assert extra_info == {3: {"some_extra_info": 1}}
+
+    node_with_wrong_attr_val = {"id": 3, "u_rated": "fault"}
+    objects[0].append(node_with_wrong_attr_val)
+    with pytest.raises(
+        ValueError, match="Invalid 'u_rated' value for node input data: could not convert string to float: 'fault'"
+    ):
+        converter._parse_component(objects=objects[0], component=component, data_type="input")
