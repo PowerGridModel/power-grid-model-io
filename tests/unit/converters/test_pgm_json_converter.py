@@ -2,13 +2,13 @@ import numpy as np
 import pytest
 from power_grid_model.data_types import BatchPythonDataset, SinglePythonDataset
 
-from power_grid_model_io.converters.pgm_converter import PgmConverter
+from power_grid_model_io.converters.pgm_json_converter import PgmJsonConverter
 from power_grid_model_io.data_types import ExtraInfoLookup
 
 
 @pytest.fixture
 def converter():
-    converter = PgmConverter()
+    converter = PgmJsonConverter()
     return converter
 
 
@@ -33,7 +33,7 @@ def batch_data():
 
 
 def test_converter__parse_data(
-    converter: PgmConverter, input_data: SinglePythonDataset, batch_data: BatchPythonDataset
+    converter: PgmJsonConverter, input_data: SinglePythonDataset, batch_data: BatchPythonDataset
 ):
     with pytest.raises(TypeError, match="Raw data should be either a list or a dictionary!"):
         converter._parse_data(data="str", data_type="input")  # type: ignore
@@ -55,7 +55,7 @@ def test_converter__parse_data(
     # TODO include extra_info
 
 
-def test_converter__parse_dataset(converter: PgmConverter, input_data: SinglePythonDataset):
+def test_converter__parse_dataset(converter: PgmJsonConverter, input_data: SinglePythonDataset):
     pgm_data = converter._parse_dataset(data=input_data, data_type="input")
 
     assert len(pgm_data) == 1
@@ -66,7 +66,7 @@ def test_converter__parse_dataset(converter: PgmConverter, input_data: SinglePyt
     # TODO include extra_info
 
 
-def test_converter__parse_component(converter: PgmConverter, input_data: SinglePythonDataset):
+def test_converter__parse_component(converter: PgmJsonConverter, input_data: SinglePythonDataset):
     objects = list(input_data.values())
     component = "node"
     extra_node = {"id": 3, "u_rated": 400.0, "some_extra_info": 1}
