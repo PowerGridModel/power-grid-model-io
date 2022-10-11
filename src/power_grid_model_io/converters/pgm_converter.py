@@ -52,6 +52,14 @@ class PgmConverter(BaseConverter[StructuredData]):
     def _parse_dataset(
         self, data: SinglePythonDataset, data_type: str, extra_info: Optional[ExtraInfoLookup] = None
     ) -> SingleDataset:
+        """
+        This function parses a single Python dataset and returns a power-grid-model input or update dictionary
+        :param data: a single Python dataset
+        :param data_type: the data type of the dataset, i.e. "input" or "update"
+        :param extra_info: a dictionary where extra info can be stored
+        :return: a dictionary containing the components as keys and their corresponding numpy arrays as values: a
+        power-grid-model "input" or "update" dataset
+        """
         return {
             component: self._parse_component(
                 objects=objects, component=component, data_type=data_type, extra_info=extra_info
