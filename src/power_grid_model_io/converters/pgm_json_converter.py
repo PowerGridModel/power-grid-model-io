@@ -58,7 +58,8 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
         This function parses a single Python dataset and returns a power-grid-model input or update dictionary
         :param data: a single Python dataset
         :param data_type: the data type of the dataset, i.e. "input" or "update"
-        :param extra_info: a dictionary where extra info can be stored
+        :param extra_info: an optional dictionary where extra component info (that can't be specified in
+        power-grid-model data) can be specified
         :return: a dictionary containing the components as keys and their corresponding numpy arrays as values: a
         power-grid-model "input" or "update" dataset
         """
@@ -73,6 +74,16 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
     def _parse_component(
         objects: ComponentList, component: str, data_type: str, extra_info: Optional[ExtraInfoLookup] = None
     ) -> np.ndarray:
+        """
+        This function generates a structured numpy array (power-grid-model native) from a structured dataset
+        :param objects: a list with dictionaries, where each dictionary contains all attributes of a component
+        :param component: the type of component, eg. node, line, etc. Note: it should be a valid power-grid-model
+        component
+        :param data_type: a string specifying the data type: input/update
+        :param extra_info: an optional dictionary where extra component info (that can't be specified in
+        power-grid-model data) can be specified
+        :return: a numpy structured array for a power-grid-model component
+        """
         # We'll initialize an 1d-array with NaN values for all the objects of this component type
         array = initialize_array(data_type, component, len(objects))
 
