@@ -31,6 +31,8 @@ def test_auto_id__with_hashable_items():
 
 def test_auto_id__with_non_hashable_items():
     auto_id = AutoID()
+    with raises(TypeError, match=f"Unhashable type: 'dict'"):
+        auto_id(item={"name": "Alpha"})
     assert auto_id(item={"name": "Alpha"}, key="Alpha") == 0
     assert auto_id(item={"name": "Bravo"}, key="Bravo") == 1
     assert auto_id(item={"name": "Alpha"}, key="Alpha") == 0  # because key "Alpha" already existed
