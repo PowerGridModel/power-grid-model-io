@@ -39,13 +39,21 @@ def mapping() -> TabularMapping:
 
 
 def test_tables(mapping: TabularMapping):
+
+    # Act
     actual = list(mapping.tables())
+
+    # Assert
     expected = ["Nodes", "Cables", "Generator"]
     assert actual == expected
 
 
 def test_instances(mapping: TabularMapping):
+
+    # Act
     actual = list(mapping.instances(table="Generator"))
+
+    # Assert
     expected = [
         ("generator", {"id": "ID", "from_node": "FROM_NODE_ID", "to_node": "TO_NODE_ID"}),
         ("node", {"id": "FROM_NODE_ID"}),
