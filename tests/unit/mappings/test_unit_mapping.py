@@ -32,7 +32,7 @@ def test_set_mapping(units: Units):
     mapping.set_mapping(mapping=units)
 
 
-def test_set_mapping__multiple_mappings(units: Units):
+def test_set_mapping__multiple_mappings():
     # Arrange
     mapping = UnitMapping()
     units = {"X": {"A": 111.0}, "Y": {"A": 222.0}}
@@ -42,7 +42,7 @@ def test_set_mapping__multiple_mappings(units: Units):
         mapping.set_mapping(mapping=units)
 
 
-def test_set_mapping__valid_si_to_si_mapping(units: Units):
+def test_set_mapping__valid_si_to_si_mapping():
     # Arrange
     mapping = UnitMapping()
     units = {"A": {"A": 1.0}}
@@ -51,7 +51,7 @@ def test_set_mapping__valid_si_to_si_mapping(units: Units):
     mapping.set_mapping(mapping=units)
 
 
-def test_set_mapping__invalid_si_to_si_mapping(units: Units):
+def test_set_mapping__invalid_si_to_si_mapping():
     # Arrange
     mapping = UnitMapping()
     units = {"A": {"A": 2.0}}
@@ -59,3 +59,17 @@ def test_set_mapping__invalid_si_to_si_mapping(units: Units):
     # Act / Assert
     with pytest.raises(ValueError, match="Invalid unit definition for 'A': 1A cannot be 2.0A"):
         mapping.set_mapping(mapping=units)
+
+
+def test_set_unit_multiplier(units: Units):
+    # Arrange
+    mapping = UnitMapping(mapping=units)
+
+    # Act / Assert
+    assert mapping.get_unit_multiplier("A") == (1.0, "A")
+    assert mapping.get_unit_multiplier("W") == (1.0, "W")
+    assert mapping.get_unit_multiplier("kW") == (1000.0, "W")
+    assert mapping.get_unit_multiplier("MW") == (1000000.0, "W")
+
+    with pytest.raises(KeyError):
+        mapping.get_unit_multiplier("I")
