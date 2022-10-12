@@ -15,11 +15,11 @@ import structlog
 from power_grid_model.validation import errors_to_string, validate_input_data
 
 from power_grid_model_io.converters.gaia_excel_converter import GaiaExcelConverter
-from power_grid_model_io.converters.pgm_converter import PgmConverter
+from power_grid_model_io.converters.pgm_json_converter import PgmJsonConverter
 from power_grid_model_io.converters.vision_excel_converter import VisionExcelConverter
 from power_grid_model_io.utils.modules import import_optional_module
 
-typer = import_optional_module("cli", "typer")
+typer = import_optional_module("typer", extra="cli")
 app = typer.Typer(pretty_exceptions_show_locals=False)
 
 
@@ -65,7 +65,7 @@ def vision2pgm(
     vision_converter = VisionExcelConverter(source_file=excel_file)
     input_data, extra_info = vision_converter.load_input_data()
 
-    pgm_converter = PgmConverter(destination_file=pgm_json_file)
+    pgm_converter = PgmJsonConverter(destination_file=pgm_json_file)
     pgm_converter.save(data=input_data, extra_info=extra_info)
 
     if validate:
@@ -96,7 +96,7 @@ def gaia2pgm(
     gaia_converter = GaiaExcelConverter(source_file=excel_file, types_file=types_file)
     input_data, extra_info = gaia_converter.load_input_data()
 
-    pgm_converter = PgmConverter(destination_file=pgm_json_file)
+    pgm_converter = PgmJsonConverter(destination_file=pgm_json_file)
     pgm_converter.save(data=input_data, extra_info=extra_info)
 
     if validate:

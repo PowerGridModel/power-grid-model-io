@@ -12,11 +12,11 @@ from pathlib import Path
 import structlog
 from power_grid_model.validation import errors_to_string, validate_input_data
 
-from power_grid_model_io.converters.pgm_converter import PgmConverter
+from power_grid_model_io.converters.pgm_json_converter import PgmJsonConverter
 from power_grid_model_io.data_stores.json_file_store import JsonFileStore
 from power_grid_model_io.utils.modules import import_optional_module
 
-typer = import_optional_module("cli", "typer")
+typer = import_optional_module("typer", extra="cli")
 app = typer.Typer(pretty_exceptions_show_locals=False)
 
 
@@ -53,7 +53,7 @@ def pgm_json(pgm_json_file: Path, symmetric: bool = True, verbose: bool = False)
         wrapper_class=structlog.make_filtering_bound_logger(logging.DEBUG if verbose else logging.INFO),
     )
 
-    pgm_converter = PgmConverter()
+    pgm_converter = PgmJsonConverter()
     input_file = JsonFileStore(pgm_json_file)
     input_data, _extra_info = pgm_converter.load_input_data(input_file.load())
     _validate(input_data, symmetric, log)

@@ -66,22 +66,22 @@ grid:
       uk: uk
       pk: Pk
       i0:
-        power_grid_model_io.utils.filters.relative_no_load_current:
+        power_grid_model_io.filters.phase_to_phase.relative_no_load_current:
           - Io
           - Po
           - Snom
           - Unom2
       p0: Po
       winding_from:
-        power_grid_model_io.utils.filters.get_winding_from:
+        power_grid_model_io.filters.phase_to_phase.get_winding_from:
           - Connection
           - N1
       winding_to:
-        power_grid_model_io.utils.filters.get_winding_to:
+        power_grid_model_io.filters.phase_to_phase.get_winding_to:
           - Connection
           - N2
       clock:
-        power_grid_model_io.utils.filters.get_clock:
+        power_grid_model_io.filters.phase_to_phase.get_clock:
           - Connection
       tap_side: Tap side
       tap_pos: Tap
@@ -113,7 +113,7 @@ grid:
       uk: uknom
       pk: Pknom
       i0:
-        power_grid_model_io.utils.filters.relative_no_load_current:
+        power_grid_model_io.filters.phase_to_phase.relative_no_load_current:
           - Io
           - Po
           - Snom
@@ -157,17 +157,17 @@ grid:
       pk: Pk
       p0: Po
       i0:
-        power_grid_model_io.utils.filters.relative_no_load_current:
+        power_grid_model_io.filters.phase_to_phase.relative_no_load_current:
           - 0
           - Po
           - Snom
           - Unom2
       winding_from:
-        power_grid_model_io.utils.filters.get_winding_from: Connection
+        power_grid_model_io.filters.phase_to_phase.get_winding_from: Connection
       winding_to:
-        power_grid_model_io.utils.filters.get_winding_to: Connection
+        power_grid_model_io.filters.phase_to_phase.get_winding_to: Connection
       clock:
-        power_grid_model_io.utils.filters.get_clock: Connection
+        power_grid_model_io.filters.phase_to_phase.get_clock: Connection
       tap_side: Tap side
       tap_pos: Tap
       tap_min: Tap min
@@ -201,11 +201,11 @@ grid:
       status: Switch state
       type: Behaviour
       p_specified:
-        power_grid_model_io.utils.filters.multiply:
+        power_grid_model_io.filters.multiply:
           - Load.P
           - Nodes!Simultaneity[Number=Node.Number]
       q_specified:
-        power_grid_model_io.utils.filters.multiply:
+        power_grid_model_io.filters.multiply:
           - Load.Q
           - Nodes!Simultaneity[Number=Node.Number]
       extra:
@@ -215,6 +215,7 @@ grid:
       - id:
           - Node.Number
           - Subnumber
+          - 1
         node:
           - Node.Number
           - Subnumber
@@ -226,6 +227,7 @@ grid:
       - id:
           - Node.Number
           - Subnumber
+          - 2
         node:
           - Node.Number
           - Subnumber
@@ -233,9 +235,8 @@ grid:
         type: 0
         p_specified: PV.Pnom
         q_specified:
-          power_grid_model_io.utils.filters.reactive_power_calculation:
+          power_grid_model_io.filters.phase_to_phase.reactive_power:
             - PV.Pnom
-            - 1
             - 1
         extra: Name
   Sources:
@@ -259,9 +260,10 @@ grid:
       type: 0
       p_specified: Pref
       q_specified:
-        power_grid_model_io.utils.filters.reactive_power_calculation:
-          - Pref
-          - cos phi
+        power_grid_model_io.filters.multiply:
+          - power_grid_model_io.filters.phase_to_phase.reactive_power:
+            - Pref
+            - cos phi
           - Q
       extra: Name
   Wind turbines:
@@ -273,18 +275,19 @@ grid:
       status: Switch state
       type: 1
       p_specified:
-        power_grid_model_io.utils.filters.power_wind_speed:
+        power_grid_model_io.filters.value_or_default:
           - Pref
-          - Pnom
-          - Wind speed
+          - power_grid_model_io.filters.phase_to_phase.power_wind_speed:
+            - Pnom
+            - Wind speed
       q_specified:
-        power_grid_model_io.utils.filters.reactive_power_calculation:
-          - power_grid_model_io.utils.filters.power_wind_speed:
-              - Pref
+        power_grid_model_io.filters.phase_to_phase.reactive_power:
+          - power_grid_model_io.filters.value_or_default:
+            - Pref
+            - power_grid_model_io.filters.phase_to_phase.power_wind_speed:
               - Pnom
               - Wind speed
           - cos phi
-          - 1
       extra: Name
   Loads:
     sym_load:
@@ -295,11 +298,11 @@ grid:
       status: Switch state
       type: Behaviour
       p_specified:
-        power_grid_model_io.utils.filters.multiply:
+        power_grid_model_io.filters.multiply:
           - P
           - Nodes!Simultaneity[Number=Node.Number]
       q_specified:
-        power_grid_model_io.utils.filters.multiply:
+        power_grid_model_io.filters.multiply:
           - Q
           - Nodes!Simultaneity[Number=Node.Number]
       extra:
@@ -315,11 +318,11 @@ grid:
       g1: 0
       b1: 0
       g0:
-        power_grid_model_io.utils.filters.complex_inverse_real_part:
+        power_grid_model_io.filters.complex_inverse_real_part:
           - R0
           - X0
       b0:
-        power_grid_model_io.utils.filters.complex_inverse_imaginary_part:
+        power_grid_model_io.filters.complex_inverse_imaginary_part:
           - R0
           - X0
       extra:
@@ -338,12 +341,11 @@ grid:
           - Pnom
           - Inverter.Pnom | Inverter.Snom
       q_specified:
-        power_grid_model_io.utils.filters.reactive_power_calculation:
+        power_grid_model_io.filters.phase_to_phase.reactive_power:
           - min:
               - Pnom
               - Inverter.Pnom | Inverter.Snom
           - Inverter.cos phi
-          - 1
       extra: Name
 units:
   A:

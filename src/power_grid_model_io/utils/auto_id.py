@@ -67,7 +67,7 @@ class AutoID:
         if key is None:
             if item.__hash__ is None:
                 raise TypeError(
-                    f"unhashable type: '{type(item).__name__}', " "please supply a 'key' argument or use hashable items"
+                    f"Unhashable type: '{type(item).__name__}', please supply a 'key' argument or use hashable items"
                 )
             key = item.__hash__()
 
