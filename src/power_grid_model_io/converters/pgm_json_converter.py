@@ -136,7 +136,8 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
         data = cast(SingleDataset, data)
         return self._serialize_dataset(data=data, extra_info=extra_info)
 
-    def _is_batch(self, data: Dataset) -> bool:
+    @staticmethod
+    def _is_batch(data: Dataset) -> bool:
         """
         This function check if a dataset is single or batch. The function loops trhough all components in the dataset
         and checks for each component if the corresponding dataset is single or batch. All components should have the
@@ -156,9 +157,16 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
             is_batch = is_dense_batch or is_sparse_batch
         return bool(is_batch)
 
-    def _serialize_dataset(
-        self, data: SingleDataset, extra_info: Optional[ExtraInfoLookup] = None
-    ) -> SinglePythonDataset:
+    @staticmethod
+    def _serialize_dataset(data: SingleDataset, extra_info: Optional[ExtraInfoLookup] = None) -> SinglePythonDataset:
+        """
+        This function converts a single power-grid-model dataset to a structured dataset
+        :param data: a power-grid-model (single) dataset
+        :param extra_info: an optional dictionary with extra information. If supplied, the extra info is added to the
+        structured dataset. The keys in this dictionary should match with id's of components in the power-grid-model
+        dataset
+        :return: the function returns a structured dataset
+        """
 
         # This should be a single data set
         for component, array in data.items():

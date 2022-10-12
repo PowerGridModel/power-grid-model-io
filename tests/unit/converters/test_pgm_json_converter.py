@@ -36,6 +36,7 @@ def structured_batch_data():
 @pytest.fixture
 def pgm_input_data():
     node = initialize_array("input", "node", 2)
+    node["id"] = [1, 2]
     return {"node": node}
 
 
@@ -130,6 +131,17 @@ def test_converter__is_batch(
         converter._is_batch(combined_input_batch)
 
 
-def test_converter__serialize_dataset():
-    # TODO
-    pass
+def test_converter__serialize_dataset(
+    converter: PgmJsonConverter, pgm_input_data: SingleDataset, pgm_batch_data: BatchDataset
+):
+    with pytest.raises(ValueError, match="Invalid data format"):
+        converter._serialize_dataset(data={"node": "attribute"})  # type: ignore
+    with pytest.raises(ValueError, match="Invalid data format"):
+        converter._serialize_dataset(data=pgm_batch_data)
+
+    structured_data = converter._serialize_dataset(data=pgm_input_data)
+    assert structured_data == {"node": [{"id": 1}, {"id": 2}]}
+
+    extra_info = {1: {"dummy": "data"}}
+    structured_data_with_extra_info = converter._serialize_dataset(data=pgm_input_data, extra_info=extra_info)
+    assert structured_data_with_extra_info == {"node": [{"id": 1, "dummy": "data"}, {"id": 2}]}
