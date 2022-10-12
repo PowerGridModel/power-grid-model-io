@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: MPL-2.0
 ---
 grid:
-  Bus:
+  bus:
     node:
-      id: index
+      id: name
       u_rated:
-        multiply: [vn_kv, 1000.0]
+        power_grid_model_io.filters.multiply: [vn_kv, 1000.0]
