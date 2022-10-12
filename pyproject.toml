@@ -44,6 +44,7 @@ dev = [
     "pylint",
     "pytest",
     "pytest-cov",
+    "pydantic", # Used in unit tests
 ]
 cli = [
     "typer[all]",
