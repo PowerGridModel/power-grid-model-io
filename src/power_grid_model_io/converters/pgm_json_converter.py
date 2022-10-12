@@ -41,6 +41,18 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
     def _parse_data(
         self, data: StructuredData, data_type: str, extra_info: Optional[ExtraInfoLookup] = None
     ) -> Dataset:
+        """
+        This function expects Structured data, which can either be a dictionary (single dataset) or a list of
+        dictionaries (batch dataset). The structured dataset consists of components + attributes that exist within
+        power-grid-model, but can also contain other data. If this data should be saved for later usage an extra_info
+        dictionary can be provided when calling this function
+        :param data: Structured data, which can either be a dictionary or a list of dictionaries
+        :param data_type: the data type of the dataset, i.e. "input" or "update"
+        :param extra_info: an optional dictionary where extra component info (that can't be specified in
+        power-grid-model data) can be specified
+        :return: a dictionary containing the components as keys and their corresponding numpy arrays as values: a
+        power-grid-model "input" or "update" dataset
+        """
         self._log.debug(f"Loading PGM {data_type} data")
         if isinstance(data, list):
             parsed_data = [
