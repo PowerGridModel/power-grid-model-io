@@ -65,7 +65,6 @@ def test_converter__parse_data(converter: PgmJsonConverter, structured_input_dat
 
     # test for batch dataset
     pgm_batch_data = converter._parse_data(data=structured_batch_data, data_type="update")
-    print(pgm_batch_data)
     assert len(pgm_batch_data) == 1
     assert (pgm_batch_data["sym_load"]["indptr"] == np.array([0, 1, 3])).all()
     assert (pgm_batch_data["sym_load"]["data"]["id"] == [3, 3, 4]).all()
@@ -108,9 +107,13 @@ def test_converter__parse_component(converter: PgmJsonConverter, structured_inpu
         converter._parse_component(objects=objects[0], component=component, data_type="input")
 
 
-def test_converter__serialize_data():
-    # TODO
-    pass
+def test_converter__serialize_data(
+    converter: PgmJsonConverter, pgm_input_data: SingleDataset, pgm_batch_data: BatchDataset
+):
+    structured_single_data = converter._serialize_data(data=pgm_input_data)
+    assert structured_single_data == {"node": [{"id": 1}, {"id": 2}]}
+    structured_batch_data = converter._serialize_data(data=pgm_batch_data)
+    assert structured_batch_data == [{"line": [{}, {}]}, {"line": [{}, {}]}, {"line": [{}, {}]}]
 
 
 def test_converter__is_batch(

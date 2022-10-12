@@ -120,6 +120,16 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
         return array
 
     def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup] = None) -> StructuredData:
+        """
+        This function converts a power-grid-model dataset to a structured dataset. First, the function checks if the
+        dataset is a single dataset or batch dataset. If it is a batch, the batch data is converted to a list of
+        batches, then each batch is converted individually.
+        :param data: a power-grid-model dataset
+        :param extra_info: an optional dictionary with extra information. If supplied, the extra info is added to the
+        structured dataset. The keys in this dictionary should match with id's of components in the power-grid-model
+        dataset. Note, extra info can only be supplied for single datasets
+        :return: the function returns a structured dataset
+        """
         # Check if the dataset is a single dataset or batch dataset
         # It is batch dataset if it is 2D array or a indptr/data structure
 
@@ -139,9 +149,10 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
     @staticmethod
     def _is_batch(data: Dataset) -> bool:
         """
-        This function check if a dataset is single or batch. The function loops trhough all components in the dataset
+        This function checks if a dataset is single or batch. The function loops through all components in the dataset
         and checks for each component if the corresponding dataset is single or batch. All components should have the
-        same array type (single or batch). If this is not the case a ValueError will be raised
+        same array type (single or batch). If this is not the case a ValueError will be raised. An array is a batch
+        dataset if it is 2D array or has an indptr/data structure
         :param data: a power-grid-model dataset which is either single or a batch
         :return: returns True if the dataset is a batch dataset, False if it is a single dataset
         """
