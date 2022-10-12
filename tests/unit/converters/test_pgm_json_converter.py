@@ -88,7 +88,7 @@ def test_converter__parse_component(converter: PgmJsonConverter, structured_inpu
     objects = list(structured_input_data.values())
     component = "node"
     extra_node = {"id": 3, "u_rated": 400.0, "some_extra_info": 1}
-    objects[0].append(extra_node)
+    objects[0].append(extra_node)  # type: ignore
     extra_info: ExtraInfoLookup = {}
 
     node_array = converter._parse_component(
@@ -100,7 +100,7 @@ def test_converter__parse_component(converter: PgmJsonConverter, structured_inpu
     assert extra_info == {3: {"some_extra_info": 1}}
 
     node_with_wrong_attr_val = {"id": 3, "u_rated": "fault"}
-    objects[0].append(node_with_wrong_attr_val)
+    objects[0].append(node_with_wrong_attr_val)  # type: ignore
     with pytest.raises(
         ValueError, match="Invalid 'u_rated' value for node input data: could not convert string to float: 'fault'"
     ):
