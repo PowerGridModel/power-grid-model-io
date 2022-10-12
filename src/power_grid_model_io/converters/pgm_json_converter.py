@@ -132,11 +132,18 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
             list_data = convert_batch_dataset_to_batch_list(data)
             return [self._serialize_dataset(data=x) for x in list_data]
 
-        # We have established that this is not batch data, so let's tell the type checker that this is a BatchDataset
+        # We have established that this is not batch data, so let's tell the type checker that this is a SingleDataset
         data = cast(SingleDataset, data)
         return self._serialize_dataset(data=data, extra_info=extra_info)
 
     def _is_batch(self, data: Dataset) -> bool:
+        """
+        This function check if a dataset is single or batch. The function loops trhough all components in the dataset
+        and checks for each component if the corresponding dataset is single or batch. All components should have the
+        same array type (single or batch). If this is not the case a ValueError will be raised
+        :param data: a power-grid-model dataset which is either single or a batch
+        :return: returns True if the dataset is a batch dataset, False if it is a single dataset
+        """
         is_batch: Optional[bool] = None
         for component, array in data.items():
             is_dense_batch = isinstance(array, np.ndarray) and array.ndim == 2
