@@ -13,6 +13,8 @@ import numpy as np
 from power_grid_model import WindingType
 
 CONNECTION_PATTERN = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(\d|1[0-2])")
+CONNECTION_PATTERN_PP = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)")
+CONNECTION_PATTERN_PP_3WDG = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(y|yn|d|z|zn)")
 
 """
 TODO: Implement Z winding
@@ -156,3 +158,151 @@ def positive_sequence_conductance(power: float, voltage: float) -> float:
     Calculate positive sequence conductance as used in shunts
     """
     return power / (voltage * voltage)
+
+
+def get_transformer_clock(shift_degree: float) -> int:
+    """
+    Calculate the clock of a transformer
+    """
+    return int(shift_degree / 30)
+
+
+def get_transformer_tap_size(
+    high_side_voltage: float, low_side_voltage: float, tap_step_percent: float, tap_side: str
+) -> float:  # result should be double?
+    """
+    Calculate the tap_size of a transformer
+    """
+    if tap_side == "hv":
+        return tap_step_percent * high_side_voltage
+    elif tap_side == "lv":
+        return tap_step_percent * low_side_voltage
+
+
+def get_3wdgtransformer_tap_size(
+    high_side_voltage: float, med_side_voltage: float, low_side_voltage: float, tap_step_percent: float, tap_side: str
+) -> float:
+    """
+    Calculate the tap_size of a three winding transformer
+    """
+    if tap_side == "hv":
+        return tap_step_percent * high_side_voltage
+    elif tap_side == "mv":
+        return tap_step_percent * med_side_voltage
+    elif tap_side == "lv":
+        return tap_step_percent * low_side_voltage
+
+
+def _split_string(value: str) -> Tuple[str, str]:
+    """
+    Split the string of vector_group from PP into winding_from and winding_to of PGM
+    """
+    match = CONNECTION_PATTERN_PP.fullmatch(value)
+    if not match:
+        raise ValueError(f"Invalid transformer connection string: '{value}'")
+    return match.group(1), match.group(2)
+
+
+def get_transformer_winding_from(vector_group: str) -> WindingType:
+    """
+    Extract winding_from of a transfomer
+    """
+    the_tuple = _split_string(vector_group)
+    winding = WINDING_TYPES[the_tuple[0]]
+    if winding == WindingType.wye:
+        winding = WindingType.wye
+    elif winding == WindingType.wye_n:
+        winding = WindingType.wye_n
+    elif winding == WindingType.delta:
+        winding = WindingType.delta
+    elif winding == WindingType.zigzag:
+        winding = WindingType.zigzag
+    elif winding == WindingType.zigzag_n:
+        winding = WindingType.zigzag_n
+    return winding
+
+
+def get_transformer_winding_to(vector_group: str) -> WindingType:
+    """
+    Extract winding_to of a transformer
+    """
+    the_tuple = _split_string(vector_group)
+    winding = WINDING_TYPES[the_tuple[1].upper()]
+    if winding == WindingType.wye:
+        winding = WindingType.wye
+    elif winding == WindingType.wye_n:
+        winding = WindingType.wye_n
+    elif winding == WindingType.delta:
+        winding = WindingType.delta
+    elif winding == WindingType.zigzag:
+        winding = WindingType.zigzag
+    elif winding == WindingType.zigzag_n:
+        winding = WindingType.zigzag_n
+    return winding
+
+
+def _split_string_3wdg(value: str) -> Tuple[str, str, str]:
+    """
+    Split the string of vector_group from PP into winding_1, winding_2 and winding_3 of PGM
+    """
+    match = CONNECTION_PATTERN_PP_3WDG.fullmatch(value)
+    if not match:
+        raise ValueError(f"Invalid transformer connection string: '{value}'")
+    return match.group(1), match.group(2), match.group(3)
+
+
+def get_3wdgtransformer_winding_1(vector_group: str) -> WindingType:
+    """
+    Extract winding_1 of a three winding transformer
+    """
+    the_tuple = _split_string_3wdg(vector_group)
+    winding = WINDING_TYPES[the_tuple[0]]
+    if winding == WindingType.wye:
+        winding = WindingType.wye
+    elif winding == WindingType.wye_n:
+        winding = WindingType.wye_n
+    elif winding == WindingType.delta:
+        winding = WindingType.delta
+    elif winding == WindingType.zigzag:
+        winding = WindingType.zigzag
+    elif winding == WindingType.zigzag_n:
+        winding = WindingType.zigzag_n
+    return winding
+
+
+def get_3wdgtransformer_winding_2(vector_group: str) -> WindingType:
+    """
+    Extract winding_2 of a three winding transformer
+    """
+    the_tuple = _split_string_3wdg(vector_group)
+    winding = WINDING_TYPES[the_tuple[1].upper()]
+    if winding == WindingType.wye:
+        winding = WindingType.wye
+    elif winding == WindingType.wye_n:
+        winding = WindingType.wye_n
+    elif winding == WindingType.delta:
+        winding = WindingType.delta
+    elif winding == WindingType.zigzag:
+        winding = WindingType.zigzag
+    elif winding == WindingType.zigzag_n:
+        winding = WindingType.zigzag_n
+    return winding
+
+
+def get_3wdgtransformer_winding_3(vector_group: str) -> WindingType:
+    """
+    Extract winding_3 of a three winding transformer
+    """
+    the_tuple = _split_string_3wdg(vector_group)
+    winding = WINDING_TYPES[the_tuple[2].upper()]
+    if winding == WindingType.wye:
+        winding = WindingType.wye
+    elif winding == WindingType.wye_n:
+        winding = WindingType.wye_n
+    elif winding == WindingType.delta:
+        winding = WindingType.delta
+    elif winding == WindingType.zigzag:
+        winding = WindingType.zigzag
+    elif winding == WindingType.zigzag_n:
+        winding = WindingType.zigzag_n
+    return winding
