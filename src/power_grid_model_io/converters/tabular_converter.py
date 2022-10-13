@@ -96,7 +96,15 @@ class TabularConverter(BaseConverter[TabularData]):
         )
 
     def _parse_data(self, data: TabularData, data_type: str, extra_info: Optional[ExtraInfoLookup] = None) -> Dataset:
-
+        """
+        This function parses tabular data and returns power-grid-model data
+        :param data: TabularData, i.e. a dictionary with the components as keys and pd.DataFrames as values, with
+        attribute names as columns and their values in the table
+        :param data_type: power-grid-model data type, i.e. "input" or "update"
+        :param extra_info: an optional dictionary where extra component info (that can't be specified in
+        power-grid-model data) can be specified
+        :return: a power-grid-model dataset, i.e. a dictionary as {component: np.ndarray}
+        """
         # Apply units and substitutions to the data. Note that the conversions are 'lazy', i.e. the units and
         # substitutions will be applied the first time .get_column(table, field) is called.
         if self._units is not None:

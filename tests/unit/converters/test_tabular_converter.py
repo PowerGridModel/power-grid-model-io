@@ -3,14 +3,13 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from pathlib import Path
-
-import pandas as pd
-from power_grid_model import initialize_array
-from power_grid_model.data_types import SingleDataset
 from typing import Optional, Tuple
 from unittest.mock import MagicMock
 
+import pandas as pd
 import pytest
+from power_grid_model import initialize_array
+from power_grid_model.data_types import SingleDataset
 
 from power_grid_model_io.converters.tabular_converter import COL_REF_RE, TabularConverter
 from power_grid_model_io.data_types import TabularData
@@ -70,7 +69,9 @@ def pgm_input_data():
 
 @pytest.fixture
 def tabular_data():
-    nodes = pd.DataFrame(data=[[1, 10.5], [2, 0.4]], columns=pd.MultiIndex.from_tuples([("id_number", ""), ("u_nom", "kV")]))
+    nodes = pd.DataFrame(
+        data=[[1, 10.5], [2, 0.4]], columns=pd.MultiIndex.from_tuples([("id_number", ""), ("u_nom", "kV")])
+    )
     lines = pd.DataFrame(data=[[1, 100], [2, 200]], columns=["id_number", "from_node_side"])
     tabular_data = TabularData(nodes=nodes, lines=lines)
     return tabular_data
@@ -147,6 +148,7 @@ def test_converter__serialize_data(converter: TabularConverter, pgm_input_data: 
         converter._serialize_data(data=[])  # type: ignore
     # TODO: serialize_data expects pgm Dataset, TabularData, expects pd.DataFrame
     # tabular_data = converter._serialize_data(data=pgm_input_data)
+
 
 def test_converter__id_lookup():
     # TODO
