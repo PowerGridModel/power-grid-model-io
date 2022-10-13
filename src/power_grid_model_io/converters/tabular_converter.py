@@ -194,7 +194,7 @@ class TabularConverter(BaseConverter[TabularData]):
                 data=data, table=table, component=component, col_def=col_def, extra_info=extra_info
             )
         elif attr.endswith("node"):
-            # Atributes that end with "node" are refences to nodes. Currently this is the only type of reference
+            # Attributes that end with "node" are references to nodes. Currently, this is the only type of reference
             # that is supported.
             attr_data = self._handle_node_ref_column(data=data, table=table, col_def=col_def)
         elif attr.endswith("object"):
@@ -282,7 +282,7 @@ class TabularConverter(BaseConverter[TabularData]):
         if extra_info is not None:
             raise NotImplementedError("Extra info can not (yet) be stored for tabular data")
         if isinstance(data, list):
-            raise NotImplementedError("Batch data can not(yet) be stored for tabular data")
+            raise NotImplementedError("Batch data can not (yet) be stored for tabular data")
         return TabularData(**data)
 
     def _id_lookup(self, component: str, row: pd.Series) -> int:

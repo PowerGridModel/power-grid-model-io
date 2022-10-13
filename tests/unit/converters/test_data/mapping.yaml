@@ -1,9 +1,12 @@
 grid:
-  Nodes:
+  nodes:
     node:
-      id: Number
-      u_rated: Unom
-      extra: ID
+      id: id_number
+      u_rated: u_nom
+  lines:
+    line:
+      id: id_number
+      from_node: from_node_side
 
 units:
   A:
@@ -13,6 +16,6 @@ units:
     kV: 1000.0
 
 substitutions:
-  Tap side:
-    1: 0
-    2: 1
+  from_node_side:
+    100: 1
+    200: 2
