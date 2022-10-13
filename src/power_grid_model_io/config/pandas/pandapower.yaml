@@ -18,7 +18,7 @@ grid:
           power_grid_model_io.utils.filters.multiply:
             - r_ohm_per_km
             - length_km
-        x1: 
+        x1:
           power_grid_model_io.utils.filters.multiply:
             - x_ohm_per_km
             - length_km
@@ -31,9 +31,9 @@ grid:
           power_grid_model_io.utils.filters.multiply:
             - r0_ohm_per_km
             - length_km
-        x0: 
+        x0:
           power_grid_model_io.utils.filters.multiply:
-            - x0_ohm_per_km 
+            - x0_ohm_per_km
             - length_km
         c0:
           power_grid_model_io.utils.filters.multiply:
@@ -75,7 +75,7 @@ grid:
         g1:
           power_grid_model_io.utils.filters.positive_sequence_conductance:
             - p_mw
-            - bus!vn_kv[bus!index=shunt!bus]  
+            - bus!vn_kv[bus!index=shunt!bus]
         b1:
           power_grid_model_io.utils.filters.positive_sequence_conductance:
             - q_mvar
@@ -115,23 +115,23 @@ grid:
             - s_n
         i0: i0_percent
         p0: pfe_kw
-        winding_from: 
+        winding_from:
           power_grid_model_io.utils.filters.get_transformer_winding_from:
             - vector_group
         winding_to:
           power_grid_model_io.utils.filters.get_transformer_winding_to:
             - vector_group
-        clock: 
+        clock:
           power_grid_model_io.utils.filters.get_transformer_clock:
             - shift_degree
         tap_side:
           power_grid_model_io.utils.filters.get_transformer_tap_side:
-            - tap_side 
+            - tap_side
         tap_pos: tap_pos
         tap_min: tap_min
         tap_max: tap_max
         tap_nom: tap_neutral
-        tap_size: 
+        tap_size:
           power_grid_model_io.utils.filters.get_transformer_tap_size:
             - vn_hv_kv
             - vn_lv_kv
@@ -162,7 +162,7 @@ grid:
             - min(sn_2, sn_3)
         i0: i0_percent
         p0: pfe_kw
-        winding_1: 
+        winding_1:
           power_grid_model_io.utils.filters.get_3wdgtransformer_winding_1:
             - vector_group
         winding_2:
@@ -180,7 +180,7 @@ grid:
         tap_min: tap_min
         tap_max: tap_max
         tap_nom: tap_neutral
-        tap_size: 
+        tap_size:
           power_grid_model_io.utils.filters.get_3wdgtransformer_tap_size:
             - vn_hv_kv
             - vn_mv_kv
@@ -194,6 +194,6 @@ substitutions:
   trafo3w.tap_side:
     - "hv": 0
     - "mv": 1
-    - "lv": 2 
-  
+    - "lv": 2
+
 

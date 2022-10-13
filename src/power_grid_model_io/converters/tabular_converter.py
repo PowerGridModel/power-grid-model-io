@@ -328,6 +328,8 @@ class TabularConverter(BaseConverter[TabularData]):
         for col_name in columns:
             if col_name in sheet:
                 return pd.DataFrame(data.get_column(table_name=table, column_name=col_name))
+            if col_name == "index":
+                return pd.DataFrame(data[table].index, columns=("index",))
 
         try:  # Maybe it is not a column name, but a float value like 'inf', let's try to convert the string to a float
             const_value = float(col_def)

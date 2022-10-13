@@ -25,7 +25,7 @@ pp_converter = PandaPowerConverter()
 input_data, extra_info = pp_converter.load_input_data(pp_data)
 
 # Store the source data in JSON format
-converter = PgmJsonConverter(destination_file="pp_input.json")
+converter = PgmJsonConverter(destination_file="data/pandapower/example_simple_input.json")
 converter.save(data=input_data, extra_info=extra_info)
 
 # Perform power flow calculation
@@ -33,5 +33,5 @@ grid = PowerGridModel(input_data=input_data)
 output_data = grid.calculate_power_flow()
 
 # Store the result data in JSON format
-converter = PgmJsonConverter(destination_file="pp_output.json")
+converter = PgmJsonConverter(destination_file="data/pandapower/example_simple_output.json")
 converter.save(data=output_data, extra_info=extra_info)
