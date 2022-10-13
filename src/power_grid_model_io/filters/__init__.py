@@ -10,8 +10,17 @@ import math
 from typing import Any, Optional, TypeVar, cast
 
 import numpy as np
+from power_grid_model import WindingType
 
 T = TypeVar("T")
+
+WINDING_TYPES = {
+    "Y": WindingType.wye,
+    "YN": WindingType.wye_n,
+    "D": WindingType.delta,
+    "Z": WindingType.zigzag,
+    "ZN": WindingType.zigzag_n,
+}
 
 
 def multiply(*args: float):
@@ -58,3 +67,16 @@ def complex_inverse_imaginary_part(real: float, imag: float) -> float:
     Return the imaginary part of the inverse of a complex number
     """
     return (1.0 / (real + 1j * imag)).imag
+
+
+def get_winding(winding: str, neutral_grounding: bool = True) -> WindingType:
+    """
+    Return the winding type as an enum value, based on the string representation
+    """
+    winding_type = WINDING_TYPES[winding.upper()]
+    if not neutral_grounding:
+        if winding_type == WindingType.wye_n:
+            return WindingType.wye
+        if winding_type == WindingType.zigzag_n:
+            return WindingType.zigzag
+    return winding_type
