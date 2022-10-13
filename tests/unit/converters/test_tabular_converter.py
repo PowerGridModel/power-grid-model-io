@@ -75,3 +75,78 @@ def test_converter__parse_data(converter: TabularConverter):
     data.set_substitutions.assert_called_once()
 
     # TODO test other functionalities of _parse_data
+
+
+def test_converter__convert_table_to_component():
+    # TODO
+    pass
+
+
+def test_converter__convert_col_def_to_attribute():
+    # TODO
+    pass
+
+
+def test_converter__handle_column():
+    # TODO
+    pass
+
+
+def test_converter__handle_id_column():
+    # TODO
+    pass
+
+
+def test_converter__handle_extra_info():
+    # TODO
+    pass
+
+
+def test_converter__handle_node_ref_column():
+    # TODO
+    pass
+
+
+def test_converter__merge_pgm_data():
+    # TODO
+    pass
+
+
+def test_converter__serialize_data():
+    # TODO
+    pass
+
+
+def test_converter__id_lookup():
+    # TODO
+    pass
+
+
+def test_converter__parse_col_def():
+    # TODO
+    pass
+
+
+def test_converter__parse_col_def_const():
+    # TODO
+    pass
+
+
+def test_converter__parse_col_def_column_name():
+    # TODO
+    pass
+
+
+def test_converter__parse_col_def_column_reference():
+    # TODO
+    pass
+
+
+def test_converter__parse_col_def_function():
+    # TODO
+    pass
+
+
+def test_converter__parse_col_def_composite():
+    # TODO
+    pass
