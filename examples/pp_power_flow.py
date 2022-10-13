@@ -16,8 +16,9 @@ from power_grid_model_io.data_types.tabular_data import TabularData
 structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(logging.INFO))
 
 # Source data
-net = pandapower.networks.example_simple()
-pp_data = TabularData(**{component: net[component] for component in net if isinstance(net[component], pd.DataFrame)})
+pp_net = pandapower.networks.example_simple()
+pp_net_dict = {component: pp_net[component] for component in pp_net if isinstance(pp_net[component], pd.DataFrame)}
+pp_data = TabularData(**pp_net_dict)
 
 # Convert Vision file
 pp_converter = PandaPowerConverter()
