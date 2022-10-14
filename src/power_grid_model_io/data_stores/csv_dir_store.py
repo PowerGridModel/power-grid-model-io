@@ -6,7 +6,7 @@ CSV Directory Store
 """
 
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List
 
 import pandas as pd
 
@@ -26,17 +26,24 @@ class CsvDirStore(BaseDataStore[TabularData]):
 
     def __init__(self, dir_path: Path, **csv_kwargs):
         super().__init__()
-        self._dir_path = dir_path
+        self._dir_path = Path(dir_path)
         self._csv_kwargs: Dict[str, Any] = csv_kwargs
         self._header_rows: List[int] = [0]
 
     def load(self) -> TabularData:
         """
-        Load all CSV files in a directory as tabular data.
+        Create a lazy loader for all CSV files in a directory and store them in a TabularData instance.
         """
-        data: Dict[str, pd.DataFrame] = {}
+
+        def lazy_csv_loader(csv_path: Path) -> Callable[[], pd.DataFrame]:
+            def csv_loader():
+                return pd.read_csv(filepath_or_buffer=csv_path, header=self._header_rows, **self._csv_kwargs)
+
+            return csv_loader
+
+        data: Dict[str, Callable[[], pd.DataFrame]] = {}
         for path in self._dir_path.glob("*.csv"):
-            data[path.stem] = pd.read_csv(filepath_or_buffer=path, header=self._header_rows, **self._csv_kwargs)
+            data[path.stem] = lazy_csv_loader(path)
 
         return TabularData(**data)
 
