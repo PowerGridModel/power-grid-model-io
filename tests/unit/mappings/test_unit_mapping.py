@@ -61,7 +61,7 @@ def test_set_mapping__invalid_si_to_si_mapping():
         mapping.set_mapping(mapping=units)
 
 
-def test_set_unit_multiplier(units: Units):
+def test_get_unit_multiplier(units: Units):
     # Arrange
     mapping = UnitMapping(mapping=units)
 
