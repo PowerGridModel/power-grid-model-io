@@ -149,6 +149,19 @@ class TabularConverter(BaseConverter[TabularData]):
         attributes: InstanceAttributes,
         extra_info: Optional[ExtraInfoLookup] = None,
     ) -> Optional[np.ndarray]:
+        """
+        This function converts a single table/sheet of TabularData to a power-grid-model input/update array. One table
+        corresponds to one component
+        :param data: The full dataset with tabular data
+        :param data_type: The data type, i.e. "input" or "update"
+        :param table: The name of the table that should be converter
+        :param component: the component for which a power-grid-model array should be made
+        :param attributes: a dictionary with a mapping from the attribute names in the table to the corresponding
+        power-grid-model attribute names
+        :param extra_info: an optional dictionary where extra component info (that can't be specified in
+        power-grid-model data) can be specified
+        :return: returns a power-grid-model structured array for one component
+        """
         if table not in data:
             return None
 

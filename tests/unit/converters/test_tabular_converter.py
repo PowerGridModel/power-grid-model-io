@@ -117,9 +117,18 @@ def test_converter__parse_data(converter: TabularConverter, tabular_data: Tabula
 def test_converter__convert_table_to_component(
     converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
 ):
+    # if table does not exist in data _convert_table_to_component should return None
+    none_data = converter._convert_table_to_component(
+        data=tabular_data_no_units_no_substitutions,
+        data_type="input",
+        table="some_random_table",
+        component="node",
+        attributes={"key": "value"},
+    )
+    assert none_data is None
     # wrong component
     with pytest.raises(KeyError, match="Invalid component type 'dummy' or data type 'input'"):
-        pgm_node_data = converter._convert_table_to_component(
+        converter._convert_table_to_component(
             data=tabular_data_no_units_no_substitutions,
             data_type="input",
             table="nodes",
@@ -128,7 +137,7 @@ def test_converter__convert_table_to_component(
         )
     # wrong data_type
     with pytest.raises(KeyError, match="Invalid component type 'node' or data type 'some_type'"):
-        pgm_node_data = converter._convert_table_to_component(
+        converter._convert_table_to_component(
             data=tabular_data_no_units_no_substitutions,
             data_type="some_type",
             table="nodes",
@@ -137,7 +146,7 @@ def test_converter__convert_table_to_component(
         )
     # no 'id' in attributes
     with pytest.raises(KeyError, match="No mapping for the attribute 'id' for 'nodes'!"):
-        pgm_node_data = converter._convert_table_to_component(
+        converter._convert_table_to_component(
             data=tabular_data_no_units_no_substitutions,
             data_type="input",
             table="nodes",
