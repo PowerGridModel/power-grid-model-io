@@ -59,6 +59,7 @@ cli = [
 
 [project.urls]
 Home-page = "https://github.com/alliander-opensource/power-grid-model-io"
+Documentation = "https://power-grid-model-io.readthedocs.io/en/stable/"
 
 [project.scripts]
 pgm_convert = "power_grid_model_io.cli.convert:app"

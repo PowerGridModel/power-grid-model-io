@@ -24,6 +24,12 @@ data/
 .idea/
 .vscode/
 
+# sphinx builds
+docs/_build
+auto_gen
+docs/make.bat
+docs/Makefile
+
 # docs
 _build/
 _static/
