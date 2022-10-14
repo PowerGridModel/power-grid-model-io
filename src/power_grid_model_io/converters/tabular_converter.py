@@ -157,7 +157,7 @@ class TabularConverter(BaseConverter[TabularData]):
         try:
             pgm_data = initialize_array(data_type=data_type, component_type=component, shape=n_records)
         except KeyError as ex:
-            raise KeyError(f"Invalid component type '{component}'") from ex
+            raise KeyError(f"Invalid component type '{component}' or data type '{data_type}'") from ex
 
         if "id" not in attributes:
             raise KeyError(f"No mapping for the attribute 'id' for '{component}s'!")

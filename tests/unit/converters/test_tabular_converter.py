@@ -77,6 +77,14 @@ def tabular_data():
     return tabular_data
 
 
+@pytest.fixture
+def tabular_data_no_units_no_substitutions():
+    nodes = pd.DataFrame(data=[[1, 10.5e3], [2, 400.0]], columns=["id_number", "u_nom"])
+    lines = pd.DataFrame(data=[[1, 1], [2, 2]], columns=["id_number", "from_node_side"])
+    tabular_data_no_units_no_substitutions = TabularData(nodes=nodes, lines=lines)
+    return tabular_data_no_units_no_substitutions
+
+
 def test_converter__set_mapping_file(converter: TabularConverter):
     with pytest.raises(ValueError, match="Mapping file should be a .yaml file, .txt provided."):
         converter.set_mapping_file(mapping_file=Path("dummy/path.txt"))
@@ -106,9 +114,48 @@ def test_converter__parse_data(converter: TabularConverter, tabular_data: Tabula
     # assert (pgm_input_data["line"]["from_node"] == [0, 1]).all()
 
 
-def test_converter__convert_table_to_component():
-    # TODO
-    pass
+def test_converter__convert_table_to_component(
+    converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
+):
+    # wrong component
+    with pytest.raises(KeyError, match="Invalid component type 'dummy' or data type 'input'"):
+        pgm_node_data = converter._convert_table_to_component(
+            data=tabular_data_no_units_no_substitutions,
+            data_type="input",
+            table="nodes",
+            component="dummy",
+            attributes={"key": "value"},
+        )
+    # wrong data_type
+    with pytest.raises(KeyError, match="Invalid component type 'node' or data type 'some_type'"):
+        pgm_node_data = converter._convert_table_to_component(
+            data=tabular_data_no_units_no_substitutions,
+            data_type="some_type",
+            table="nodes",
+            component="node",
+            attributes={"key": "value"},
+        )
+    # no 'id' in attributes
+    with pytest.raises(KeyError, match="No mapping for the attribute 'id' for 'nodes'!"):
+        pgm_node_data = converter._convert_table_to_component(
+            data=tabular_data_no_units_no_substitutions,
+            data_type="input",
+            table="nodes",
+            component="node",
+            attributes={"key": "value"},
+        )
+
+    node_attributes = {"id": "id_number", "u_rated": "u_nom"}
+    pgm_node_data = converter._convert_table_to_component(
+        data=tabular_data_no_units_no_substitutions,
+        data_type="input",
+        table="nodes",
+        component="node",
+        attributes=node_attributes,
+    )
+    assert len(pgm_node_data) == 2
+    assert (pgm_node_data["id"] == [0, 1]).all()
+    assert (pgm_node_data["u_rated"] == [10.5e3, 400]).all()
 
 
 def test_converter__convert_col_def_to_attribute():
