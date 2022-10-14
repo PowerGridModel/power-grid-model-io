@@ -147,7 +147,7 @@ class TabularConverter(BaseConverter[TabularData]):
         table: str,
         component: str,
         attributes: InstanceAttributes,
-        extra_info: Optional[ExtraInfoLookup],
+        extra_info: Optional[ExtraInfoLookup] = None,
     ) -> Optional[np.ndarray]:
         if table not in data:
             return None
@@ -187,7 +187,7 @@ class TabularConverter(BaseConverter[TabularData]):
         component: str,
         attr: str,
         col_def: Any,
-        extra_info: Optional[ExtraInfoLookup],
+        extra_info: Optional[ExtraInfoLookup] = None,
     ):
         # To avoid mistakes, the attributes in the mapping should exist. There is one extra attribute called
         # 'extra' in which extra information can be captured.
@@ -234,7 +234,7 @@ class TabularConverter(BaseConverter[TabularData]):
         return attr_data.iloc[:, 0]
 
     def _handle_id_column(
-        self, data: TabularData, table: str, component: str, col_def: Any, extra_info: Optional[ExtraInfoLookup]
+        self, data: TabularData, table: str, component: str, col_def: Any, extra_info: Optional[ExtraInfoLookup] = None
     ) -> pd.DataFrame:
 
         attr_data = TabularConverter._parse_col_def(data=data, table=table, col_def=col_def)
@@ -250,7 +250,12 @@ class TabularConverter(BaseConverter[TabularData]):
         return uuids
 
     def _handle_extra_info(
-        self, data: TabularData, table: str, col_def: Any, uuids: np.ndarray, extra_info: Optional[ExtraInfoLookup]
+        self,
+        data: TabularData,
+        table: str,
+        col_def: Any,
+        uuids: np.ndarray,
+        extra_info: Optional[ExtraInfoLookup] = None,
     ) -> None:
         if extra_info is None:
             return
