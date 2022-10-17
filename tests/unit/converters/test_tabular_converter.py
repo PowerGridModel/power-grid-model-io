@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Optional, Tuple
 from unittest.mock import MagicMock
 
+import numpy as np
 import pandas as pd
 import pytest
 from power_grid_model import initialize_array
@@ -62,9 +63,21 @@ def converter():
 
 
 @pytest.fixture
-def pgm_input_data():
+def pgm_node_empty():
     node = initialize_array("input", "node", 2)
     return {"node": node}
+
+
+@pytest.fixture
+def pgm_line_empty():
+    line = initialize_array("input", "line", 2)
+    return {"line": line}
+
+
+@pytest.fixture
+def pgm_power_sensor_empty():
+    power_sensor = initialize_array("input", "sym_power_sensor", 1)
+    return {"power_sensor": power_sensor}
 
 
 @pytest.fixture
@@ -115,7 +128,7 @@ def test_converter__parse_data(converter: TabularConverter, tabular_data: Tabula
 
 
 def test_converter__convert_table_to_component(
-    converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
+        converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
 ):
     # if table does not exist in data _convert_table_to_component should return None
     none_data = converter._convert_table_to_component(
@@ -167,10 +180,73 @@ def test_converter__convert_table_to_component(
     assert (pgm_node_data["u_rated"] == [10.5e3, 400]).all()
 
 
-def test_converter__convert_col_def_to_attribute():
-    # TODO
-    pass
+def test_converter__convert_col_def_to_attribute(converter: TabularConverter,
+                                                 tabular_data_no_units_no_substitutions: TabularData,
+                                                 pgm_node_empty: SingleDataset,
+                                                 pgm_line_empty: SingleDataset,
+                                                 pgm_power_sensor_empty: SingleDataset):
+    with pytest.raises(KeyError, match=r"Could not find attribute 'incorrect_attribute' for 'nodes'. "
+                                       r"\(choose from: id, u_rated\)"):
+        converter._convert_col_def_to_attribute(data=tabular_data_no_units_no_substitutions,
+                                                pgm_data=pgm_node_empty["node"],
+                                                table="nodes",
+                                                component="node",
+                                                attr="incorrect_attribute",
+                                                col_def="id_number")
 
+    # test "id"
+    converter._convert_col_def_to_attribute(data=tabular_data_no_units_no_substitutions,
+                                            pgm_data=pgm_node_empty["node"],
+                                            table="nodes",
+                                            component="node",
+                                            attr="id",
+                                            col_def="id_number")
+    assert len(pgm_node_empty) == 1
+    assert (pgm_node_empty["node"]["id"] == [0, 1]).all()
+
+    # test attr ends with "node"
+    converter._convert_col_def_to_attribute(data=tabular_data_no_units_no_substitutions,
+                                            pgm_data=pgm_line_empty["line"],
+                                            table="lines",
+                                            component="line",
+                                            attr="from_node",
+                                            col_def="from_node_side")
+    assert len(pgm_line_empty) == 1
+    # TODO: fix line below
+    # assert(pgm_line_empty["line"]["from_node"] == [0, 1]).all()
+
+    # test attr ends with "object"
+    with pytest.raises(NotImplementedError, match="dummys are not implemented, because of the 'measured_object' "
+                                                  "reference..."):
+        converter._convert_col_def_to_attribute(data=tabular_data_no_units_no_substitutions,
+                                                pgm_data=pgm_power_sensor_empty["power_sensor"],
+                                                table="dummy",
+                                                component="dummy",
+                                                attr="measured_object",
+                                                col_def="dummy")
+    # TODO: is this error correct? Are sensors not implemented or is it just these attributes?
+
+    # test extra info
+    # converter._convert_col_def_to_attribute(data=tabular_data_no_units_no_substitutions,
+    #                                         pgm_data=pgm_node_empty["node"],
+    #                                         table="nodes",
+    #                                         component="node",
+    #                                         attr="extra",
+    #                                         col_def="u_nom",
+    #                                         extra_info={})
+    # TODO: code crashes on extra_info[i].update, are we expecting the ids to be in extra_info already?
+
+    # test other attr
+    converter._convert_col_def_to_attribute(data=tabular_data_no_units_no_substitutions,
+                                            pgm_data=pgm_node_empty["node"],
+                                            table="nodes",
+                                            component="node",
+                                            attr="u_rated",
+                                            col_def="u_nom")
+    assert len(pgm_node_empty) == 1
+    assert (pgm_node_empty["node"]["u_rated"] == [10500.0, 400.0]).all()
+
+    # TODO test "invalid literal"
 
 def test_converter__handle_column():
     # TODO
@@ -197,9 +273,9 @@ def test_converter__merge_pgm_data():
     pass
 
 
-def test_converter__serialize_data(converter: TabularConverter, pgm_input_data: SingleDataset):
+def test_converter__serialize_data(converter: TabularConverter, pgm_node_empty: SingleDataset):
     with pytest.raises(NotImplementedError, match=r"Extra info can not \(yet\) be stored for tabular data"):
-        converter._serialize_data(data=pgm_input_data, extra_info={})
+        converter._serialize_data(data=pgm_node_empty, extra_info={})
     with pytest.raises(NotImplementedError, match=r"Batch data can not \(yet\) be stored for tabular data"):
         converter._serialize_data(data=[])  # type: ignore
     # TODO: serialize_data expects pgm Dataset, TabularData, expects pd.DataFrame
