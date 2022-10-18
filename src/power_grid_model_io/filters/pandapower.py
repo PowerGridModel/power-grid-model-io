@@ -30,31 +30,31 @@ def get_transformer_clock(shift_degree: float) -> int:
 
 
 def get_transformer_tap_size(
-    high_side_voltage: float, low_side_voltage: float, tap_step_percent: float, tap_side: str
+    high_side_voltage: float, low_side_voltage: float, tap_step_percent: float, tap_side: int
 ) -> float:
     """
     Calculate the tap_size of a transformer
     """
-    if tap_side == "hv":
-        return tap_step_percent * high_side_voltage
-    if tap_side == "lv":
-        return tap_step_percent * low_side_voltage
-    raise ValueError(f"Only tap_side 'lv' and 'hv' are allowed, got {tap_side}.")
+    if tap_side == 0:
+        return (tap_step_percent / 100.0) * high_side_voltage
+    if tap_side == 1:
+        return (tap_step_percent / 100.0) * low_side_voltage
+    raise ValueError(f"Only tap_side 0 and 1 are allowed, got {tap_side}.")
 
 
 def get_3wdgtransformer_tap_size(
-    high_side_voltage: float, med_side_voltage: float, low_side_voltage: float, tap_step_percent: float, tap_side: str
+    high_side_voltage: float, med_side_voltage: float, low_side_voltage: float, tap_step_percent: float, tap_side: int
 ) -> float:
     """
     Calculate the tap_size of a three winding transformer
     """
-    if tap_side == "hv":
-        return tap_step_percent * high_side_voltage
-    if tap_side == "mv":
-        return tap_step_percent * med_side_voltage
-    if tap_side == "lv":
-        return tap_step_percent * low_side_voltage
-    raise ValueError(f"Only tap_side 'lv', 'mv' and 'hv' are allowed, got {tap_side}.")
+    if tap_side == 0:
+        return (tap_step_percent / 100.0) * high_side_voltage
+    if tap_side == 1:
+        return (tap_step_percent / 100.0) * med_side_voltage
+    if tap_side == 2:
+        return (tap_step_percent / 100.0) * low_side_voltage
+    raise ValueError(f"Only tap_side 0, 1 and 2 are allowed, got {tap_side}.")
 
 
 def _split_string(value: str) -> Tuple[str, str]:
@@ -69,7 +69,7 @@ def _split_string(value: str) -> Tuple[str, str]:
 
 def get_transformer_winding_from(vector_group: str) -> WindingType:
     """
-    Extract winding_from of a transfomer
+    Extract winding_from of a transformer
     """
     the_tuple = _split_string(vector_group)
     return get_winding(the_tuple[0])
@@ -115,3 +115,14 @@ def get_3wdgtransformer_winding_3(vector_group: str) -> WindingType:
     """
     the_tuple = _split_string_3wdg(vector_group)
     return get_winding(the_tuple[2])
+
+
+def get_3wdgtransformer_pk(percent: int, apparent_power1: float, apparent_power2: float) -> float:
+    """
+    Calculate pk of a three winding transformer
+    """
+    if apparent_power1 <= apparent_power2:
+        return percent * apparent_power1
+    if apparent_power1 > apparent_power2:
+        return percent * apparent_power2
+    return 0.0

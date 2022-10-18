@@ -109,6 +109,8 @@ class TabularConverter(BaseConverter[TabularData]):
 
         # For each table in the mapping
         for table in self._mapping.tables():
+            if table not in data or data[table].empty:
+                continue
             for component, attributes in self._mapping.instances(table=table):
                 component_data = self._convert_table_to_component(
                     data=data,
@@ -379,6 +381,8 @@ class TabularConverter(BaseConverter[TabularData]):
         for fn_name, sub_def in col_def.items():
             fn_ptr = get_function(fn_name)
             col_data = TabularConverter._parse_col_def(data=data, table=table, col_def=sub_def)
+            if col_data.empty:
+                raise ValueError(f"Cannot apply function {fn_name} to an empty DataFrame")
             col_data = col_data.apply(lambda row, fn=fn_ptr: fn(*row), axis=1, raw=True)
             data_frame.append(col_data)
         return pd.concat(data_frame, axis=1)

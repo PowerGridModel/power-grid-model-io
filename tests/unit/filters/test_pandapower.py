@@ -8,6 +8,7 @@ from power_grid_model.enum import WindingType
 from power_grid_model_io.filters.pandapower import (
     _split_string,
     _split_string_3wdg,
+    get_3wdgtransformer_pk,
     get_3wdgtransformer_tap_size,
     get_3wdgtransformer_winding_1,
     get_3wdgtransformer_winding_2,
@@ -21,10 +22,10 @@ from power_grid_model_io.filters.pandapower import (
 
 
 def test_positive_sequence_conductance():
-    assert positive_sequence_conductance(450.3, 10) == 4.503
-    assert positive_sequence_conductance(1000, 10) == 10
-    assert positive_sequence_conductance(20.2, 10) == 0.20199999999999999
-    assert positive_sequence_conductance(225.3001, 15.01) == 1
+    assert positive_sequence_conductance(450.3, 10) == pytest.approx(4.503)
+    assert positive_sequence_conductance(1000, 10) == pytest.approx(10)
+    assert positive_sequence_conductance(20.2, 10) == pytest.approx(0.202)
+    assert positive_sequence_conductance(225.3001, 15.01) == pytest.approx(1)
     with pytest.raises(TypeError):
         positive_sequence_conductance("20.2", "10")  # type: ignore
     with pytest.raises(TypeError):
@@ -43,25 +44,26 @@ def test_get_transformer_clock():
 
 
 def test_get_transformer_tap_size():
-    assert get_transformer_tap_size(10, 9, 36, "hv") == 360
-    assert get_transformer_tap_size(10, 9, 30, "lv") == 270
-    assert get_transformer_tap_size(20, 10, 55.5, "lv") == 555
-    assert get_transformer_tap_size(100, 101, 35, "hv") == 3500
+    assert get_transformer_tap_size(10, 9, 36, 0) == pytest.approx(3.60)
+    assert get_transformer_tap_size(10, 9, 30, 1) == pytest.approx(2.70)
+    assert get_transformer_tap_size(20, 10, 55.5, 1) == pytest.approx(5.55)
+    assert get_transformer_tap_size(100, 101, 35, 0) == pytest.approx(35.00)
     with pytest.raises(TypeError):
-        get_transformer_tap_size("10", "20", "35", "hv")  # type: ignore
+        get_transformer_tap_size("10", "20", "35", 0)  # type: ignore
     with pytest.raises(ValueError):
-        get_transformer_tap_size(10, 20, 35, "foo")
+        get_transformer_tap_size(10, 20, 35, 3)
 
 
 def test_get_3wdgtransformer_tap_size():
-    assert get_3wdgtransformer_tap_size(10, 9, 60, 36, "hv") == 360
-    assert get_3wdgtransformer_tap_size(10, 54, 9, 30, "lv") == 270
-    assert get_3wdgtransformer_tap_size(20, 13, 10, 55.5, "lv") == 555
-    assert get_3wdgtransformer_tap_size(100, 50, 101, 35, "hv") == 3500
+    assert get_3wdgtransformer_tap_size(10, 9, 60, 36, 0) == pytest.approx(3.60)
+    assert get_3wdgtransformer_tap_size(10, 54, 9, 30, 2) == pytest.approx(2.70)
+    assert get_3wdgtransformer_tap_size(20, 13, 10, 55.5, 2) == pytest.approx(5.55)
+    assert get_3wdgtransformer_tap_size(100, 50, 101, 35, 0) == pytest.approx(35.00)
+    assert get_3wdgtransformer_tap_size(100, 50, 101, 35, 1) == pytest.approx(17.50)
     with pytest.raises(TypeError):
-        get_3wdgtransformer_tap_size("10", "20", "30", "35", "hv")  # type: ignore
+        get_3wdgtransformer_tap_size("10", "20", "30", "35", 0)  # type: ignore
     with pytest.raises(ValueError):
-        get_transformer_tap_size(10, 20, 35, "foo")
+        get_transformer_tap_size(10, 20, 35, 4)
 
 
 def test__split_string():
@@ -152,3 +154,12 @@ def test_get_3wdgtransformer_winding_3():
         get_3wdgtransformer_winding_3(14.276)  # type: ignore
     with pytest.raises(ValueError):
         get_3wdgtransformer_winding_3("XNd")
+
+
+def test_get_3wdgtransformer_pk():
+    assert get_3wdgtransformer_pk(14, 70, 20) == pytest.approx(280)
+    assert get_3wdgtransformer_pk(10, 11.5, 54.35) == pytest.approx(115)
+    assert get_3wdgtransformer_pk(200, 65.42, 30.5) == pytest.approx(6100)
+    assert get_3wdgtransformer_pk(10, 15.1564, 91.23) == pytest.approx(151.564)
+    with pytest.raises(TypeError):
+        get_3wdgtransformer_pk("gsd", "rsgz", "dxgh")  # type: ignore
