@@ -18,17 +18,23 @@ structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(logging.
 
 # Source data
 pp_net = pandapower.networks.example_simple()
-for col in pp_net["trafo3w"].columns:
-    print(col)
 print(pp_net)
-pp_net_dict = {component: pp_net[component] for component in pp_net if isinstance(pp_net[component], pd.DataFrame)}
+
+pp_net_dict = {
+    component: pp_net[component]
+    for component in pp_net
+    if isinstance(pp_net[component], pd.DataFrame) and not pp_net[component].empty
+}
 pp_data = TabularData(**pp_net_dict)
+pp_std_types = pp_net.std_types
 
 # Convert Vision file
-pp_converter = PandaPowerConverter()
+pp_converter = PandaPowerConverter(std_types=pp_std_types)
 input_data, extra_info = pp_converter.load_input_data(pp_data)
 
-print(errors_to_string(validate_input_data(input_data), details=True, id_lookup=extra_info))
+# Validate and display validation results
+id_lookup = {idx: "{table:s}.{index:s}".format(**obj) for idx, obj in extra_info.items()}
+print(errors_to_string(validate_input_data(input_data), details=True, id_lookup=id_lookup))
 
 # Store the source data in JSON format
 converter = PgmJsonConverter(destination_file="data/pandapower/example_simple_input.json")

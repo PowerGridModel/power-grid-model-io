@@ -222,7 +222,7 @@ class TabularConverter(BaseConverter[TabularData]):
             raise
 
     def _handle_column(self, data: TabularData, table: str, component: str, attr: str, col_def: Any) -> pd.DataFrame:
-        attr_data = TabularConverter._parse_col_def(data=data, table=table, col_def=col_def)
+        attr_data = self._parse_col_def(data=data, table=table, col_def=col_def)
         if len(attr_data.columns) != 1:
             raise ValueError(f"DataFrame for {component}.{attr} should contain a single column ({attr_data.columns})")
         return attr_data.iloc[:, 0]
@@ -231,7 +231,7 @@ class TabularConverter(BaseConverter[TabularData]):
         self, data: TabularData, table: str, component: str, col_def: Any, extra_info: Optional[ExtraInfoLookup]
     ) -> pd.DataFrame:
 
-        attr_data = TabularConverter._parse_col_def(data=data, table=table, col_def=col_def)
+        attr_data = self._parse_col_def(data=data, table=table, col_def=col_def)
         uuids = attr_data.apply(lambda row: self._id_lookup(component, row), axis=1)
 
         if extra_info is not None:
@@ -249,12 +249,12 @@ class TabularConverter(BaseConverter[TabularData]):
         if extra_info is None:
             return
 
-        extra = TabularConverter._parse_col_def(data=data, table=table, col_def=col_def).to_dict(orient="records")
+        extra = self._parse_col_def(data=data, table=table, col_def=col_def).to_dict(orient="records")
         for i, xtr in zip(uuids, extra):
             extra_info[i].update({k: v for k, v in xtr.items() if not isinstance(v, float) or not np.isnan(v)})
 
     def _handle_node_ref_column(self, data: TabularData, table: str, col_def: Any) -> pd.DataFrame:
-        attr_data = TabularConverter._parse_col_def(data=data, table=table, col_def=col_def)
+        attr_data = self._parse_col_def(data=data, table=table, col_def=col_def)
         attr_data = attr_data.apply(lambda row: self._id_lookup("node", row), axis=1)
         return attr_data
 
@@ -274,7 +274,7 @@ class TabularConverter(BaseConverter[TabularData]):
             if len(data_set) == 1:
                 merged[component_name] = data_set[0]
 
-            # If there are numtiple arrays, concatenate them
+            # If there are multiple arrays, concatenate them
             elif len(data_set) > 1:
                 merged[component_name] = np.concatenate(data_set)
 
@@ -292,33 +292,30 @@ class TabularConverter(BaseConverter[TabularData]):
         key = component + ":" + ",".join(f"{k}={v}" for k, v in data.items())
         return self._lookup(item={"component": component, "row": data}, key=key)
 
-    @staticmethod
-    def _parse_col_def(data: TabularData, table: str, col_def: Any) -> pd.DataFrame:
+    def _parse_col_def(self, data: TabularData, table: str, col_def: Any) -> pd.DataFrame:
         """
         Interpret the column definition and extract/convert/create the data as a pandas DataFrame.
         """
         if isinstance(col_def, (int, float)):
-            return TabularConverter._parse_col_def_const(data=data, table=table, col_def=col_def)
+            return self._parse_col_def_const(data=data, table=table, col_def=col_def)
         if isinstance(col_def, str):
             if COL_REF_RE.fullmatch(col_def) is not None:
-                return TabularConverter._parse_col_def_column_reference(data=data, table=table, col_def=col_def)
-            return TabularConverter._parse_col_def_column_name(data=data, table=table, col_def=col_def)
+                return self._parse_col_def_column_reference(data=data, table=table, col_def=col_def)
+            return self._parse_col_def_column_name(data=data, table=table, col_def=col_def)
         if isinstance(col_def, dict):
-            return TabularConverter._parse_col_def_function(data=data, table=table, col_def=col_def)
+            return self._parse_col_def_function(data=data, table=table, col_def=col_def)
         if isinstance(col_def, list):
-            return TabularConverter._parse_col_def_composite(data=data, table=table, col_def=col_def)
+            return self._parse_col_def_composite(data=data, table=table, col_def=col_def)
         raise TypeError(f"Invalid column definition: {col_def}")
 
-    @staticmethod
-    def _parse_col_def_const(data: TabularData, table: str, col_def: Union[int, float]) -> pd.DataFrame:
+    def _parse_col_def_const(self, data: TabularData, table: str, col_def: Union[int, float, str]) -> pd.DataFrame:
         """
         Create a single column pandas DataFrame containing the const value.
         """
-        assert isinstance(col_def, (int, float))
+        assert isinstance(col_def, (int, float, str))
         return pd.DataFrame([col_def] * len(data[table]))
 
-    @staticmethod
-    def _parse_col_def_column_name(data: TabularData, table: str, col_def: str) -> pd.DataFrame:
+    def _parse_col_def_column_name(self, data: TabularData, table: str, col_def: str) -> pd.DataFrame:
         """
         Extract a column from the data. If the column doesn't exist, check if the col_def is a special float value,
         like 'inf'. If that's the case, create a single column pandas DataFrame containing the const value.
@@ -340,10 +337,11 @@ class TabularConverter(BaseConverter[TabularData]):
             columns_str = " and ".join(f"'{col_name}'" for col_name in columns)
             raise KeyError(f"Could not find column {columns_str} on sheet '{table}'")
 
-        return TabularConverter._parse_col_def_const(data=data, table=table, col_def=const_value)
+        return self._parse_col_def_const(data=data, table=table, col_def=const_value)
 
-    @staticmethod
-    def _parse_col_def_column_reference(data: TabularData, table: str, col_def: str) -> pd.DataFrame:
+    def _parse_col_def_column_reference(self, data: TabularData, table: str, col_def: str) -> pd.DataFrame:
+        # pylint: disable=too-many-locals
+
         """
         Find and extract a column from a different table.
         """
@@ -363,15 +361,14 @@ class TabularConverter(BaseConverter[TabularData]):
                 f"{other_table}!{value_col_name}[{other_table}!{{id_column}}={table}!{{ref_column}}] "
                 f"or simply {other_table}!{value_col_name}[{{id_column}}={{ref_column}}]"
             )
-        ref_column = TabularConverter._parse_col_def_column_name(data=data, table=table, col_def=ref_col_name)
-        id_column = TabularConverter._parse_col_def_column_name(data=data, table=other_table, col_def=id_col_name)
-        val_column = TabularConverter._parse_col_def_column_name(data=data, table=other_table, col_def=value_col_name)
+        ref_column = self._parse_col_def_column_name(data=data, table=table, col_def=ref_col_name)
+        id_column = self._parse_col_def_column_name(data=data, table=other_table, col_def=id_col_name)
+        val_column = self._parse_col_def_column_name(data=data, table=other_table, col_def=value_col_name)
         other = pd.concat([id_column, val_column], axis=1)
         result = ref_column.merge(other, how="left", left_on=ref_col_name, right_on=id_col_name)
         return result[value_col_name]
 
-    @staticmethod
-    def _parse_col_def_function(data: TabularData, table: str, col_def: Dict[str, str]) -> pd.DataFrame:
+    def _parse_col_def_function(self, data: TabularData, table: str, col_def: Dict[str, str]) -> pd.DataFrame:
         """
         Import the function by name and apply it to each row. The column definition may contain multiple functions,
         a DataFrame with one column per function will be returned.
@@ -379,19 +376,21 @@ class TabularConverter(BaseConverter[TabularData]):
         assert isinstance(col_def, dict)
         data_frame = []
         for fn_name, sub_def in col_def.items():
-            fn_ptr = get_function(fn_name)
-            col_data = TabularConverter._parse_col_def(data=data, table=table, col_def=sub_def)
+            if fn_name.startswith("self."):
+                fn_ptr = getattr(self, fn_name.split(".", maxsplit=1).pop())
+            else:
+                fn_ptr = get_function(fn_name)
+            col_data = self._parse_col_def(data=data, table=table, col_def=sub_def)
             if col_data.empty:
                 raise ValueError(f"Cannot apply function {fn_name} to an empty DataFrame")
             col_data = col_data.apply(lambda row, fn=fn_ptr: fn(*row), axis=1, raw=True)
             data_frame.append(col_data)
         return pd.concat(data_frame, axis=1)
 
-    @staticmethod
-    def _parse_col_def_composite(data: TabularData, table: str, col_def: list) -> pd.DataFrame:
+    def _parse_col_def_composite(self, data: TabularData, table: str, col_def: list) -> pd.DataFrame:
         """
         Select multiple columns (each is created from a column definition) and return them as a new DataFrame.
         """
         assert isinstance(col_def, list)
-        columns = [TabularConverter._parse_col_def(data=data, table=table, col_def=sub_def) for sub_def in col_def]
+        columns = [self._parse_col_def(data=data, table=table, col_def=sub_def) for sub_def in col_def]
         return pd.concat(columns, axis=1)

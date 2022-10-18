@@ -92,12 +92,14 @@ grid:
           - sn_mva
       i0: i0_percent
       p0: pfe_kw
-      #winding_from:
-      #  power_grid_model_io.filters.pandapower.get_transformer_winding_from:
-      #    - vector_group | std_type
-      #winding_to:
-      #  power_grid_model_io.filters.pandapower.get_transformer_winding_to:
-      #    - vector_group | std_type
+      winding_from:
+        power_grid_model_io.filters.pandapower.get_transformer_winding_from:
+          self.get_trafo_vector_group:
+            - vector_group | std_type
+      winding_to:
+        power_grid_model_io.filters.pandapower.get_transformer_winding_to:
+          self.get_trafo_vector_group:
+            - vector_group | std_type
       clock:
         power_grid_model_io.filters.pandapower.get_transformer_clock:
           - shift_degree
