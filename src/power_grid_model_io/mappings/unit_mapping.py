@@ -5,12 +5,12 @@
 Unit mapping helper class
 """
 
-from typing import Dict, Set, Tuple
+from typing import Dict, Optional, Set, Tuple
 
 import structlog
 
 #            si-unit   unit factor
-Units = Dict[str, Dict[str, float]]
+Units = Dict[str, Optional[Dict[str, float]]]
 
 
 class UnitMapping:
@@ -26,11 +26,11 @@ class UnitMapping:
      }
     """
 
-    def __init__(self, mapping: Units):
+    def __init__(self, mapping: Optional[Units] = None):
         self._log = structlog.get_logger(type(self).__name__)
         self._si_units: Set[str] = set()
         self._mapping: Dict[str, Tuple[float, str]] = {}
-        self.set_mapping(mapping)
+        self.set_mapping(mapping=mapping if mapping is not None else {})
 
     def set_mapping(self, mapping: Units):
         """
@@ -52,12 +52,15 @@ class UnitMapping:
                 if unit in self._mapping:
                     multiplier_, si_unit_ = self._mapping[unit]
                     raise ValueError(
-                        f"Multiple mapping for {unit}; 1 {unit} = {multiplier_} {si_unit_} = {multiplier} {si_unit}"
+                        f"Multiple unit definitions for '{unit}': "
+                        f"1{unit} = {multiplier_}{si_unit_} = {multiplier}{si_unit}"
                     )
                 self._mapping[unit] = (multiplier, si_unit)
                 if unit == si_unit:
                     if multiplier != 1.0:
-                        raise ValueError(f"Invalid mapping for {unit}; 1 {unit} = {multiplier} {si_unit}")
+                        raise ValueError(
+                            f"Invalid unit definition for '{unit}': 1{unit} cannot be {multiplier}{si_unit}"
+                        )
                     continue
                 self._mapping[unit] = (multiplier, si_unit)
         self._log.debug(
