@@ -49,7 +49,14 @@ class TabularData:
         """
         Select a column from a table, while applying unit conversions and value substitutions
         """
+
         table_data = self._data[table_name]
+
+        # If the index 'column' is requested, but no column called 'index' exist,
+        # return the index of the dataframe as if it were an actual column.
+        if column_name == "index" and not column_name in table_data:
+            pd.DataFrame(table_data.index, columns=("index",))
+
         column_data = table_data[column_name]
 
         # If unit information is available, convert the unit

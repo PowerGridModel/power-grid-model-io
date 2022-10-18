@@ -218,7 +218,7 @@ class TabularConverter(BaseConverter[TabularData]):
         except ValueError as ex:
             if "invalid literal" in str(ex) and isinstance(col_def, str):
                 # pylint: disable=raise-missing-from
-                raise ValueError(f"Possibly missing enum value for '{col_def}' column on '{table}' sheet: {ex}")
+                raise ValueError(f"Possibly missing enum value for '{col_def}' column on '{table}' table: {ex}")
             raise
 
     def _handle_column(self, data: TabularData, table: str, component: str, attr: str, col_def: Any) -> pd.DataFrame:
@@ -321,21 +321,19 @@ class TabularConverter(BaseConverter[TabularData]):
         like 'inf'. If that's the case, create a single column pandas DataFrame containing the const value.
         """
         assert isinstance(col_def, str)
-        sheet = data[table]
+        table_data = data[table]
 
         columns = [col_name.strip() for col_name in col_def.split("|")]
         for col_name in columns:
-            if col_name in sheet:
+            if col_name in table_data:
                 return pd.DataFrame(data.get_column(table_name=table, column_name=col_name))
-            if col_name == "index":
-                return pd.DataFrame(data[table].index, columns=("index",))
 
         try:  # Maybe it is not a column name, but a float value like 'inf', let's try to convert the string to a float
             const_value = float(col_def)
         except ValueError:
             # pylint: disable=raise-missing-from
             columns_str = " and ".join(f"'{col_name}'" for col_name in columns)
-            raise KeyError(f"Could not find column {columns_str} on sheet '{table}'")
+            raise KeyError(f"Could not find column {columns_str} on table '{table}'")
 
         return self._parse_col_def_const(data=data, table=table, col_def=const_value)
 
@@ -349,7 +347,7 @@ class TabularConverter(BaseConverter[TabularData]):
         match = COL_REF_RE.fullmatch(col_def)
         if match is None:
             raise ValueError(
-                f"Invalid column reference '{col_def}' " "(should be 'OtherSheet!ValueColumn[IdColumn=RefColumn])"
+                f"Invalid column reference '{col_def}' " "(should be 'OtherTable!ValueColumn[IdColumn=RefColumn])"
             )
         other_table, value_col_name, _, other_table_, id_col_name, _, this_table_, ref_col_name = match.groups()
         if (other_table_ is not None and other_table_ != other_table) or (
