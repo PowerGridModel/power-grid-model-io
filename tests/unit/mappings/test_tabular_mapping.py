@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from pytest import fixture
+from pytest import fixture, raises
 
 from power_grid_model_io.mappings.tabular_mapping import TabularMapping
 
@@ -39,7 +39,6 @@ def mapping() -> TabularMapping:
 
 
 def test_tables(mapping: TabularMapping):
-
     # Act
     actual = list(mapping.tables())
 
@@ -49,7 +48,6 @@ def test_tables(mapping: TabularMapping):
 
 
 def test_instances(mapping: TabularMapping):
-
     # Act
     actual = list(mapping.instances(table="Generator"))
 
@@ -60,3 +58,12 @@ def test_instances(mapping: TabularMapping):
         ("node", {"id": "TO_NODE_ID"}),
     ]
     assert actual == expected
+
+
+def test_instances__exception():
+    # Arrange
+    mapping = TabularMapping({"Nodes": [{"node": {"id": "ID"}}]})  # type: ignore
+
+    # Act and Assert
+    with raises(TypeError):
+        next(mapping.instances(table="Nodes"))
