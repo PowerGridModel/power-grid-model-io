@@ -26,7 +26,7 @@ class PandaPowerConverter(TabularConverter):
 
         row_dict = {}
         for key, value in row.to_dict().items():
-            if key.endswith("_bus"):
+            if key == "bus" or key.endswith("_bus"):
                 key = "index"
             row_dict[key] = value
 
