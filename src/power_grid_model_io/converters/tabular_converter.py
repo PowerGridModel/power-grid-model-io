@@ -270,7 +270,7 @@ class TabularConverter(BaseConverter[TabularData]):
                 raise ValueError(f"Possibly missing enum value for '{col_def}' column on '{table}' sheet: {ex}")
             raise
 
-    def _handle_column(self, data: TabularData, table: str, component: str, attr: str, col_def: Any) -> pd.DataFrame:
+    def _handle_column(self, data: TabularData, table: str, component: str, attr: str, col_def: Any) -> pd.Series:
         attr_data = TabularConverter._parse_col_def(data=data, table=table, col_def=col_def)
         if len(attr_data.columns) != 1:
             raise ValueError(f"DataFrame for {component}.{attr} should contain a single column ({attr_data.columns})")

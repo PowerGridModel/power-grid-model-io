@@ -277,9 +277,15 @@ def test_converter__convert_col_def_to_attribute(
     # TODO test "invalid literal"
 
 
-def test_converter__handle_column():
-    # TODO
-    pass
+def test_converter__handle_column(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
+    attr_data = converter._handle_column(
+        data=tabular_data_no_units_no_substitutions, table="nodes", component="node", attr="u_rated", col_def="u_nom"
+    )
+    assert isinstance(attr_data, pd.Series)
+    assert len(attr_data) == 2
+    assert (attr_data == pd.Series([10500.0, 400.0])).all()
+
+    # TODO: test error for more columns
 
 
 def test_converter__handle_id_column():
