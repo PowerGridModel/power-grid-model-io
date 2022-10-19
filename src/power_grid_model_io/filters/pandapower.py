@@ -126,3 +126,10 @@ def get_3wdgtransformer_pk(percent: int, apparent_power1: float, apparent_power2
     if apparent_power1 > apparent_power2:
         return percent * apparent_power2
     return 0.0
+
+
+def is_bus_switch(element_type: str) -> bool:
+    """
+    In PP switches, elements of type 'b' are busses
+    """
+    return element_type == "b"

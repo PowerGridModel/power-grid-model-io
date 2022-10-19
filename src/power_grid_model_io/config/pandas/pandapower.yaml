@@ -11,9 +11,21 @@ grid:
     line:
       id: index
       from_node: from_bus
-      from_status: in_service
+      from_status:
+        power_grid_model_io.filters.all_true:
+          - in_service
+#          - power_grid_model_io.filters.value_or_default:
+#            # - switch!closed[element=index,bus=from_bus]
+#            - switch!closed[element=index]
+#            - true
       to_node: to_bus
-      to_status: in_service
+      to_status:
+        power_grid_model_io.filters.all_true:
+          - in_service
+#          - power_grid_model_io.filters.value_or_default:
+#            # - switch!closed[element=index,bus=to_bus]
+#            - switch!closed[element=index]
+#            - true
       r1:
         power_grid_model_io.filters.multiply:
           - r_ohm_per_km
@@ -54,13 +66,10 @@ grid:
         q_specified: {power_grid_model_io.filters.multiply: [const_i_percent, 0.01, q_mvar, 1000000]}
   ext_grid:
     source:
-      id: index
+      id: [index, 0]
       node: bus
       status: in_service
-      u_ref: vm_pu #both volts per unit
-      #sk:  {power_grid_model_io.filters.multiply: [s_sc_max_mva, 0.000001]}
-      #rx_ratio: rx_max
-      #z01_ratio: x0x_max
+      u_ref: vm_pu
   shunt:
     shunt:
       id: index
@@ -77,6 +86,7 @@ grid:
   sgen:
     sym_gen:
       id: index
+      type: 0 #const_power
       node: bus
       status: in_service
       p_specified: {power_grid_model_io.filters.multiply: [p_mw, 1000000]}
@@ -182,6 +192,23 @@ grid:
           - {power_grid_model_io.filters.multiply: [vn_lv_kv, 1000]}
           - tap_step_percent
           - tap_side
+#  switch:
+#    link:
+#      id: index
+#      from_node: bus
+#      to_node: element
+#      from_status:
+#        power_grid_model_io.filters.all_true:
+#          - power_grid_model_io.filters.pandapower.is_bus_switch:
+#              - et
+#          - closed
+#      to_status:
+#        power_grid_model_io.filters.all_true:
+#          - power_grid_model_io.filters.pandapower.is_bus_switch:
+#              - et
+#          - closed
+
+
 substitutions:
   trafo.tap_side:
     "hv": 0

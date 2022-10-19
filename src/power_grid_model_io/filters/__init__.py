@@ -96,3 +96,17 @@ def subtract(value: float, *args: float) -> float:
     for arg in args:
         value -= arg
     return value
+
+
+def all_true(*args) -> bool:
+    """
+    Return true if all values are true
+    """
+    return all(args)
+
+
+def any_true(*args) -> bool:
+    """
+    Return true if at least one of the values is true
+    """
+    return any(args)
