@@ -6,8 +6,9 @@ The TabularData class is a wrapper around Dict[str, pd.DataFrame],
 which supports unit conversions and value substitutions
 """
 
-from typing import Dict, Iterable, Optional, Tuple
+from typing import Dict, Iterable, Optional, Tuple, Union
 
+import numpy as np
 import pandas as pd
 import structlog
 
@@ -17,18 +18,18 @@ from power_grid_model_io.mappings.value_mapping import ValueMapping
 
 class TabularData:
     """
-    The TabularData class is a wrapper around Dict[str, pd.DataFrame],
+    The TabularData class is a wrapper around Dict[str, Union[pd.DataFrame, np.ndarray]],
     which supports unit conversions and value substitutions
     """
 
-    def __init__(self, **tables: pd.DataFrame):
+    def __init__(self, **tables: Union[pd.DataFrame, np.ndarray]):
         for table_name, table_data in tables.items():
             if not isinstance(table_data, pd.DataFrame):
                 raise TypeError(
                     f"Invalid data type for table '{table_name}'; "
                     f"expected a pandas DataFrame, got {type(table_data).__name__}."
                 )
-        self._data: Dict[str, pd.DataFrame] = tables
+        self._data: Dict[str, Union[pd.DataFrame, np.ndarray]] = tables
         self._units: Optional[UnitMapping] = None
         self._substitution: Optional[ValueMapping] = None
         self._log = structlog.get_logger(type(self).__name__)
@@ -50,6 +51,8 @@ class TabularData:
         Select a column from a table, while applying unit conversions and value substitutions
         """
         table_data = self._data[table_name]
+        if not isinstance(table_data, pd.DataFrame):
+            raise TypeError("TabularData.get_column is not implemented for numpy arrays")
         column_data = table_data[column_name]
 
         # If unit information is available, convert the unit
@@ -142,7 +145,7 @@ class TabularData:
         """
         return self._data.keys()
 
-    def items(self) -> Iterable[Tuple[str, pd.DataFrame]]:
+    def items(self) -> Iterable[Tuple[str, Union[pd.DataFrame, np.ndarray]]]:
         """
         Mimic the dictionary .items() function
         """

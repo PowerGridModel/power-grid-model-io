@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Optional, Tuple
 from unittest.mock import MagicMock
 
-import numpy as np
 import pandas as pd
 import pytest
 from power_grid_model import initialize_array
@@ -14,6 +13,7 @@ from power_grid_model.data_types import SingleDataset
 
 from power_grid_model_io.converters.tabular_converter import COL_REF_RE, TabularConverter
 from power_grid_model_io.data_types import TabularData
+from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes
 
 MAPPING_FILE = Path(__file__).parent / "test_data/mapping.yaml"
 
@@ -166,7 +166,7 @@ def test_converter__convert_table_to_component(
             attributes={"key": "value"},
         )
 
-    node_attributes = {"id": "id_number", "u_rated": "u_nom"}
+    node_attributes: InstanceAttributes = {"id": "id_number", "u_rated": "u_nom"}
     pgm_node_data = converter._convert_table_to_component(
         data=tabular_data_no_units_no_substitutions,
         data_type="input",
@@ -174,6 +174,7 @@ def test_converter__convert_table_to_component(
         component="node",
         attributes=node_attributes,
     )
+    assert pgm_node_data is not None
     assert len(pgm_node_data) == 2
     assert (pgm_node_data["id"] == [0, 1]).all()
     assert (pgm_node_data["u_rated"] == [10.5e3, 400]).all()
@@ -220,12 +221,11 @@ def test_converter__convert_col_def_to_attribute(
         col_def="from_node_side",
     )
     assert len(pgm_line_empty) == 1
-    # TODO: fix line below
-    # assert(pgm_line_empty["line"]["from_node"] == [0, 1]).all()
+    assert (pgm_line_empty["line"]["from_node"] == [0, 1]).all()
 
     # test attr ends with "object"
     with pytest.raises(
-        NotImplementedError, match="dummys are not implemented, because of the 'measured_object' " "reference..."
+        NotImplementedError, match="dummys are not supported, because of the 'measured_object' reference..."
     ):
         converter._convert_col_def_to_attribute(
             data=tabular_data_no_units_no_substitutions,
@@ -235,17 +235,17 @@ def test_converter__convert_col_def_to_attribute(
             attr="measured_object",
             col_def="dummy",
         )
-    # TODO: is this error correct? Are sensors not implemented or is it just these attributes?
 
     # test extra info
-    # converter._convert_col_def_to_attribute(data=tabular_data_no_units_no_substitutions,
-    #                                         pgm_data=pgm_node_empty["node"],
-    #                                         table="nodes",
-    #                                         component="node",
-    #                                         attr="extra",
-    #                                         col_def="u_nom",
-    #                                         extra_info={})
-    # TODO: code crashes on extra_info[i].update, are we expecting the ids to be in extra_info already?
+    converter._convert_col_def_to_attribute(
+        data=tabular_data_no_units_no_substitutions,
+        pgm_data=pgm_node_empty["node"],
+        table="nodes",
+        component="node",
+        attr="extra",
+        col_def="u_nom",
+        extra_info={0: {}, 1: {}},
+    )
 
     # test other attr
     converter._convert_col_def_to_attribute(
