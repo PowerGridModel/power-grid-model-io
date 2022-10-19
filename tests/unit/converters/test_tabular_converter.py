@@ -11,7 +11,7 @@ import pytest
 from power_grid_model import initialize_array
 from power_grid_model.data_types import SingleDataset
 
-from power_grid_model_io.converters.tabular_converter import COL_REF_RE, TabularConverter
+from power_grid_model_io.converters.tabular_converter import COL_REF_RE, NODE_REF_RE, TabularConverter
 from power_grid_model_io.data_types import TabularData
 from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes
 
@@ -44,6 +44,21 @@ def ref_cases():
     yield "OtherTable.ValueColumn[IdColumn=RefColumn]", None
     yield "ValueColumn[IdColumn=RefColumn]", None
     yield "OtherTable![IdColumn=RefColumn]", None
+
+
+def test_node_ref_pattern__pos():
+    assert NODE_REF_RE.fullmatch("node")
+    assert NODE_REF_RE.fullmatch("from_node")
+    assert NODE_REF_RE.fullmatch("to_node")
+    assert NODE_REF_RE.fullmatch("node_1")
+    assert NODE_REF_RE.fullmatch("node_2")
+    assert NODE_REF_RE.fullmatch("node_3")
+
+
+def test_node_ref_pattern__neg():
+    assert not NODE_REF_RE.fullmatch("nodes")
+    assert not NODE_REF_RE.fullmatch("anode")
+    assert not NODE_REF_RE.fullmatch("immunodeficient")
 
 
 @pytest.mark.parametrize("value,groups", ref_cases())
