@@ -218,6 +218,20 @@ class TabularConverter(BaseConverter[TabularData]):
         col_def: Any,
         extra_info: Optional[ExtraInfoLookup] = None,
     ):
+        """
+        This function updates one of the attributes of pgm_data, based on the corresponding table/column in a tabular
+        dataset
+        :param data: TabularData, i.e. a dictionary with the components as keys and pd.DataFrames as values, with
+        attribute names as columns and their values in the table
+        :param pgm_data: a power-grid-model input/update array for one component
+        :param table: the table name of the particular component in the tabular dataset
+        :param component: the corresponding component
+        :param attr: the name of the attribute that should be updated in the power-grid-model array
+        :param col_def: the name of the column where the attribute values can be found
+        :param extra_info: an optional dictionary where extra component info (that can't be specified in
+        power-grid-model data) can be specified
+        :return: the function updates pgm_data, it should not return something
+        """
         # To avoid mistakes, the attributes in the mapping should exist. There is one extra attribute called
         # 'extra' in which extra information can be captured.
         if attr not in pgm_data.dtype.names and attr != "extra":
