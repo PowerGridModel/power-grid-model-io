@@ -312,9 +312,8 @@ class TabularConverter(BaseConverter[TabularData]):
         return TabularData(**data)
 
     def _id_lookup(self, component: str, row: pd.Series) -> int:
-        data = dict(sorted(row.to_dict().items(), key=lambda x: x[0]))
-        key = component + ":" + ",".join(f"{k}={v}" for k, v in data.items())
-        return self._lookup(item={"component": component, "row": data}, key=key)
+        key = str([component] + list(row))
+        return self._lookup(item=key)
 
     @staticmethod
     def _parse_col_def(data: TabularData, table: str, col_def: Any) -> pd.DataFrame:

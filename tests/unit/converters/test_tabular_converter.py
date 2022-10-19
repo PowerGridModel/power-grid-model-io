@@ -123,12 +123,11 @@ def test_converter__parse_data(converter: TabularConverter, tabular_data: Tabula
 
     assert len(pgm_input_data["line"]) == 2
     assert (pgm_input_data["line"]["id"] == [2, 3]).all()
-    # TODO: fix line below
-    # assert (pgm_input_data["line"]["from_node"] == [0, 1]).all()
+    assert (pgm_input_data["line"]["from_node"] == [0, 1]).all()
 
 
 def test_converter__convert_table_to_component(
-        converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
+    converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
 ):
     # if table does not exist in data _convert_table_to_component should return None
     none_data = converter._convert_table_to_component(
@@ -180,50 +179,62 @@ def test_converter__convert_table_to_component(
     assert (pgm_node_data["u_rated"] == [10.5e3, 400]).all()
 
 
-def test_converter__convert_col_def_to_attribute(converter: TabularConverter,
-                                                 tabular_data_no_units_no_substitutions: TabularData,
-                                                 pgm_node_empty: SingleDataset,
-                                                 pgm_line_empty: SingleDataset,
-                                                 pgm_power_sensor_empty: SingleDataset):
-    with pytest.raises(KeyError, match=r"Could not find attribute 'incorrect_attribute' for 'nodes'. "
-                                       r"\(choose from: id, u_rated\)"):
-        converter._convert_col_def_to_attribute(data=tabular_data_no_units_no_substitutions,
-                                                pgm_data=pgm_node_empty["node"],
-                                                table="nodes",
-                                                component="node",
-                                                attr="incorrect_attribute",
-                                                col_def="id_number")
+def test_converter__convert_col_def_to_attribute(
+    converter: TabularConverter,
+    tabular_data_no_units_no_substitutions: TabularData,
+    pgm_node_empty: SingleDataset,
+    pgm_line_empty: SingleDataset,
+    pgm_power_sensor_empty: SingleDataset,
+):
+    with pytest.raises(
+        KeyError, match=r"Could not find attribute 'incorrect_attribute' for 'nodes'. " r"\(choose from: id, u_rated\)"
+    ):
+        converter._convert_col_def_to_attribute(
+            data=tabular_data_no_units_no_substitutions,
+            pgm_data=pgm_node_empty["node"],
+            table="nodes",
+            component="node",
+            attr="incorrect_attribute",
+            col_def="id_number",
+        )
 
     # test "id"
-    converter._convert_col_def_to_attribute(data=tabular_data_no_units_no_substitutions,
-                                            pgm_data=pgm_node_empty["node"],
-                                            table="nodes",
-                                            component="node",
-                                            attr="id",
-                                            col_def="id_number")
+    converter._convert_col_def_to_attribute(
+        data=tabular_data_no_units_no_substitutions,
+        pgm_data=pgm_node_empty["node"],
+        table="nodes",
+        component="node",
+        attr="id",
+        col_def="id_number",
+    )
     assert len(pgm_node_empty) == 1
     assert (pgm_node_empty["node"]["id"] == [0, 1]).all()
 
     # test attr ends with "node"
-    converter._convert_col_def_to_attribute(data=tabular_data_no_units_no_substitutions,
-                                            pgm_data=pgm_line_empty["line"],
-                                            table="lines",
-                                            component="line",
-                                            attr="from_node",
-                                            col_def="from_node_side")
+    converter._convert_col_def_to_attribute(
+        data=tabular_data_no_units_no_substitutions,
+        pgm_data=pgm_line_empty["line"],
+        table="lines",
+        component="line",
+        attr="from_node",
+        col_def="from_node_side",
+    )
     assert len(pgm_line_empty) == 1
     # TODO: fix line below
     # assert(pgm_line_empty["line"]["from_node"] == [0, 1]).all()
 
     # test attr ends with "object"
-    with pytest.raises(NotImplementedError, match="dummys are not implemented, because of the 'measured_object' "
-                                                  "reference..."):
-        converter._convert_col_def_to_attribute(data=tabular_data_no_units_no_substitutions,
-                                                pgm_data=pgm_power_sensor_empty["power_sensor"],
-                                                table="dummy",
-                                                component="dummy",
-                                                attr="measured_object",
-                                                col_def="dummy")
+    with pytest.raises(
+        NotImplementedError, match="dummys are not implemented, because of the 'measured_object' " "reference..."
+    ):
+        converter._convert_col_def_to_attribute(
+            data=tabular_data_no_units_no_substitutions,
+            pgm_data=pgm_power_sensor_empty["power_sensor"],
+            table="dummy",
+            component="dummy",
+            attr="measured_object",
+            col_def="dummy",
+        )
     # TODO: is this error correct? Are sensors not implemented or is it just these attributes?
 
     # test extra info
@@ -237,16 +248,19 @@ def test_converter__convert_col_def_to_attribute(converter: TabularConverter,
     # TODO: code crashes on extra_info[i].update, are we expecting the ids to be in extra_info already?
 
     # test other attr
-    converter._convert_col_def_to_attribute(data=tabular_data_no_units_no_substitutions,
-                                            pgm_data=pgm_node_empty["node"],
-                                            table="nodes",
-                                            component="node",
-                                            attr="u_rated",
-                                            col_def="u_nom")
+    converter._convert_col_def_to_attribute(
+        data=tabular_data_no_units_no_substitutions,
+        pgm_data=pgm_node_empty["node"],
+        table="nodes",
+        component="node",
+        attr="u_rated",
+        col_def="u_nom",
+    )
     assert len(pgm_node_empty) == 1
     assert (pgm_node_empty["node"]["u_rated"] == [10500.0, 400.0]).all()
 
     # TODO test "invalid literal"
+
 
 def test_converter__handle_column():
     # TODO
