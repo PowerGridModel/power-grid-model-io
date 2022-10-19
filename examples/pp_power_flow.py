@@ -33,7 +33,9 @@ pp_converter = PandaPowerConverter(std_types=pp_std_types)
 input_data, extra_info = pp_converter.load_input_data(pp_data)
 
 # Validate and display validation results
-id_lookup = {idx: "{table:s}.{index:s}".format(**obj) for idx, obj in extra_info.items()}
+id_lookup = {
+    idx: "{table:s}.{index:d}".format(table=obj["table"], index=int(obj["index"])) for idx, obj in extra_info.items()
+}
 print(errors_to_string(validate_input_data(input_data=input_data), details=True, id_lookup=id_lookup))
 
 # Store the source data in JSON format
