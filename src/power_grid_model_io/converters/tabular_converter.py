@@ -24,13 +24,14 @@ from power_grid_model_io.mappings.value_mapping import ValueMapping, Values
 from power_grid_model_io.utils.auto_id import AutoID
 from power_grid_model_io.utils.modules import get_function
 
-COL_REF_RE = re.compile(r"([^!]+)!([^\[]+)\[(([^!]+)!)?([^=]+)=(([^!]+)!)?([^\]]+)\]")
+COL_REF_RE = re.compile(r"^([^!]+)!([^\[]+)\[(([^!]+)!)?([^=]+)=(([^!]+)!)?([^\]]+)\]$")
 r"""
 Regular expressions to match patterns like:
   OtherTable!ValueColumn[IdColumn=RefColumn]
 and:
   OtherTable!ValueColumn[OtherTable!IdColumn=ThisTable!RefColumn]
 
+^           Start of the string
 ([^!]+)     OtherTable
 !           separator
 ([^\[]+)    ValueColumn
@@ -43,6 +44,21 @@ and:
 =           separator
 ([^\]]+)
 ]           separator
+$           End of the string
+"""
+
+NODE_REF_RE = re.compile(r"^(.+_)?node(_.+)?$")
+r"""
+Regular expressions to match the word node with an optional prefix or suffix, e.g.:
+    - node
+    - from_node
+    - node_1
+
+^           Start of the string
+(.+_)?      Optional prefix, ending with an underscore
+node        The word 'node'
+(_.+)?      Optional suffix, starting with in an underscore
+$           End of the string
 """
 
 
@@ -193,12 +209,12 @@ class TabularConverter(BaseConverter[TabularData]):
             attr_data = self._handle_id_column(
                 data=data, table=table, component=component, col_def=col_def, extra_info=extra_info
             )
-        elif attr.endswith("node"):
-            # Atributes that end with "node" are refences to nodes. Currently this is the only type of reference
+        elif NODE_REF_RE.fullmatch(attr):
+            # Attributes that contain "node" are references to nodes. Currently this is the only type of reference
             # that is supported.
             attr_data = self._handle_node_ref_column(data=data, table=table, col_def=col_def)
-        elif attr.endswith("object"):
-            # Atributes that end with "object" can be references to different types of objects, as used by sensors.
+        elif attr == "measured_object":
+            # The attribute "measured_object" can be a reference to different types of objects, as used by sensors.
             raise NotImplementedError(f"{component}s are not implemented, because of the '{attr}' reference...")
         elif attr == "extra":
             # Extra info must be linked to the object IDs, therefore the uuids should be known before extra info can
