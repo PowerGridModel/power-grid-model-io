@@ -6,7 +6,7 @@ from typing import Optional, Tuple
 
 import pytest
 
-from power_grid_model_io.converters.tabular_converter import COL_REF_RE
+from power_grid_model_io.converters.tabular_converter import COL_REF_RE, NODE_REF_RE
 
 
 def ref_cases():
@@ -45,3 +45,18 @@ def test_col_ref_pattern(value: str, groups: Optional[Tuple[Optional[str]]]):
     else:
         assert match is not None
         assert match.groups() == groups
+
+
+def test_node_ref_pattern__pos():
+    assert NODE_REF_RE.fullmatch("node")
+    assert NODE_REF_RE.fullmatch("from_node")
+    assert NODE_REF_RE.fullmatch("to_node")
+    assert NODE_REF_RE.fullmatch("node_1")
+    assert NODE_REF_RE.fullmatch("node_2")
+    assert NODE_REF_RE.fullmatch("node_3")
+
+
+def test_node_ref_pattern__neg():
+    assert not NODE_REF_RE.fullmatch("nodes")
+    assert not NODE_REF_RE.fullmatch("anode")
+    assert not NODE_REF_RE.fullmatch("immunodeficient")
