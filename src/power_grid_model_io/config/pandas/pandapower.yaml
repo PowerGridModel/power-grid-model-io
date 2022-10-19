@@ -33,7 +33,7 @@ grid:
       - id: [index, 0]
         type: 0 #const_power
         node: bus
-        status: {int: [1]}
+        status: in_service
         p_specified:
           {power_grid_model_io.filters.multiply:
             [{power_grid_model_io.filters.subtract: [100.0, const_z_percent, const_i_percent]}, 0.01, p_mw, 1000000 ]}
@@ -43,13 +43,13 @@ grid:
       - id: [index, 1]
         type: 1 #const_impedance
         node: bus
-        status: {int: [1]}
+        status: in_service
         p_specified: {power_grid_model_io.filters.multiply: [const_z_percent, 0.01, p_mw, 1000000]}
         q_specified: {power_grid_model_io.filters.multiply: [const_z_percent, 0.01, q_mvar, 1000000]}
       - id: [index, 2]
         type: 2 #const_current
         node: bus
-        status: {int: [1]}
+        status: in_service
         p_specified: {power_grid_model_io.filters.multiply: [const_i_percent, 0.01, p_mw, 1000000]}
         q_specified: {power_grid_model_io.filters.multiply: [const_i_percent, 0.01, q_mvar, 1000000]}
   ext_grid:
