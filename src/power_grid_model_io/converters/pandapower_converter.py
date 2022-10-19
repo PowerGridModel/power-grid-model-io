@@ -38,11 +38,21 @@ class PandaPowerConverter(TabularConverter):
                 return str(trafo[std_type]["vector_group"])
         return std_type
 
+    def get_trafo3w_vector_group(self, std_type: str) -> str:
+        """
+        Get the vector of a three winding transformer group from the std_type table
+        """
+        if self._std_types is not None:
+            trafo3w = self._std_types.get("trafo3w", {})
+            if std_type in trafo3w:
+                return str(trafo3w[std_type]["vector_group"])
+        return std_type
+
     def _id_lookup(self, component: str, row: pd.Series) -> int:
 
         row_dict = {}
         for key, value in row.to_dict().items():
-            if key == "bus" or key.endswith("_bus"):
+            if key == "bus" or str(key).endswith("_bus"):
                 key = "index"
             row_dict[key] = value
 

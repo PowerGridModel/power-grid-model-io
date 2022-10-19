@@ -80,3 +80,19 @@ def get_winding(winding: str, neutral_grounding: bool = True) -> WindingType:
         if winding_type == WindingType.zigzag_n:
             return WindingType.zigzag
     return winding_type
+
+
+def degrees_to_clock(degrees: float) -> int:
+    """
+    Return the clock
+    """
+    return int(round(degrees / 30.0)) % 12
+
+
+def subtract(value: float, *args: float) -> float:
+    """
+    Return a value after subtracting all the arguments from the first argument
+    """
+    for arg in args:
+        value -= arg
+    return value

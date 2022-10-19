@@ -6,7 +6,7 @@ grid:
   bus:
     node:
       id: index
-      u_rated: vn_kv
+      u_rated: {power_grid_model_io.filters.multiply: [vn_kv, 1000]}
   line:
     line:
       id: index
@@ -26,33 +26,39 @@ grid:
         power_grid_model_io.filters.multiply:
           - c_nf_per_km
           - length_km
-      #r0:
-      #  power_grid_model_io.filters.multiply:
-      #    - r0_ohm_per_km
-      #    - length_km
-      #x0:
-      #  power_grid_model_io.filters.multiply:
-      #    - x0_ohm_per_km
-      #    - length_km
-      #c0:
-      #  power_grid_model_io.filters.multiply:
-      #    - c0_nf_per_km
-      #    - length_km
-      i_n: max_i_ka
+      tan1: 0.0
+      i_n: {power_grid_model_io.filters.multiply: [max_i_ka, 1000]}
   load:
     sym_load:
-      id: index
-      node: bus
-      status: in_service
-      p_specified: p_mw
-      q_specified: q_mvar
+      - id: [index, 0]
+        type: 0 #const_power
+        node: bus
+        status: {int: [1]}
+        p_specified:
+          {power_grid_model_io.filters.multiply:
+            [{power_grid_model_io.filters.subtract: [100.0, const_z_percent, const_i_percent]}, 0.01, p_mw, 1000000 ]}
+        q_specified:
+          {power_grid_model_io.filters.multiply:
+            [{power_grid_model_io.filters.subtract: [100.0, const_z_percent, const_i_percent]}, 0.01, q_mvar, 1000000]}
+      - id: [index, 1]
+        type: 1 #const_impedance
+        node: bus
+        status: {int: [1]}
+        p_specified: {power_grid_model_io.filters.multiply: [const_z_percent, 0.01, p_mw, 1000000]}
+        q_specified: {power_grid_model_io.filters.multiply: [const_z_percent, 0.01, q_mvar, 1000000]}
+      - id: [index, 2]
+        type: 2 #const_current
+        node: bus
+        status: {int: [1]}
+        p_specified: {power_grid_model_io.filters.multiply: [const_i_percent, 0.01, p_mw, 1000000]}
+        q_specified: {power_grid_model_io.filters.multiply: [const_i_percent, 0.01, q_mvar, 1000000]}
   ext_grid:
     source:
       id: index
       node: bus
       status: in_service
-      u_ref: vm_pu
-      #sk: s_sc_max_mva
+      u_ref: vm_pu #both volts per unit
+      #sk:  {power_grid_model_io.filters.multiply: [s_sc_max_mva, 0.000001]}
       #rx_ratio: rx_max
       #z01_ratio: x0x_max
   shunt:
@@ -62,19 +68,19 @@ grid:
       status: in_service
       g1:
         power_grid_model_io.filters.pandapower.positive_sequence_conductance:
-          - p_mw
+          - {power_grid_model_io.filters.multiply: [p_mw, 1000000]}
           - bus!vn_kv[bus!index=shunt!bus]
       b1:
         power_grid_model_io.filters.pandapower.positive_sequence_conductance:
-          - q_mvar
+          - {power_grid_model_io.filters.multiply: [q_mvar, 1000000]}
           - bus!vn_kv[bus!index=shunt!bus]
   sgen:
     sym_gen:
       id: index
       node: bus
       status: in_service
-      p_specified: p_mw
-      q_specified: q_mvar
+      p_specified: {power_grid_model_io.filters.multiply: [p_mw, 1000000]}
+      q_specified: {power_grid_model_io.filters.multiply: [q_mvar, 1000000]}
   trafo:
     transformer:
       id: index
@@ -82,16 +88,13 @@ grid:
       from_status: in_service
       to_node: lv_bus
       to_status: in_service
-      u1: vn_hv_kv
-      u2: vn_lv_kv
-      sn: sn_mva
-      uk: vk_percent
-      pk:
-        power_grid_model_io.filters.multiply:
-          - vkr_percent
-          - sn_mva
-      i0: i0_percent
-      p0: pfe_kw
+      u1: {power_grid_model_io.filters.multiply: [vn_hv_kv, 1000]}
+      u2: {power_grid_model_io.filters.multiply: [vn_lv_kv, 1000]}
+      sn: {power_grid_model_io.filters.multiply: [sn_mva, 1000000]}
+      uk: {power_grid_model_io.filters.multiply: [vkr_percent, 0.01]}
+      pk: {power_grid_model_io.filters.multiply: [vkr_percent, 0.01, sn_mva, 1000000]}
+      i0: {power_grid_model_io.filters.multiply: [i0_percent, 0.01]}
+      p0: {power_grid_model_io.filters.multiply: [pfe_kw, 1000]}
       winding_from:
         power_grid_model_io.filters.pandapower.get_transformer_winding_from:
           self.get_trafo_vector_group:
@@ -104,66 +107,81 @@ grid:
         power_grid_model_io.filters.pandapower.get_transformer_clock:
           - shift_degree
       tap_pos: tap_pos
+      tap_side: tap_side
       tap_min: tap_min
       tap_max: tap_max
       tap_nom: tap_neutral #default zero
       tap_size:
         power_grid_model_io.filters.pandapower.get_transformer_tap_size:
-          - vn_hv_kv
-          - vn_lv_kv
+          - {power_grid_model_io.filters.multiply: [vn_hv_kv, 1000]}
+          - {power_grid_model_io.filters.multiply: [vn_lv_kv, 1000]}
           - tap_step_percent
           - tap_side
   trafo3w:
     three_winding_transformer:
       id: index
-      u1: vn_hv_kv
-      u2: vn_mv_kv
-      u3: vn_lv_kv
-      sn_1: sn_hv_mva
-      sn_2: sn_mv_mva
-      sn_3: sn_lv_mva
-      uk_12: vk_hv_percent
-      uk_13: vk_lv_percent
-      uk_23: vk_mv_percent
+      node_1: hv_bus
+      node_2: mv_bus
+      node_3: lv_bus
+      status_1: in_service #not completely right
+      status_2: in_service
+      status_3: in_service
+      u1: {power_grid_model_io.filters.multiply: [vn_hv_kv, 1000]}
+      u2: {power_grid_model_io.filters.multiply: [vn_mv_kv, 1000]}
+      u3: {power_grid_model_io.filters.multiply: [vn_lv_kv, 1000]}
+      sn_1: {power_grid_model_io.filters.multiply: [sn_hv_mva, 1000000]}
+      sn_2: {power_grid_model_io.filters.multiply: [sn_mv_mva, 1000000]}
+      sn_3: {power_grid_model_io.filters.multiply: [sn_lv_mva, 1000000]}
+      uk_12: {power_grid_model_io.filters.multiply: [vk_hv_percent, 0.01]}
+      uk_13: {power_grid_model_io.filters.multiply: [vk_lv_percent, 0.01]}
+      uk_23: {power_grid_model_io.filters.multiply: [vk_mv_percent, 0.01]}
       pk_12:
         power_grid_model_io.filters.pandapower.get_3wdgtransformer_pk:
           - vkr_hv_percent
-          - sn_hv_mva
-          - sn_mv_mva
+          - {power_grid_model_io.filters.multiply: [sn_hv_mva, 1000000]}
+          - {power_grid_model_io.filters.multiply: [sn_mv_mva, 1000000]}
       pk_13:
         power_grid_model_io.filters.pandapower.get_3wdgtransformer_pk:
           - vkr_lv_percent
-          - sn_hv_mva
-          - sn_lv_mva
+          - {power_grid_model_io.filters.multiply: [sn_hv_mva, 1000000]}
+          - {power_grid_model_io.filters.multiply: [sn_lv_mva, 1000000]}
       pk_23:
         power_grid_model_io.filters.pandapower.get_3wdgtransformer_pk:
           - vkr_mv_percent
-          - sn_mv_mva
-          - sn_lv_mva
-      i0: i0_percent
-      p0: pfe_kw
-      #winding_1:
-      #  power_grid_model_io.filters.pandapower.get_3wdgtransformer_winding_1:
-      #    - vector_group
-      #winding_2:
-      #  power_grid_model_io.filters.pandapower.get_3wdgtransformer_winding_2:
-      #    - vector_group
-      #winding_3:
-      #  power_grid_model_io.filters.pandapower.get_3wdgtransformer_winding_3:
-      #    - vector_group
-      clock_12: shift_mv_degree
-      clock_13: shift_lv_degree
+          - {power_grid_model_io.filters.multiply: [sn_mv_mva, 1000000]}
+          - {power_grid_model_io.filters.multiply: [sn_lv_mva, 1000000]}
+      i0: {power_grid_model_io.filters.multiply: [i0_percent, 0.01]}
+      p0: {power_grid_model_io.filters.multiply: [pfe_kw, 1000]}
+      winding_1:
+        power_grid_model_io.filters.pandapower.get_3wdgtransformer_winding_1:
+          self.get_trafo3w_vector_group:
+            - vector_group | std_type
+      winding_2:
+        power_grid_model_io.filters.pandapower.get_3wdgtransformer_winding_2:
+          self.get_trafo3w_vector_group:
+            - vector_group | std_type
+      winding_3:
+        power_grid_model_io.filters.pandapower.get_3wdgtransformer_winding_3:
+          self.get_trafo3w_vector_group:
+            - vector_group | std_type
+      clock_12:
+        power_grid_model_io.filters.degrees_to_clock:
+          - shift_mv_degree
+      clock_13:
+        power_grid_model_io.filters.degrees_to_clock:
+          - shift_lv_degree
       tap_pos: tap_pos
+      tap_side: tap_side
       tap_min: tap_min
       tap_max: tap_max
       tap_nom: tap_neutral
-      #tap_size:
-      #  power_grid_model_io.filters.pandapower.get_3wdgtransformer_tap_size:
-      #    - vn_hv_kv
-      #    - vn_mv_kv
-      #    - vn_lv_kv
-      #    - tap_step_percent
-      #    - tap_side
+      tap_size:
+        power_grid_model_io.filters.pandapower.get_3wdgtransformer_tap_size:
+          - {power_grid_model_io.filters.multiply: [vn_hv_kv, 1000]}
+          - {power_grid_model_io.filters.multiply: [vn_mv_kv, 1000]}
+          - {power_grid_model_io.filters.multiply: [vn_lv_kv, 1000]}
+          - tap_step_percent
+          - tap_side
 substitutions:
   trafo.tap_side:
     "hv": 0
@@ -172,9 +190,3 @@ substitutions:
     "hv": 0
     "mv": 1
     "lv": 2
-
-
-#vector group with std_type
-#attributes in 3wdgtrafo, error with column
-#Indexes
-#Assymetric calc
