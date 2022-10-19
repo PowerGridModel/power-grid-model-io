@@ -24,13 +24,14 @@ from power_grid_model_io.mappings.value_mapping import ValueMapping, Values
 from power_grid_model_io.utils.auto_id import AutoID
 from power_grid_model_io.utils.modules import get_function
 
-COL_REF_RE = re.compile(r"([^!]+)!([^\[]+)\[(([^!]+)!)?([^=]+)=(([^!]+)!)?([^\]]+)\]")
+COL_REF_RE = re.compile(r"^([^!]+)!([^\[]+)\[(([^!]+)!)?([^=]+)=(([^!]+)!)?([^\]]+)\]$")
 r"""
 Regular expressions to match patterns like:
   OtherTable!ValueColumn[IdColumn=RefColumn]
 and:
   OtherTable!ValueColumn[OtherTable!IdColumn=ThisTable!RefColumn]
 
+^           Start of the string
 ([^!]+)     OtherTable
 !           separator
 ([^\[]+)    ValueColumn
@@ -43,6 +44,21 @@ and:
 =           separator
 ([^\]]+)
 ]           separator
+$           End of the string
+"""
+
+NODE_REF_RE = re.compile(r"^(.+_)?node(_.+)?$")
+r"""
+Regular expressions to match the word node with an optional prefix or suffix, e.g.:
+    - node
+    - from_node
+    - node_1
+
+^           Start of the string
+(.+_)?      Optional prefix, ending with an underscore
+node        The word 'node'
+(_.+)?      Optional suffix, starting with in an underscore
+$           End of the string
 """
 
 
@@ -195,12 +211,12 @@ class TabularConverter(BaseConverter[TabularData]):
             attr_data = self._handle_id_column(
                 data=data, table=table, component=component, col_def=col_def, extra_info=extra_info
             )
-        elif attr.endswith("node"):
-            # Atributes that end with "node" are refences to nodes. Currently this is the only type of reference
+        elif NODE_REF_RE.fullmatch(attr):
+            # Attributes that contain "node" are references to nodes. Currently this is the only type of reference
             # that is supported.
             attr_data = self._handle_node_ref_column(data=data, table=table, col_def=col_def)
-        elif attr.endswith("object"):
-            # Atributes that end with "object" can be references to different types of objects, as used by sensors.
+        elif attr == "measured_object":
+            # Attributes that end with "object" can be references to different types of objects, as used by sensors.
             raise NotImplementedError(f"{component}s are not implemented, because of the '{attr}' reference...")
         elif attr == "extra":
             # Extra info must be linked to the object IDs, therefore the uuids should be known before extra info can
@@ -218,7 +234,7 @@ class TabularConverter(BaseConverter[TabularData]):
         except ValueError as ex:
             if "invalid literal" in str(ex) and isinstance(col_def, str):
                 # pylint: disable=raise-missing-from
-                raise ValueError(f"Possibly missing enum value for '{col_def}' column on '{table}' sheet: {ex}")
+                raise ValueError(f"Possibly missing enum value for '{col_def}' column on '{table}' table: {ex}")
             raise
 
     def _handle_column(self, data: TabularData, table: str, component: str, attr: str, col_def: Any) -> pd.DataFrame:
@@ -321,21 +337,19 @@ class TabularConverter(BaseConverter[TabularData]):
         like 'inf'. If that's the case, create a single column pandas DataFrame containing the const value.
         """
         assert isinstance(col_def, str)
-        sheet = data[table]
+        table_data = data[table]
 
         columns = [col_name.strip() for col_name in col_def.split("|")]
         for col_name in columns:
-            if col_name in sheet:
+            if col_name in table_data:
                 return pd.DataFrame(data.get_column(table_name=table, column_name=col_name))
-            if col_name == "index":
-                return pd.DataFrame(data[table].index, columns=("index",))
 
         try:  # Maybe it is not a column name, but a float value like 'inf', let's try to convert the string to a float
             const_value = float(col_def)
         except ValueError:
             # pylint: disable=raise-missing-from
             columns_str = " and ".join(f"'{col_name}'" for col_name in columns)
-            raise KeyError(f"Could not find column {columns_str} on sheet '{table}'")
+            raise KeyError(f"Could not find column {columns_str} on table '{table}'")
 
         return self._parse_col_def_const(data=data, table=table, col_def=const_value)
 
@@ -349,7 +363,7 @@ class TabularConverter(BaseConverter[TabularData]):
         match = COL_REF_RE.fullmatch(col_def)
         if match is None:
             raise ValueError(
-                f"Invalid column reference '{col_def}' " "(should be 'OtherSheet!ValueColumn[IdColumn=RefColumn])"
+                f"Invalid column reference '{col_def}' " "(should be 'OtherTable!ValueColumn[IdColumn=RefColumn])"
             )
         other_table, value_col_name, _, other_table_, id_col_name, _, this_table_, ref_col_name = match.groups()
         if (other_table_ is not None and other_table_ != other_table) or (
