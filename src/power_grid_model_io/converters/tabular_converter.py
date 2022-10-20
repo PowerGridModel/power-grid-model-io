@@ -262,13 +262,8 @@ class TabularConverter(BaseConverter[TabularData]):
         else:
             attr_data = self._handle_column(data=data, table=table, component=component, attr=attr, col_def=col_def)
 
-        try:
-            pgm_data[attr] = attr_data
-        except ValueError as ex:
-            if "invalid literal" in str(ex) and isinstance(col_def, str):
-                # pylint: disable=raise-missing-from
-                raise ValueError(f"Possibly missing enum value for '{col_def}' column on '{table}' sheet: {ex}")
-            raise
+        pgm_data[attr] = attr_data
+
 
     def _handle_column(self, data: TabularData, table: str, component: str, attr: str, col_def: Any) -> pd.Series:
         """

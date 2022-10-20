@@ -274,8 +274,6 @@ def test_converter__convert_col_def_to_attribute(
     assert len(pgm_node_empty) == 1
     assert (pgm_node_empty["node"]["u_rated"] == [10500.0, 400.0]).all()
 
-    # TODO test "invalid literal"
-
 
 def test_converter__handle_column(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
     attr_data = converter._handle_column(
