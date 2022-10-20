@@ -11,6 +11,14 @@ grid:
     line:
       id: id_number
       from_node: from_node_side
+  loads:
+    sym_load: # for testing purpose, the same loads will be added twice, with different types
+      - id: [id_number, 1]
+        type: 1 # const_impedence
+        node: node_id
+      - id: [id_number, 2]
+        type: 2 # const_current
+        node: node_id
 
 units:
   A:

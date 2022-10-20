@@ -101,7 +101,8 @@ def tabular_data():
         data=[[1, 10.5], [2, 0.4]], columns=pd.MultiIndex.from_tuples([("id_number", ""), ("u_nom", "kV")])
     )
     lines = pd.DataFrame(data=[[1, 100], [2, 200]], columns=["id_number", "from_node_side"])
-    tabular_data = TabularData(nodes=nodes, lines=lines)
+    loads = pd.DataFrame(data=[[1, 1], [2, 2]], columns=["id_number", "node_id"])
+    tabular_data = TabularData(nodes=nodes, lines=lines, loads=loads)
     return tabular_data
 
 
@@ -131,7 +132,7 @@ def test_converter__parse_data(converter: TabularConverter, tabular_data: Tabula
     data.set_substitutions.assert_called_once()
 
     pgm_input_data = converter._parse_data(data=tabular_data, data_type="input")
-    assert list(pgm_input_data.keys()) == ["node", "line"]
+    assert list(pgm_input_data.keys()) == ["node", "line", "sym_load"]
     assert len(pgm_input_data["node"]) == 2
     assert (pgm_input_data["node"]["id"] == [0, 1]).all()
     assert (pgm_input_data["node"]["u_rated"] == [10.5e3, 400]).all()
@@ -139,6 +140,10 @@ def test_converter__parse_data(converter: TabularConverter, tabular_data: Tabula
     assert len(pgm_input_data["line"]) == 2
     assert (pgm_input_data["line"]["id"] == [2, 3]).all()
     assert (pgm_input_data["line"]["from_node"] == [0, 1]).all()
+
+    assert len(pgm_input_data["sym_load"]) == 4
+    assert (pgm_input_data["sym_load"]["id"] == [4, 5, 6, 7]).all()
+    assert (pgm_input_data["sym_load"]["node"] == [0, 1, 0, 1]).all()
 
 
 def test_converter__convert_table_to_component(
