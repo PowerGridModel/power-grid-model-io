@@ -271,6 +271,16 @@ class TabularConverter(BaseConverter[TabularData]):
             raise
 
     def _handle_column(self, data: TabularData, table: str, component: str, attr: str, col_def: Any) -> pd.Series:
+        """
+        This function parses a column from the table and returns a pd.Series of the data
+        :param data: tabularData, i.e. a dictionary with the components as keys and pd.DataFrames as values, with
+        attribute names as columns and their values in the table
+        :param table: the table name of the particular component in the tabular dataset
+        :param component: the corresponding component
+        :param attr: the name of the attribute
+        :param col_def: the name of the column
+        :return: a pd.Series of the specific column
+        """
         attr_data = TabularConverter._parse_col_def(data=data, table=table, col_def=col_def)
         if len(attr_data.columns) != 1:
             raise ValueError(f"DataFrame for {component}.{attr} should contain a single column ({attr_data.columns})")
