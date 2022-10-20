@@ -26,7 +26,7 @@ class JsonFileStore(BaseDataStore[StructuredData]):
         super().__init__()
         self._indent: Optional[int] = 2
         self._compact: bool = True
-        self._file_path: Path = file_path
+        self._file_path: Path = Path(file_path)
 
         # Check JSON file name
         if file_path.suffix.lower() != ".json":
@@ -69,14 +69,13 @@ class JsonFileStore(BaseDataStore[StructuredData]):
 
     def save(self, data: StructuredData) -> None:
         self._validate(data=data)
-        if self._compact and self._indent:
-            max_level = 3
-            if isinstance(data, list):
-                max_level += 1
-            with self._file_path.open(mode="w", encoding="utf-8") as file_pointer:
+        with self._file_path.open(mode="w", encoding="utf-8") as file_pointer:
+            if self._compact and self._indent:
+                max_level = 3
+                if isinstance(data, list):
+                    max_level += 1
                 compact_json_dump(data, file_pointer, indent=self._indent, max_level=max_level)
-        else:
-            with self._file_path.open(mode="w", encoding="utf-8") as file_pointer:
+            else:
                 json.dump(data, file_pointer, indent=self._indent)
 
     def _validate(self, data: StructuredData) -> None:
@@ -86,7 +85,7 @@ class JsonFileStore(BaseDataStore[StructuredData]):
             raise TypeError(f"Invalid data type for {type(self).__name__}: {type(data).__name__}")
 
         if isinstance(data, list) and any(not isinstance(x, dict) for x in data):
-            type_names = {type(x).__name__ for x in data}
+            type_names = sorted({type(x).__name__ for x in data})
             if len(type_names) == 1:
                 type_str = type_names.pop()
             else:
