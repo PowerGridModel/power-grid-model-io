@@ -283,7 +283,18 @@ def test_converter__handle_column(converter: TabularConverter, tabular_data_no_u
     assert len(attr_data) == 2
     assert (attr_data == pd.Series([10500.0, 400.0])).all()
 
-    # TODO: test error for more columns
+    with pytest.raises(
+        ValueError,
+        match=r"DataFrame for node.u_rated should contain a single column "
+        r"\(Index\(\['id_number', 'u_nom'\], dtype='object'\)\)",
+    ):
+        converter._handle_column(
+            data=tabular_data_no_units_no_substitutions,
+            table="nodes",
+            component="node",
+            attr="u_rated",
+            col_def=["id_number", "u_nom"],
+        )
 
 
 def test_converter__handle_id_column():

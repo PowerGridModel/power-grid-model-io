@@ -264,7 +264,6 @@ class TabularConverter(BaseConverter[TabularData]):
 
         pgm_data[attr] = attr_data
 
-
     def _handle_column(self, data: TabularData, table: str, component: str, attr: str, col_def: Any) -> pd.Series:
         """
         This function parses a column from the table and returns a pd.Series of the data
