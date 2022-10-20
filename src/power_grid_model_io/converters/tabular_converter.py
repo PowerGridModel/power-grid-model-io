@@ -334,7 +334,8 @@ class TabularConverter(BaseConverter[TabularData]):
 
             # If there are numtiple arrays, concatenate them
             elif len(data_set) > 1:
-                merged[component_name] = np.concatenate(data_set)
+                # pylint: disable=unexpected-keyword-arg
+                merged[component_name] = np.concatenate(data_set, dtype=data_set[0].dtype)
 
         return merged
 
