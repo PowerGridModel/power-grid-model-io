@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
-from power_grid_model import initialize_array
+from power_grid_model import initialize_array, power_grid_meta_data
 from power_grid_model.data_types import SingleDataset
 
 from power_grid_model_io.converters.tabular_converter import COL_REF_RE, NODE_REF_RE, TabularConverter
@@ -144,6 +144,7 @@ def test_converter__parse_data(converter: TabularConverter, tabular_data: Tabula
     assert len(pgm_input_data["sym_load"]) == 4
     assert (pgm_input_data["sym_load"]["id"] == [4, 5, 6, 7]).all()
     assert (pgm_input_data["sym_load"]["node"] == [0, 1, 0, 1]).all()
+    assert pgm_input_data["sym_load"].dtype == power_grid_meta_data["input"]["sym_load"]["dtype"]
 
 
 def test_converter__convert_table_to_component(
