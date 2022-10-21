@@ -7,7 +7,7 @@ Excel File Store
 
 import re
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 import pandas as pd
 
@@ -28,21 +28,40 @@ class ExcelFileStore(BaseDataStore[TabularData]):
 
     _unnamed_pattern: re.Pattern = re.compile(r"Unnamed: \d+_level_\d+")
 
-    def __init__(self, *file_paths: Path):
+    def __init__(self, file_path: Optional[Path] = None, **extra_paths: Path):
         super().__init__()
-        self._file_paths: List[Path] = list(file_paths)
+
+        # Create a list of all supplied file paths:
+        # [(None, file_path), [extra_name[0], extra_path[0]), [extra_name[1], extra_path[1]), ...]
+        self._file_paths: Dict[str, Path] = {}
+        if file_path is not None:
+            self._file_paths[""] = file_path
+        for name, path in extra_paths.items():
+            self._file_paths[name] = path
+
+        for name, path in self._file_paths.items():
+            if path.suffix.lower() not in {".xls", ".xlsx"}:
+                name = name.title() if name else "Excel"
+                raise ValueError(f"{name} file should be a .xls or .xlsx file, {path.suffix} provided.")
+
         self._header_rows: List[int] = [0]
+
+    def files(self) -> Dict[str, Path]:
+        """
+        Read-only accessor
+        """
+        return self._file_paths.copy()
 
     def load(self) -> TabularData:
         """
         Load one or more Excel file as tabular data.
         """
         data: Dict[str, pd.DataFrame] = {}
-        for path in self._file_paths:
-            if path.suffix.lower() != ".xlsx":
-                raise ValueError(f"ExcelFile file should be a .xlsx file, {path.suffix} provided.")
+        for name, path in self._file_paths.items():
             with path.open(mode="rb") as file_pointer:
                 spreadsheet = pd.read_excel(io=file_pointer, sheet_name=None, header=self._header_rows)
+            if name:
+                spreadsheet = {f"{name}.{tbl_name}": tbl_data for tbl_name, tbl_data in spreadsheet.items()}
             data.update(spreadsheet)
 
         for sheet_name, sheet_data in data.items():
@@ -56,8 +75,10 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         TODO: Test and finalize this method
         """
         if len(self._file_paths) != 1:
-            raise ValueError(f"ExcelFileStore can only write to a single .xlsx file, {len(self._file_paths)} provided.")
-        with self._file_paths[0].open(mode="wb") as file_pointer:
+            raise ValueError(
+                f"ExcelFileStore can only write to a single .xls or .xlsx file, {len(self._file_paths)} provided."
+            )
+        with list(self._file_paths.values()).pop().open(mode="wb") as file_pointer:
             for sheet_name, sheet_data in data.items():
                 sheet_data.to_excel(
                     excel_writer=file_pointer,
