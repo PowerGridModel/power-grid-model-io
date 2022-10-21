@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 from unittest.mock import MagicMock
 
 import pandas as pd
@@ -303,9 +303,18 @@ def test_converter__handle_column(converter: TabularConverter, tabular_data_no_u
         )
 
 
-def test_converter__handle_id_column():
-    # TODO
-    pass
+def test_converter__handle_id_column(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
+    extra_info: Dict = {}
+    uuids = converter._handle_id_column(
+        data=tabular_data_no_units_no_substitutions,
+        table="nodes",
+        component="node",
+        col_def="id_number",
+        extra_info=extra_info,
+    )
+    assert (tabular_data_no_units_no_substitutions["nodes"]["id_number"] == pd.Series([1, 2])).all()
+    assert (uuids == pd.Series([0, 1])).all()
+    assert extra_info == {0: {"table": "nodes", "id_number": 1}, 1: {"table": "nodes", "id_number": 2}}
 
 
 def test_converter__handle_extra_info():
