@@ -6,13 +6,14 @@ from pathlib import Path
 from typing import Dict, Optional, Tuple
 from unittest.mock import MagicMock
 
+import numpy as np
 import pandas as pd
 import pytest
 from power_grid_model import initialize_array, power_grid_meta_data
 from power_grid_model.data_types import SingleDataset
 
 from power_grid_model_io.converters.tabular_converter import COL_REF_RE, NODE_REF_RE, TabularConverter
-from power_grid_model_io.data_types import TabularData
+from power_grid_model_io.data_types import ExtraInfoLookup, TabularData
 from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes
 
 MAPPING_FILE = Path(__file__).parent / "test_data/mapping.yaml"
@@ -304,7 +305,7 @@ def test_converter__handle_column(converter: TabularConverter, tabular_data_no_u
 
 
 def test_converter__handle_id_column(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
-    extra_info: Dict = {}
+    extra_info: ExtraInfoLookup = {}
     uuids = converter._handle_id_column(
         data=tabular_data_no_units_no_substitutions,
         table="nodes",
@@ -317,9 +318,25 @@ def test_converter__handle_id_column(converter: TabularConverter, tabular_data_n
     assert extra_info == {0: {"table": "nodes", "id_number": 1}, 1: {"table": "nodes", "id_number": 2}}
 
 
-def test_converter__handle_extra_info():
-    # TODO
-    pass
+def test_converter__handle_extra_info(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
+    uuids = np.array([0, 1])
+    # possible to call function with extra_info = None
+    converter._handle_extra_info(
+        data=tabular_data_no_units_no_substitutions, table="nodes", col_def="u_nom", uuids=uuids, extra_info=None
+    )
+    # _handle_extra_info expects the ids to be in extra_info already (as keys)
+    with pytest.raises(KeyError, match="0"):
+        converter._handle_extra_info(
+            data=tabular_data_no_units_no_substitutions, table="nodes", col_def="u_nom", uuids=uuids, extra_info={}
+        )
+    extra_info: ExtraInfoLookup = {0: {"some_value": "some_key"}, 1: {"some_value": "some_key"}}
+    converter._handle_extra_info(
+        data=tabular_data_no_units_no_substitutions, table="nodes", col_def="u_nom", uuids=uuids, extra_info=extra_info
+    )
+    assert extra_info == {
+        0: {"some_value": "some_key", "u_nom": 10500.0},
+        1: {"some_value": "some_key", "u_nom": 400.0},
+    }
 
 
 def test_converter__handle_node_ref_column():

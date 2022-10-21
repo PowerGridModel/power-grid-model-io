@@ -282,7 +282,19 @@ class TabularConverter(BaseConverter[TabularData]):
 
     def _handle_id_column(
         self, data: TabularData, table: str, component: str, col_def: Any, extra_info: Optional[ExtraInfoLookup] = None
-    ) -> pd.DataFrame:
+    ) -> pd.Series:
+        """
+        This function parses the id column from the table and assigns uuids using the _id_lookup. It then returns a
+        pd.Series of uuids
+        :param data: tabularData, i.e. a dictionary with the components as keys and pd.DataFrames as values, with
+        attribute names as columns and their values in the table
+        :param table: the table name of the particular component in the tabular dataset
+        :param component: the corresponding component
+        :param col_def: the name of the column where the ids are stored
+        :param extra_info: an optional dictionary where extra component info (that can't be specified in
+        power-grid-model data) can be specified
+        :return: a pd.Series of the specific column
+        """
 
         attr_data = TabularConverter._parse_col_def(data=data, table=table, col_def=col_def)
         uuids = attr_data.apply(lambda row: self._id_lookup(component, row), axis=1)
@@ -302,8 +314,19 @@ class TabularConverter(BaseConverter[TabularData]):
         table: str,
         col_def: Any,
         uuids: np.ndarray,
-        extra_info: Optional[ExtraInfoLookup] = None,
+        extra_info: Optional[ExtraInfoLookup],
     ) -> None:
+        """
+        This function can extract extra info from the tabular data and store it in the extra_info dict
+        :param data: tabularData, i.e. a dictionary with the components as keys and pd.DataFrames as values, with
+        attribute names as columns and their values in the table
+        :param table: the table name of the particular component in the tabular dataset
+        :param col_def: the name of the column that should be stored in extra_info
+        :param uuids: a numpy nd.array containing the uuids of the components
+        :param extra_info: an optional dictionary where extra component info (that can't be specified in
+        power-grid-model data) can be specified
+        :return:
+        """
         if extra_info is None:
             return
 
