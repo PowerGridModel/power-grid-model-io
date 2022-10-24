@@ -102,7 +102,7 @@ def tabular_data():
         data=[[1, 10.5], [2, 0.4]], columns=pd.MultiIndex.from_tuples([("id_number", ""), ("u_nom", "kV")])
     )
     lines = pd.DataFrame(data=[[1, 100], [2, 200]], columns=["id_number", "from_node_side"])
-    loads = pd.DataFrame(data=[[1, 1], [2, 2]], columns=["id_number", "node_id"])
+    loads = pd.DataFrame(data=[[1, 1, 1], [2, 2, 0]], columns=["id_number", "node_id", "switching_status"])
     tabular_data = TabularData(nodes=nodes, lines=lines, loads=loads)
     return tabular_data
 
@@ -145,6 +145,7 @@ def test_converter__parse_data(converter: TabularConverter, tabular_data: Tabula
     assert len(pgm_input_data["sym_load"]) == 4
     assert (pgm_input_data["sym_load"]["id"] == [4, 5, 6, 7]).all()
     assert (pgm_input_data["sym_load"]["node"] == [0, 1, 0, 1]).all()
+    assert (pgm_input_data["sym_load"]["status"] == [1, 0, 1, 0]).all()
     assert pgm_input_data["sym_load"].dtype == power_grid_meta_data["input"]["sym_load"]["dtype"]
 
 

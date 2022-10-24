@@ -16,9 +16,11 @@ grid:
       - id: [id_number, 1]
         type: 1 # const_impedence
         node: node_id
+        status: switching_status
       - id: [id_number, 2]
         type: 2 # const_current
         node: node_id
+        status: switching_status
 
 units:
   A:
