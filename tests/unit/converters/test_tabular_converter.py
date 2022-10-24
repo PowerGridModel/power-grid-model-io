@@ -340,9 +340,14 @@ def test_converter__handle_extra_info(converter: TabularConverter, tabular_data_
     }
 
 
-def test_converter__handle_node_ref_column():
-    # TODO
-    pass
+def test_converter__handle_node_ref_column(
+    converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
+):
+    attr_data = converter._handle_node_ref_column(
+        data=tabular_data_no_units_no_substitutions, table="lines", col_def="from_node_side"
+    )
+    # TODO: discuss what to do with this function. Now nodes will be added to the lookup. Don't we want to crash already
+    #  when the nodes do not exist?
 
 
 def test_converter__merge_pgm_data():
