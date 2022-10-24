@@ -350,9 +350,17 @@ def test_converter__handle_node_ref_column(
     #  when the nodes do not exist?
 
 
-def test_converter__merge_pgm_data():
-    # TODO
-    pass
+def test_converter__merge_pgm_data(converter: TabularConverter):
+    nodes_1 = initialize_array("input", "node", 2)
+    nodes_1["id"] = [0, 1]
+
+    nodes_2 = initialize_array("input", "node", 3)
+    nodes_2["id"] = [2, 3, 4]
+    data = {"node": [nodes_1, nodes_2]}
+
+    merged = converter._merge_pgm_data(data)
+    assert len(merged) == 1
+    assert (merged["node"]["id"] == np.array([0, 1, 2, 3, 4])).all()
 
 
 def test_converter__serialize_data(converter: TabularConverter, pgm_node_empty: SingleDataset):

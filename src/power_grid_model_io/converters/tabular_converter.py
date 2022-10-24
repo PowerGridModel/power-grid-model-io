@@ -341,12 +341,11 @@ class TabularConverter(BaseConverter[TabularData]):
 
     def _merge_pgm_data(self, data: Dict[str, List[np.ndarray]]) -> Dict[str, np.ndarray]:
         """
-        During the conversion, multiple numpy arrays can be produced for the same type of componnent. These arrays
+        During the conversion, multiple numpy arrays can be produced for the same type of component. These arrays
         should be concatenated to form one large table.
 
         Args:
             data: For each component, one or more numpy structured arrays
-            data_type: The data_type defines the attributs in the numpy array (input, update, sym_output, asym_output).
         """
         merged = {}
         for component_name, data_set in data.items():
@@ -355,7 +354,7 @@ class TabularConverter(BaseConverter[TabularData]):
             if len(data_set) == 1:
                 merged[component_name] = data_set[0]
 
-            # If there are numtiple arrays, concatenate them
+            # If there are multiple arrays, concatenate them
             elif len(data_set) > 1:
                 # pylint: disable=unexpected-keyword-arg
                 merged[component_name] = np.concatenate(data_set, dtype=data_set[0].dtype)
