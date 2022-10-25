@@ -369,6 +369,14 @@ class TabularConverter(BaseConverter[TabularData]):
         return TabularData(**data)
 
     def _id_lookup(self, component: str, row: pd.Series) -> int:
+        """
+        This function generates a key from the component name and a pd.Series. self._lookup() is called with this key.
+        If this key does not exist in self._lookup, a new id is generated. If it does exist the corresponding id is
+        returned. For more information see power_grid_model_io/utils/auto_id.py
+        :param component: component name
+        :param row: a pd.Series
+        :return: the unique id
+        """
         key = str([component] + list(row))
         return self._lookup(item=key)
 

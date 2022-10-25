@@ -372,8 +372,14 @@ def test_converter__serialize_data(converter: TabularConverter, pgm_node_empty: 
 
 
 def test_converter__id_lookup(converter: TabularConverter):
-    # converter._id_lookup(component=, row=)
-    pass
+    a01 = converter._id_lookup(component="a", row=pd.Series([0, 1]))
+    b0 = converter._id_lookup(component="b", row=pd.Series([0]))
+    b0_ = converter._id_lookup(component="b", row=pd.Series([0]))
+    a0 = converter._id_lookup(component="a", row=pd.Series([0]))
+    assert a01 == 0
+    assert b0 == 1
+    assert b0_ == 1
+    assert a0 == 2
 
 
 def test_converter__parse_col_def():
