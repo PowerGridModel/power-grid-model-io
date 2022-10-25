@@ -346,8 +346,7 @@ def test_converter__handle_node_ref_column(
     attr_data = converter._handle_node_ref_column(
         data=tabular_data_no_units_no_substitutions, table="lines", col_def="from_node_side"
     )
-    # TODO: discuss what to do with this function. Now nodes will be added to the lookup. Don't we want to crash already
-    #  when the nodes do not exist?
+    assert (attr_data == pd.Series([0, 1])).all()
 
 
 def test_converter__merge_pgm_data(converter: TabularConverter):
@@ -369,11 +368,11 @@ def test_converter__serialize_data(converter: TabularConverter, pgm_node_empty: 
     with pytest.raises(NotImplementedError, match=r"Batch data can not \(yet\) be stored for tabular data"):
         converter._serialize_data(data=[])  # type: ignore
     # TODO: serialize_data expects pgm Dataset, TabularData, expects pd.DataFrame
-    # tabular_data = converter._serialize_data(data=pgm_input_data)
+    # tabular_data = converter._serialize_data(data=pgm_node_empty)
 
 
-def test_converter__id_lookup():
-    # TODO
+def test_converter__id_lookup(converter: TabularConverter):
+    # converter._id_lookup(component=, row=)
     pass
 
 
