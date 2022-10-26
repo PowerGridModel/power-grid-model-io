@@ -13,7 +13,6 @@ from power_grid_model_io.filters.pandapower import (
     get_3wdgtransformer_winding_1,
     get_3wdgtransformer_winding_2,
     get_3wdgtransformer_winding_3,
-    get_closed,
     get_transformer_clock,
     get_transformer_tap_size,
     get_transformer_winding_from,
@@ -164,12 +163,3 @@ def test_get_3wdgtransformer_pk():
     assert get_3wdgtransformer_pk(10, 15.1564, 91.23) == pytest.approx(151.564)
     with pytest.raises(TypeError):
         get_3wdgtransformer_pk("gsd", "rsgz", "dxgh")  # type: ignore
-
-
-def test_get_closed():
-    assert get_closed(True) is False
-    assert get_closed(False) is True
-    with pytest.raises(TypeError):
-        get_transformer_clock("20.2")  # type: ignore
-    with pytest.raises(TypeError):
-        get_transformer_clock("True")  # type: ignore

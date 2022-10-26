@@ -133,38 +133,3 @@ def is_bus_switch(element_type: str) -> bool:  # is something's switch
     In PP switches, elements of type 'b' are busses
     """
     return element_type == "b"
-
-
-def get_et(element_type: str) -> str:
-    """
-    Returns the name of a dataframe in PP
-    """
-    if element_type == "b":
-        return "bus"
-    if element_type == "l":
-        return "line"
-    if element_type == "t":
-        return "trafo"
-    if element_type == "t3":
-        return "trafo3w"
-    raise ValueError
-
-
-def get_switch_to_element(element_type, element_id):
-    """
-    Returns a string which can be used as a reference to a column on another sheet
-    """
-    element = get_et(element_type)
-    print(f"{element}!id[{element}!index={element_id}]")
-    return f"{element}!id[{element}!index={element_id}]"
-
-
-def get_closed(closed: bool) -> bool:
-    """
-    In PP "closed" attribute of a switch is open when it is False, and closed when True. We want it to be the opposite
-    """
-    if closed is True:
-        return False
-    if closed is False:
-        return True
-    return True
