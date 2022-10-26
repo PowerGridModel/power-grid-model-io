@@ -18,6 +18,8 @@ SPDX-License-Identifier: MPL-2.0
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=alliander-opensource_power-grid-model-io&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=alliander-opensource_power-grid-model-io)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=alliander-opensource_power-grid-model-io&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=alliander-opensource_power-grid-model-io)
 
+<img src="docs\images\pgm-logo-color.svg" alt="Power Grid Model logo" width="100"/>
+
 # Power Grid Model Input/Output
 
 ## Documentation:
