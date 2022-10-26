@@ -4,11 +4,12 @@
 
 from pathlib import Path
 from typing import Dict, Optional, Tuple
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pandas as pd
 import pytest
+from pandas.testing import assert_frame_equal
 from power_grid_model import initialize_array, power_grid_meta_data
 from power_grid_model.data_types import SingleDataset
 
@@ -382,14 +383,81 @@ def test_converter__id_lookup(converter: TabularConverter):
     assert a0 == 2
 
 
-def test_converter__parse_col_def():
-    # TODO
-    pass
+def test_converter__parse_col_def(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
+    with pytest.raises(TypeError, match=r"Invalid column definition: \(\)"):
+        converter._parse_col_def(data=tabular_data_no_units_no_substitutions, table="table_name", col_def=())
+
+    # type(col_def) == int
+    with patch(
+        "power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def_const"
+    ) as mock_parse_col_def_const:
+        converter._parse_col_def(data=tabular_data_no_units_no_substitutions, table="nodes", col_def=50)
+        mock_parse_col_def_const.assert_called_once_with(
+            data=tabular_data_no_units_no_substitutions, table="nodes", col_def=50
+        )
+
+    # type(col_def) == float
+    with patch(
+        "power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def_const"
+    ) as mock_parse_col_def_const:
+        converter._parse_col_def(data=tabular_data_no_units_no_substitutions, table="nodes", col_def=4.0)
+        mock_parse_col_def_const.assert_called_once_with(
+            data=tabular_data_no_units_no_substitutions, table="nodes", col_def=4.0
+        )
+
+    # type(col_def) == str (regular expression)
+    with patch(
+        "power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def_column_reference"
+    ) as mock_parse_col_column_reference:
+        converter._parse_col_def(
+            data=tabular_data_no_units_no_substitutions,
+            table="nodes",
+            col_def="OtherTable!ValueColumn[IdColumn=RefColumn]",
+        )
+        mock_parse_col_column_reference.assert_called_once_with(
+            data=tabular_data_no_units_no_substitutions,
+            table="nodes",
+            col_def="OtherTable!ValueColumn[IdColumn=RefColumn]",
+        )
+
+    # type(col_def) == str
+    with patch(
+        "power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def_column_name"
+    ) as mock_parse_col_def_column_name:
+        converter._parse_col_def(data=tabular_data_no_units_no_substitutions, table="nodes", col_def="col_name")
+        mock_parse_col_def_column_name.assert_called_once_with(
+            data=tabular_data_no_units_no_substitutions, table="nodes", col_def="col_name"
+        )
+
+    # type(col_def) == dict
+    with patch(
+        "power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def_function"
+    ) as mock_parse_col_def_function:
+        converter._parse_col_def(data=tabular_data_no_units_no_substitutions, table="nodes", col_def={})
+        mock_parse_col_def_function.assert_called_once_with(
+            data=tabular_data_no_units_no_substitutions, table="nodes", col_def={}
+        )
+
+    # type(col_def) == list
+    with patch(
+        "power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def_composite"
+    ) as mock_parse_col_def_composite:
+        converter._parse_col_def(data=tabular_data_no_units_no_substitutions, table="nodes", col_def=[])
+        mock_parse_col_def_composite.assert_called_once_with(
+            data=tabular_data_no_units_no_substitutions, table="nodes", col_def=[]
+        )
 
 
-def test_converter__parse_col_def_const():
-    # TODO
-    pass
+def test_converter__parse_col_def_const(
+    converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
+):
+    # type(col_def) == int
+    col_int = converter._parse_col_def_const(data=tabular_data_no_units_no_substitutions, table="nodes", col_def=50)
+    assert_frame_equal(col_int, pd.DataFrame([50, 50]))
+
+    # type(col_def) == float
+    col_int = converter._parse_col_def_const(data=tabular_data_no_units_no_substitutions, table="nodes", col_def=3.0)
+    assert_frame_equal(col_int, pd.DataFrame([3.0, 3.0]))
 
 
 def test_converter__parse_col_def_column_name():
