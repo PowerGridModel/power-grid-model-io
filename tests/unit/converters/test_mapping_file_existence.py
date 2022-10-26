@@ -10,7 +10,6 @@ from power_grid_model_io.converters.vision_excel_converter import DEFAULT_MAPPIN
 
 
 def test_mapping_files_exist():
-
     gf = Path(str(gaia_mapping).format(language="en"))
     vf = Path(str(vision_mapping).format(language="en"))
     assert gf.exists()
