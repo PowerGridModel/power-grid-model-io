@@ -43,12 +43,7 @@ grid:
       i_n: {power_grid_model_io.filters.multiply: [max_i_ka, 1000]}
   load:
     sym_load:
-    - if:
-        power_grid_model_io.filters.is_greater_than:
-          - {power_grid_model_io.filters.subtract: [100.0, const_z_percent, const_i_percent]}
-          - 0.0
-      then:
-        id: [index, 0]
+      - id: [index, 0]
         type: 0 #const_power
         node: bus
         status: in_service
@@ -58,28 +53,30 @@ grid:
         q_specified:
           {power_grid_model_io.filters.multiply:
             [{power_grid_model_io.filters.subtract: [100.0, const_z_percent, const_i_percent]}, 0.01, q_mvar, 1000000]}
-    - if:
-        power_grid_model_io.filters.is_greater_than:
-          - const_z_percent
-          - 0.0
-      then:
-        id: [index, 1]
+        condition:
+          power_grid_model_io.filters.is_greater_than:
+            - {power_grid_model_io.filters.subtract: [100.0, const_z_percent, const_i_percent]}
+            - 0.0
+      - id: [index, 1]
         type: 1 #const_impedance
         node: bus
         status: in_service
         p_specified: {power_grid_model_io.filters.multiply: [const_z_percent, 0.01, p_mw, 1000000]}
         q_specified: {power_grid_model_io.filters.multiply: [const_z_percent, 0.01, q_mvar, 1000000]}
-    - if:
-        power_grid_model_io.filters.is_greater_than:
-          - const_i_percent
-          - 0.0
-      then:
-        id: index
+        condition:
+          power_grid_model_io.filters.is_greater_than:
+            - const_z_percent
+            - 0.0
+      - id: index
         type: 2 #const_current
         node: bus
         status: in_service
         p_specified: {power_grid_model_io.filters.multiply: [const_i_percent, 0.01, p_mw, 1000000]}
         q_specified: {power_grid_model_io.filters.multiply: [const_i_percent, 0.01, q_mvar, 1000000]}
+        condition:
+          power_grid_model_io.filters.is_greater_than:
+            - const_i_percent
+            - 0.0
   ext_grid:
     source:
       id: [index, 0]
@@ -209,16 +206,15 @@ grid:
           - tap_step_percent
           - tap_side
   switch:
-    if:
-      power_grid_model_io.filters.pandapower.is_bus_switch:
-        - et
-    then:
-      link:
-        id: index
-        from_node: bus
-        to_node: element
-        from_status: closed
-        to_status: closed
+    link:
+      id: index
+      from_node: bus
+      to_node: element
+      from_status: closed
+      to_status: closed
+      condition:
+        power_grid_model_io.filters.pandapower.is_bus_switch:
+          - et
 substitutions:
   trafo.tap_side:
     "hv": 0
