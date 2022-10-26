@@ -22,6 +22,8 @@ SPDX-License-Identifier: MPL-2.0
 
 # Power Grid Model Input/Output
 
+`power-grid-model-io` can be used for various conversions to the [power-grid-model](https://github.com/alliander-opensource/power-grid-model).
+
 ## Documentation:
   * Converters
     * [Tabular Converter](docs/converters/tabular_converter.md)
@@ -57,3 +59,12 @@ pgm_convert vision2pgm myfile.xlsx --validate
 ```bash
 pgm_convert gaia2pgm myfile.xlsx types.xlsx --validate
 ```
+# License
+This project is licensed under the Mozilla Public License, version 2.0 - see [LICENSE](LICENSE) for details.
+
+# Contributing
+Please read [CODE_OF_CONDUCT](CODE_OF_CONDUCT.md) and [CONTRIBUTING](CONTRIBUTING.md) for details on the process 
+for submitting pull requests to us.
+
+# Contact
+Please read [SUPPORT](SUPPORT.md) for how to connect and get into contact with the Power Gird Model project.
