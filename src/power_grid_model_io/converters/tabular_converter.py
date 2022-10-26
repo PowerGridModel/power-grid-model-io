@@ -349,8 +349,8 @@ class TabularConverter(BaseConverter[TabularData]):
         for col_name in columns:
             if col_name in table_data or col_name == "index":
                 col_data = data.get_column(table_name=table, column_name=col_name)
-                self._apply_multiplier(table=table, column=col_name, data=col_data)
-                return pd.DataFrame(data.get_column(table_name=table, column_name=col_name))
+                col_data = self._apply_multiplier(table=table, column=col_name, data=col_data)
+                return pd.DataFrame(col_data)
 
         try:  # Maybe it is not a column name, but a float value like 'inf', let's try to convert the string to a float
             const_value = float(col_def)
@@ -361,15 +361,15 @@ class TabularConverter(BaseConverter[TabularData]):
 
         return self._parse_col_def_const(data=data, table=table, col_def=const_value)
 
-    def _apply_multiplier(self, table: str, column: str, data: pd.Series) -> None:
+    def _apply_multiplier(self, table: str, column: str, data: pd.Series) -> pd.Series:
         if self._multipliers is None:
-            return
+            return data
         try:
             multiplier = self._multipliers.get_multiplier(table=table, attr=column)
             self._log.debug("Applied multiplier", table=table, column=column, multiplier=multiplier)
-            data *= multiplier
+            return data * multiplier
         except KeyError:
-            return
+            return data
 
     def _parse_col_def_column_reference(self, data: TabularData, table: str, col_def: str) -> pd.DataFrame:
         # pylint: disable=too-many-locals

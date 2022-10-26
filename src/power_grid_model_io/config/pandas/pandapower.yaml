@@ -83,11 +83,11 @@ grid:
       g1:
         power_grid_model_io.filters.pandapower.positive_sequence_conductance:
           - p_mw
-          - bus!vn_kv[bus!index=shunt!bus]
+          - vn_kv
       b1:
         power_grid_model_io.filters.pandapower.positive_sequence_conductance:
           - q_mvar
-          - bus!vn_kv[bus!index=shunt!bus]
+          - vn_kv
   sgen:
     sym_gen:
       id: index
@@ -206,14 +206,12 @@ grid:
         power_grid_model_io.filters.all_true:
           - power_grid_model_io.filters.pandapower.is_bus_switch:
             - et
-          - power_grid_model_io.filters.pandapower.get_closed:
-            - closed
+          - closed
       to_status:
         power_grid_model_io.filters.all_true:
           - power_grid_model_io.filters.pandapower.is_bus_switch:
             - et
-          - power_grid_model_io.filters.pandapower.get_closed:
-            - closed
+          - closed
 
 
 substitutions:
