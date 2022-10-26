@@ -4,13 +4,15 @@
 ---
 grid:
   Nodes:
-    node:
+    node: #1
       id: Number
       u_rated: Unom
       extra: ID
   Cables:
-    line:
-      id: Number
+    line: #2
+      id:
+      - Number
+      - 2
       from_node: From.Number
       from_status: From.Switch state
       to_node: To.Number
@@ -28,15 +30,19 @@ grid:
         - Name
         - ID
   Links:
-    link:
-      id: Number
+    link: #3
+      id:
+        - Number
+        - 3
       from_node: From.Number
       from_status: From.Switch state
       to_node: To.Number
       to_status: To.Switch state
   Reactance coils:
-    line:
-      id: Number
+    line: #4
+      id:
+        - Number
+        - 4
       from_node: From.Number
       from_status: From.Switch state
       to_node: To.Number
@@ -54,8 +60,10 @@ grid:
         - Name
         - ID
   Transformers:
-    transformer:
-      id: Number
+    transformer: #5
+      id:
+        - Number
+        - 5
       from_node: From.Number
       from_status: From.Switch state
       to_node: To.Number
@@ -101,8 +109,10 @@ grid:
         - Name
         - ID
   Special transformers:
-    transformer:
-      id: Number
+    transformer: #6
+      id:
+        - Number
+        - 6
       from_node: From.Number
       from_status: From.Switch state
       to_node: To.Number
@@ -140,14 +150,16 @@ grid:
         - Name
         - ID
   Transformer loads:
-    transformer:
+    transformer: #7
       id:
         - Node.Number
         - Subnumber
+        - 7
       from_node: Node.Number
       to_node:
         - Node.Number
         - Subnumber
+        - 8
       from_status: Switch state
       to_status: 1
       u1: Unom1
@@ -185,19 +197,22 @@ grid:
       extra:
         - Name
         - ID
-    node:
+    node: #8
       id:
         - Node.Number
         - Subnumber
+        - 8
       u_rated: Unom2
       extra: ID
-    sym_load:
+    sym_load: #9
       id:
         - Node.Number
         - Subnumber
+        - 9
       node:
         - Node.Number
         - Subnumber
+        - 8
       status: Switch state
       type: Behaviour
       p_specified:
@@ -212,25 +227,27 @@ grid:
         - Name
         - ID
     sym_gen:
-      - id:
+      - id: #10
           - Node.Number
           - Subnumber
-          - 1
+          - 10
         node:
           - Node.Number
           - Subnumber
+          - 8
         status: Switch state
         type: 0
         p_specified: Generation.P
         q_specified: Generation.Q
         extra: Name
-      - id:
+      - id: #11
           - Node.Number
           - Subnumber
-          - 2
+          - 11
         node:
           - Node.Number
           - Subnumber
+          - 8
         status: Switch state
         type: 0
         p_specified: PV.Pnom
@@ -240,10 +257,11 @@ grid:
             - 1
         extra: Name
   Sources:
-    source:
+    source: #12
       id:
         - Node.Number
         - Subnumber
+        - 12
       node: Node.Number
       status: Switch state
       u_ref: Uref
@@ -251,10 +269,11 @@ grid:
       rx_ratio: R/X
       z01_ratio: Z0/Z1
   Synchronous generators:
-    sym_gen:
+    sym_gen: #13
       id:
         - Node.Number
         - Subnumber
+        - 13
       node: Node.Number
       status: Switch state
       type: 0
@@ -267,10 +286,11 @@ grid:
           - Q
       extra: Name
   Wind turbines:
-    sym_gen:
+    sym_gen: #14
       id:
         - Node.Number
         - Subnumber
+        - 14
       node: Node.Number
       status: Switch state
       type: 1
@@ -290,10 +310,11 @@ grid:
           - cos phi
       extra: Name
   Loads:
-    sym_load:
+    sym_load: #15
       id:
         - Node.Number
         - Subnumber
+        - 15
       node: Node.Number
       status: Switch state
       type: Behaviour
@@ -309,10 +330,11 @@ grid:
         - Name
         - ID
   Zigzag transformers:
-    shunt:
+    shunt: #16
       id:
         - Node.Number
         - Subnumber
+        - 16
       node: Node.Number
       status: Switch state
       g1: 0
@@ -329,10 +351,11 @@ grid:
         - Name
         - ID
   Pvs:
-    sym_gen:
+    sym_gen: #17
       id:
         - Node.Number
         - Subnumber
+        - 17
       node: Node.Number
       status: Switch state
       type: 0

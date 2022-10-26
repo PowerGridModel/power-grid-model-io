@@ -5,6 +5,8 @@
 # Generated files
 *.egg-info
 PYPI_VERSION
+build/
+wheelhouse/
 
 # temporary_files
 __pycache__/
