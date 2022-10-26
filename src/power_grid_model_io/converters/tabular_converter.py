@@ -18,6 +18,7 @@ from power_grid_model.data_types import Dataset
 from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_stores.base_data_store import BaseDataStore
 from power_grid_model_io.data_types import ExtraInfoLookup, TabularData
+from power_grid_model_io.mappings.multiplier_mapping import MultiplierMapping, Multipliers
 from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes, Tables, TabularMapping
 from power_grid_model_io.mappings.unit_mapping import UnitMapping, Units
 from power_grid_model_io.mappings.value_mapping import ValueMapping, Values
@@ -61,6 +62,8 @@ node        The word 'node'
 $           End of the string
 """
 
+MappingFile = Dict[Literal["multipliers", "grid", "units", "substitutions"], Union[Multipliers, Tables, Units, Values]]
+
 
 class TabularConverter(BaseConverter[TabularData]):
     """
@@ -82,7 +85,8 @@ class TabularConverter(BaseConverter[TabularData]):
         super().__init__(source=source, destination=destination)
         self._mapping: TabularMapping = TabularMapping(mapping={})
         self._units: Optional[UnitMapping] = None
-        self._substitution: Optional[ValueMapping] = None
+        self._substitutions: Optional[ValueMapping] = None
+        self._multipliers: Optional[MultiplierMapping] = None
         if mapping_file is not None:
             self.set_mapping_file(mapping_file=mapping_file)
         self._lookup = AutoID()
@@ -100,15 +104,16 @@ class TabularConverter(BaseConverter[TabularData]):
         self._log.debug("Read mapping file", mapping_file=mapping_file)
 
         with open(mapping_file, "r", encoding="utf-8") as mapping_stream:
-            mapping: Dict[Literal["grid", "units", "substitutions"], Union[Tables, Units, Values]] = yaml.safe_load(
-                mapping_stream
-            )
+            mapping: MappingFile = yaml.safe_load(mapping_stream)
         if "grid" not in mapping:
             raise KeyError("Missing 'grid' mapping in mapping_file")
         self._mapping = TabularMapping(cast(Tables, mapping["grid"]))
         self._units = UnitMapping(cast(Units, mapping["units"])) if "units" in mapping else None
         self._substitutions = (
             ValueMapping(cast(Values, mapping["substitutions"])) if "substitutions" in mapping else None
+        )
+        self._multipliers = (
+            MultiplierMapping(cast(Multipliers, mapping["multipliers"])) if "multipliers" in mapping else None
         )
 
     def _parse_data(self, data: TabularData, data_type: str, extra_info: Optional[ExtraInfoLookup] = None) -> Dataset:
@@ -343,7 +348,9 @@ class TabularConverter(BaseConverter[TabularData]):
         columns = [col_name.strip() for col_name in col_def.split("|")]
         for col_name in columns:
             if col_name in table_data or col_name == "index":
-                return pd.DataFrame(data.get_column(table_name=table, column_name=col_name))
+                col_data = data.get_column(table_name=table, column_name=col_name)
+                col_data = self._apply_multiplier(table=table, column=col_name, data=col_data)
+                return pd.DataFrame(col_data)
 
         try:  # Maybe it is not a column name, but a float value like 'inf', let's try to convert the string to a float
             const_value = float(col_def)
@@ -353,6 +360,16 @@ class TabularConverter(BaseConverter[TabularData]):
             raise KeyError(f"Could not find column {columns_str} on table '{table}'")
 
         return self._parse_col_def_const(data=data, table=table, col_def=const_value)
+
+    def _apply_multiplier(self, table: str, column: str, data: pd.Series) -> pd.Series:
+        if self._multipliers is None:
+            return data
+        try:
+            multiplier = self._multipliers.get_multiplier(table=table, attr=column)
+            self._log.debug("Applied multiplier", table=table, column=column, multiplier=multiplier)
+            return data * multiplier
+        except KeyError:
+            return data
 
     def _parse_col_def_column_reference(self, data: TabularData, table: str, col_def: str) -> pd.DataFrame:
         # pylint: disable=too-many-locals
