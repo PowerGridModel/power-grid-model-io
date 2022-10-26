@@ -349,7 +349,9 @@ class TabularConverter(BaseConverter[TabularData]):
             raise NotImplementedError("Batch data can not(yet) be stored for tabular data")
         return TabularData(**data)
 
-    def _parse_col_def(self, data: TabularData, table: str, col_def: Any) -> pd.DataFrame:
+    def _parse_col_def(
+        self, data: TabularData, table: str, col_def: Any, selection: Optional[np.ndarray] = None
+    ) -> pd.DataFrame:
         """
         Interpret the column definition and extract/convert/create the data as a pandas DataFrame.
         """
