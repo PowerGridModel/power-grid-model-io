@@ -4,11 +4,7 @@
 ---
 multipliers:
   .+_percent: 0.01
-<<<<<<< HEAD
   .+_k(a|v|w): 1000.0
-=======
-  .+_k(a|v): 1000.0
->>>>>>> cbd4574c29005473f1de438638ede5aa43d4a591
   .+_m(w|va|var): 1000000.0
 grid:
   bus:
