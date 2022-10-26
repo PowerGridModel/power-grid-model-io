@@ -14,7 +14,7 @@ from power_grid_model_io.converters.pandapower_converter import PandaPowerConver
 from power_grid_model_io.converters.pgm_json_converter import PgmJsonConverter
 from power_grid_model_io.data_types.tabular_data import TabularData
 
-structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(logging.INFO))
+structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(logging.DEBUG))
 
 # Source data
 pp_net = pandapower.networks.example_simple()
