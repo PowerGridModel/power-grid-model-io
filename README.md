@@ -6,7 +6,7 @@ SPDX-License-Identifier: MPL-2.0
 
 [![PyPI version](https://badge.fury.io/py/power-grid-model-io.svg)](https://badge.fury.io/py/power-grid-model-io)
 [![License: MIT](https://img.shields.io/badge/License-MPL2.0-informational.svg)](https://github.com/alliander-opensource/power-grid-model-io/blob/main/LICENSE)
-[![Build and Test C++ and Python](https://github.com/alliander-opensource/power-grid-model-io/actions/workflows/build-test-and-sonar.yml/badge.svg)](https://github.com/alliander-opensource/power-grid-model-io/actions/workflows/build-test-and-sonar.yml)
+[![Build and Test Python](https://github.com/alliander-opensource/power-grid-model-io/actions/workflows/build-test-and-sonar.yml/badge.svg)](https://github.com/alliander-opensource/power-grid-model-io/actions/workflows/build-test-and-sonar.yml)
 [![Check Code Quality](https://github.com/alliander-opensource/power-grid-model-io/actions/workflows/check-code-quality.yml/badge.svg)](https://github.com/alliander-opensource/power-grid-model-io/actions/workflows/check-code-quality.yml)
 [![REUSE Compliance Check](https://github.com/alliander-opensource/power-grid-model-io/actions/workflows/reuse-compliance.yml/badge.svg)](https://github.com/alliander-opensource/power-grid-model-io/actions/workflows/reuse-compliance.yml)
 [![docs](https://readthedocs.org/projects/power-grid-model-io/badge/)](https://power-grid-model-io.readthedocs.io/en/stable/)
