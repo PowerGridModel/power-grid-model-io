@@ -13,4 +13,4 @@ from power_grid_model_io.data_types.tabular_data import TabularData
 
 ExtraInfo = Dict[str, Union[AttributeValue, str]]
 ExtraInfoLookup = Dict[int, ExtraInfo]
-StructuredData = Union[Dict[str, Dict[str, Any]], List[Dict[str, Dict[str, Any]]]]
+StructuredData = Union[Dict[str, List[Dict[str, Any]]], List[Dict[str, List[Dict[str, Any]]]]]
