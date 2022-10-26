@@ -3,7 +3,6 @@ SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dy
 
 SPDX-License-Identifier: MPL-2.0
 -->
-# Power Grid Model Input/Output
 
 [![PyPI version](https://badge.fury.io/py/power-grid-model-io.svg)](https://badge.fury.io/py/power-grid-model-io)
 [![License: MIT](https://img.shields.io/badge/License-MPL2.0-informational.svg)](https://github.com/alliander-opensource/power-grid-model-io/blob/main/LICENSE)
@@ -19,6 +18,7 @@ SPDX-License-Identifier: MPL-2.0
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=alliander-opensource_power-grid-model-io&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=alliander-opensource_power-grid-model-io)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=alliander-opensource_power-grid-model-io&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=alliander-opensource_power-grid-model-io)
 
+# Power Grid Model Input/Output
 
 ## Documentation:
   * Converters
