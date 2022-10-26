@@ -67,4 +67,4 @@ Please read [CODE_OF_CONDUCT](CODE_OF_CONDUCT.md) and [CONTRIBUTING](CONTRIBUTIN
 for submitting pull requests to us.
 
 # Contact
-Please read [SUPPORT](SUPPORT.md) for how to connect and get into contact with the Power Gird Model project.
+Please read [SUPPORT](SUPPORT.md) for how to connect and get into contact with the Power Gird Model IO project.
