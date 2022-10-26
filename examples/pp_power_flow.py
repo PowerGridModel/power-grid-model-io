@@ -18,7 +18,7 @@ structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(logging.
 
 # Source data
 pp_net = pandapower.networks.example_simple()
-print(pp_net)
+print(pp_net["switch"])
 
 pp_net_dict = {
     component: pp_net[component]

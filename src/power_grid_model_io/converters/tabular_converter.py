@@ -216,7 +216,7 @@ class TabularConverter(BaseConverter[TabularData]):
             # that is supported.
             attr_data = self._handle_node_ref_column(data=data, table=table, col_def=col_def)
         elif attr == "measured_object":
-            # Attributes that end with "object" can be references to different types of objects, as used by sensors.
+            # The attribute "measured_object" can be a reference to different types of objects, as used by sensors.
             raise NotImplementedError(f"{component}s are not implemented, because of the '{attr}' reference...")
         elif attr == "extra":
             # Extra info must be linked to the object IDs, therefore the uuids should be known before extra info can

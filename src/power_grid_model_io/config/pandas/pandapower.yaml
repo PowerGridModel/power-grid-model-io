@@ -19,18 +19,18 @@ grid:
       from_status:
         power_grid_model_io.filters.all_true:
           - in_service
-#          - power_grid_model_io.filters.value_or_default:
-#            # - switch!closed[element=index,bus=from_bus]
-#            - switch!closed[element=index]
-#            - true
+          #- power_grid_model_io.filters.value_or_default: #returns False = open, True = closed or simply true if there is no value
+            #- switch!closed[element=index,bus=from_bus]
+            #- switch!closed[element=index]
+            #- true
       to_node: to_bus
       to_status:
         power_grid_model_io.filters.all_true:
           - in_service
-#          - power_grid_model_io.filters.value_or_default:
-#            # - switch!closed[element=index,bus=to_bus]
-#            - switch!closed[element=index]
-#            - true
+          #- power_grid_model_io.filters.value_or_default:
+            # - switch!closed[element=index,bus=to_bus]
+            #- switch!closed[element=index]
+            #- true
       r1:
         power_grid_model_io.filters.multiply:
           - r_ohm_per_km
@@ -197,21 +197,23 @@ grid:
           - {power_grid_model_io.filters.multiply: [vn_lv_kv, 1000]}
           - tap_step_percent
           - tap_side
-#  switch:
-#    link:
-#      id: index
-#      from_node: bus
-#      to_node: element
-#      from_status:
-#        power_grid_model_io.filters.all_true:
-#          - power_grid_model_io.filters.pandapower.is_bus_switch:
-#              - et
-#          - closed
-#      to_status:
-#        power_grid_model_io.filters.all_true:
-#          - power_grid_model_io.filters.pandapower.is_bus_switch:
-#              - et
-#          - closed
+  switch:
+    link:
+      id: index
+      from_node: bus
+      to_node: element
+      from_status:
+        power_grid_model_io.filters.all_true:
+          - power_grid_model_io.filters.pandapower.is_bus_switch:
+            - et
+          - power_grid_model_io.filters.pandapower.get_closed:
+            - closed
+      to_status:
+        power_grid_model_io.filters.all_true:
+          - power_grid_model_io.filters.pandapower.is_bus_switch:
+            - et
+          - power_grid_model_io.filters.pandapower.get_closed:
+            - closed
 
 
 substitutions:
