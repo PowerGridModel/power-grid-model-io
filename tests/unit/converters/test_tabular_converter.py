@@ -522,12 +522,12 @@ def test_converter__parse_col_def_column_reference(
         table="nodes",
         col_def="lines!from_node_side[lines!id_number=nodes!id_number]",
     )
-    assert (df_lines_from_node_long == pd.Series([1, 2])).all()
+    assert_frame_equal(df_lines_from_node_long, pd.DataFrame([1, 2], columns=["from_node_side"]))
+
     df_lines_from_node_short = converter._parse_col_def_column_reference(
         data=tabular_data_no_units_no_substitutions, table="nodes", col_def="lines!from_node_side[id_number=id_number]"
     )
-    assert (df_lines_from_node_long == df_lines_from_node_short).all()
-    # TODO: discuss - function returns pd.Series instead of pd.DataFrame
+    assert_frame_equal(df_lines_from_node_long, df_lines_from_node_short)
 
 
 def test_converter__parse_col_def_function():

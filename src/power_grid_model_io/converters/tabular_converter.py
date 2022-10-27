@@ -455,7 +455,7 @@ class TabularConverter(BaseConverter[TabularData]):
         val_column = TabularConverter._parse_col_def_column_name(data=data, table=other_table, col_def=value_col_name)
         other = pd.concat([id_column, val_column], axis=1)
         result = ref_column.merge(other, how="left", left_on=ref_col_name, right_on=id_col_name)
-        return result[value_col_name]
+        return result[[value_col_name]]
 
     @staticmethod
     def _parse_col_def_function(data: TabularData, table: str, col_def: Dict[str, str]) -> pd.DataFrame:
