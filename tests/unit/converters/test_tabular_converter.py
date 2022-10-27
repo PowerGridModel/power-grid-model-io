@@ -489,9 +489,45 @@ def test_converter__parse_col_def_column_name(
         )
 
 
-def test_converter__parse_col_def_column_reference():
-    # TODO
-    pass
+def test_converter__parse_col_def_column_reference(
+    converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
+):
+    with pytest.raises(AssertionError):
+        converter._parse_col_def_column_reference(
+            data=tabular_data_no_units_no_substitutions, table="nodes", col_def=1  # type: ignore
+        )
+    with pytest.raises(
+        ValueError,
+        match="Invalid column reference 'some_column' " r"\(should be 'OtherSheet!ValueColumn\[IdColumn=RefColumn\]\)",
+    ):
+        converter._parse_col_def_column_reference(
+            data=tabular_data_no_units_no_substitutions, table="nodes", col_def="some_column"
+        )
+    with pytest.raises(
+        ValueError,
+        match=r"Invalid column reference 'lines!id_number\[abc!id_number=def!u_nom\]'.\n"
+        "It should be something like "
+        r"lines!id_number\[lines!{id_column}=nodes!{ref_column}\] "
+        r"or simply lines!id_number\[{id_column}={ref_column}\]",
+    ):
+        converter._parse_col_def_column_reference(
+            data=tabular_data_no_units_no_substitutions,
+            table="nodes",
+            col_def="lines!id_number[abc!id_number=def!u_nom]",
+        )
+
+    # get lines.from_nodes where line id == node id
+    df_lines_from_node_long = converter._parse_col_def_column_reference(
+        data=tabular_data_no_units_no_substitutions,
+        table="nodes",
+        col_def="lines!from_node_side[lines!id_number=nodes!id_number]",
+    )
+    assert (df_lines_from_node_long == pd.Series([1, 2])).all()
+    df_lines_from_node_short = converter._parse_col_def_column_reference(
+        data=tabular_data_no_units_no_substitutions, table="nodes", col_def="lines!from_node_side[id_number=id_number]"
+    )
+    assert (df_lines_from_node_long == df_lines_from_node_short).all()
+    # TODO: discuss - function returns pd.Series instead of pd.DataFrame
 
 
 def test_converter__parse_col_def_function():
