@@ -65,7 +65,7 @@ namespaces = false
 version = {file = "PYPI_VERSION"}
 
 [tool.setuptools.package-data]
-"*" = ["*.yaml"]
+power_grid_model_io = ["config/**/*.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]

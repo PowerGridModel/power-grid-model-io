@@ -21,7 +21,6 @@ from power_grid_model_io.data_types import ExtraInfoLookup, TabularData
 from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes, Tables, TabularMapping
 from power_grid_model_io.mappings.unit_mapping import UnitMapping, Units
 from power_grid_model_io.mappings.value_mapping import ValueMapping, Values
-from power_grid_model_io.utils.auto_id import AutoID
 from power_grid_model_io.utils.modules import get_function
 
 COL_REF_RE = re.compile(r"^([^!]+)!([^\[]+)\[(([^!]+)!)?([^=]+)=(([^!]+)!)?([^\]]+)\]$")
@@ -85,7 +84,6 @@ class TabularConverter(BaseConverter[TabularData]):
         self._substitution: Optional[ValueMapping] = None
         if mapping_file is not None:
             self.set_mapping_file(mapping_file=mapping_file)
-        self._lookup = AutoID()
 
     def set_mapping_file(self, mapping_file: Path) -> None:
         """
@@ -301,11 +299,6 @@ class TabularConverter(BaseConverter[TabularData]):
         if isinstance(data, list):
             raise NotImplementedError("Batch data can not(yet) be stored for tabular data")
         return TabularData(**data)
-
-    def _id_lookup(self, component: str, row: pd.Series) -> int:
-        data = dict(sorted(row.to_dict().items(), key=lambda x: x[0]))
-        key = component + ":" + ",".join(f"{k}={v}" for k, v in data.items())
-        return self._lookup(item={"component": component, "row": data}, key=key)
 
     @staticmethod
     def _parse_col_def(data: TabularData, table: str, col_def: Any) -> pd.DataFrame:

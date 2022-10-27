@@ -56,6 +56,8 @@ jobs:
           cat coverage.xml
     
       - name: SonarCloud Scan
+        # only run sonar server in push event or pull request event from own repo
+        if:  ${{ (github.event_name == 'push') || (github.event.pull_request.head.repo.owner.login == 'alliander-opensource') }}
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
