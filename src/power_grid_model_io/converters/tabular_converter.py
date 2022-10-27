@@ -362,11 +362,11 @@ class TabularConverter(BaseConverter[TabularData]):
         except KeyError:
             return data
 
-    # pylint: disable=too-many-locals
     def _parse_col_def_column_reference(self, data: TabularData, table: str, col_def: str) -> pd.DataFrame:
         """
         Find and extract a column from a different table.
         """
+        # pylint: disable=too-many-locals
         assert isinstance(col_def, str)
         match = COL_REF_RE.fullmatch(col_def)
         if match is None:
