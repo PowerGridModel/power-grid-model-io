@@ -535,6 +535,15 @@ def test_converter__parse_col_def_function():
     pass
 
 
-def test_converter__parse_col_def_composite():
-    # TODO
-    pass
+def test_converter__parse_col_def_composite(
+    converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
+):
+    with pytest.raises(AssertionError):
+        converter._parse_col_def_composite(
+            data=tabular_data_no_units_no_substitutions, table="nodes", col_def="wrong"  # type: ignore
+        )
+
+    df = converter._parse_col_def_composite(
+        data=tabular_data_no_units_no_substitutions, table="nodes", col_def=["id_number", "u_nom"]
+    )
+    assert_frame_equal(df, tabular_data_no_units_no_substitutions["nodes"])
