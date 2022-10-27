@@ -142,7 +142,7 @@ class TabularConverter(BaseConverter[TabularData]):
                         pgm[component] = []
                     pgm[component].append(component_data)
 
-        input_data = self._merge_pgm_data(data=pgm)
+        input_data = TabularConverter._merge_pgm_data(data=pgm)
         self._log.debug(
             "Converted tabular data to power grid model data",
             n_components=len(input_data),
@@ -275,7 +275,8 @@ class TabularConverter(BaseConverter[TabularData]):
         attr_data = attr_data.apply(lambda row: self._id_lookup("node", row), axis=1)
         return attr_data
 
-    def _merge_pgm_data(self, data: Dict[str, List[np.ndarray]]) -> Dict[str, np.ndarray]:
+    @staticmethod
+    def _merge_pgm_data(data: Dict[str, List[np.ndarray]]) -> Dict[str, np.ndarray]:
         """
         During the conversion, multiple numpy arrays can be produced for the same type of componnent. These arrays
         should be concatenated to form one large table.
