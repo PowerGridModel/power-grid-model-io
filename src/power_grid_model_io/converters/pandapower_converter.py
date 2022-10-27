@@ -82,28 +82,45 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         assert "line" not in self.pgm_data
 
         pp_lines = self.pp_data["line"]
-        pp_switches = self.pp_data["switch"][self.pp_data["switch"]["et"] == "l"]
 
+        # Add an extra column called 'index' containing the index values, which we need to do the join with switches
         pp_lines["index"] = pp_lines.index
-        pp_from_switches = pp_lines[["index", "from_bus"]].merge(
-            pp_switches[["element", "bus", "closed"]],
-            how="left",
-            left_on=["index", "from_bus"],
-            right_on=["element", "bus"],
+
+        # Select the appropriate switches and columns
+        pp_switches = self.pp_data["switch"]
+        pp_switches = pp_switches[self.pp_data["switch"]["et"] == "l"]
+        pp_switches = pp_switches[["element", "bus", "closed"]]
+
+        # Join the switches with the lines twice, once for the from_bus and once for the to_bus
+        pp_from_switches = (
+            pp_lines[["index", "from_bus"]]
+            .merge(
+                pp_switches,
+                how="left",
+                left_on=["index", "from_bus"],
+                right_on=["element", "bus"],
+            )
+            .fillna(True)
+            .set_index(pp_lines.index)
         )
-        pp_to_switches = pp_lines[["index", "to_bus"]].merge(
-            pp_switches[["element", "bus", "closed"]],
-            how="left",
-            left_on=["index", "to_bus"],
-            right_on=["element", "bus"],
+        pp_to_switches = (
+            pp_lines[["index", "to_bus"]]
+            .merge(
+                pp_switches,
+                how="left",
+                left_on=["index", "to_bus"],
+                right_on=["element", "bus"],
+            )
+            .fillna(True)
+            .set_index(pp_lines.index)
         )
 
         pgm_lines = initialize_array(data_type="input", component_type="line", shape=len(pp_lines))
         pgm_lines["id"] = self._generate_ids("line", pp_lines.index)
         pgm_lines["from_node"] = self._get_ids("bus", pp_lines["from_bus"])
-        pgm_lines["from_status"] = pp_from_switches["closed"].fillna(1)
+        pgm_lines["from_status"] = pp_lines["in_service"] & pp_from_switches["closed"]
         pgm_lines["to_node"] = self._get_ids("bus", pp_lines["to_bus"])
-        pgm_lines["to_status"] = pp_to_switches["closed"].fillna(1)
+        pgm_lines["to_status"] = pp_lines["in_service"] & pp_to_switches["closed"]
         pgm_lines["r1"] = pp_lines["r_ohm_per_km"] * pp_lines["length_km"]
         pgm_lines["x1"] = pp_lines["x_ohm_per_km"] * pp_lines["length_km"]
         pgm_lines["c1"] = pp_lines["c_nf_per_km"] * pp_lines["length_km"]
