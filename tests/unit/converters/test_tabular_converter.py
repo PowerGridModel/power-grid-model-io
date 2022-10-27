@@ -2,13 +2,15 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from typing import Optional, Tuple
-from unittest.mock import MagicMock
+from typing import Any, Dict, Optional, Tuple, Union
+from unittest.mock import MagicMock, patch
 
+import numpy as np
 import pandas as pd
 import pytest
 
 from power_grid_model_io.converters.tabular_converter import COL_REF_RE, NODE_REF_RE, TabularConverter
+from power_grid_model_io.data_types.tabular_data import TabularData
 
 
 def ref_cases():
@@ -108,3 +110,34 @@ def test_apply_multiplier__no_attr_multiplier():
     converter._multipliers.get_multiplier.assert_called_once_with(table="foo", attr="bar")
     pd.testing.assert_series_equal(data, pd.Series([-2.0, 0.0, 2.0]))
     pd.testing.assert_series_equal(result, pd.Series([-2.0, 0.0, 2.0]))
+
+
+@patch("power_grid_model_io.converters.tabular_converter.initialize_array")
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._convert_col_def_to_attribute")
+def test__convert_table_to_component__condition(
+    mock_convert_col_def_to_attribute: MagicMock, mock_initialize_array: MagicMock
+):
+    # Arrange
+    converter = TabularConverter()
+    data = TabularData(Nodes=pd.DataFrame([[1, 400.0], [1, 10.5e3], [2, 10.5e3], [3, 400.0]], columns=("id", "U")))
+    attributes = {
+        "id": "node_id",
+        "u_rated": "U",
+        "condition": {"power_grid_model_io.filters.is_greater_than": ["U", 1000.0]},
+    }
+
+    # Act
+    converter._convert_table_to_component(
+        data=data,
+        data_type="input",
+        table="Nodes",
+        component="node",
+        attributes=attributes,  # type: ignore
+        extra_info=None,
+    )
+
+    # Assert
+    mock_initialize_array.assert_called_once_with(data_type="input", component_type="node", shape=2)
+    calls = mock_convert_col_def_to_attribute.call_args_list
+    np.testing.assert_array_equal(calls[0][1]["selection"], np.array([False, True, True, False]))
+    np.testing.assert_array_equal(calls[1][1]["selection"], np.array([False, True, True, False]))

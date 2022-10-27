@@ -12,6 +12,7 @@ from power_grid_model_io.filters import (
     complex_inverse_real_part,
     degrees_to_clock,
     has_value,
+    is_greater_than,
     multiply,
     subtract,
     value_or_default,
@@ -127,3 +128,17 @@ def test_degrees_to_clock(degrees: float, expected: int):
 def test_subtract(value: float, arguments: List[float], expected: float):
     actual = subtract(value, *arguments)
     assert actual == approx(expected) or (np.isnan(actual) and np.isnan(expected))
+
+
+@mark.parametrize(
+    ("left_side", "right_side", "expected"),
+    [
+        (float("nan"), float("nan"), False),
+        (0.0, 0.0, False),
+        (1.0, 2.0, False),
+        (2.0, 1.0, True),
+    ],
+)
+def test_is_greater_than(left_side: float, right_side: List[float], expected: float):
+    actual = is_greater_than(left_side, right_side)
+    assert actual == expected

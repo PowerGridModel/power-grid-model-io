@@ -112,8 +112,8 @@ def any_true(*args) -> bool:
     return any(args)
 
 
-def is_greater_than(left_size, right_side) -> bool:
+def is_greater_than(left_side, right_side) -> bool:
     """
     Return true if the first argument is greater than the second
     """
-    return left_size > right_side
+    return left_side > right_side
