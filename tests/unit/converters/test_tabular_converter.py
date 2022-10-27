@@ -451,6 +451,11 @@ def test_converter__parse_col_def(converter: TabularConverter, tabular_data_no_u
 def test_converter__parse_col_def_const(
     converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
 ):
+    with pytest.raises(AssertionError):
+        converter._parse_col_def_const(
+            data=tabular_data_no_units_no_substitutions, table="nodes", col_def="str"  # type: ignore
+        )
+
     # type(col_def) == int
     col_int = converter._parse_col_def_const(data=tabular_data_no_units_no_substitutions, table="nodes", col_def=50)
     assert_frame_equal(col_int, pd.DataFrame([50, 50]))
@@ -460,9 +465,28 @@ def test_converter__parse_col_def_const(
     assert_frame_equal(col_int, pd.DataFrame([3.0, 3.0]))
 
 
-def test_converter__parse_col_def_column_name():
-    # TODO
-    pass
+def test_converter__parse_col_def_column_name(
+    converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
+):
+    with pytest.raises(AssertionError):
+        converter._parse_col_def_column_name(
+            data=tabular_data_no_units_no_substitutions, table="nodes", col_def=1  # type: ignore
+        )
+
+    df_multiple_columns = converter._parse_col_def_column_name(
+        data=tabular_data_no_units_no_substitutions, table="nodes", col_def="  wrong_column  | id_number  | u_nom  "
+    )
+    assert_frame_equal(df_multiple_columns, pd.DataFrame([1, 2], columns=["id_number"]))
+
+    df_inf = converter._parse_col_def_column_name(
+        data=tabular_data_no_units_no_substitutions, table="nodes", col_def="inf"
+    )
+    assert_frame_equal(df_inf, pd.DataFrame([np.inf, np.inf]))
+
+    with pytest.raises(KeyError, match="Could not find column 'a' and 'b' and 'c' on sheet 'nodes'"):
+        converter._parse_col_def_column_name(
+            data=tabular_data_no_units_no_substitutions, table="nodes", col_def="  a  | b  | c  "
+        )
 
 
 def test_converter__parse_col_def_column_reference():

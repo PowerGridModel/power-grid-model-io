@@ -414,6 +414,7 @@ class TabularConverter(BaseConverter[TabularData]):
         assert isinstance(col_def, str)
         sheet = data[table]
 
+        # If multiple columns are given in col_def, return the first column that exists in the dataset
         columns = [col_name.strip() for col_name in col_def.split("|")]
         for col_name in columns:
             if col_name in sheet:
