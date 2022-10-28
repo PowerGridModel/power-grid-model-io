@@ -10,9 +10,9 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'power-grid-model-io'
-copyright = '2022, alliander-opensource'
-author = 'alliander-opensource'
+project = "power-grid-model-io"
+copyright = "2022, alliander-opensource"
+author = "alliander-opensource"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -21,24 +21,25 @@ extensions = [
     "sphinx.ext.duration",
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
     "numpydoc",
     "hoverxref.extension",
     "myst_parser",
 ]
 
 source_suffix = {
-    '.rst': 'restructuredtext',
-    '.md': 'markdown',
+    ".rst": "restructuredtext",
+    ".md": "markdown",
 }
 
-templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+templates_path = ["_templates"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'sphinx_rtd_theme'
-html_static_path = ['_static']
+html_theme = "sphinx_rtd_theme"
+html_static_path = ["_static"]
 
 # -- myst parser config ------------------------------------------------------
 # label references for depth of headers: label name in anchor slug structure
@@ -60,9 +61,13 @@ hoverxref_role_types = {
 
 # -- sphinx.autodoc config ---------------------------------------------------
 autodoc_default_options = {
-    'members': None,
-    'member-order': 'bysource',
-    'special-members': '__init__',
-    'undoc-members': False,
-    'exclude-members': '__weakref__'
+    "members": None,
+    "member-order": "bysource",
+    "special-members": "__init__",
+    "undoc-members": False,
+    "exclude-members": "__weakref__",
 }
+
+# -- sphinx.ext.intersphinx config -------------------------------------------
+# For linking to power-grid-model's documentation.
+intersphinx_mapping = {"power-grid-model": ("https://power-grid-model.readthedocs.io/en/stable/", None)}
