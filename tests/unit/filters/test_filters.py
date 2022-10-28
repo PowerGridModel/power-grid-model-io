@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
+from typing import List
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -9,8 +10,11 @@ from pytest import approx, mark
 from power_grid_model_io.filters import (
     complex_inverse_imaginary_part,
     complex_inverse_real_part,
+    degrees_to_clock,
     has_value,
+    is_greater_than,
     multiply,
+    subtract,
     value_or_default,
     value_or_zero,
 )
@@ -96,3 +100,45 @@ def test_complex_inverse_real_part(real: float, imag: float, expected: float):
 def test_complex_inverse_imaginary_part(real: float, imag: float, expected: float):
     actual = complex_inverse_imaginary_part(real, imag)
     assert actual == approx(expected) or (np.isnan(actual) and np.isnan(expected))
+
+
+@mark.parametrize(
+    ("degrees", "expected"),
+    [
+        (360, 0),
+        (120, 4),
+        (180, 6),
+        (540, 6),
+    ],
+)
+def test_degrees_to_clock(degrees: float, expected: int):
+    actual = degrees_to_clock(degrees)
+    assert actual == approx(expected) or (np.isnan(actual) and np.isnan(expected))
+
+
+@mark.parametrize(
+    ("value", "arguments", "expected"),
+    [
+        (360.0, [0.0, 10.0, 300.0], 50.0),
+        (120.0, [4.0, 15.5, 63.5], 37.0),
+        (180.0, [10.5, 20.5, 30.5, 40.5], 78.0),
+        (540.0, [50.5, 10.5, 101.0, 64.5, 3.5], 310.0),
+    ],
+)
+def test_subtract(value: float, arguments: List[float], expected: float):
+    actual = subtract(value, *arguments)
+    assert actual == approx(expected) or (np.isnan(actual) and np.isnan(expected))
+
+
+@mark.parametrize(
+    ("left_side", "right_side", "expected"),
+    [
+        (float("nan"), float("nan"), False),
+        (0.0, 0.0, False),
+        (1.0, 2.0, False),
+        (2.0, 1.0, True),
+    ],
+)
+def test_is_greater_than(left_side: float, right_side: List[float], expected: float):
+    actual = is_greater_than(left_side, right_side)
+    assert actual == expected

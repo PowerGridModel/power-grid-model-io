@@ -10,8 +10,17 @@ import math
 from typing import Any, Optional, TypeVar, cast
 
 import numpy as np
+from power_grid_model import WindingType
 
 T = TypeVar("T")
+
+WINDING_TYPES = {
+    "Y": WindingType.wye,
+    "YN": WindingType.wye_n,
+    "D": WindingType.delta,
+    "Z": WindingType.zigzag,
+    "ZN": WindingType.zigzag_n,
+}
 
 
 def multiply(*args: float):
@@ -58,3 +67,53 @@ def complex_inverse_imaginary_part(real: float, imag: float) -> float:
     Return the imaginary part of the inverse of a complex number
     """
     return (1.0 / (real + 1j * imag)).imag
+
+
+def get_winding(winding: str, neutral_grounding: bool = True) -> WindingType:
+    """
+    Return the winding type as an enum value, based on the string representation
+    """
+    winding_type = WINDING_TYPES[winding.upper()]
+    if not neutral_grounding:
+        if winding_type == WindingType.wye_n:
+            return WindingType.wye
+        if winding_type == WindingType.zigzag_n:
+            return WindingType.zigzag
+    return winding_type
+
+
+def degrees_to_clock(degrees: float) -> int:
+    """
+    Return the clock
+    """
+    return int(round(degrees / 30.0)) % 12
+
+
+def subtract(value: float, *args: float) -> float:
+    """
+    Return a value after subtracting all the arguments from the first argument
+    """
+    for arg in args:
+        value -= arg
+    return value
+
+
+def all_true(*args) -> bool:
+    """
+    Return true if all values are true
+    """
+    return all(args)
+
+
+def any_true(*args) -> bool:
+    """
+    Return true if at least one of the values is true
+    """
+    return any(args)
+
+
+def is_greater_than(left_side, right_side) -> bool:
+    """
+    Return true if the first argument is greater than the second
+    """
+    return left_side > right_side

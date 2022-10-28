@@ -23,7 +23,7 @@ from power_grid_model_io.mappings.unit_mapping import UnitMapping, Units
 from power_grid_model_io.mappings.value_mapping import ValueMapping, Values
 from power_grid_model_io.utils.modules import get_function
 
-COL_REF_RE = re.compile(r"^([^!]+)!([^\[]+)\[(([^!]+)!)?([^=]+)=(([^!]+)!)?([^\]]+)\]$")
+COL_REF_RE = re.compile(r"^([^!]+)!([^\[]+)\[(([^!]+)!)?([^=]+)=(([^!]+)!)?([^]]+)]$")
 r"""
 Regular expressions to match patterns like:
   OtherTable!ValueColumn[IdColumn=RefColumn]
@@ -41,7 +41,7 @@ and:
 =           separator
 (([^!]+)!)? ThisTable + separator! (optional)
 =           separator
-([^\]]+)
+([^]]+)
 ]           separator
 $           End of the string
 """
@@ -81,7 +81,7 @@ class TabularConverter(BaseConverter[TabularData]):
         super().__init__(source=source, destination=destination)
         self._mapping: TabularMapping = TabularMapping(mapping={})
         self._units: Optional[UnitMapping] = None
-        self._substitution: Optional[ValueMapping] = None
+        self._substitutions: Optional[ValueMapping] = None
         if mapping_file is not None:
             self.set_mapping_file(mapping_file=mapping_file)
 
@@ -123,6 +123,8 @@ class TabularConverter(BaseConverter[TabularData]):
 
         # For each table in the mapping
         for table in self._mapping.tables():
+            if table not in data or data[table].empty:
+                continue
             for component, attributes in self._mapping.instances(table=table):
                 component_data = self._convert_table_to_component(
                     data=data,
@@ -230,10 +232,11 @@ class TabularConverter(BaseConverter[TabularData]):
         except ValueError as ex:
             if "invalid literal" in str(ex) and isinstance(col_def, str):
                 # pylint: disable=raise-missing-from
-                raise ValueError(f"Possibly missing enum value for '{col_def}' column on '{table}' sheet: {ex}")
+                raise ValueError(f"Possibly missing enum value for '{col_def}' column on '{table}' table: {ex}")
             raise
 
-    def _handle_column(self, data: TabularData, table: str, component: str, attr: str, col_def: Any) -> pd.DataFrame:
+    @staticmethod
+    def _handle_column(data: TabularData, table: str, component: str, attr: str, col_def: Any) -> pd.DataFrame:
         attr_data = TabularConverter._parse_col_def(data=data, table=table, col_def=col_def)
         if len(attr_data.columns) != 1:
             raise ValueError(f"DataFrame for {component}.{attr} should contain a single column ({attr_data.columns})")
@@ -243,7 +246,7 @@ class TabularConverter(BaseConverter[TabularData]):
         self, data: TabularData, table: str, component: str, col_def: Any, extra_info: Optional[ExtraInfoLookup]
     ) -> pd.DataFrame:
 
-        attr_data = TabularConverter._parse_col_def(data=data, table=table, col_def=col_def)
+        attr_data = self._parse_col_def(data=data, table=table, col_def=col_def)
         uuids = attr_data.apply(lambda row: self._id_lookup(component, row), axis=1)
 
         if extra_info is not None:
@@ -255,8 +258,9 @@ class TabularConverter(BaseConverter[TabularData]):
 
         return uuids
 
+    @staticmethod
     def _handle_extra_info(
-        self, data: TabularData, table: str, col_def: Any, uuids: np.ndarray, extra_info: Optional[ExtraInfoLookup]
+        data: TabularData, table: str, col_def: Any, uuids: np.ndarray, extra_info: Optional[ExtraInfoLookup]
     ) -> None:
         if extra_info is None:
             return
@@ -266,18 +270,18 @@ class TabularConverter(BaseConverter[TabularData]):
             extra_info[i].update({k: v for k, v in xtr.items() if not isinstance(v, float) or not np.isnan(v)})
 
     def _handle_node_ref_column(self, data: TabularData, table: str, col_def: Any) -> pd.DataFrame:
-        attr_data = TabularConverter._parse_col_def(data=data, table=table, col_def=col_def)
+        attr_data = self._parse_col_def(data=data, table=table, col_def=col_def)
         attr_data = attr_data.apply(lambda row: self._id_lookup("node", row), axis=1)
         return attr_data
 
-    def _merge_pgm_data(self, data: Dict[str, List[np.ndarray]]) -> Dict[str, np.ndarray]:
+    @staticmethod
+    def _merge_pgm_data(data: Dict[str, List[np.ndarray]]) -> Dict[str, np.ndarray]:
         """
-        During the conversion, multiple numpy arrays can be produced for the same type of componnent. These arrays
+        During the conversion, multiple numpy arrays can be produced for the same type of component. These arrays
         should be concatenated to form one large table.
 
         Args:
             data: For each component, one or more numpy structured arrays
-            data_type: The data_type defines the attributs in the numpy array (input, update, sym_output, asym_output).
         """
         merged = {}
         for component_name, data_set in data.items():
@@ -286,7 +290,7 @@ class TabularConverter(BaseConverter[TabularData]):
             if len(data_set) == 1:
                 merged[component_name] = data_set[0]
 
-            # If there are numtiple arrays, concatenate them
+            # If there are multiple arrays, concatenate them
             elif len(data_set) > 1:
                 # pylint: disable=unexpected-keyword-arg
                 merged[component_name] = np.concatenate(data_set, dtype=data_set[0].dtype)
@@ -332,11 +336,11 @@ class TabularConverter(BaseConverter[TabularData]):
         like 'inf'. If that's the case, create a single column pandas DataFrame containing the const value.
         """
         assert isinstance(col_def, str)
-        sheet = data[table]
+        table_data = data[table]
 
         columns = [col_name.strip() for col_name in col_def.split("|")]
         for col_name in columns:
-            if col_name in sheet:
+            if col_name in table_data or col_name == "index":
                 return pd.DataFrame(data.get_column(table_name=table, column_name=col_name))
 
         try:  # Maybe it is not a column name, but a float value like 'inf', let's try to convert the string to a float
@@ -344,7 +348,7 @@ class TabularConverter(BaseConverter[TabularData]):
         except ValueError:
             # pylint: disable=raise-missing-from
             columns_str = " and ".join(f"'{col_name}'" for col_name in columns)
-            raise KeyError(f"Could not find column {columns_str} on sheet '{table}'")
+            raise KeyError(f"Could not find column {columns_str} on table '{table}'")
 
         return TabularConverter._parse_col_def_const(data=data, table=table, col_def=const_value)
 
@@ -357,7 +361,7 @@ class TabularConverter(BaseConverter[TabularData]):
         match = COL_REF_RE.fullmatch(col_def)
         if match is None:
             raise ValueError(
-                f"Invalid column reference '{col_def}' " "(should be 'OtherSheet!ValueColumn[IdColumn=RefColumn])"
+                f"Invalid column reference '{col_def}' " "(should be 'OtherTable!ValueColumn[IdColumn=RefColumn])"
             )
         other_table, value_col_name, _, other_table_, id_col_name, _, this_table_, ref_col_name = match.groups()
         if (other_table_ is not None and other_table_ != other_table) or (
@@ -387,6 +391,8 @@ class TabularConverter(BaseConverter[TabularData]):
         for fn_name, sub_def in col_def.items():
             fn_ptr = get_function(fn_name)
             col_data = TabularConverter._parse_col_def(data=data, table=table, col_def=sub_def)
+            if col_data.empty:
+                raise ValueError(f"Cannot apply function {fn_name} to an empty DataFrame")
             col_data = col_data.apply(lambda row, fn=fn_ptr: fn(*row), axis=1, raw=True)
             data_frame.append(col_data)
         return pd.concat(data_frame, axis=1)
