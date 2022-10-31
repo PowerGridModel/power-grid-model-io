@@ -6,17 +6,27 @@ SPDX-License-Identifier: MPL-2.0
 
 # Converters
 
-There are 4 types of converters present as of now. PGM JSON Converter, VisonExcelConverter, GaiaExcelConverter and Pandapower Converter.
-Among them, VisonExcelConverter and GaiaExcelConverter are [tabular converters](tabular_converter.md) for excel exports of vision and gaia respectively.
+There are 4 types of converters present as of now:
 
-PGM JSON converter converts to and from the power-grid-model JSON data format. 
+- **PGM JSON Converter:** PGM JSON converter converts to and from the power-grid-model JSON data format. 
 This json format makes it convenient to evaluate the grid data in perspective of input to power-grid-model. 
 More details about the JSON format are mentioned in {external:py:class}`power_grid_model.utils` and example of it is in [Make Test Dataset](power-grid-model:exapmles/Make%20Test%20Dataset.ipynb) in power-grid-model repository.
 Check the API reference of {py:class}`PgmJsonConverter` for more information.
 
-Pandapower converter converts pandapower network which is a dictionary of dataframes to power-grid-model data.
+- **VisonExcelConverter:** The vision files which can be exported to excel as given in [manual](https://phasetophase.nl/pdf/VisionEN.pdf). The information for attributes can also be found here.
+- **GaiaExcelConverter**
+- **Pandapower Converter:** Pandapower converter converts [pandapower network](https://pandapower.readthedocs.io/en/stable/elements.html) which is a dictionary of dataframes to power-grid-model data.
 
-A converter object can be instantiated in the following way.
+
+VisonExcelConverter and GaiaExcelConverter are inherited from [tabular converters](tabular_converter.md) for excel exports of vision and gaia respectively.
+All 4 converters are derived from the base {py:class}`power_grid_model_io.converters.base_converter`. 
+The usable functions for loading, saving and converting the data are located here. 
+The private functions (`_load_data`, `_parse_data` and `_serialize_data`) should then be overloaded based on the specific type of converter (ie. excel, json or pandapower). 
+It is recommended to create any custom converter in a similar way.
+
+## Instantiation
+
+A converter object can be instantiated in the following way. For eg, for a `PgmJsonConverter`,
 
 ```python
 from power_grid_model_io.converters.pgm_json_converter import PgmJsonConverter
@@ -24,8 +34,7 @@ from power_grid_model_io.converters.pgm_json_converter import PgmJsonConverter
 converter = PgmJsonConverter(source_file=source, destination_file=destination)
 ```
 
-
-All converters have certain common methods for loading, converting and saving source data.
+The usable methods of converters for loading and saving the data are as follows.
 
 ## Loading data
 
