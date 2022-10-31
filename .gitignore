@@ -5,6 +5,8 @@
 # Generated files
 *.egg-info
 PYPI_VERSION
+build/
+wheelhouse/
 
 # temporary_files
 __pycache__/
@@ -23,3 +25,10 @@ data/
 # IDE
 .idea/
 .vscode/
+
+# docs
+docs/_build/
+docs/_static/
+docs/_templates/
+docs/make.bat
+docs/Makefile

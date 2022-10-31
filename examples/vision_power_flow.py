@@ -5,7 +5,8 @@
 import logging
 
 import structlog
-from power_grid_model import PowerGridModel
+from power_grid_model import CalculationType, PowerGridModel
+from power_grid_model.validation import assert_valid_input_data
 
 from power_grid_model_io.converters.pgm_json_converter import PgmJsonConverter
 from power_grid_model_io.converters.vision_excel_converter import VisionExcelConverter
@@ -19,6 +20,9 @@ dst = "data/vision/example_output.json"
 # Convert Vision file
 vision_converter = VisionExcelConverter(source_file=src)
 input_data, extra_info = vision_converter.load_input_data()
+
+# Validate data
+assert_valid_input_data(input_data, calculation_type=CalculationType.power_flow, symmetric=True)
 
 # Perform power flow calculation
 grid = PowerGridModel(input_data=input_data)
