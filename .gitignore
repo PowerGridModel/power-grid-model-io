@@ -26,15 +26,9 @@ data/
 .idea/
 .vscode/
 
-# sphinx builds
-docs/_build
-auto_gen
-docs/make.bat
-docs/Makefile
-
 # docs
-_build/
-_static/
-_templates/
+docs/_build/
+docs/_static/
+docs/_templates/
 docs/make.bat
 docs/Makefile
