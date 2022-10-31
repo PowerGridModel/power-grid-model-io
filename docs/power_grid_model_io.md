@@ -4,16 +4,16 @@ SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynam
 SPDX-License-Identifier: MPL-2.0
 -->
 
-# API reference
+# power_grid_model_io
 
-## Converters
-
-## CLI
+## cli
 
 ```{eval-rst}
 .. automodule:: power_grid_model_io.cli.convert
 .. automodule:: power_grid_model_io.cli.validate
 ```
+
+## Converters
 
 ```{eval-rst}
 .. automodule:: power_grid_model_io.converters.base_converter
@@ -23,7 +23,7 @@ SPDX-License-Identifier: MPL-2.0
 .. automodule:: power_grid_model_io.converters.pgm_json_converter
 ```
 
-## Data Stores
+## data_stores
 
 ```{eval-rst}
 .. automodule:: power_grid_model_io.data_stores.base_data_store
@@ -33,18 +33,18 @@ SPDX-License-Identifier: MPL-2.0
 .. automodule:: power_grid_model_io.data_stores.vision_excel_file_store
 ```
 
-## Data types
+## data_types
 
 ```{eval-rst}
 .. automodule:: power_grid_model_io.data_types.tabular_data
 ```
 
-## Filters
+## filters
 
 ```{eval-rst}
 .. automodule:: power_grid_model_io.filters.phase_to_phase
 ```
-## Mappings
+## mappings
 
 ```{eval-rst}
 .. automodule:: power_grid_model_io.mappings.tabular_mapping
@@ -52,8 +52,9 @@ SPDX-License-Identifier: MPL-2.0
 .. automodule:: power_grid_model_io.mappings.value_mapping
 ```
 
-## Utils
+## utils
 
 ```{eval-rst}
-
+.. automodule:: power_grid_model_io.utils.AutoID
+.. automodule:: power_grid_model_io.utils.modules
 ```
