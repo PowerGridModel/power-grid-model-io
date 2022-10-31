@@ -13,7 +13,7 @@ SPDX-License-Identifier: MPL-2.0
 .. automodule:: power_grid_model_io.cli.validate
 ```
 
-## Converters
+## converters
 
 ```{eval-rst}
 .. automodule:: power_grid_model_io.converters.base_converter
@@ -55,6 +55,6 @@ SPDX-License-Identifier: MPL-2.0
 ## utils
 
 ```{eval-rst}
-.. automodule:: power_grid_model_io.utils.AutoID
+.. automodule:: power_grid_model_io.utils.auto_id
 .. automodule:: power_grid_model_io.utils.modules
 ```
