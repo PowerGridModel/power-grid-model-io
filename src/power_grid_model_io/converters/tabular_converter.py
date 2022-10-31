@@ -21,16 +21,16 @@ from power_grid_model_io.data_types import ExtraInfoLookup, TabularData
 from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes, Tables, TabularMapping
 from power_grid_model_io.mappings.unit_mapping import UnitMapping, Units
 from power_grid_model_io.mappings.value_mapping import ValueMapping, Values
-from power_grid_model_io.utils.auto_id import AutoID
 from power_grid_model_io.utils.modules import get_function
 
-COL_REF_RE = re.compile(r"([^!]+)!([^\[]+)\[(([^!]+)!)?([^=]+)=(([^!]+)!)?([^\]]+)\]")
+COL_REF_RE = re.compile(r"^([^!]+)!([^\[]+)\[(([^!]+)!)?([^=]+)=(([^!]+)!)?([^\]]+)\]$")
 r"""
 Regular expressions to match patterns like:
   OtherTable!ValueColumn[IdColumn=RefColumn]
 and:
   OtherTable!ValueColumn[OtherTable!IdColumn=ThisTable!RefColumn]
 
+^           Start of the string
 ([^!]+)     OtherTable
 !           separator
 ([^\[]+)    ValueColumn
@@ -43,6 +43,21 @@ and:
 =           separator
 ([^\]]+)
 ]           separator
+$           End of the string
+"""
+
+NODE_REF_RE = re.compile(r"^(.+_)?node(_.+)?$")
+r"""
+Regular expressions to match the word node with an optional prefix or suffix, e.g.:
+    - node
+    - from_node
+    - node_1
+
+^           Start of the string
+(.+_)?      Optional prefix, ending with an underscore
+node        The word 'node'
+(_.+)?      Optional suffix, starting with in an underscore
+$           End of the string
 """
 
 
@@ -69,7 +84,6 @@ class TabularConverter(BaseConverter[TabularData]):
         self._substitution: Optional[ValueMapping] = None
         if mapping_file is not None:
             self.set_mapping_file(mapping_file=mapping_file)
-        self._lookup = AutoID()
 
     def set_mapping_file(self, mapping_file: Path) -> None:
         """
@@ -193,12 +207,12 @@ class TabularConverter(BaseConverter[TabularData]):
             attr_data = self._handle_id_column(
                 data=data, table=table, component=component, col_def=col_def, extra_info=extra_info
             )
-        elif attr.endswith("node"):
-            # Atributes that end with "node" are refences to nodes. Currently this is the only type of reference
+        elif NODE_REF_RE.fullmatch(attr):
+            # Attributes that contain "node" are references to nodes. Currently this is the only type of reference
             # that is supported.
             attr_data = self._handle_node_ref_column(data=data, table=table, col_def=col_def)
-        elif attr.endswith("object"):
-            # Atributes that end with "object" can be references to different types of objects, as used by sensors.
+        elif attr == "measured_object":
+            # The attribute "measured_object" can be a reference to different types of objects, as used by sensors.
             raise NotImplementedError(f"{component}s are not implemented, because of the '{attr}' reference...")
         elif attr == "extra":
             # Extra info must be linked to the object IDs, therefore the uuids should be known before extra info can
@@ -274,7 +288,8 @@ class TabularConverter(BaseConverter[TabularData]):
 
             # If there are numtiple arrays, concatenate them
             elif len(data_set) > 1:
-                merged[component_name] = np.concatenate(data_set)
+                # pylint: disable=unexpected-keyword-arg
+                merged[component_name] = np.concatenate(data_set, dtype=data_set[0].dtype)
 
         return merged
 
@@ -284,11 +299,6 @@ class TabularConverter(BaseConverter[TabularData]):
         if isinstance(data, list):
             raise NotImplementedError("Batch data can not(yet) be stored for tabular data")
         return TabularData(**data)
-
-    def _id_lookup(self, component: str, row: pd.Series) -> int:
-        data = dict(sorted(row.to_dict().items(), key=lambda x: x[0]))
-        key = component + ":" + ",".join(f"{k}={v}" for k, v in data.items())
-        return self._lookup(item={"component": component, "row": data}, key=key)
 
     @staticmethod
     def _parse_col_def(data: TabularData, table: str, col_def: Any) -> pd.DataFrame:
