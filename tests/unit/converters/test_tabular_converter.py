@@ -368,15 +368,20 @@ def test_converter__serialize_data(converter: TabularConverter, pgm_node_empty: 
         converter._serialize_data(data=pgm_node_empty, extra_info={})
     with pytest.raises(NotImplementedError, match=r"Batch data can not \(yet\) be stored for tabular data"):
         converter._serialize_data(data=[])  # type: ignore
-    # TODO: serialize_data expects pgm Dataset, TabularData, expects pd.DataFrame
-    # tabular_data = converter._serialize_data(data=pgm_node_empty)
+
+    pgm_node_empty["node"]["id"] = [1, 2]
+    pgm_node_empty["node"]["u_rated"] = [3.0, 4.0]
+    tabular_data = converter._serialize_data(data=pgm_node_empty)
+    assert len(tabular_data._data) == 1
+    assert (tabular_data._data["node"]["id"] == np.array([1, 2])).all()
+    assert (tabular_data._data["node"]["u_rated"] == np.array([3.0, 4.0])).all()
 
 
 def test_converter__id_lookup(converter: TabularConverter):
-    a01 = converter._id_lookup(component="a", row=pd.Series([0, 1]))
-    b0 = converter._id_lookup(component="b", row=pd.Series([0]))
-    b0_ = converter._id_lookup(component="b", row=pd.Series([0]))
-    a0 = converter._id_lookup(component="a", row=pd.Series([0]))
+    a01 = converter._id_lookup(component="a", row=[0, 1])
+    b0 = converter._id_lookup(component="b", row=[0])
+    b0_ = converter._id_lookup(component="b", row=[0])
+    a0 = converter._id_lookup(component="a", row=[0])
     assert a01 == 0
     assert b0 == 1
     assert b0_ == 1
