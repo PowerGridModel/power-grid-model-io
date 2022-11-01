@@ -5,13 +5,14 @@
 Abstract converter class
 """
 from abc import ABC, abstractmethod
-from typing import Generic, Optional, Tuple, TypeVar
+from typing import Generic, Hashable, List, Optional, Tuple, TypeVar
 
 import structlog
 from power_grid_model.data_types import Dataset, SingleDataset
 
 from power_grid_model_io.data_stores.base_data_store import BaseDataStore
 from power_grid_model_io.data_types import ExtraInfoLookup
+from power_grid_model_io.utils.auto_id import AutoID
 
 T = TypeVar("T")
 
@@ -28,6 +29,7 @@ class BaseConverter(Generic[T], ABC):
         self._log = structlog.get_logger(type(self).__name__)
         self._source = source
         self._destination = destination
+        self._lookup = AutoID()
 
     def load_input_data(self, data: Optional[T] = None) -> Tuple[SingleDataset, ExtraInfoLookup]:
         """
@@ -102,6 +104,9 @@ class BaseConverter(Generic[T], ABC):
         if self._source is not None:
             return self._source.load()
         raise ValueError("No data supplied!")
+
+    def _id_lookup(self, component: str, row: List[Hashable]) -> int:
+        return self._lookup(item=(component,) + tuple(row))
 
     @abstractmethod  # pragma: nocover
     def _parse_data(self, data: T, data_type: str, extra_info: Optional[ExtraInfoLookup] = None) -> Dataset:
