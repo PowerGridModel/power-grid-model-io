@@ -530,9 +530,24 @@ def test_converter__parse_col_def_column_reference(
     assert_frame_equal(df_lines_from_node_long, df_lines_from_node_short)
 
 
-def test_converter__parse_col_def_function():
-    # TODO
-    pass
+@patch("power_grid_model_io.converters.tabular_converter.get_function")
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def")
+def test_converter__parse_col_def_function(
+    mock_parse_col_def: MagicMock,
+    mock_get_function: MagicMock,
+    converter: TabularConverter,
+    tabular_data_no_units_no_substitutions: TabularData,
+):
+    def multiply_by_two(value: int):
+        return value * 2
+
+    mock_get_function.return_value = multiply_by_two
+    mock_parse_col_def.return_value = pd.DataFrame([2, 4, 5])
+
+    multiplied_data = converter._parse_col_def_function(
+        data=tabular_data_no_units_no_substitutions, table="nodes", col_def={"multiply_by_two": "u_nom"}
+    )
+    assert_frame_equal(multiplied_data, pd.DataFrame([4, 8, 10]))
 
 
 def test_converter__parse_col_def_composite(

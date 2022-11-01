@@ -2,13 +2,12 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from pathlib import Path
+from unittest.mock import patch
 
 import pandas as pd
 import pytest
-from unittest.mock import patch
 
 from power_grid_model_io.converters.vision_excel_converter import VisionExcelConverter
-
 
 MAPPING_FILE = Path(__file__).parent / "test_data/mapping.yaml"
 
@@ -23,7 +22,9 @@ def test_initialization():
     with pytest.raises(FileNotFoundError, match="No Vision Excel mapping available for language 'abcde'"):
         VisionExcelConverter(language="abcde")
 
-    with patch("power_grid_model_io.converters.tabular_converter.TabularConverter.set_mapping_file") as mock_set_mapping_file:
+    with patch(
+        "power_grid_model_io.converters.tabular_converter.TabularConverter.set_mapping_file"
+    ) as mock_set_mapping_file:
         VisionExcelConverter()
         mock_set_mapping_file.assert_called_once()
 
@@ -49,14 +50,8 @@ def test_converter__id_lookup(converter: VisionExcelConverter):
     assert converter._lookup._keys == {
         "node:b=4.0,c=6.0,e=5.0": 0,
         "node:b=1.0,c=6.0,e=5.0": 1,
-        "node:c=6.0,e=5.0,b=4.0": 2
+        "node:c=6.0,e=5.0,b=4.0": 2,
     }
-    assert converter._lookup._items[0] == {
-        "component": "node", "row": {"b": 4.0, "c": 6.0, "e": 5.0}
-    }
-    assert converter._lookup._items[1] == {
-        "component": "node", "row": {"b": 1.0, "c": 6.0, "e": 5.0}
-    }
-    assert converter._lookup._items[2] == {
-        "component": "node", "row": {"c": 6.0, "e": 5.0, "b": 4.0}
-    }
+    assert converter._lookup._items[0] == {"component": "node", "row": {"b": 4.0, "c": 6.0, "e": 5.0}}
+    assert converter._lookup._items[1] == {"component": "node", "row": {"b": 1.0, "c": 6.0, "e": 5.0}}
+    assert converter._lookup._items[2] == {"component": "node", "row": {"c": 6.0, "e": 5.0, "b": 4.0}}
