@@ -24,10 +24,10 @@ class TabularData:
 
     def __init__(self, **tables: Union[pd.DataFrame, np.ndarray]):
         for table_name, table_data in tables.items():
-            if not isinstance(table_data, pd.DataFrame):
+            if not isinstance(table_data, (pd.DataFrame, np.ndarray)):
                 raise TypeError(
                     f"Invalid data type for table '{table_name}'; "
-                    f"expected a pandas DataFrame, got {type(table_data).__name__}."
+                    f"expected a pandas DataFrame or NumPy array, got {type(table_data).__name__}."
                 )
         self._data: Dict[str, Union[pd.DataFrame, np.ndarray]] = tables
         self._units: Optional[UnitMapping] = None
