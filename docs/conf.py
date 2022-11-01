@@ -24,7 +24,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "numpydoc",
     "hoverxref.extension",
-    "myst_parser",
+    "myst_nb",
 ]
 
 source_suffix = {
