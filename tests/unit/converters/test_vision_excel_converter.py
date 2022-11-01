@@ -28,13 +28,12 @@ def test_initialization():
         VisionExcelConverter()
         mock_set_mapping_file.assert_called_once()
 
-    with patch("power_grid_model_io.data_stores.vision_excel_file_store.VisionExcelFileStore") as MockFileStore:
+    with patch("power_grid_model_io.converters.vision_excel_converter.VisionExcelFileStore") as MockFileStore:
         VisionExcelConverter()
         MockFileStore.assert_not_called()
 
-        # TODO: fix lines below
-        # VisionExcelConverter(source_file="source_file")
-        # MockFileStore.assert_called_once()
+        VisionExcelConverter(source_file="source_file")
+        MockFileStore.assert_called_once()
 
 
 def test_converter__id_lookup(converter: VisionExcelConverter):
