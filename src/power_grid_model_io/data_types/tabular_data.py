@@ -51,9 +51,10 @@ class TabularData:
         Select a column from a table, while applying unit conversions and value substitutions
         """
         table_data = self._data[table_name]
-        if not isinstance(table_data, pd.DataFrame):
-            raise TypeError("TabularData.get_column is not implemented for numpy arrays")
         column_data = table_data[column_name]
+
+        if isinstance(column_data, np.ndarray):
+            column_data = pd.Series(column_data, name=column_name)
 
         # If unit information is available, convert the unit
         if not isinstance(column_data, pd.Series):
@@ -63,6 +64,7 @@ class TabularData:
                     f"The '{column_name}' column should now be unitless, "
                     f"but it still contains a unit: {column_data.columns.values}"
                 )
+
         return self._apply_value_substitution(column_data=column_data, table=table_name, field=column_name)
 
     def _apply_value_substitution(self, column_data: pd.Series, table: str, field: str) -> pd.Series:
