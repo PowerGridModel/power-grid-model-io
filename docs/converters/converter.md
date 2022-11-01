@@ -15,7 +15,7 @@ Use the examples notebooks to understand how to convert data from the respective
 - **VisonExcelConverter** and **GaiaExcelConverter:** Refer to the [Vision and Gaia Example](../examples/vision_gaia_example.ipynb)
 - **Pandapower Converter:** Converts [pandapower network](https://pandapower.readthedocs.io/en/stable/elements.html) which is a dictionary of dataframes to power-grid-model data.
 
-Refer to [converters](../power_grid_model.io#converters) in API documentation for more details
+Refer to [converters](../power_grid_model_io.md#converters) in API documentation for more details
 
 ## Structure
 
