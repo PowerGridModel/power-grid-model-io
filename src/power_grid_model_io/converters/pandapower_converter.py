@@ -67,6 +67,11 @@ class PandaPowerConverter(BaseConverter[PandasData]):
     def _create_input_data(self):
         self._create_pgm_input_nodes()
         self._create_pgm_input_lines()
+        self._create_pgm_input_source()
+        # self._create_pgm_input_shunt()
+        # self._create_pgm_input_transformer()
+        # self._create_pgm_input_sym_gen()
+        # self._create_pgm_input_three_winding_transformer()
 
     def _create_pgm_input_nodes(self):
         assert "node" not in self.pgm_data
@@ -125,9 +130,123 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_lines["x1"] = pp_lines["x_ohm_per_km"] * pp_lines["length_km"]
         pgm_lines["c1"] = pp_lines["c_nf_per_km"] * pp_lines["length_km"]
         pgm_lines["tan1"] = 0.0
-        pgm_lines["i_n"] = pp_lines["max_i_ka"] * 1000.0
+        pgm_lines["i_n"] = pp_lines["max_i_ka"] * 1e3
 
         self.pgm_data["line"] = pgm_lines
+
+    def _create_pgm_input_source(self):
+        assert "source" not in self.pgm_data
+
+        pp_ext_grid = self.pp_data["ext_grid"]
+
+        pgm_source = initialize_array(data_type="input", component_type="source", shape=len(pp_ext_grid))
+        pgm_source["id"] = self._generate_ids("source", pp_ext_grid.index)
+        pgm_source["node"] = pp_ext_grid["bus"]
+        pgm_source["status"] = pp_ext_grid["in_service"]
+        pgm_source["u_ref"] = pp_ext_grid["vm_pu"]
+
+    def _create_pgm_input_shunt(self):
+        assert "shunt" not in self.pgm_data
+
+        pp_shunt = self.pp_data["shunt"]
+
+        pgm_shunt = initialize_array(data_type="input", component_type="shunt", shape=len(pp_shunt))
+        pgm_shunt["id"] = self._generate_ids("shunt", pp_shunt.index)
+        pgm_shunt["node"] = pp_shunt["bus"]
+        pgm_shunt["status"] = pp_shunt["in_service"]
+        pgm_shunt["g1"] = (pp_shunt["p_mw"] * 1e6) / ((pp_shunt["vn_kv"] * 1e3) * (pp_shunt["vn_kv"] * 1e3))
+        pgm_shunt["b1"] = (pp_shunt["q_mvar"] * 1e6) / ((pp_shunt["vn_kv"] * 1e3) * (pp_shunt["vn_kv"] * 1e3))
+
+    def _create_pgm_input_sym_gen(self):
+        assert "sym_gen" not in self.pgm_data
+
+        pp_sgen = self.pp_data["sgen"]
+
+        pgm_sym_gen = initialize_array(data_type="input", component_type="sym_gen", shape=len(pp_sgen))
+        pgm_sym_gen["id"] = self._generate_ids("sym_gen", pp_sgen.index)
+        pgm_sym_gen["node"] = pp_sgen["bus"]
+        pgm_sym_gen["status"] = pp_sgen["in_service"]
+        pgm_sym_gen["p_specified"] = pp_sgen["p_mw"] * 1e6
+        pgm_sym_gen["q_specified"] = pp_sgen["q_mvar"] * 1e6
+
+    def _create_pgm_input_transformer(self):
+        assert "transformer" not in self.pgm_data
+
+        pp_trafo = self.pp_data["trafo"]
+
+        pgm_transformer = initialize_array(data_type="input", component_type="transformer", shape=len(pp_trafo))
+        pgm_transformer["id"] = self._generate_ids("transformer", pp_trafo.index)
+        pgm_transformer["from_node"] = pp_trafo["hv_bus"]
+        pgm_transformer["from_status"] = pp_trafo["in_service"]
+        pgm_transformer["to_node"] = pp_trafo["lv_bus"]
+        pgm_transformer["to_status"] = pp_trafo["in_service"]
+        pgm_transformer["u1"] = pp_trafo["vn_hv_kv"] * 1e3
+        pgm_transformer["u2"] = pp_trafo["vn_lv_kv"] * 1e3
+        pgm_transformer["sn"] = pp_trafo["sn_mva"] * 1e6
+        pgm_transformer["uk"] = pp_trafo["vkr_percent"] * 1e-2
+        pgm_transformer["pk"] = (pp_trafo["vkr_percent"] * 1e-2) * (pp_trafo["sn_mva"] * 1e6)
+        pgm_transformer["i0"] = pp_trafo["i0_percent"] * 1e-2
+        pgm_transformer["p0"] = pp_trafo["pfe_kw"] * 1e3
+        # pgm_transformer["winding_from"] =  vectorization?
+        # pgm_transformer["winding_to"] =  vectorization?
+        # pgm_transformer["clock"] =  vectorization?
+        pgm_transformer["tap_pos"] = pp_trafo["tap_pos"]
+        pgm_transformer["tap_side"] = pp_trafo["tap_side"]
+        pgm_transformer["tap_min"] = pp_trafo["tap_min"]
+        pgm_transformer["tap_max"] = pp_trafo["tap_max"]
+        pgm_transformer["tap_nom"] = pp_trafo["tap_neutral"]
+        # pgm_transformer["tap_size"] =  vectorization?
+
+    def _create_pgm_input_three_winding_transformer(self):
+        assert "three_winding_transformer" not in self.pgm_data
+
+        pp_trafo3w = self.pp_data["trafo3w"]
+
+        pgm_3wtransformer = initialize_array(
+            data_type="input", component_type="three_winding_transformer", shape=len(pp_trafo3w)
+        )
+        pgm_3wtransformer["id"] = self._generate_ids("three_winding_transformer", pp_trafo3w.index)
+        pgm_3wtransformer["node_1"] = pp_trafo3w["hv_bus"]
+        pgm_3wtransformer["node_2"] = pp_trafo3w["mv_bus"]
+        pgm_3wtransformer["node_3"] = pp_trafo3w["lv_bus"]
+        pgm_3wtransformer["status_1"] = pp_trafo3w["in_service"]
+        pgm_3wtransformer["status_2"] = pp_trafo3w["in_service"]
+        pgm_3wtransformer["status_3"] = pp_trafo3w["in_service"]
+        pgm_3wtransformer["u1"] = pp_trafo3w["vn_hv_kv"] * 1e3
+        pgm_3wtransformer["u2"] = pp_trafo3w["vn_mv_kv"] * 1e3
+        pgm_3wtransformer["u3"] = pp_trafo3w["vn_lv_kv"] * 1e3
+        pgm_3wtransformer["sn_1"] = pp_trafo3w["sn_hv_mva"] * 1e6
+        pgm_3wtransformer["sn_2"] = pp_trafo3w["sn_mv_mva"] * 1e6
+        pgm_3wtransformer["sn_3"] = pp_trafo3w["sn_lv_mva"] * 1e6
+        pgm_3wtransformer["uk_12"] = pp_trafo3w["vk_hv_percent"] * 1e-2
+        pgm_3wtransformer["uk_13"] = pp_trafo3w["vk_lv_percent"] * 1e-2
+        pgm_3wtransformer["uk_23"] = pp_trafo3w["vk_mv_percent"] * 1e-2
+
+        pgm_3wtransformer["pk_12"] = (pp_trafo3w["vkr_hv_percent"] * 1e-2) * min(
+            (pp_trafo3w["sn_hv_mva"] * 1e6), (pp_trafo3w["sn_mv_mva"] * 1e6)
+        )
+
+        pgm_3wtransformer["pk_13"] = (pp_trafo3w["vkr_lv_percent"] * 1e-2) * min(
+            (pp_trafo3w["sn_hv_mva"] * 1e6), (pp_trafo3w["sn_lv_mva"] * 1e6)
+        )
+
+        pgm_3wtransformer["pk_23"] = (pp_trafo3w["vkr_mv_percent"] * 1e-2) * min(
+            (pp_trafo3w["sn_mv_mva"] * 1e6), (pp_trafo3w["sn_lv_mva"] * 1e6)
+        )
+
+        pgm_3wtransformer["io"] = pp_trafo3w["i0_percent"] * 1e-2
+        pgm_3wtransformer["p0"] = pp_trafo3w["pfe_kw"] * 1e3
+        # pgm_transformer["winding_1"] =  vectorization?
+        # pgm_transformer["winding_2"] =  vectorization?
+        # pgm_transformer["winding_3"] =  vectorization?
+        # pgm_transformer["clock_12"] =  vectorization?
+        # pgm_transformer["clock_13"] =  vectorization?
+        pgm_3wtransformer["tap_pos"] = pp_trafo3w["tap_pos"]
+        pgm_3wtransformer["tap_side"] = pp_trafo3w["tap_side"]
+        pgm_3wtransformer["tap_min"] = pp_trafo3w["tap_min"]
+        pgm_3wtransformer["tap_max"] = pp_trafo3w["tap_max"]
+        pgm_3wtransformer["tap_nom"] = pp_trafo3w["tap_neutral"]
+        # pgm_transformer["tap_size"] =  vectorization?
 
     def _generate_ids(self, key: str, pp_idx: pd.Index) -> np.arange:
         assert key not in self.idx_lookup
