@@ -138,10 +138,10 @@ def test_get_index__key_error():
 def test_get_tap_size():
     # Arrange
     pp_trafo = pd.DataFrame(
-        [["hv", 62.0, 10.5, 400.0], ["lv", 62.0, 10.5, 400.0]],
+        [["hv", 62.0, 10.5, 0.4], ["lv", 62.0, 10.5, 0.4], ["lv", np.nan, 10.5, 0.4]],
         columns=["tap_side", "tap_step_percent", "vn_hv_kv", "vn_lv_kv"],
     )
-    expected_tap_size = np.array([0.0, 0.0], dtype=np.float64)
+    expected_tap_size = np.array([0.0, 0.0, np.nan], dtype=np.float64)
 
     # Act
     actual_tap_size = PandaPowerConverter._get_tap_size(pp_trafo)
