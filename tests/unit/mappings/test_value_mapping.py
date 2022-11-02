@@ -12,7 +12,7 @@ from power_grid_model_io.mappings.value_mapping import ValueMapping, Values
 
 @fixture
 def mapping() -> ValueMapping:
-    return ValueMapping({".*\.switch_state": {"off": 0, "in": 1}, "N1": {"none": False, "own": True}})
+    return ValueMapping({".*\\.switch_state": {"off": 0, "in": 1}, "N1": {"none": False, "own": True}})
 
 
 def test_get_substitutions__exact_match(mapping: ValueMapping):

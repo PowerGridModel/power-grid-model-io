@@ -6,7 +6,7 @@ The TabularData class is a wrapper around Dict[str, Union[pd.DataFrame, np.ndarr
 which supports unit conversions and value substitutions
 """
 
-from typing import Dict, Iterable, List, Optional, Tuple, Union
+from typing import Dict, Iterable, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -27,7 +27,7 @@ class TabularData:
             if not isinstance(table_data, (pd.DataFrame, np.ndarray)):
                 raise TypeError(
                     f"Invalid data type for table '{table_name}'; "
-                    f"expected a pandas DataFrame or numpy array, got {type(table_data).__name__}."
+                    f"expected a pandas DataFrame or NumPy array, got {type(table_data).__name__}."
                 )
         self._data: Dict[str, Union[pd.DataFrame, np.ndarray]] = tables
         self._units: Optional[UnitMapping] = None
@@ -157,8 +157,8 @@ class TabularData:
         """
         return self._data.keys()
 
-    def items(self) -> List[Tuple[str, Union[pd.DataFrame, np.ndarray]]]:
+    def items(self) -> Iterable[Tuple[str, Union[pd.DataFrame, np.ndarray]]]:
         """
         Mimic the dictionary .items() function
         """
-        return list(self._data.items())
+        return self._data.items()
