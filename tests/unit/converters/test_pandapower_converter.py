@@ -13,6 +13,8 @@ from power_grid_model.utils import import_input_data
 
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter, PandasData
 
+from ...utils import assert_struct_array_equal
+
 DATA_DIR = Path(__file__).parent.parent.parent / "data"
 
 
@@ -77,11 +79,10 @@ def test_create_pgm_input_lines(pp_example_simple: PandasData, pgm_example_simpl
     converter._create_pgm_input_lines()
 
     # Assert
-    pd.testing.assert_frame_equal(pd.DataFrame(converter.pgm_data["line"]), pd.DataFrame(pgm_example_simple["line"]))
+    assert_struct_array_equal(converter.pgm_data["line"], pgm_example_simple["line"])
     pd.testing.assert_series_equal(converter.idx["line"], pd.Series([3], index=[101], dtype=np.int32))
 
 
-@pytest.mark.xfail(reason="Don't know why...")
 def test_create_pgm_input_sources(pp_example_simple: PandasData, pgm_example_simple: SingleDataset):
     # Arrange
     converter = PandaPowerConverter()
@@ -93,7 +94,7 @@ def test_create_pgm_input_sources(pp_example_simple: PandasData, pgm_example_sim
     converter._create_pgm_input_sources()
 
     # Assert
-    np.testing.assert_array_equal(converter.pgm_data["source"], pgm_example_simple["source"])
+    assert_struct_array_equal(converter.pgm_data["source"], pgm_example_simple["source"])
     # pd.testing.assert_series_equal(converter.idx["ext_grid"], pd.Series([4], index=[1], dtype=np.int32))
 
 
