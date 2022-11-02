@@ -44,7 +44,7 @@ def pp_example_simple() -> PandasData:
     #     vk_percent=17.8,
     # )
     pp.create_line(net, index=101, from_bus=103, to_bus=102, length_km=1.23, std_type="NAYY 4x150 SE")
-    # pp.create_load(net, index=101, bus=103, p_mw=2.5, q_mvar=0.24)
+    pp.create_load(net, index=101, bus=103, p_mw=2.5, q_mvar=0.24, const_i_percent=26.0, const_z_percent=51.0)
     pp.create_switch(net, index=101, et="l", bus=103, element=101, closed=False)
 
     return {component: net[component] for component in net if isinstance(net[component], pd.DataFrame)}
@@ -98,6 +98,20 @@ def test_create_pgm_input_sources(pp_example_simple: PandasData, pgm_example_sim
     # pd.testing.assert_series_equal(converter.idx["ext_grid"], pd.Series([4], index=[1], dtype=np.int32))
 
 
+def test_create_pgm_input_sym_loads(pp_example_simple: PandasData, pgm_example_simple: SingleDataset):
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.pp_data = pp_example_simple
+    converter.idx = {"bus": pd.Series([0, 1, 2], index=[101, 102, 103], dtype=np.int32)}
+    converter.next_idx = 5
+
+    # Act
+    converter._create_pgm_input_sym_loads()
+
+    # Assert
+    assert_struct_array_equal(converter.pgm_data["sym_load"], pgm_example_simple["sym_load"])
+
+
 # def test_create_pgm_input_shunt(pp_example_simple: PandasData, pgm_example_simple: SingleDataset):
 #     # Arrange
 #     converter = PandaPowerConverter()
@@ -118,3 +132,19 @@ def test_get_index__key_error():
     # Act / Assert
     with pytest.raises(KeyError, match=r"index.*bus"):
         converter._get_ids(key="bus", pp_idx=pd.Series())
+
+
+@pytest.mark.xfail(reason="TODO: define expected values")
+def test_get_tap_size():
+    # Arrange
+    pp_trafo = pd.DataFrame(
+        [["hv", 62.0, 10.5, 400.0], ["lv", 62.0, 10.5, 400.0]],
+        columns=["tap_side", "tap_step_percent", "vn_hv_kv", "vn_lv_kv"],
+    )
+    expected_tap_size = np.array([0.0, 0.0], dtype=np.float64)
+
+    # Act
+    actual_tap_size = PandaPowerConverter._get_tap_size(pp_trafo)
+
+    # Assert
+    np.testing.assert_array_equal(actual_tap_size, expected_tap_size)

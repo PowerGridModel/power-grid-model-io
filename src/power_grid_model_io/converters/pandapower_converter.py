@@ -8,7 +8,7 @@ from typing import Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
-from power_grid_model import initialize_array
+from power_grid_model import LoadGenType, initialize_array
 from power_grid_model.data_types import Dataset
 
 from power_grid_model_io.converters.base_converter import BaseConverter
@@ -68,6 +68,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         self._create_pgm_input_nodes()
         self._create_pgm_input_lines()
         self._create_pgm_input_sources()
+        self._create_pgm_input_sym_loads()
         # self._create_pgm_input_shunt()
         # self._create_pgm_input_transformer()
         # self._create_pgm_input_sym_gen()
@@ -180,14 +181,36 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         pp_loads = self.pp_data["load"]
 
-        # if condition == True
-        pgm_sym_loads = initialize_array(data_type="input", component_type="sym_load", shape=len(pp_loads))
-        pgm_sym_loads["id"] = self._generate_ids("sym_gen", pp_loads.index)
-        pgm_sym_loads["node"] = pp_loads["bus"], 0, 0
-        pgm_sym_loads["status"] = pp_loads["in_service"], 0, 0
-        pgm_sym_loads["type"] = 0, 1, 2
-        pgm_sym_loads["p_specified"] = pp_loads["p_mw"] * 1e6, 0, 0
-        pgm_sym_loads["q_specified"] = pp_loads["q_mvar"] * 1e6, 0, 0
+        n_loads = len(pp_loads)
+
+        pgm_sym_loads = initialize_array(data_type="input", component_type="sym_load", shape=3 * n_loads)
+
+        const_i_multiplier = pp_loads["const_i_percent"] * (1e-2 * 1e6)
+        const_z_multiplier = pp_loads["const_z_percent"] * (1e-2 * 1e6)
+        const_p_multiplier = 1e6 - const_i_multiplier - const_z_multiplier
+
+        pgm_sym_loads["id"][:n_loads] = self._generate_ids("sym_load_const_power", pp_loads.index)
+        pgm_sym_loads["node"][:n_loads] = self._get_ids("bus", pp_loads["bus"])
+        pgm_sym_loads["status"][:n_loads] = pp_loads["in_service"]
+        pgm_sym_loads["type"][:n_loads] = LoadGenType.const_power
+        pgm_sym_loads["p_specified"][:n_loads] = const_p_multiplier * pp_loads["p_mw"]
+        pgm_sym_loads["q_specified"][:n_loads] = const_p_multiplier * pp_loads["q_mvar"]
+
+        pgm_sym_loads["id"][n_loads : 2 * n_loads] = self._generate_ids("sym_load_const_impedance", pp_loads.index)
+        pgm_sym_loads["node"][n_loads : 2 * n_loads] = self._get_ids("bus", pp_loads["bus"])
+        pgm_sym_loads["status"][n_loads : 2 * n_loads] = pp_loads["in_service"]
+        pgm_sym_loads["type"][n_loads : 2 * n_loads] = LoadGenType.const_impedance
+        pgm_sym_loads["p_specified"][n_loads : 2 * n_loads] = const_z_multiplier * pp_loads["p_mw"]
+        pgm_sym_loads["q_specified"][n_loads : 2 * n_loads] = const_z_multiplier * pp_loads["q_mvar"]
+
+        pgm_sym_loads["id"][-n_loads:] = self._generate_ids("sym_load_const_current", pp_loads.index)
+        pgm_sym_loads["node"][-n_loads:] = self._get_ids("bus", pp_loads["bus"])
+        pgm_sym_loads["status"][-n_loads:] = pp_loads["in_service"]
+        pgm_sym_loads["type"][-n_loads:] = LoadGenType.const_current
+        pgm_sym_loads["p_specified"][-n_loads:] = const_i_multiplier * pp_loads["p_mw"]
+        pgm_sym_loads["q_specified"][-n_loads:] = const_i_multiplier * pp_loads["q_mvar"]
+
+        self.pgm_data["sym_load"] = pgm_sym_loads
 
     def _create_pgm_input_transformers(self):
         assert "transformer" not in self.pgm_data
@@ -209,13 +232,13 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_transformers["p0"] = pp_trafo["pfe_kw"] * 1e3
         # pgm_transformers["winding_from"] =  vectorization?
         # pgm_transformers["winding_to"] =  vectorization?
-        # pgm_transformers["clock"] =  vectorization?
+        pgm_transformers["clock"] = (pp_trafo["shift_degree"] / 30).astype(np.int8)
         pgm_transformers["tap_pos"] = pp_trafo["tap_pos"]
         pgm_transformers["tap_side"] = pp_trafo["tap_side"]  # problem here
         pgm_transformers["tap_min"] = pp_trafo["tap_min"]
         pgm_transformers["tap_max"] = pp_trafo["tap_max"]
         pgm_transformers["tap_nom"] = pp_trafo["tap_neutral"]
-        # pgm_transformers["tap_size"] =  vectorization?
+        pgm_transformers["tap_size"] = self._get_tap_size(pp_trafo)
 
         self.pgm_data["transformer"] = pgm_transformers
 
@@ -285,3 +308,15 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         if key not in self.idx:
             raise KeyError(f"No indexes have been created for '{key}'!")
         return self.idx[key][pp_idx]
+
+    @staticmethod
+    def _get_tap_size(pp_trafo: pd.DataFrame) -> np.ndarray:
+        tap_side_hv = np.array(pp_trafo["tap_side"] == "hv")
+        tap_side_lv = ~tap_side_hv
+        tap_step_multiplier = pp_trafo["tap_step_percent"] * (1e-2 * 1e3)
+
+        tap_size = np.empty(shape=len(pp_trafo), dtype=np.float64)
+        tap_size[tap_side_hv] = tap_step_multiplier[tap_side_hv] * pp_trafo["vn_hv_kv"][tap_side_hv]
+        tap_size[tap_side_lv] = tap_step_multiplier[tap_side_lv] * pp_trafo["vn_lv_kv"][tap_side_lv]
+
+        return tap_size
