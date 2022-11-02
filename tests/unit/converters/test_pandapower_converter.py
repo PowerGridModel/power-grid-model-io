@@ -27,7 +27,7 @@ def pp_example_simple() -> PandasData:
     pp.create_bus(net, index=101, vn_kv=110)
     pp.create_bus(net, index=102, vn_kv=20)
     pp.create_bus(net, index=103, vn_kv=20)
-    # pp.create_ext_grid(net, index=1, in_service=True, bus=101, vm_pu=31.02)
+    pp.create_ext_grid(net, index=1, in_service=True, bus=101, vm_pu=31.02)
     # pp.create_transformer_from_parameters(
     #     net,
     #     index=101,
@@ -78,19 +78,21 @@ def test_create_pgm_input_lines(pp_example_simple: PandasData, pgm_example_simpl
 
     # Assert
     pd.testing.assert_frame_equal(pd.DataFrame(converter.pgm_data["line"]), pd.DataFrame(pgm_example_simple["line"]))
+    pd.testing.assert_series_equal(converter.idx["line"], pd.Series([3], index=[101], dtype=np.int32))
 
 
-# def test_create_pgm_input_source(pp_example_simple: PandasData, pgm_example_simple: SingleDataset):
-#     # Arrange
-#     converter = PandaPowerConverter()
-#     converter.pp_data = pp_example_simple
-#     converter.next_idx = 4
-#
-#     # Act
-#     converter._create_pgm_input_source()
-#
-#     # Assert
-#     np.testing.assert_array_equal(converter.pgm_data["source"], pgm_example_simple["source"])
+def test_create_pgm_input_sources(pp_example_simple: PandasData, pgm_example_simple: SingleDataset):
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.pp_data = pp_example_simple
+    converter.next_idx = 4
+
+    # Act
+    converter._create_pgm_input_sources()
+
+    # Assert
+    np.testing.assert_array_equal(converter.pgm_data["source"], pgm_example_simple["source"])
+    # pd.testing.assert_series_equal(converter.idx["ext_grid"], pd.Series([4], index=[1], dtype=np.int32))
 
 
 # def test_create_pgm_input_shunt(pp_example_simple: PandasData, pgm_example_simple: SingleDataset):
