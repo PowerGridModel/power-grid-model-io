@@ -60,42 +60,57 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         for name, path in self._file_paths.items():
             with path.open(mode="rb") as file_pointer:
                 spreadsheet = pd.read_excel(io=file_pointer, sheet_name=None, header=self._header_rows)
-            if name:
-                spreadsheet = {f"{name}.{tbl_name}": tbl_data for tbl_name, tbl_data in spreadsheet.items()}
-            data.update(spreadsheet)
-
-        for sheet_name, sheet_data in data.items():
-            self._empty_unnamed_column_indexes(data=sheet_data)
-            data[sheet_name] = self._handle_duplicate_columns(sheet_name=sheet_name, data=sheet_data)
+            for sheet_name, sheet_data in spreadsheet.items():
+                sheet_data = self._remove_unnamed_column_placeholders(data=sheet_data, sheet_name=sheet_name)
+                sheet_data = self._handle_duplicate_columns(data=sheet_data, sheet_name=sheet_name)
+                if name:
+                    sheet_name = f"{name}.{sheet_name}"
+                if sheet_name in data:
+                    raise ValueError(f"Duplicate sheet name '{sheet_name}'")
+                data[sheet_name] = sheet_data
 
         return TabularData(**data)
 
     def save(self, data: TabularData) -> None:
         """
-        TODO: Test and finalize this method
+        Load one or more Excel file as tabular data.
         """
-        if len(self._file_paths) != 1:
-            raise ValueError(
-                f"ExcelFileStore can only write to a single .xls or .xlsx file, {len(self._file_paths)} provided."
-            )
-        with list(self._file_paths.values()).pop().open(mode="wb") as file_pointer:
-            for sheet_name, sheet_data in data.items():
-                sheet_data.to_excel(
-                    excel_writer=file_pointer,
-                    sheet_name=sheet_name,
-                )
 
-    def _empty_unnamed_column_indexes(self, data: pd.DataFrame) -> None:
+        # First group all sheets per file. Each sheet name that starts with a file name is assigned to that file.
+        # Sheets that don't start with a file name are assigned to the first file.
+        sheets: Dict[str, Dict[str, pd.DataFrame]] = {file_name: {} for file_name in self._file_paths}
+        for sheet_name, sheet_data in data.items():
+            if "." in sheet_name:
+                file_name, alt_sheet_name = sheet_name.split(".", maxsplit=1)
+                if file_name in self._file_paths:
+                    sheets[file_name][alt_sheet_name] = sheet_data
+                    continue
+            sheets[""][sheet_name] = sheet_data
+
+        # Create an Excel file if there is at least one sheet.
+        for file_name, file_path in self._file_paths.items():
+            if not sheets[file_name]:
+                continue
+            with file_path.open(mode="wb") as file_pointer:
+                for sheet_name, sheet_data in sheets[file_name].items():
+                    sheet_data.to_excel(
+                        excel_writer=file_pointer,
+                        sheet_name=sheet_name,
+                    )
+
+    def _remove_unnamed_column_placeholders(self, data: pd.DataFrame, sheet_name: str) -> pd.DataFrame:
         if data.empty:
-            return
+            return data
 
         def is_unnamed(col_name):
-            return self._unnamed_pattern.fullmatch(str(col_name))
+            col_is_unnamed = self._unnamed_pattern.fullmatch(str(col_name))
+            self._log.warning("Column is renamed", sheet_name=sheet_name, col_name=col_name, new_name="")
+            return col_is_unnamed
 
         columns = (tuple("" if is_unnamed(idx) else idx for idx in col_idx) for col_idx in data.columns.values)
-        data.columns = pd.MultiIndex.from_tuples(columns)
+        return pd.DataFrame(data, columns=pd.MultiIndex.from_tuples(columns))
 
-    def _handle_duplicate_columns(self, sheet_name: str, data: pd.DataFrame) -> pd.DataFrame:
+    def _handle_duplicate_columns(self, data: pd.DataFrame, sheet_name: str) -> pd.DataFrame:
         if data.empty:
             return data
 
