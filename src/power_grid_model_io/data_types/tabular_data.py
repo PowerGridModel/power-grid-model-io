@@ -2,12 +2,13 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 """
-The TabularData class is a wrapper around Dict[str, pd.DataFrame],
+The TabularData class is a wrapper around Dict[str, Union[pd.DataFrame, np.ndarray]],
 which supports unit conversions and value substitutions
 """
 
-from typing import Dict, Iterable, Optional, Tuple
+from typing import Dict, Iterable, Optional, Tuple, Union
 
+import numpy as np
 import pandas as pd
 import structlog
 
@@ -17,18 +18,18 @@ from power_grid_model_io.mappings.value_mapping import ValueMapping
 
 class TabularData:
     """
-    The TabularData class is a wrapper around Dict[str, pd.DataFrame],
+    The TabularData class is a wrapper around Dict[str, Union[pd.DataFrame, np.ndarray]],
     which supports unit conversions and value substitutions
     """
 
-    def __init__(self, **tables: pd.DataFrame):
+    def __init__(self, **tables: Union[pd.DataFrame, np.ndarray]):
         for table_name, table_data in tables.items():
-            if not isinstance(table_data, pd.DataFrame):
+            if not isinstance(table_data, (pd.DataFrame, np.ndarray)):
                 raise TypeError(
                     f"Invalid data type for table '{table_name}'; "
-                    f"expected a pandas DataFrame, got {type(table_data).__name__}."
+                    f"expected a pandas DataFrame or NumPy array, got {type(table_data).__name__}."
                 )
-        self._data: Dict[str, pd.DataFrame] = tables
+        self._data: Dict[str, Union[pd.DataFrame, np.ndarray]] = tables
         self._units: Optional[UnitMapping] = None
         self._substitution: Optional[ValueMapping] = None
         self._log = structlog.get_logger(type(self).__name__)
@@ -50,7 +51,21 @@ class TabularData:
         Select a column from a table, while applying unit conversions and value substitutions
         """
         table_data = self._data[table_name]
+
+        # If the index 'column' is requested, but no column called 'index' exist,
+        # return the index of the dataframe as if it were an actual column.
+        if column_name == "index" and column_name not in table_data:
+            return pd.Series(table_data.index, name="index")
+
         column_data = table_data[column_name]
+
+        if isinstance(column_data, np.ndarray):
+            self._log.warning(
+                "Implicitly copying a numpy array and converting it to a pandas DataFrame",
+                table_name=table_name,
+                column_name=column_name,
+            )
+            column_data = pd.Series(column_data, name=column_name)
 
         # If unit information is available, convert the unit
         if not isinstance(column_data, pd.Series):
@@ -64,7 +79,7 @@ class TabularData:
 
     def _apply_value_substitution(self, column_data: pd.Series, table: str, field: str) -> pd.Series:
 
-        if self._substitution is None:  # No subtitution defined, at all
+        if self._substitution is None:  # No substitution defined, at all
             return column_data
 
         # Find substitutions, ignore if none is found
@@ -76,7 +91,7 @@ class TabularData:
             except KeyError:
                 return column_data
 
-        if substitutions is None:  # No subtitution defined, for this column
+        if substitutions is None:  # No substitution defined, for this column
             return column_data
 
         def sub(value):
@@ -142,7 +157,7 @@ class TabularData:
         """
         return self._data.keys()
 
-    def items(self) -> Iterable[Tuple[str, pd.DataFrame]]:
+    def items(self) -> Iterable[Tuple[str, Union[pd.DataFrame, np.ndarray]]]:
         """
         Mimic the dictionary .items() function
         """
