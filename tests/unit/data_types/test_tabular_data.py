@@ -68,6 +68,18 @@ def test_tabular_data__get_column__numpy(nodes_np: np.ndarray):
     pd.testing.assert_series_equal(col_data, pd.Series([150e3, 10.5e3, 400.0], name="u_rated", dtype=np.float32))
 
 
+def test_tabular_data__get_column__numpy_is_a_reference(nodes_np: np.ndarray):
+    # Arrange
+    data = TabularData(nodes=nodes_np)
+
+    # Act
+    col_data = data.get_column(table_name="nodes", column_name="u_rated")
+    col_data[0] = 123.0  # << should update the source data
+
+    # Assert
+    np.testing.assert_array_equal(nodes_np["u_rated"], np.array([123.0, 10.5e3, 400.0]))
+
+
 def test_tabular_data__get_column__iso(nodes_iso: pd.DataFrame, lines: pd.DataFrame):
     # Arrange
     data = TabularData(nodes=nodes_iso, lines=lines)
