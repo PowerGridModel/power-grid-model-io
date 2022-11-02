@@ -60,11 +60,6 @@ class TabularData:
         column_data = table_data[column_name]
 
         if isinstance(column_data, np.ndarray):
-            self._log.warning(
-                "Implicitly copying a numpy array and converting it to a pandas DataFrame",
-                table_name=table_name,
-                column_name=column_name,
-            )
             column_data = pd.Series(column_data, name=column_name)
 
         # If unit information is available, convert the unit
