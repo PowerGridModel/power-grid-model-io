@@ -24,7 +24,7 @@ from power_grid_model_io.mappings.unit_mapping import UnitMapping, Units
 from power_grid_model_io.mappings.value_mapping import ValueMapping, Values
 from power_grid_model_io.utils.modules import get_function
 
-COL_REF_RE = re.compile(r"^([^!]+)!([^\[]+)\[(([^!]+)!)?([^=]+)=(([^!]+)!)?([^\]]+)\]$")
+COL_REF_RE = re.compile(r"^([^!]+)!([^\[]+)\[(([^!]+)!)?([^=]+)=(([^!]+)!)?([^]]+)]$")
 r"""
 Regular expressions to match patterns like:
   OtherTable!ValueColumn[IdColumn=RefColumn]
@@ -42,7 +42,7 @@ and:
 =           separator
 (([^!]+)!)? ThisTable + separator! (optional)
 =           separator
-([^\]]+)
+([^]]+)
 ]           separator
 $           End of the string
 """
@@ -128,6 +128,8 @@ class TabularConverter(BaseConverter[TabularData]):
 
         # For each table in the mapping
         for table in self._mapping.tables():
+            if table not in data or data[table].empty:
+                continue
             for component, attributes in self._mapping.instances(table=table):
                 component_data = self._convert_table_to_component(
                     data=data,
@@ -235,7 +237,7 @@ class TabularConverter(BaseConverter[TabularData]):
         except ValueError as ex:
             if "invalid literal" in str(ex) and isinstance(col_def, str):
                 # pylint: disable=raise-missing-from
-                raise ValueError(f"Possibly missing enum value for '{col_def}' column on '{table}' sheet: {ex}")
+                raise ValueError(f"Possibly missing enum value for '{col_def}' column on '{table}' table: {ex}")
             raise
 
     def _handle_column(self, data: TabularData, table: str, component: str, attr: str, col_def: Any) -> pd.DataFrame:
@@ -278,12 +280,11 @@ class TabularConverter(BaseConverter[TabularData]):
     @staticmethod
     def _merge_pgm_data(data: Dict[str, List[np.ndarray]]) -> Dict[str, np.ndarray]:
         """
-        During the conversion, multiple numpy arrays can be produced for the same type of componnent. These arrays
+        During the conversion, multiple numpy arrays can be produced for the same type of component. These arrays
         should be concatenated to form one large table.
 
         Args:
             data: For each component, one or more numpy structured arrays
-            data_type: The data_type defines the attributs in the numpy array (input, update, sym_output, asym_output).
         """
         merged = {}
         for component_name, data_set in data.items():
@@ -292,7 +293,7 @@ class TabularConverter(BaseConverter[TabularData]):
             if len(data_set) == 1:
                 merged[component_name] = data_set[0]
 
-            # If there are numtiple arrays, concatenate them
+            # If there are multiple arrays, concatenate them
             elif len(data_set) > 1:
                 # pylint: disable=unexpected-keyword-arg
                 merged[component_name] = np.concatenate(data_set, dtype=data_set[0].dtype)
@@ -339,7 +340,7 @@ class TabularConverter(BaseConverter[TabularData]):
 
         columns = [col_name.strip() for col_name in col_def.split("|")]
         for col_name in columns:
-            if col_name in table_data:
+            if col_name in table_data or col_name == "index":
                 col_data = data.get_column(table_name=table, column_name=col_name)
                 col_data = self._apply_multiplier(table=table, column=col_name, data=col_data)
                 return pd.DataFrame(col_data)
@@ -372,7 +373,7 @@ class TabularConverter(BaseConverter[TabularData]):
         match = COL_REF_RE.fullmatch(col_def)
         if match is None:
             raise ValueError(
-                f"Invalid column reference '{col_def}' " "(should be 'OtherSheet!ValueColumn[IdColumn=RefColumn])"
+                f"Invalid column reference '{col_def}' " "(should be 'OtherTable!ValueColumn[IdColumn=RefColumn])"
             )
         other_table, value_col_name, _, other_table_, id_col_name, _, this_table_, ref_col_name = match.groups()
         if (other_table_ is not None and other_table_ != other_table) or (
@@ -401,6 +402,8 @@ class TabularConverter(BaseConverter[TabularData]):
         for fn_name, sub_def in col_def.items():
             fn_ptr = get_function(fn_name)
             col_data = self._parse_col_def(data=data, table=table, col_def=sub_def)
+            if col_data.empty:
+                raise ValueError(f"Cannot apply function {fn_name} to an empty DataFrame")
             col_data = col_data.apply(lambda row, fn=fn_ptr: fn(*row), axis=1, raw=True)
             data_frame.append(col_data)
         return pd.concat(data_frame, axis=1)
