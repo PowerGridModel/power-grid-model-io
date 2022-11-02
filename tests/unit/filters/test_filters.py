@@ -60,13 +60,13 @@ def test_value_or_default__value(mock_has_value: MagicMock):
     assert value_or_default("value", "default") == "value"
 
 
-@patch("power_grid_model_io.filters.has_value")
+@patch("power_grid_model_io.filters._filters.has_value")
 def test_value_or_default__default(mock_has_value: MagicMock):
     mock_has_value.return_value = False
     assert value_or_default("value", "default") == "default"
 
 
-@patch("power_grid_model_io.filters.value_or_default")
+@patch("power_grid_model_io.filters._filters.value_or_default")
 def test_value_or_zero(mock_value_or_default: MagicMock):
     value_or_zero(1.23)
     mock_value_or_default.assert_called_once_with(value=1.23, default=0.0)
