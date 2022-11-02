@@ -43,7 +43,7 @@ def pp_example_simple() -> PandasData:
     # )
     pp.create_line(net, index=101, from_bus=103, to_bus=102, length_km=1.23, std_type="NAYY 4x150 SE")
     # pp.create_load(net, index=101, bus=103, p_mw=2.5, q_mvar=0.24)
-    # pp.create_switch(net, index=101, et="l", bus=103, element=101, closed=False)
+    pp.create_switch(net, index=101, et="l", bus=103, element=101, closed=False)
 
     return {component: net[component] for component in net if isinstance(net[component], pd.DataFrame)}
 
@@ -66,7 +66,6 @@ def test_create_pgm_input_nodes(pp_example_simple: PandasData, pgm_example_simpl
     pd.testing.assert_series_equal(converter.idx["bus"], pd.Series([0, 1, 2], index=[101, 102, 103], dtype=np.int32))
 
 
-@pytest.mark.xfail(reason="Don't know why...")
 def test_create_pgm_input_lines(pp_example_simple: PandasData, pgm_example_simple: SingleDataset):
     # Arrange
     converter = PandaPowerConverter()
