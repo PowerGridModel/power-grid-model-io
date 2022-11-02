@@ -488,7 +488,7 @@ def test_converter__parse_col_def_column_name(
     )
     assert_frame_equal(df_inf, pd.DataFrame([np.inf, np.inf]))
 
-    with pytest.raises(KeyError, match="Could not find column 'a' and 'b' and 'c' on sheet 'nodes'"):
+    with pytest.raises(KeyError, match="Could not find column 'a' and 'b' and 'c' on table 'nodes'"):
         converter._parse_col_def_column_name(
             data=tabular_data_no_units_no_substitutions, table="nodes", col_def="  a  | b  | c  "
         )
@@ -503,7 +503,7 @@ def test_converter__parse_col_def_column_reference(
         )
     with pytest.raises(
         ValueError,
-        match="Invalid column reference 'some_column' " r"\(should be 'OtherSheet!ValueColumn\[IdColumn=RefColumn\]\)",
+        match="Invalid column reference 'some_column' " r"\(should be 'OtherTable!ValueColumn\[IdColumn=RefColumn\]\)",
     ):
         converter._parse_col_def_column_reference(
             data=tabular_data_no_units_no_substitutions, table="nodes", col_def="some_column"

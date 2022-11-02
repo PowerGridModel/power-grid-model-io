@@ -69,6 +69,7 @@ class JsonFileStore(BaseDataStore[StructuredData]):
 
     def save(self, data: StructuredData) -> None:
         self._validate(data=data)
+        self._file_path.parent.mkdir(parents=True, exist_ok=True)
         with self._file_path.open(mode="w", encoding="utf-8") as file_pointer:
             if self._compact and self._indent:
                 max_level = 3
