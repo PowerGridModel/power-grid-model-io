@@ -102,14 +102,14 @@ def all_true(*args) -> bool:
     """
     Return true if all values are true
     """
-    return all(args)
+    return all(args) and not any(np.isnan(x) for x in args)
 
 
 def any_true(*args) -> bool:
     """
     Return true if at least one of the values is true
     """
-    return any(args)
+    return any(x and not np.isnan(x) for x in args)
 
 
 def is_greater_than(left_side, right_side) -> bool:

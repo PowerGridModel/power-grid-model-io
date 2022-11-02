@@ -1,16 +1,20 @@
 # SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
-from typing import List
+from typing import List, Tuple, Union
 from unittest.mock import MagicMock, patch
 
 import numpy as np
-from pytest import approx, mark
+from power_grid_model import WindingType
+from pytest import approx, mark, param
 
 from power_grid_model_io.filters import (
+    all_true,
+    any_true,
     complex_inverse_imaginary_part,
     complex_inverse_real_part,
     degrees_to_clock,
+    get_winding,
     has_value,
     is_greater_than,
     multiply,
@@ -103,6 +107,36 @@ def test_complex_inverse_imaginary_part(real: float, imag: float, expected: floa
 
 
 @mark.parametrize(
+    ("winding", "neutral_grounding", "expected"),
+    [
+        ("Y", True, WindingType.wye),
+        ("YN", True, WindingType.wye_n),
+        ("D", True, WindingType.delta),
+        ("Z", True, WindingType.zigzag),
+        ("ZN", True, WindingType.zigzag_n),
+        ("y", True, WindingType.wye),
+        ("yn", True, WindingType.wye_n),
+        ("d", True, WindingType.delta),
+        ("z", True, WindingType.zigzag),
+        ("zn", True, WindingType.zigzag_n),
+        ("Y", False, WindingType.wye),
+        ("YN", False, WindingType.wye),
+        ("D", False, WindingType.delta),
+        ("Z", False, WindingType.zigzag),
+        ("ZN", False, WindingType.zigzag),
+        ("y", False, WindingType.wye),
+        ("yn", False, WindingType.wye),
+        ("d", False, WindingType.delta),
+        ("z", False, WindingType.zigzag),
+        ("zn", False, WindingType.zigzag),
+    ],
+)
+def test_get_winding(winding: str, neutral_grounding: bool, expected: WindingType):
+    actual = get_winding(winding, neutral_grounding)
+    assert actual == expected
+
+
+@mark.parametrize(
     ("degrees", "expected"),
     [
         (360, 0),
@@ -128,6 +162,48 @@ def test_degrees_to_clock(degrees: float, expected: int):
 def test_subtract(value: float, arguments: List[float], expected: float):
     actual = subtract(value, *arguments)
     assert actual == approx(expected) or (np.isnan(actual) and np.isnan(expected))
+
+
+@mark.parametrize(
+    ("args", "expected"),
+    [
+        param(tuple(), True, id="no_args"),
+        param((True,), True, id="single_true"),
+        param((False,), False, id="single_false"),
+        param((True, True), True, id="only_true"),
+        param((True, False), False, id="mixed_true_false"),
+        param((False, False), False, id="only_false"),
+        param((True, 1, 1.0), True, id="mixed_types"),
+        param((True, 1, 0.0), False, id="mixed_types_zero_float"),
+        param((True, 0, 1.0), False, id="mixed_types_zero_int"),
+        param((False, 1, 1.0), False, id="mixed_types_false_bool"),
+        param((True, 1, np.nan), False, id="mixed_types_nan_float"),
+    ],
+)
+def test_all_true(args: Tuple[Union[bool, int, float], ...], expected: bool):
+    actual = all_true(*args)
+    assert actual == expected
+
+
+@mark.parametrize(
+    ("args", "expected"),
+    [
+        param(tuple(), False, id="no_args"),
+        param((True,), True, id="single_true"),
+        param((False,), False, id="single_false"),
+        param((True, True), True, id="only_true"),
+        param((True, False), True, id="mixed_true_false"),
+        param((False, False), False, id="only_false"),
+        param((False, 0, 0.0), False, id="mixed_types"),
+        param((False, 0, 1.0), True, id="mixed_types_non_zero_float"),
+        param((False, 1, 0.0), True, id="mixed_types_non_zero_int"),
+        param((True, 0, 0.0), True, id="mixed_types_true_bool"),
+        param((False, 0, np.nan), False, id="mixed_types_nan_float"),
+    ],
+)
+def test_any_true(args: Tuple[Union[bool, int, float], ...], expected: bool):
+    actual = any_true(*args)
+    assert actual == expected
 
 
 @mark.parametrize(
