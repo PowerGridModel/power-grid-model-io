@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 """
-The TabularData class is a wrapper around Dict[str, pd.DataFrame],
+The TabularData class is a wrapper around Dict[str, Union[pd.DataFrame, np.ndarray]],
 which supports unit conversions and value substitutions
 """
 
@@ -60,6 +60,11 @@ class TabularData:
         column_data = table_data[column_name]
 
         if isinstance(column_data, np.ndarray):
+            self._log.warning(
+                "Implicitly copying a numpy array and converting it to a pandas DataFrame",
+                table_name=table_name,
+                column_name=column_name,
+            )
             column_data = pd.Series(column_data, name=column_name)
 
         # If unit information is available, convert the unit
@@ -75,7 +80,7 @@ class TabularData:
 
     def _apply_value_substitution(self, column_data: pd.Series, table: str, field: str) -> pd.Series:
 
-        if self._substitution is None:  # No subtitution defined, at all
+        if self._substitution is None:  # No substitution defined, at all
             return column_data
 
         # Find substitutions, ignore if none is found
@@ -87,7 +92,7 @@ class TabularData:
             except KeyError:
                 return column_data
 
-        if substitutions is None:  # No subtitution defined, for this column
+        if substitutions is None:  # No substitution defined, for this column
             return column_data
 
         def sub(value):
