@@ -282,4 +282,6 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         return pgm_idx
 
     def _get_ids(self, key: str, pp_idx: pd.Series) -> pd.Series:
+        if key not in self.idx:
+            raise KeyError(f"No indexes have been created for '{key}'!")
         return self.idx[key][pp_idx]
