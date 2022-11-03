@@ -6,10 +6,12 @@ from pathlib import Path
 from typing import Dict
 from unittest.mock import MagicMock, call, mock_open, patch
 
+import numpy as np
 import pandas as pd
 import pytest
 
 from power_grid_model_io.data_stores.excel_file_store import ExcelFileStore
+from power_grid_model_io.data_types.tabular_data import TabularData
 
 PandasExcelData = Dict[str, pd.DataFrame]
 
@@ -175,3 +177,51 @@ def test_excel_file_store__load__extra__duplicate_sheet_name(
     # Act / Assert
     with pytest.raises(ValueError, match=r"Duplicate sheet name.+bar\.Nodes"):
         fs.load()
+
+
+@patch("power_grid_model_io.data_stores.excel_file_store.pd.ExcelWriter")
+@patch("power_grid_model_io.data_stores.excel_file_store.pd.DataFrame.to_excel")
+def test_excel_file_store__save(mock_to_excel: MagicMock, mock_excel_writer: MagicMock):
+    # Arrange
+    data = TabularData(
+        foo=pd.DataFrame([(1, 2.3)], columns=["id", "foo_val"]),
+        bar=np.array([(4, 5.6)], dtype=[("id", "i4"), ("bar_val", "f4")]),
+    )
+    fs = ExcelFileStore(Path("output_data.xlsx"))
+
+    # Act
+    fs.save(data=data)
+
+    # Assert
+    mock_excel_writer.assert_called_once_with(path=Path("output_data.xlsx"))
+    mock_to_excel.assert_any_call(excel_writer=mock_excel_writer().__enter__(), sheet_name="foo")
+    mock_to_excel.assert_any_call(excel_writer=mock_excel_writer().__enter__(), sheet_name="bar")
+
+
+@patch("power_grid_model_io.data_stores.excel_file_store.pd.ExcelWriter")
+@patch("power_grid_model_io.data_stores.excel_file_store.pd.DataFrame.to_excel")
+def test_excel_file_store__save__multiple_files(mock_to_excel: MagicMock, mock_excel_writer):
+    # Arrange
+    data = TabularData(
+        **{
+            "nodes": pd.DataFrame(),
+            "lines": pd.DataFrame(),
+            "foo.colors": pd.DataFrame(),
+        }
+    )
+    fs = ExcelFileStore(Path("output_data.xlsx"), foo=Path("foo.xlsx"), bar=Path("bar.xlsx"))
+
+    output_data_writer = MagicMock()
+    foo_writer = MagicMock()
+    mock_excel_writer.side_effect = [output_data_writer, foo_writer]
+
+    # Act
+    fs.save(data=data)
+
+    # Assert
+    mock_excel_writer.assert_any_call(path=Path("output_data.xlsx"))
+    mock_to_excel.assert_any_call(excel_writer=output_data_writer.__enter__(), sheet_name="nodes")
+    mock_to_excel.assert_any_call(excel_writer=output_data_writer.__enter__(), sheet_name="lines")
+
+    mock_excel_writer.assert_any_call(path=Path("foo.xlsx"))
+    mock_to_excel.assert_any_call(excel_writer=foo_writer.__enter__(), sheet_name="colors")

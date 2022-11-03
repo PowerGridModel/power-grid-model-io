@@ -73,7 +73,7 @@ class ExcelFileStore(BaseDataStore[TabularData]):
 
     def save(self, data: TabularData) -> None:
         """
-        Load one or more Excel file as tabular data.
+        Store tabular data as one or more Excel file.
         """
 
         # First group all sheets per file. Each sheet name that starts with a file name is assigned to that file.
@@ -91,10 +91,12 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         for file_name, file_path in self._file_paths.items():
             if not sheets[file_name]:
                 continue
-            with file_path.open(mode="wb") as file_pointer:
+            with pd.ExcelWriter(path=file_path) as excel_writer:  # pylint: disable=abstract-class-instantiated
                 for sheet_name, sheet_data in sheets[file_name].items():
+                    if not isinstance(sheet_data, pd.DataFrame):
+                        sheet_data = pd.DataFrame(sheet_data)
                     sheet_data.to_excel(
-                        excel_writer=file_pointer,
+                        excel_writer=excel_writer,
                         sheet_name=sheet_name,
                     )
 

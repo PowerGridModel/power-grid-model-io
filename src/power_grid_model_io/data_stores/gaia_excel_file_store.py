@@ -8,10 +8,10 @@ Gaia Excel file store
 from pathlib import Path
 from typing import Optional
 
-from power_grid_model_io.data_stores.vision_excel_file_store import VisionExcelFileStore
+from power_grid_model_io.data_stores.excel_file_store import ExcelFileStore
 
 
-class GaiaExcelFileStore(VisionExcelFileStore):
+class GaiaExcelFileStore(ExcelFileStore):
     """
     Gaia Excel file store
 
@@ -21,6 +21,8 @@ class GaiaExcelFileStore(VisionExcelFileStore):
     """
 
     def __init__(self, file_path: Path, types_file: Optional[Path] = None):
-        super().__init__(file_path)
-        if types_file is not None:
-            self._file_paths.append(types_file)
+        if types_file is None:
+            super().__init__(file_path)
+        else:
+            super().__init__(file_path, types=types_file)
+        self._header_rows.append(1)  # Units are stored in the row below the column names
