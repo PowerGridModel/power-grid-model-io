@@ -25,3 +25,16 @@ class VisionExcelConverter(TabularConverter):
             raise FileNotFoundError(f"No Vision Excel mapping available for language '{language}'")
         source = VisionExcelFileStore(file_path=Path(source_file)) if source_file else None
         super().__init__(mapping_file=mapping_file, source=source)
+
+    def get_node_id(self, number: int) -> int:
+        return self._id_lookup(name="Nodes", key=number)
+
+    def get_branch_id(self, table: str, number: int, sub_number: Optional[int] = None) -> int:
+        key = number if sub_number is None else (number, sub_number)
+        return self._id_lookup(name=table, key=key)
+
+    def get_appliance_id(self, table: str, node_id: int, sub_number: int) -> int:
+        return self._id_lookup(name=table, key=(node_id, sub_number))
+
+    def get_virtual_id(self, table: str, obj_name: str, node_id: int, sub_number: int) -> int:
+        return self._id_lookup(name=(table, obj_name), key=(node_id, sub_number))
