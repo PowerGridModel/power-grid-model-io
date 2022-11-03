@@ -567,3 +567,49 @@ def test_converter__parse_col_def_composite(
         data=tabular_data_no_units_no_substitutions, table="nodes", col_def=["id_number", "u_nom"]
     )
     assert_frame_equal(df, tabular_data_no_units_no_substitutions["nodes"])
+
+
+def test_apply_multiplier__no_multipliers():
+    # Arrange
+    converter = TabularConverter()
+    data = pd.Series([-2.0, 0.0, 2.0])
+
+    # Act
+    result = converter._apply_multiplier(table="foo", column="bar", data=data)
+
+    # Assert
+    assert converter._multipliers is None
+    pd.testing.assert_series_equal(data, pd.Series([-2.0, 0.0, 2.0]))
+    pd.testing.assert_series_equal(result, pd.Series([-2.0, 0.0, 2.0]))
+
+
+def test_apply_multiplier():
+    # Arrange
+    converter = TabularConverter()
+    converter._multipliers = MagicMock()
+    converter._multipliers.get_multiplier.return_value = 10.0
+    data = pd.Series([-2.0, 0.0, 2.0])
+
+    # Act
+    result = converter._apply_multiplier(table="foo", column="bar", data=data)
+
+    # Assert
+    converter._multipliers.get_multiplier.assert_called_once_with(table="foo", attr="bar")
+    pd.testing.assert_series_equal(data, pd.Series([-2.0, 0.0, 2.0]))
+    pd.testing.assert_series_equal(result, pd.Series([-20.0, 0.0, 20.0]))
+
+
+def test_apply_multiplier__no_attr_multiplier():
+    # Arrange
+    converter = TabularConverter()
+    converter._multipliers = MagicMock()
+    converter._multipliers.get_multiplier.side_effect = KeyError
+    data = pd.Series([-2.0, 0.0, 2.0])
+
+    # Act
+    result = converter._apply_multiplier(table="foo", column="bar", data=data)
+
+    # Assert
+    converter._multipliers.get_multiplier.assert_called_once_with(table="foo", attr="bar")
+    pd.testing.assert_series_equal(data, pd.Series([-2.0, 0.0, 2.0]))
+    pd.testing.assert_series_equal(result, pd.Series([-2.0, 0.0, 2.0]))
