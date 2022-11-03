@@ -161,7 +161,7 @@ c = auto_id("Alpha")   # c = 0 (because key "Alpha" already existed)
 item = auto_id[1]      # item = "Bravo"
  ```
   
-See also [AutoID](/src/power_grid_model_io/utils/auto_id.py).
+See also {py:class}`power_grid_model_io.utils.AutoID`
 
 ### Vision and Gaia
 For Vision and Gaia files, an extra trick is applied. Let's assume this mapping:
