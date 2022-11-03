@@ -13,6 +13,13 @@ from power_grid_model.data_types import Dataset
 
 from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_types import ExtraInfoLookup
+from power_grid_model_io.filters.pandapower import (
+    get_3wdgtransformer_winding_1,
+    get_3wdgtransformer_winding_2,
+    get_3wdgtransformer_winding_3,
+    get_transformer_winding_from,
+    get_transformer_winding_to,
+)
 
 StdTypes = Dict[str, Dict[str, Dict[str, Union[float, int, str]]]]
 PandasData = Dict[str, pd.DataFrame]
@@ -230,8 +237,8 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_transformers["pk"] = (pp_trafo["vkr_percent"] * 1e-2) * (pp_trafo["sn_mva"] * 1e6)
         pgm_transformers["i0"] = pp_trafo["i0_percent"] * 1e-2
         pgm_transformers["p0"] = pp_trafo["pfe_kw"] * 1e3
-        # pgm_transformers["winding_from"] = vectorization?
-        # pgm_transformers["winding_to"] = vectorization?
+        pgm_transformers["winding_from"] = pp_trafo["vector_group"].apply(get_transformer_winding_from)
+        pgm_transformers["winding_to"] = pp_trafo["vector_group"].apply(get_transformer_winding_to)
         pgm_transformers["clock"] = (pp_trafo["shift_degree"] / 30).astype(np.int8)
         pgm_transformers["tap_pos"] = pp_trafo["tap_pos"]
         pgm_transformers["tap_side"] = self._get_transformer_tap_side(pp_trafo["tap_side"])
@@ -281,9 +288,9 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         pgm_3wtransformers["io"] = pp_trafo3w["i0_percent"] * 1e-2
         pgm_3wtransformers["p0"] = pp_trafo3w["pfe_kw"] * 1e3
-        # pgm_3wtransformers["winding_1"] =  vectorization?
-        # pgm_3wtransformers["winding_2"] =  vectorization?
-        # pgm_3wtransformers["winding_3"] =  vectorization?
+        pgm_3wtransformers["winding_1"] = pp_trafo3w["vector_group"].apply(get_3wdgtransformer_winding_1)
+        pgm_3wtransformers["winding_2"] = pp_trafo3w["vector_group"].apply(get_3wdgtransformer_winding_2)
+        pgm_3wtransformers["winding_3"] = pp_trafo3w["vector_group"].apply(get_3wdgtransformer_winding_3)
         pgm_3wtransformers["clock_12"] = (round(pp_trafo3w["shift_mv_degree"] / 30.0) % 12).astype(np.int8)
         pgm_3wtransformers["clock_13"] = (round(pp_trafo3w["shift_lv_degree"] / 30.0) % 12).astype(np.int8)
         pgm_3wtransformers["tap_pos"] = pp_trafo3w["tap_pos"]
