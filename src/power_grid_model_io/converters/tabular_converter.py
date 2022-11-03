@@ -302,7 +302,7 @@ class TabularConverter(BaseConverter[TabularData]):
         """
 
         attr_data = self._parse_col_def(data=data, table=table, col_def=col_def)
-        uuids = attr_data.apply(lambda row: self._id_lookup(component, row), axis=1)
+        uuids = attr_data.apply(lambda row: self._id_lookup(component, row.tolist()), axis=1)
 
         if extra_info is not None:
             extra = attr_data.to_dict(orient="records")
@@ -341,7 +341,7 @@ class TabularConverter(BaseConverter[TabularData]):
 
     def _handle_node_ref_column(self, data: TabularData, table: str, col_def: Any) -> pd.Series:
         attr_data = self._parse_col_def(data=data, table=table, col_def=col_def)
-        attr_data = attr_data.apply(lambda row: self._id_lookup("node", row), axis=1)
+        attr_data = attr_data.apply(lambda row: self._id_lookup("node", row.tolist()), axis=1)
         return attr_data
 
     @staticmethod
