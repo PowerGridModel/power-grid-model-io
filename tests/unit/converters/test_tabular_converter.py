@@ -3,10 +3,12 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from typing import Optional, Tuple
+from unittest.mock import MagicMock
 
+import pandas as pd
 import pytest
 
-from power_grid_model_io.converters.tabular_converter import COL_REF_RE, NODE_REF_RE
+from power_grid_model_io.converters.tabular_converter import COL_REF_RE, NODE_REF_RE, TabularConverter
 
 
 def ref_cases():
@@ -60,3 +62,49 @@ def test_node_ref_pattern__neg():
     assert not NODE_REF_RE.fullmatch("nodes")
     assert not NODE_REF_RE.fullmatch("anode")
     assert not NODE_REF_RE.fullmatch("immunodeficient")
+
+
+def test_apply_multiplier__no_multipliers():
+    # Arrange
+    converter = TabularConverter()
+    data = pd.Series([-2.0, 0.0, 2.0])
+
+    # Act
+    result = converter._apply_multiplier(table="foo", column="bar", data=data)
+
+    # Assert
+    assert converter._multipliers is None
+    pd.testing.assert_series_equal(data, pd.Series([-2.0, 0.0, 2.0]))
+    pd.testing.assert_series_equal(result, pd.Series([-2.0, 0.0, 2.0]))
+
+
+def test_apply_multiplier():
+    # Arrange
+    converter = TabularConverter()
+    converter._multipliers = MagicMock()
+    converter._multipliers.get_multiplier.return_value = 10.0
+    data = pd.Series([-2.0, 0.0, 2.0])
+
+    # Act
+    result = converter._apply_multiplier(table="foo", column="bar", data=data)
+
+    # Assert
+    converter._multipliers.get_multiplier.assert_called_once_with(table="foo", attr="bar")
+    pd.testing.assert_series_equal(data, pd.Series([-2.0, 0.0, 2.0]))
+    pd.testing.assert_series_equal(result, pd.Series([-20.0, 0.0, 20.0]))
+
+
+def test_apply_multiplier__no_attr_multiplier():
+    # Arrange
+    converter = TabularConverter()
+    converter._multipliers = MagicMock()
+    converter._multipliers.get_multiplier.side_effect = KeyError
+    data = pd.Series([-2.0, 0.0, 2.0])
+
+    # Act
+    result = converter._apply_multiplier(table="foo", column="bar", data=data)
+
+    # Assert
+    converter._multipliers.get_multiplier.assert_called_once_with(table="foo", attr="bar")
+    pd.testing.assert_series_equal(data, pd.Series([-2.0, 0.0, 2.0]))
+    pd.testing.assert_series_equal(result, pd.Series([-2.0, 0.0, 2.0]))

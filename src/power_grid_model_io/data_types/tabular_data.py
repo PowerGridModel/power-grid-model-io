@@ -79,12 +79,9 @@ class TabularData:
 
         # Find substitutions, ignore if none is found
         try:
-            substitutions = self._substitution.get_substitutions(field=f"{table}.{field}")
+            substitutions = self._substitution.get_substitutions(attr=field, table=table)
         except KeyError:
-            try:
-                substitutions = self._substitution.get_substitutions(field=field)
-            except KeyError:
-                return column_data
+            return column_data
 
         if substitutions is None:  # No substitution defined, for this column
             return column_data
