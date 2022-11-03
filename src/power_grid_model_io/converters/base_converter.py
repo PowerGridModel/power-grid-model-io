@@ -109,9 +109,9 @@ class BaseConverter(Generic[T], ABC):
         return self._lookup(item=(component,) + tuple(row))
 
     @abstractmethod  # pragma: nocover
-    def _parse_data(self, data: T, data_type: str, extra_info: Optional[ExtraInfoLookup] = None) -> Dataset:
+    def _parse_data(self, data: T, data_type: str, extra_info: Optional[ExtraInfoLookup]) -> Dataset:
         pass
 
     @abstractmethod  # pragma: nocover
-    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup] = None) -> T:
+    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup]) -> T:
         pass

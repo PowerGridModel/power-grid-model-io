@@ -114,7 +114,7 @@ class TabularConverter(BaseConverter[TabularData]):
             MultiplierMapping(cast(Multipliers, mapping["multipliers"])) if "multipliers" in mapping else None
         )
 
-    def _parse_data(self, data: TabularData, data_type: str, extra_info: Optional[ExtraInfoLookup] = None) -> Dataset:
+    def _parse_data(self, data: TabularData, data_type: str, extra_info: Optional[ExtraInfoLookup]) -> Dataset:
         """
         This function parses tabular data and returns power-grid-model data
         :param data: TabularData, i.e. a dictionary with the components as keys and pd.DataFrames as values, with
@@ -168,7 +168,7 @@ class TabularConverter(BaseConverter[TabularData]):
         table: str,
         component: str,
         attributes: InstanceAttributes,
-        extra_info: Optional[ExtraInfoLookup] = None,
+        extra_info: Optional[ExtraInfoLookup],
     ) -> Optional[np.ndarray]:
         """
         This function converts a single table/sheet of TabularData to a power-grid-model input/update array. One table
@@ -221,7 +221,7 @@ class TabularConverter(BaseConverter[TabularData]):
         component: str,
         attr: str,
         col_def: Any,
-        extra_info: Optional[ExtraInfoLookup] = None,
+        extra_info: Optional[ExtraInfoLookup],
     ):
         """
         This function updates one of the attributes of pgm_data, based on the corresponding table/column in a tabular
@@ -286,7 +286,7 @@ class TabularConverter(BaseConverter[TabularData]):
         return attr_data.iloc[:, 0]
 
     def _handle_id_column(
-        self, data: TabularData, table: str, component: str, col_def: Any, extra_info: Optional[ExtraInfoLookup] = None
+        self, data: TabularData, table: str, component: str, col_def: Any, extra_info: Optional[ExtraInfoLookup]
     ) -> pd.Series:
         """
         This function parses the id column from the table and assigns uuids using the _id_lookup. It then returns a
@@ -367,7 +367,7 @@ class TabularConverter(BaseConverter[TabularData]):
 
         return merged
 
-    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup] = None) -> TabularData:
+    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup]) -> TabularData:
         if extra_info is not None:
             raise NotImplementedError("Extra info can not (yet) be stored for tabular data")
         if isinstance(data, list):
