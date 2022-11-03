@@ -134,17 +134,55 @@ def test_get_index__key_error():
         converter._get_ids(key="bus", pp_idx=pd.Series())
 
 
-@pytest.mark.xfail(reason="TODO: define expected values")
 def test_get_tap_size():
     # Arrange
     pp_trafo = pd.DataFrame(
-        [["hv", 62.0, 10.5, 400.0], ["lv", 62.0, 10.5, 400.0]],
+        [["hv", 62.0, 20.5, 3.214], ["lv", 62.0, 20.5, 3.214]],
         columns=["tap_side", "tap_step_percent", "vn_hv_kv", "vn_lv_kv"],
     )
-    expected_tap_size = np.array([0.0, 0.0], dtype=np.float64)
+    expected_tap_size = np.array([12710.0, 1992.68], dtype=np.float64)
 
     # Act
     actual_tap_size = PandaPowerConverter._get_tap_size(pp_trafo)
+
+    # Assert
+    np.testing.assert_array_equal(actual_tap_size, expected_tap_size)
+
+
+def test_get_transformer_tap_side():
+    # Arrange
+    pp_trafo_tap_side = pd.Series(["hv", "lv", "lv", "hv"])
+    expected_tap_side = np.array([0, 1, 1, 0], dtype=np.int8)
+
+    # Act
+    actual_tap_side = PandaPowerConverter._get_transformer_tap_side(pp_trafo_tap_side)
+
+    # Assert
+    np.testing.assert_array_equal(actual_tap_side, expected_tap_side)
+
+
+def test_get_3wtransformer_tap_side():
+    # Arrange
+    pp_trafo3w_tap_side = pd.Series(["hv", "mv", "lv", "mv", "lv", "hv", "lv"])
+    expected_tap_side = np.array([0, 1, 2, 1, 2, 0, 2], dtype=np.int8)
+
+    # Act
+    actual_tap_side = PandaPowerConverter._get_3wtransformer_tap_side(pp_trafo3w_tap_side)
+
+    # Assert
+    np.testing.assert_array_equal(actual_tap_side, expected_tap_side)
+
+
+def test_get_3wtransformer_tap_size():
+    # Arrange
+    pp_trafo = pd.DataFrame(
+        [["hv", 62.0, 10.5, 400.0, 32.1], ["lv", 62.0, 10.5, 400.0, 32.1], ["mv", 62.0, 10.5, 400.0, 32.1]],
+        columns=["tap_side", "tap_step_percent", "vn_hv_kv", "vn_mv_kv", "vn_lv_kv"],
+    )
+    expected_tap_size = np.array([6510.0, 19902.0, 248000.0], dtype=np.float64)
+
+    # Act
+    actual_tap_size = PandaPowerConverter._get_3wtransformer_tap_size(pp_trafo)
 
     # Assert
     np.testing.assert_array_equal(actual_tap_size, expected_tap_size)

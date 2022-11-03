@@ -155,7 +155,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         pgm_shunts = initialize_array(data_type="input", component_type="shunt", shape=len(pp_shunt))
         pgm_shunts["id"] = self._generate_ids("shunt", pp_shunt.index)
-        pgm_shunts["node"] = pp_shunt["bus"]
+        pgm_shunts["node"] = self._get_ids("bus", pp_shunt["bus"])
         pgm_shunts["status"] = pp_shunt["in_service"]
         pgm_shunts["g1"] = (pp_shunt["p_mw"] * 1e6) / ((pp_shunt["vn_kv"] * 1e3) * (pp_shunt["vn_kv"] * 1e3))
         pgm_shunts["b1"] = (pp_shunt["q_mvar"] * 1e6) / ((pp_shunt["vn_kv"] * 1e3) * (pp_shunt["vn_kv"] * 1e3))
@@ -169,7 +169,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         pgm_sym_gens = initialize_array(data_type="input", component_type="sym_gen", shape=len(pp_sgens))
         pgm_sym_gens["id"] = self._generate_ids("sym_gen", pp_sgens.index)
-        pgm_sym_gens["node"] = pp_sgens["bus"]
+        pgm_sym_gens["node"] = self._get_ids("bus", pp_sgens["bus"])
         pgm_sym_gens["status"] = pp_sgens["in_service"]
         pgm_sym_gens["p_specified"] = pp_sgens["p_mw"] * 1e6
         pgm_sym_gens["q_specified"] = pp_sgens["q_mvar"] * 1e6
@@ -219,9 +219,9 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         pgm_transformers = initialize_array(data_type="input", component_type="transformer", shape=len(pp_trafo))
         pgm_transformers["id"] = self._generate_ids("transformer", pp_trafo.index)
-        pgm_transformers["from_node"] = pp_trafo["hv_bus"]
+        pgm_transformers["from_node"] = self._get_ids("bus", pp_trafo["hv_bus"])
         pgm_transformers["from_status"] = pp_trafo["in_service"]
-        pgm_transformers["to_node"] = pp_trafo["lv_bus"]
+        pgm_transformers["to_node"] = self._get_ids("bus", pp_trafo["lv_bus"])
         pgm_transformers["to_status"] = pp_trafo["in_service"]
         pgm_transformers["u1"] = pp_trafo["vn_hv_kv"] * 1e3
         pgm_transformers["u2"] = pp_trafo["vn_lv_kv"] * 1e3
@@ -230,11 +230,11 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_transformers["pk"] = (pp_trafo["vkr_percent"] * 1e-2) * (pp_trafo["sn_mva"] * 1e6)
         pgm_transformers["i0"] = pp_trafo["i0_percent"] * 1e-2
         pgm_transformers["p0"] = pp_trafo["pfe_kw"] * 1e3
-        # pgm_transformers["winding_from"] =  vectorization?
-        # pgm_transformers["winding_to"] =  vectorization?
+        # pgm_transformers["winding_from"] = vectorization?
+        # pgm_transformers["winding_to"] = vectorization?
         pgm_transformers["clock"] = (pp_trafo["shift_degree"] / 30).astype(np.int8)
         pgm_transformers["tap_pos"] = pp_trafo["tap_pos"]
-        pgm_transformers["tap_side"] = pp_trafo["tap_side"]  # problem here
+        pgm_transformers["tap_side"] = self._get_transformer_tap_side(pp_trafo["tap_side"])
         pgm_transformers["tap_min"] = pp_trafo["tap_min"]
         pgm_transformers["tap_max"] = pp_trafo["tap_max"]
         pgm_transformers["tap_nom"] = pp_trafo["tap_neutral"]
@@ -251,9 +251,9 @@ class PandaPowerConverter(BaseConverter[PandasData]):
             data_type="input", component_type="three_winding_transformer", shape=len(pp_trafo3w)
         )
         pgm_3wtransformers["id"] = self._generate_ids("three_winding_transformer", pp_trafo3w.index)
-        pgm_3wtransformers["node_1"] = pp_trafo3w["hv_bus"]
-        pgm_3wtransformers["node_2"] = pp_trafo3w["mv_bus"]
-        pgm_3wtransformers["node_3"] = pp_trafo3w["lv_bus"]
+        pgm_3wtransformers["node_1"] = self._get_ids("bus", pp_trafo3w["hv_bus"])
+        pgm_3wtransformers["node_2"] = self._get_ids("bus", pp_trafo3w["mv_bus"])
+        pgm_3wtransformers["node_3"] = self._get_ids("bus", pp_trafo3w["lv_bus"])
         pgm_3wtransformers["status_1"] = pp_trafo3w["in_service"]
         pgm_3wtransformers["status_2"] = pp_trafo3w["in_service"]
         pgm_3wtransformers["status_3"] = pp_trafo3w["in_service"]
@@ -281,17 +281,17 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         pgm_3wtransformers["io"] = pp_trafo3w["i0_percent"] * 1e-2
         pgm_3wtransformers["p0"] = pp_trafo3w["pfe_kw"] * 1e3
-        # pgm_transformers["winding_1"] =  vectorization?
-        # pgm_transformers["winding_2"] =  vectorization?
-        # pgm_transformers["winding_3"] =  vectorization?
-        # pgm_transformers["clock_12"] =  vectorization?
-        # pgm_transformers["clock_13"] =  vectorization?
+        # pgm_3wtransformers["winding_1"] =  vectorization?
+        # pgm_3wtransformers["winding_2"] =  vectorization?
+        # pgm_3wtransformers["winding_3"] =  vectorization?
+        pgm_3wtransformers["clock_12"] = (round(pp_trafo3w["shift_mv_degree"] / 30.0) % 12).astype(np.int8)
+        pgm_3wtransformers["clock_13"] = (round(pp_trafo3w["shift_lv_degree"] / 30.0) % 12).astype(np.int8)
         pgm_3wtransformers["tap_pos"] = pp_trafo3w["tap_pos"]
-        pgm_3wtransformers["tap_side"] = pp_trafo3w["tap_side"]  # problem here
+        pgm_3wtransformers["tap_side"] = self._get_3wtransformer_tap_side(pp_trafo3w["tap_side"])
         pgm_3wtransformers["tap_min"] = pp_trafo3w["tap_min"]
         pgm_3wtransformers["tap_max"] = pp_trafo3w["tap_max"]
         pgm_3wtransformers["tap_nom"] = pp_trafo3w["tap_neutral"]
-        # pgm_transformers["tap_size"] =  vectorization?
+        pgm_3wtransformers["tap_size"] = self._get_3wtransformer_tap_size(pp_trafo3w)
 
         self.pgm_data["three_winding_transformer"] = pgm_3wtransformers
 
@@ -312,11 +312,43 @@ class PandaPowerConverter(BaseConverter[PandasData]):
     @staticmethod
     def _get_tap_size(pp_trafo: pd.DataFrame) -> np.ndarray:
         tap_side_hv = np.array(pp_trafo["tap_side"] == "hv")
-        tap_side_lv = ~tap_side_hv
+        tap_side_lv = ~tap_side_hv  # everything else that is not hv is lv
         tap_step_multiplier = pp_trafo["tap_step_percent"] * (1e-2 * 1e3)
 
         tap_size = np.empty(shape=len(pp_trafo), dtype=np.float64)
         tap_size[tap_side_hv] = tap_step_multiplier[tap_side_hv] * pp_trafo["vn_hv_kv"][tap_side_hv]
         tap_size[tap_side_lv] = tap_step_multiplier[tap_side_lv] * pp_trafo["vn_lv_kv"][tap_side_lv]
+
+        return tap_size
+
+    @staticmethod
+    def _get_transformer_tap_side(tap_side: pd.Series) -> np.ndarray:
+        new_tap_side = np.array(tap_side)
+        new_tap_side[new_tap_side == "hv"] = 0
+        new_tap_side[new_tap_side == "lv"] = 1
+
+        return new_tap_side
+
+    @staticmethod
+    def _get_3wtransformer_tap_side(tap_side: pd.Series) -> np.ndarray:
+        new_tap_side = np.array(tap_side)
+        new_tap_side[new_tap_side == "hv"] = 0
+        new_tap_side[new_tap_side == "mv"] = 1
+        new_tap_side[new_tap_side == "lv"] = 2
+
+        return new_tap_side
+
+    @staticmethod
+    def _get_3wtransformer_tap_size(pp_3wtrafo: pd.DataFrame) -> np.ndarray:
+        tap_side_hv = np.array(pp_3wtrafo["tap_side"] == "hv")
+        tap_side_mv = np.array(pp_3wtrafo["tap_side"] == "mv")
+        tap_side_lv = np.array(pp_3wtrafo["tap_side"] == "lv")
+
+        tap_step_multiplier = pp_3wtrafo["tap_step_percent"] * (1e-2 * 1e3)
+
+        tap_size = np.empty(shape=len(pp_3wtrafo), dtype=np.float64)
+        tap_size[tap_side_hv] = tap_step_multiplier[tap_side_hv] * pp_3wtrafo["vn_hv_kv"][tap_side_hv]
+        tap_size[tap_side_mv] = tap_step_multiplier[tap_side_mv] * pp_3wtrafo["vn_mv_kv"][tap_side_mv]
+        tap_size[tap_side_lv] = tap_step_multiplier[tap_side_lv] * pp_3wtrafo["vn_lv_kv"][tap_side_lv]
 
         return tap_size
