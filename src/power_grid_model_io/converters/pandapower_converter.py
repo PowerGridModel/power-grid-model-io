@@ -77,7 +77,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         self._create_pgm_input_sources()
         self._create_pgm_input_sym_loads()
         # self._create_pgm_input_shunt()
-        # self._create_pgm_input_transformer()
+        self._create_pgm_input_transformers()
         # self._create_pgm_input_sym_gen()
         # self._create_pgm_input_three_winding_transformer()
 
@@ -169,7 +169,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         self.pgm_data["shunt"] = pgm_shunts
 
-    def _create_pgm_input_sym_gens(self):
+    def _create_pgm_input_sym_gens(self):  # not tested yet
         assert "sym_gen" not in self.pgm_data
 
         pp_sgens = self.pp_data["sgen"]
