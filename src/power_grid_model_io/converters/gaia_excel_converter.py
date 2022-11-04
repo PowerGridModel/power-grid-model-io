@@ -17,9 +17,7 @@ DEFAULT_MAPPING_FILE = Path(__file__).parent.parent / "config" / "excel" / "gaia
 
 
 class GaiaExcelConverter(TabularConverter):
-    """
-    Gaia Excel Converter: Load data from a Gaia Excel export file and use a mapping file to convert the data to PGM
-    """
+    """Gaia Excel Converter: Load data from a Gaia Excel export file and use a mapping file to convert the data to PGM"""
 
     def __init__(
         self,
@@ -37,9 +35,15 @@ class GaiaExcelConverter(TabularConverter):
         super().__init__(mapping_file=mapping_file, source=source)
 
     def _id_lookup(self, component: str, row: pd.Series) -> int:
-        """
-        Overwrite the default id_lookup method.
+        """Overwrite the default id_lookup method.
         For Gaia files only the last part of a column name is used in the key, e.g. Node.Number becomes Number.
+
+        Args:
+          component: str: 
+          row: pd.Series: 
+
+        Returns:
+
         """
         data = {str(col).split(".").pop(): val for col, val in sorted(row.to_dict().items(), key=lambda x: str(x[0]))}
         key = component + ":" + ",".join(f"{k}={v}" for k, v in data.items())
