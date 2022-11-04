@@ -31,7 +31,7 @@ class BaseConverter(Generic[T], ABC):
 
     def load_input_data(self, data: Optional[T] = None) -> Tuple[SingleDataset, ExtraInfoLookup]:
         """Load input data and extra info
-        
+
         Note: You shouldn't have to overwrite this method. Check _parse_data() instead.
 
         Args:
@@ -49,7 +49,7 @@ class BaseConverter(Generic[T], ABC):
 
     def load_update_data(self, data: Optional[T] = None) -> Dataset:
         """Load update data
-        
+
         Note: You shouldn't have to overwrite this method. Check _parse_data() instead.
 
         Args:
@@ -63,7 +63,7 @@ class BaseConverter(Generic[T], ABC):
 
     def load_sym_output_data(self, data: Optional[T] = None) -> Dataset:
         """Load symmetric output data
-        
+
         Note: You shouldn't have to overwrite this method. Check _parse_data() instead.
 
         Args:
@@ -77,7 +77,7 @@ class BaseConverter(Generic[T], ABC):
 
     def load_asym_output_data(self, data: Optional[T] = None) -> Dataset:
         """Load asymmetric output data
-        
+
         Note: You shouldn't have to overwrite this method. Check _parse_data() instead.
 
         Args:
@@ -91,11 +91,11 @@ class BaseConverter(Generic[T], ABC):
 
     def convert(self, data: Dataset, extra_info: Optional[ExtraInfoLookup] = None) -> T:
         """Convert input/update/(a)sym_output data and optionally extra info.
-        
+
         Note: You shouldn't have to overwrite this method. Check _serialize_data() instead.
 
         Args:
-          data: Dataset: 
+          data: Dataset:
           extra_info: Optional[ExtraInfoLookup]:  (Default value = None)
 
         Returns:
@@ -110,11 +110,11 @@ class BaseConverter(Generic[T], ABC):
         destination: Optional[BaseDataStore[T]] = None,
     ) -> None:
         """Save input/update/(a)sym_output data and optionally extra info.
-        
+
         Note: You shouldn't have to overwrite this method. Check _serialize_data() instead.
 
         Args:
-          data: Dataset: 
+          data: Dataset:
           extra_info: Optional[ExtraInfoLookup]:  (Default value = None)
           destination: Optional[BaseDataStore[T]]:  (Default value = None)
 

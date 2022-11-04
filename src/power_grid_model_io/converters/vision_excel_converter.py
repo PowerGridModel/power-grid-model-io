@@ -15,7 +15,9 @@ DEFAULT_MAPPING_FILE = Path(__file__).parent.parent / "config" / "excel" / "visi
 
 
 class VisionExcelConverter(TabularConverter):
-    """Vision Excel Converter: Load data from a Vision Excel export file and use a mapping file to convert the data to PGM"""
+    """
+    Vision Excel Converter: Load data from a Vision Excel export file and use a mapping file to convert the data to PGM
+    """
 
     def __init__(self, source_file: Optional[Union[Path, str]] = None, language: str = "en"):
         mapping_file = Path(str(DEFAULT_MAPPING_FILE).format(language=language))

@@ -94,7 +94,7 @@ class TabularConverter(BaseConverter[TabularData]):
          * the value substitutions ('substitutions') (e.g. enums or other one-on-one value mapping)
 
         Args:
-          mapping_file: Path: 
+          mapping_file: Path:
 
         Returns:
 
@@ -126,9 +126,9 @@ class TabularConverter(BaseConverter[TabularData]):
           data_type: power-grid-model data type, i.e. "input" or "update"
           extra_info: an optional dictionary where extra component info (that can't be specified in
         power-grid-model data) can be specified
-          data: TabularData: 
-          data_type: str: 
-          extra_info: Optional[ExtraInfoLookup]: 
+          data: TabularData:
+          data_type: str:
+          extra_info: Optional[ExtraInfoLookup]:
 
         Returns:
           a power-grid-model dataset, i.e. a dictionary as {component: np.ndarray}
@@ -180,7 +180,8 @@ class TabularConverter(BaseConverter[TabularData]):
         attributes: InstanceAttributes,
         extra_info: Optional[ExtraInfoLookup],
     ) -> Optional[np.ndarray]:
-        """This function converts a single table/sheet of TabularData to a power-grid-model input/update array. One table
+        """
+        This function converts a single table/sheet of TabularData to a power-grid-model input/update array. One table
         corresponds to one component
 
         Args:
@@ -192,12 +193,12 @@ class TabularConverter(BaseConverter[TabularData]):
         power-grid-model attribute names
           extra_info: an optional dictionary where extra component info (that can't be specified in
         power-grid-model data) can be specified
-          data: TabularData: 
-          data_type: str: 
-          table: str: 
-          component: str: 
-          attributes: InstanceAttributes: 
-          extra_info: Optional[ExtraInfoLookup]: 
+          data: TabularData:
+          data_type: str:
+          table: str:
+          component: str:
+          attributes: InstanceAttributes:
+          extra_info: Optional[ExtraInfoLookup]:
 
         Returns:
           returns a power-grid-model structured array for one component
@@ -256,13 +257,13 @@ class TabularConverter(BaseConverter[TabularData]):
           col_def: the name of the column where the attribute values can be found
           extra_info: an optional dictionary where extra component info (that can't be specified in
         power-grid-model data) can be specified
-          data: TabularData: 
-          pgm_data: np.ndarray: 
-          table: str: 
-          component: str: 
-          attr: str: 
-          col_def: Any: 
-          extra_info: Optional[ExtraInfoLookup]: 
+          data: TabularData:
+          pgm_data: np.ndarray:
+          table: str:
+          component: str:
+          attr: str:
+          col_def: Any:
+          extra_info: Optional[ExtraInfoLookup]:
 
         Returns:
           the function updates pgm_data, it should not return something
@@ -310,11 +311,11 @@ class TabularConverter(BaseConverter[TabularData]):
           component: the corresponding component
           attr: the name of the attribute
           col_def: the name of the column
-          data: TabularData: 
-          table: str: 
-          component: str: 
-          attr: str: 
-          col_def: Any: 
+          data: TabularData:
+          table: str:
+          component: str:
+          attr: str:
+          col_def: Any:
 
         Returns:
           a pd.Series of the specific column
@@ -339,11 +340,11 @@ class TabularConverter(BaseConverter[TabularData]):
           col_def: the name of the column where the ids are stored
           extra_info: an optional dictionary where extra component info (that can't be specified in
         power-grid-model data) can be specified
-          data: TabularData: 
-          table: str: 
-          component: str: 
-          col_def: Any: 
-          extra_info: Optional[ExtraInfoLookup]: 
+          data: TabularData:
+          table: str:
+          component: str:
+          col_def: Any:
+          extra_info: Optional[ExtraInfoLookup]:
 
         Returns:
           a pd.Series of the specific column
@@ -380,11 +381,11 @@ class TabularConverter(BaseConverter[TabularData]):
           uuids: a numpy nd.array containing the uuids of the components
           extra_info: an optional dictionary where extra component info (that can't be specified in
         power-grid-model data) can be specified
-          data: TabularData: 
-          table: str: 
-          col_def: Any: 
-          uuids: np.ndarray: 
-          extra_info: Optional[ExtraInfoLookup]: 
+          data: TabularData:
+          table: str:
+          col_def: Any:
+          uuids: np.ndarray:
+          extra_info: Optional[ExtraInfoLookup]:
 
         Returns:
 
@@ -408,8 +409,8 @@ class TabularConverter(BaseConverter[TabularData]):
 
         Args:
           data: For each component, one or more numpy structured arrays
-          data: Dict[str: 
-          List[np.ndarray]]: 
+          data: Dict[str:
+          List[np.ndarray]]:
 
         Returns:
 
@@ -439,9 +440,9 @@ class TabularConverter(BaseConverter[TabularData]):
         """Interpret the column definition and extract/convert/create the data as a pandas DataFrame.
 
         Args:
-          data: TabularData: 
-          table: str: 
-          col_def: Any: 
+          data: TabularData:
+          table: str:
+          col_def: Any:
 
         Returns:
 
@@ -462,10 +463,10 @@ class TabularConverter(BaseConverter[TabularData]):
         """Create a single column pandas DataFrame containing the const value.
 
         Args:
-          data: TabularData: 
-          table: str: 
-          col_def: Union[int: 
-          float]: 
+          data: TabularData:
+          table: str:
+          col_def: Union[int:
+          float]:
 
         Returns:
 
@@ -478,9 +479,9 @@ class TabularConverter(BaseConverter[TabularData]):
         like 'inf'. If that's the case, create a single column pandas DataFrame containing the const value.
 
         Args:
-          data: TabularData: 
-          table: str: 
-          col_def: str: 
+          data: TabularData:
+          table: str:
+          col_def: str:
 
         Returns:
 
@@ -519,9 +520,9 @@ class TabularConverter(BaseConverter[TabularData]):
         """Find and extract a column from a different table.
 
         Args:
-          data: TabularData: 
-          table: str: 
-          col_def: str: 
+          data: TabularData:
+          table: str:
+          col_def: str:
 
         Returns:
 
@@ -555,10 +556,10 @@ class TabularConverter(BaseConverter[TabularData]):
         a DataFrame with one column per function will be returned.
 
         Args:
-          data: TabularData: 
-          table: str: 
-          col_def: Dict[str: 
-          str]: 
+          data: TabularData:
+          table: str:
+          col_def: Dict[str:
+          str]:
 
         Returns:
 
@@ -578,9 +579,9 @@ class TabularConverter(BaseConverter[TabularData]):
         """Select multiple columns (each is created from a column definition) and return them as a new DataFrame.
 
         Args:
-          data: TabularData: 
-          table: str: 
-          col_def: list: 
+          data: TabularData:
+          table: str:
+          col_def: list:
 
         Returns:
 

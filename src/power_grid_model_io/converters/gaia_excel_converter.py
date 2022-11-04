@@ -15,7 +15,9 @@ DEFAULT_MAPPING_FILE = Path(__file__).parent.parent / "config" / "excel" / "gaia
 
 
 class GaiaExcelConverter(TabularConverter):
-    """Gaia Excel Converter: Load data from a Gaia Excel export file and use a mapping file to convert the data to PGM"""
+    """
+    Gaia Excel Converter: Load data from a Gaia Excel export file and use a mapping file to convert the data to PGM
+    """
 
     def __init__(
         self,

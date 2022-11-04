@@ -23,7 +23,8 @@ from power_grid_model_io.data_types import ExtraInfoLookup, StructuredData
 
 
 class PgmJsonConverter(BaseConverter[StructuredData]):
-    """A 'converter' class to load and store power grid model data in the native PGM JSON format. The methods are simmilar
+    """
+    A 'converter' class to load and store power grid model data in the native PGM JSON format. The methods are simmilar
     to the utils in power_grid_model, with the addition of storing and loading 'extra info'. Extra info is the set of
     attributes that don't match the power grid model's internal structure, but are important to keep close to the data.
     The most common example is the original object ID, if the original IDs are not numeric, or not unique over all
@@ -55,8 +56,8 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
           data_type: the data type of the dataset, i.e. "input" or "update"
           extra_info: an optional dictionary where extra component info (that can't be specified in
         power-grid-model data) can be specified
-          data: StructuredData: 
-          data_type: str: 
+          data: StructuredData:
+          data_type: str:
           extra_info: Optional[ExtraInfoLookup]:  (Default value = None)
 
         Returns:
@@ -84,8 +85,8 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
           data_type: the data type of the dataset, i.e. "input" or "update"
           extra_info: an optional dictionary where extra component info (that can't be specified in
         power-grid-model data) can be specified
-          data: SinglePythonDataset: 
-          data_type: str: 
+          data: SinglePythonDataset:
+          data_type: str:
           extra_info: Optional[ExtraInfoLookup]:  (Default value = None)
 
         Returns:
@@ -113,9 +114,9 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
           data_type: a string specifying the data type: input/update
           extra_info: an optional dictionary where extra component info (that can't be specified in
         power-grid-model data) can be specified
-          objects: ComponentList: 
-          component: str: 
-          data_type: str: 
+          objects: ComponentList:
+          component: str:
+          data_type: str:
           extra_info: Optional[ExtraInfoLookup]:  (Default value = None)
 
         Returns:
@@ -155,7 +156,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
           extra_info: an optional dictionary with extra information. If supplied, the extra info is added to the
         structured dataset. The keys in this dictionary should match with id's of components in the power-grid-model
         dataset. Note, extra info can only be supplied for single datasets
-          data: Dataset: 
+          data: Dataset:
           extra_info: Optional[ExtraInfoLookup]:  (Default value = None)
 
         Returns:
@@ -180,14 +181,15 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
 
     @staticmethod
     def _is_batch(data: Dataset) -> bool:
-        """This function checks if a dataset is single or batch. The function loops through all components in the dataset
+        """
+        This function checks if a dataset is single or batch. The function loops through all components in the dataset
         and checks for each component if the corresponding dataset is single or batch. All components should have the
         same array type (single or batch). If this is not the case a ValueError will be raised. An array is a batch
         dataset if it is 2D array or has an indptr/data structure
 
         Args:
           data: a power-grid-model dataset which is either single or a batch
-          data: Dataset: 
+          data: Dataset:
 
         Returns:
           returns True if the dataset is a batch dataset, False if it is a single dataset
@@ -214,7 +216,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
           extra_info: an optional dictionary with extra information. If supplied, the extra info is added to the
         structured dataset. The keys in this dictionary should match with id's of components in the power-grid-model
         dataset
-          data: SingleDataset: 
+          data: SingleDataset:
           extra_info: Optional[ExtraInfoLookup]:  (Default value = None)
 
         Returns:
