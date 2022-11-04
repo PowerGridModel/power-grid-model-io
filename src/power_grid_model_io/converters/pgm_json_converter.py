@@ -43,9 +43,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
         destination = JsonFileStore(file_path=Path(destination_file)) if destination_file else None
         super().__init__(source=source, destination=destination)
 
-    def _parse_data(
-        self, data: StructuredData, data_type: str, extra_info: Optional[ExtraInfoLookup] = None
-    ) -> Dataset:
+    def _parse_data(self, data: StructuredData, data_type: str, extra_info: Optional[ExtraInfoLookup]) -> Dataset:
         """This function expects Structured data, which can either be a dictionary (single dataset) or a list of
         dictionaries (batch dataset). The structured dataset consists of components + attributes that exist within
         power-grid-model, but can also contain other data. If this data should be saved for later usage an extra_info
@@ -53,12 +51,12 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
 
         Args:
           data: Structured data, which can either be a dictionary or a list of dictionaries
-          data_type: the data type of the dataset, i.e. "input" or "update"
+          data_type: the data type of the dataset, i.e. "input", "update", "sym_output" or "asym_output"
           extra_info: an optional dictionary where extra component info (that can't be specified in
         power-grid-model data) can be specified
           data: StructuredData:
           data_type: str:
-          extra_info: Optional[ExtraInfoLookup]:  (Default value = None)
+          extra_info: Optional[ExtraInfoLookup]:
 
         Returns:
           a dictionary containing the components as keys and their corresponding numpy arrays as values: a
@@ -76,7 +74,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
         return self._parse_dataset(data=data, data_type=data_type, extra_info=extra_info)
 
     def _parse_dataset(
-        self, data: SinglePythonDataset, data_type: str, extra_info: Optional[ExtraInfoLookup] = None
+        self, data: SinglePythonDataset, data_type: str, extra_info: Optional[ExtraInfoLookup]
     ) -> SingleDataset:
         """This function parses a single Python dataset and returns a power-grid-model input or update dictionary
 
@@ -103,7 +101,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
 
     @staticmethod
     def _parse_component(
-        objects: ComponentList, component: str, data_type: str, extra_info: Optional[ExtraInfoLookup] = None
+        objects: ComponentList, component: str, data_type: str, extra_info: Optional[ExtraInfoLookup]
     ) -> np.ndarray:
         """This function generates a structured numpy array (power-grid-model native) from a structured dataset
 
@@ -146,7 +144,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
                     extra_info[obj["id"]][attribute] = value
         return array
 
-    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup] = None) -> StructuredData:
+    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup]) -> StructuredData:
         """This function converts a power-grid-model dataset to a structured dataset. First, the function checks if the
         dataset is a single dataset or batch dataset. If it is a batch, the batch data is converted to a list of
         batches, then each batch is converted individually.
