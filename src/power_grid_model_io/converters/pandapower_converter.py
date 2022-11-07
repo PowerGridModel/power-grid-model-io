@@ -76,10 +76,10 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         self._create_pgm_input_lines()
         self._create_pgm_input_sources()
         self._create_pgm_input_sym_loads()
-        # self._create_pgm_input_shunt()
+        self._create_pgm_input_shunts()
         self._create_pgm_input_transformers()
-        # self._create_pgm_input_sym_gen()
-        # self._create_pgm_input_three_winding_transformer()
+        self._create_pgm_input_sym_gens()
+        self._create_pgm_input_three_winding_transformers()
 
     def _create_pgm_input_nodes(self):
         assert "node" not in self.pgm_data
@@ -169,7 +169,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         self.pgm_data["shunt"] = pgm_shunts
 
-    def _create_pgm_input_sym_gens(self):  # not tested yet
+    def _create_pgm_input_sym_gens(self):
         assert "sym_gen" not in self.pgm_data
 
         pp_sgens = self.pp_data["sgen"]
@@ -274,19 +274,19 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_3wtransformers["uk_13"] = pp_trafo3w["vk_lv_percent"] * 1e-2
         pgm_3wtransformers["uk_23"] = pp_trafo3w["vk_mv_percent"] * 1e-2
 
-        pgm_3wtransformers["pk_12"] = (pp_trafo3w["vkr_hv_percent"] * 1e-2) * min(
-            (pp_trafo3w["sn_hv_mva"] * 1e6), (pp_trafo3w["sn_mv_mva"] * 1e6)
+        pgm_3wtransformers["pk_12"] = (pp_trafo3w["vkr_hv_percent"] * 1e-2) * (
+            pp_trafo3w[["sn_hv_mva", "sn_mv_mva"]].min(axis=1) * 1e6
         )
 
-        pgm_3wtransformers["pk_13"] = (pp_trafo3w["vkr_lv_percent"] * 1e-2) * min(
-            (pp_trafo3w["sn_hv_mva"] * 1e6), (pp_trafo3w["sn_lv_mva"] * 1e6)
+        pgm_3wtransformers["pk_13"] = (pp_trafo3w["vkr_lv_percent"] * 1e-2) * (
+            pp_trafo3w[["sn_hv_mva", "sn_lv_mva"]].min(axis=1) * 1e6
         )
 
-        pgm_3wtransformers["pk_23"] = (pp_trafo3w["vkr_mv_percent"] * 1e-2) * min(
-            (pp_trafo3w["sn_mv_mva"] * 1e6), (pp_trafo3w["sn_lv_mva"] * 1e6)
+        pgm_3wtransformers["pk_23"] = (pp_trafo3w["vkr_mv_percent"] * 1e-2) * (
+            pp_trafo3w[["sn_mv_mva", "sn_lv_mva"]].min(axis=1) * 1e6
         )
 
-        pgm_3wtransformers["io"] = pp_trafo3w["i0_percent"] * 1e-2
+        pgm_3wtransformers["i0"] = pp_trafo3w["i0_percent"] * 1e-2
         pgm_3wtransformers["p0"] = pp_trafo3w["pfe_kw"] * 1e3
         pgm_3wtransformers["winding_1"] = pp_trafo3w["vector_group"].apply(get_3wdgtransformer_winding_1)
         pgm_3wtransformers["winding_2"] = pp_trafo3w["vector_group"].apply(get_3wdgtransformer_winding_2)
