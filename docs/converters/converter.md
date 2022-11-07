@@ -13,7 +13,7 @@ Use the examples notebooks to understand how to convert data from the respective
 
 - **PGM JSON Converter:** Refer to the [PGM JSON Example](../examples/pgm_json_example.ipynb)
 - **VisonExcelConverter** and **GaiaExcelConverter:** Refer to the [Vision and Gaia Example](../examples/vision_gaia_example.ipynb)
-- **Pandapower Converter:** Converts [pandapower network](https://pandapower.readthedocs.io/en/stable/elements.html) which is a dictionary of dataframes to power-grid-model data.
+- **Pandapower Converter:** Converts [pandapower network](https://pandapower.readthedocs.io/en/stable/elements.html), which is a dictionary of dataframes, to power-grid-model data.
 
 Refer to [converters](../power_grid_model_io.md#converters) in API documentation for more details
 
@@ -21,8 +21,8 @@ Refer to [converters](../power_grid_model_io.md#converters) in API documentation
 
 `VisonExcelConverter` and `GaiaExcelConverter` are inherited from [tabular converters](tabular_converter.md) for excel exports of vision and gaia respectively.
 All 4 converters are derived from the base {py:class}`power_grid_model_io.converters.base_converter`. 
-The usable functions for loading, saving and converting the data are located here. 
-The private functions (`_load_data`, `_parse_data` and `_serialize_data`) should then be overloaded based on the specific type of converter (ie. excel, json or pandapower). 
+The usable functions for loading, saving and converting the data are located in the base class. 
+The private functions (`_load_data`, `_parse_data` and `_serialize_data`) are overloaded based on the specific type of converter (ie. excel, json or pandapower). 
 It is recommended to create any custom converter in a similar way.
 
 ## Instantiation
@@ -35,11 +35,11 @@ from power_grid_model_io.converters.pgm_json_converter import PgmJsonConverter
 converter = PgmJsonConverter(source_file=source, destination_file=destination)
 ```
 
-The usable methods of converters for loading and saving the data are as follows.
+The usable methods of converters for loading and saving the data are described below.
 
 ## Loading data
 
-Use the methods load_input_data(), load_update_data(), load_sym_output_data(), load_asym_output_data() to load the relevant data to the converter.
+Use the methods load_input_data(), load_update_data(), load_sym_output_data() or load_asym_output_data() to load the relevant data to the converter.
 The Converter can be initialised with `source_file` containing path to source data. Or alternatively, the data can be provided as an argument to the load function.
 
 In addition to the power-grid-model input data, other miscellaneous information in the source file not used in calculations by power-grid-model gets stored under `extra_info`
