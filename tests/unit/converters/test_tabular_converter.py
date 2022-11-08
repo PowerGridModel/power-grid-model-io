@@ -13,7 +13,7 @@ from pandas.testing import assert_frame_equal
 from power_grid_model import initialize_array, power_grid_meta_data
 from power_grid_model.data_types import SingleDataset
 
-from power_grid_model_io.converters.tabular_converter import COL_REF_RE, NODE_REF_RE, TabularConverter
+from power_grid_model_io.converters.tabular_converter import COL_REF_RE, TabularConverter
 from power_grid_model_io.data_types import ExtraInfoLookup, TabularData
 from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes
 
@@ -46,21 +46,6 @@ def ref_cases():
     yield "OtherTable.ValueColumn[IdColumn=RefColumn]", None
     yield "ValueColumn[IdColumn=RefColumn]", None
     yield "OtherTable![IdColumn=RefColumn]", None
-
-
-def test_node_ref_pattern__pos():
-    assert NODE_REF_RE.fullmatch("node")
-    assert NODE_REF_RE.fullmatch("from_node")
-    assert NODE_REF_RE.fullmatch("to_node")
-    assert NODE_REF_RE.fullmatch("node_1")
-    assert NODE_REF_RE.fullmatch("node_2")
-    assert NODE_REF_RE.fullmatch("node_3")
-
-
-def test_node_ref_pattern__neg():
-    assert not NODE_REF_RE.fullmatch("nodes")
-    assert not NODE_REF_RE.fullmatch("anode")
-    assert not NODE_REF_RE.fullmatch("immunodeficient")
 
 
 @pytest.mark.parametrize("value,groups", ref_cases())
@@ -205,7 +190,7 @@ def test_converter__convert_table_to_component(
     )
     assert pgm_node_data is not None
     assert len(pgm_node_data) == 2
-    assert (pgm_node_data["id"] == [0, 1]).all()
+    assert (pgm_node_data["id"] == [1, 2]).all()
     assert (pgm_node_data["u_rated"] == [10.5e3, 400]).all()
 
 
@@ -226,46 +211,6 @@ def test_converter__convert_col_def_to_attribute(
             component="node",
             attr="incorrect_attribute",
             col_def="id_number",
-            extra_info=None,
-        )
-
-    # test "id"
-    converter._convert_col_def_to_attribute(
-        data=tabular_data_no_units_no_substitutions,
-        pgm_data=pgm_node_empty["node"],
-        table="nodes",
-        component="node",
-        attr="id",
-        col_def="id_number",
-        extra_info=None,
-    )
-    assert len(pgm_node_empty) == 1
-    assert (pgm_node_empty["node"]["id"] == [0, 1]).all()
-
-    # test attr ends with "node"
-    converter._convert_col_def_to_attribute(
-        data=tabular_data_no_units_no_substitutions,
-        pgm_data=pgm_line_empty["line"],
-        table="lines",
-        component="line",
-        attr="from_node",
-        col_def="from_node_side",
-        extra_info=None,
-    )
-    assert len(pgm_line_empty) == 1
-    assert (pgm_line_empty["line"]["from_node"] == [0, 1]).all()
-
-    # test attr ends with "object"
-    with pytest.raises(
-        NotImplementedError, match="dummys are not supported, because of the 'measured_object' reference..."
-    ):
-        converter._convert_col_def_to_attribute(
-            data=tabular_data_no_units_no_substitutions,
-            pgm_data=pgm_power_sensor_empty["power_sensor"],
-            table="dummy",
-            component="dummy",
-            attr="measured_object",
-            col_def="dummy",
             extra_info=None,
         )
 
@@ -316,48 +261,21 @@ def test_converter__handle_column(converter: TabularConverter, tabular_data_no_u
         )
 
 
-def test_converter__handle_id_column(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
-    extra_info: ExtraInfoLookup = {}
-    uuids = converter._handle_id_column(
-        data=tabular_data_no_units_no_substitutions,
-        table="nodes",
-        component="node",
-        col_def="id_number",
-        extra_info=extra_info,
-    )
-    assert (tabular_data_no_units_no_substitutions["nodes"]["id_number"] == pd.Series([1, 2])).all()
-    assert (uuids == pd.Series([0, 1])).all()
-    assert extra_info == {0: {"table": "nodes", "id_number": 1}, 1: {"table": "nodes", "id_number": 2}}
-
-
 def test_converter__handle_extra_info(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
     uuids = np.array([0, 1])
     # possible to call function with extra_info = None
     converter._handle_extra_info(
         data=tabular_data_no_units_no_substitutions, table="nodes", col_def="u_nom", uuids=uuids, extra_info=None
     )
-    # _handle_extra_info expects the ids to be in extra_info already (as keys)
-    with pytest.raises(KeyError, match="0"):
-        converter._handle_extra_info(
-            data=tabular_data_no_units_no_substitutions, table="nodes", col_def="u_nom", uuids=uuids, extra_info={}
-        )
-    extra_info: ExtraInfoLookup = {0: {"some_value": "some_key"}, 1: {"some_value": "some_key"}}
+    # _handle_extra_info creates extra info entry for id's that don't exist and updates existing entries
+    extra_info: ExtraInfoLookup = {0: {"some_value": "some_key"}}
     converter._handle_extra_info(
         data=tabular_data_no_units_no_substitutions, table="nodes", col_def="u_nom", uuids=uuids, extra_info=extra_info
     )
     assert extra_info == {
         0: {"some_value": "some_key", "u_nom": 10500.0},
-        1: {"some_value": "some_key", "u_nom": 400.0},
+        1: {"u_nom": 400.0},
     }
-
-
-def test_converter__handle_node_ref_column(
-    converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
-):
-    attr_data = converter._handle_node_ref_column(
-        data=tabular_data_no_units_no_substitutions, table="lines", col_def="from_node_side"
-    )
-    assert (attr_data == pd.Series([0, 1])).all()
 
 
 def test_converter__merge_pgm_data(converter: TabularConverter):
@@ -388,10 +306,10 @@ def test_converter__serialize_data(converter: TabularConverter, pgm_node_empty: 
 
 
 def test_converter__id_lookup(converter: TabularConverter):
-    a01 = converter._id_lookup(component="a", row=[0, 1])
-    b0 = converter._id_lookup(component="b", row=[0])
-    b0_ = converter._id_lookup(component="b", row=[0])
-    a0 = converter._id_lookup(component="a", row=[0])
+    a01 = converter._id_lookup(name="a", key=(0, 1))
+    b0 = converter._id_lookup(name="b", key=0)
+    b0_ = converter._id_lookup(name="b", key=0)
+    a0 = converter._id_lookup(name="a", key=0)
     assert a01 == 0
     assert b0 == 1
     assert b0_ == 1
@@ -446,10 +364,10 @@ def test_converter__parse_col_def(converter: TabularConverter, tabular_data_no_u
 
     # type(col_def) == dict
     with patch(
-        "power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def_function"
-    ) as mock_parse_col_def_function:
+        "power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def_filter"
+    ) as mock_parse_col_def_filter:
         converter._parse_col_def(data=tabular_data_no_units_no_substitutions, table="nodes", col_def={})
-        mock_parse_col_def_function.assert_called_once_with(
+        mock_parse_col_def_filter.assert_called_once_with(
             data=tabular_data_no_units_no_substitutions, table="nodes", col_def={}
         )
 

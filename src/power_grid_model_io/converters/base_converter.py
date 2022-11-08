@@ -5,7 +5,7 @@
 Abstract converter class
 """
 from abc import ABC, abstractmethod
-from typing import Generic, Hashable, List, Optional, Tuple, TypeVar, Union
+from typing import Generic, Optional, Tuple, TypeVar, Union
 
 import structlog
 from power_grid_model.data_types import Dataset, SingleDataset

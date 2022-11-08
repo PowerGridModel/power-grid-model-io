@@ -20,12 +20,12 @@ grid:
       from_node:
         auto_id:
           name: Nodes
-          key: Number
+          key: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
           name: Nodes
-          key: Number
+          key: To.Number
       to_status: To.Switch state
       r1: R
       x1: X
@@ -41,6 +41,7 @@ grid:
         - ID
   Links:
     link:
+      id:
         auto_id:
           name: Links
           key: Number
@@ -59,7 +60,7 @@ grid:
       id:
         auto_id:
           name: Reactance coils
-          key: From.Number
+          key: Number
       from_node:
         auto_id:
           name: Nodes
@@ -199,7 +200,7 @@ grid:
       from_node:
         auto_id:
           name: Nodes
-          key: From.Number
+          key: Node.Number
       to_node:
         auto_id:
           name:
