@@ -10,7 +10,7 @@ each with multiple `columns`, possibly with a specific `unit`.
 Others may have a categorical value which needs to be mapped (i.e. open: 0, closed: 1); in general we'll call these 
 `substitutions`.
 
-# Mapping file
+## Mapping file
 A mapping file is a yaml with three main sections `grid`, `units` and `substitutions`:
 ```yaml
 grid:
@@ -146,7 +146,7 @@ The definitions above can be interpreted as:
     the word "none" should be replaced with the boolean `false`
     and the word "own" should be replaced with the value boolean `true`.
 
-# AutoID
+## AutoID
 The `id` field is special in the sense that each object should have a unique numerical id in power grid model. 
 Therefore, each id definition is mapped to a numerical ID.
 Also each field name that ends with `node` is converted into the matching numerical ID.
@@ -161,9 +161,9 @@ c = auto_id("Alpha")   # c = 0 (because key "Alpha" already existed)
 item = auto_id[1]      # item = "Bravo"
  ```
   
-See also [AutoID](/src/power_grid_model_io/utils/auto_id.py).
+See also {py:class}`power_grid_model_io.utils.AutoID`
 
-## Vision and Gaia
+### Vision and Gaia
 For Vision and Gaia files, an extra trick is applied. Let's assume this mapping:
 
 ```yaml

@@ -24,13 +24,8 @@ extensions = [
     "sphinx.ext.intersphinx",
     "numpydoc",
     "hoverxref.extension",
-    "myst_parser",
+    "myst_nb",
 ]
-
-source_suffix = {
-    ".rst": "restructuredtext",
-    ".md": "markdown",
-}
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
@@ -71,3 +66,8 @@ autodoc_default_options = {
 # -- sphinx.ext.intersphinx config -------------------------------------------
 # For linking to power-grid-model's documentation.
 intersphinx_mapping = {"power-grid-model": ("https://power-grid-model.readthedocs.io/en/stable/", None)}
+
+
+# -- Temporary config -----------
+# Disable notebook executions in examples directory
+nb_execution_excludepatterns = ["examples/*.ipynb"]

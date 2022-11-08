@@ -36,6 +36,15 @@ converters/tabular_converter.md
 ```
 
 ```{toctree}
+:caption: "Examples"
+:maxdepth: 2
+examples/pgm_json_example.ipynb
+examples/vision_gaia_example.ipynb
+```
+
+
+
+```{toctree}
 :caption: "API Documentation"
 :maxdepth: 4
 power_grid_model_io
