@@ -511,7 +511,8 @@ class TabularConverter(BaseConverter[TabularData]):
                 raise NotImplementedError(f"Column filter '{name}' not implemented")
             else:  # For now, fall back to legacy function definition
                 col_data = self._parse_col_def_function(data=data, table=table, col_def={name: sub_def})
-                # TODO: raise NotImplementedError(f"Column filter '{name}' not implemented")
+                # TODO: raise NotImplementedError(f"Column filter '{name}' not implemented") if "function" is
+                #  implemented
             data_frames.append(col_data)
         return pd.concat(data_frames, axis=1)
 

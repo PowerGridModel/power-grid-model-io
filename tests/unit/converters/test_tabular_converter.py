@@ -463,6 +463,59 @@ def test_converter__parse_col_def_column_reference(
     assert_frame_equal(df_lines_from_node_long, df_lines_from_node_short)
 
 
+def test_converter__parse_col_def_filter(
+    converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
+):
+    # wrong col_def instance
+    with pytest.raises(AssertionError):
+        converter._parse_col_def_filter(
+            data=tabular_data_no_units_no_substitutions, table="", col_def=[]  # type: ignore
+        )
+
+    # not implemented filters
+    with pytest.raises(NotImplementedError, match="Column filter 'multiply' not implemented"):
+        converter._parse_col_def_filter(data=tabular_data_no_units_no_substitutions, table="", col_def={"multiply": ""})
+    with pytest.raises(NotImplementedError, match="Column filter 'function' not implemented"):
+        converter._parse_col_def_filter(data=tabular_data_no_units_no_substitutions, table="", col_def={"function": ""})
+    with pytest.raises(NotImplementedError, match="Column filter 'reference' not implemented"):
+        converter._parse_col_def_filter(
+            data=tabular_data_no_units_no_substitutions, table="", col_def={"reference": ""}
+        )
+
+    with patch(
+        "power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def_function"
+    ) as mock_parse_col_def_function:
+        mock_parse_col_def_function.return_value = pd.DataFrame([1, 2])
+        df = converter._parse_col_def_filter(
+            data=tabular_data_no_units_no_substitutions, table="", col_def={"a": "str"}
+        )
+        mock_parse_col_def_function.assert_called_once_with(
+            data=tabular_data_no_units_no_substitutions, table="", col_def={"a": "str"}
+        )
+        assert_frame_equal(df, pd.DataFrame([1, 2]))
+
+    # auto id
+    with pytest.raises(ValueError, match="Invalid auto_id definition: {'a': 1, 'b': 2}"):
+        converter._parse_col_def_filter(
+            data=tabular_data_no_units_no_substitutions, table="", col_def={"auto_id": {"a": 1, "b": 2}}
+        )
+    with patch(
+        "power_grid_model_io.converters.tabular_converter.TabularConverter._parse_auto_id"
+    ) as mock_parse_auto_id:
+        mock_parse_auto_id.return_value = pd.DataFrame([3, 4])
+        df = converter._parse_col_def_filter(
+            data=tabular_data_no_units_no_substitutions,
+            table="nodes",
+            col_def={"auto_id": {"name": "id", "key": "id_number"}},
+        )
+        assert_frame_equal(df, pd.DataFrame([3, 4]))
+
+
+def test_converter__parse_auto_id():
+    # TODO
+    pass
+
+
 @patch("power_grid_model_io.converters.tabular_converter.get_function")
 @patch("power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def")
 def test_converter__parse_col_def_function(
