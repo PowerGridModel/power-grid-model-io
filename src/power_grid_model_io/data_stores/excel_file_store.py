@@ -106,18 +106,24 @@ class ExcelFileStore(BaseDataStore[TabularData]):
 
         def is_unnamed(col_name):
             col_is_unnamed = self._unnamed_pattern.fullmatch(str(col_name))
-            self._log.warning("Column is renamed", sheet_name=sheet_name, col_name=col_name, new_name="")
+            if col_is_unnamed:
+                self._log.warning("Column is renamed", sheet_name=sheet_name, col_name=col_name, new_name="")
             return col_is_unnamed
 
-        columns = (tuple("" if is_unnamed(idx) else idx for idx in col_idx) for col_idx in data.columns.values)
-        return pd.DataFrame(data, columns=pd.MultiIndex.from_tuples(columns))
+        if data.columns.nlevels == 1:
+            data.columns = pd.Index("" if is_unnamed(idx) else idx for idx in data.columns.values)
+        else:
+            data.columns = pd.MultiIndex.from_tuples(
+                [tuple("" if is_unnamed(idx) else idx for idx in col_idx) for col_idx in data.columns.values]
+            )
+
+        return data
 
     def _handle_duplicate_columns(self, data: pd.DataFrame, sheet_name: str) -> pd.DataFrame:
         if data.empty:
             return data
 
-        grouped = self._group_columns_by_index(data=data)
-        to_remove, to_rename = self._check_duplicate_values(sheet_name=sheet_name, data=data, grouped=grouped)
+        to_remove, to_rename = self._check_duplicate_values(sheet_name=sheet_name, data=data)
 
         columns = data.columns.values
         if to_rename:
@@ -130,7 +136,11 @@ class ExcelFileStore(BaseDataStore[TabularData]):
                     col_idx=col_idx,
                 )
                 columns[col_idx] = new_name
-            data.columns = pd.MultiIndex.from_tuples(columns)
+
+            if data.columns.nlevels == 1:
+                data.columns = pd.Index(columns)
+            else:
+                data.columns = pd.MultiIndex.from_tuples(columns)
 
         for col_idx in to_remove:
             self._log.debug("Column is removed", sheet_name=sheet_name, col_name=columns[col_idx], col_idx=col_idx)
@@ -138,19 +148,11 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         to_keep = all_columns - to_remove
         return data.iloc[:, sorted(to_keep)]
 
-    def _group_columns_by_index(self, data: pd.DataFrame) -> Dict[Tuple[str, ...], Set[int]]:
-        grouped: Dict[Tuple[str, ...], Set[int]] = {}
-        columns = data.columns.values
-        for col_idx, col_name in enumerate(columns):
-            col_name = (col_name,) if not isinstance(col_name, tuple) else col_name
-            if col_name not in grouped:
-                grouped[col_name] = set()
-            grouped[col_name].add(col_idx)
-        return grouped
-
     def _check_duplicate_values(
-        self, sheet_name: str, data: pd.DataFrame, grouped: Dict[Tuple[str, ...], Set[int]]
+        self, sheet_name: str, data: pd.DataFrame
     ) -> Tuple[Set[int], Dict[int, Tuple[str, ...]]]:
+
+        grouped = self._group_columns_by_index(data=data)
 
         to_remove: Set[int] = set()
         to_rename: Dict[int, Tuple[str, ...]] = {}
@@ -160,6 +162,7 @@ class ExcelFileStore(BaseDataStore[TabularData]):
             # No duplicate column names
             if len(col_idxs) == 1:
                 continue
+
             # Select the first column as a reference
             ref_idx = min(col_idxs)
 
@@ -186,3 +189,14 @@ class ExcelFileStore(BaseDataStore[TabularData]):
                     to_rename[dup_idx] = (f"{col_name[0]}_{counter}",) + col_name[1:]
 
         return to_remove, to_rename
+
+    @staticmethod
+    def _group_columns_by_index(data: pd.DataFrame) -> Dict[Tuple[str, ...], Set[int]]:
+        grouped: Dict[Tuple[str, ...], Set[int]] = {}
+        columns = data.columns.values
+        for col_idx, col_name in enumerate(columns):
+            col_name = (col_name,) if not isinstance(col_name, tuple) else col_name
+            if col_name not in grouped:
+                grouped[col_name] = set()
+            grouped[col_name].add(col_idx)
+        return grouped

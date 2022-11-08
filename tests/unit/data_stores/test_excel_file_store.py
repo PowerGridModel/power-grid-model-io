@@ -9,9 +9,13 @@ from unittest.mock import MagicMock, call, mock_open, patch
 import numpy as np
 import pandas as pd
 import pytest
+from pytest import param
+from structlog.testing import capture_logs
 
 from power_grid_model_io.data_stores.excel_file_store import ExcelFileStore
 from power_grid_model_io.data_types.tabular_data import TabularData
+
+from ...utils import assert_log_exists, assert_log_match
 
 PandasExcelData = Dict[str, pd.DataFrame]
 
@@ -225,3 +229,140 @@ def test_excel_file_store__save__multiple_files(mock_to_excel: MagicMock, mock_e
 
     mock_excel_writer.assert_any_call(path=Path("foo.xlsx"))
     mock_to_excel.assert_any_call(excel_writer=foo_writer.__enter__(), sheet_name="colors")
+
+
+@pytest.mark.parametrize(
+    ("column_name", "is_unnamed"),
+    [
+        param("", False, id="empty"),
+        param("id", False, id="id"),
+        param("Unnamed: 123_level_1", True, id="unnamed"),
+        param("Unnamed", False, id="not_unnamed"),
+        param("123", False, id="number_as_str"),
+    ],
+)
+def test_unnamed_pattern(column_name: str, is_unnamed: bool):
+    assert bool(ExcelFileStore._unnamed_pattern.fullmatch(column_name)) == is_unnamed
+
+
+def test_remove_unnamed_column_placeholders():
+    # Arrange
+    data = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=["ID", "Unnamed: 123_level_0", "X"])
+    store = ExcelFileStore()
+
+    # Act
+    with capture_logs() as cap_log:
+        result = store._remove_unnamed_column_placeholders(data=data, sheet_name="foo")
+
+    # Assert
+    assert len(cap_log) == 1
+    assert_log_match(cap_log[0], "warning", "Column is renamed", col_name="Unnamed: 123_level_0")
+    pd.testing.assert_frame_equal(result, pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=["ID", "", "X"]))
+
+
+def test_remove_unnamed_column_placeholders__multi_first():
+    # Arrange
+    columns = pd.MultiIndex.from_tuples([("ID", "A"), ("Unnamed: 123_level_0", "B"), ("X", "C")])
+    data = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=columns)
+    store = ExcelFileStore()
+
+    # Act
+    with capture_logs() as cap_log:
+        result = store._remove_unnamed_column_placeholders(data=data, sheet_name="foo")
+
+    # Assert
+    assert len(cap_log) == 1
+    assert_log_match(cap_log[0], "warning", "Column is renamed", col_name="Unnamed: 123_level_0")
+    columns = pd.MultiIndex.from_tuples([("ID", "A"), ("", "B"), ("X", "C")])
+    pd.testing.assert_frame_equal(result, pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=columns))
+
+
+def test_remove_unnamed_column_placeholders__multi_seccond():
+    # Arrange
+    columns = pd.MultiIndex.from_tuples([("ID", ""), ("B", "Unnamed: 123_level_1"), ("C", "kW")])
+    data = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=columns)
+    store = ExcelFileStore()
+
+    # Act
+    with capture_logs() as cap_log:
+        result = store._remove_unnamed_column_placeholders(data=data, sheet_name="foo")
+
+    # Assert
+    assert len(cap_log) == 1
+    assert_log_match(cap_log[0], "warning", "Column is renamed", col_name="Unnamed: 123_level_1")
+    columns = pd.MultiIndex.from_tuples([("ID", ""), ("B", ""), ("C", "kW")])
+    pd.testing.assert_frame_equal(result, pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=columns))
+
+
+@patch("power_grid_model_io.data_stores.excel_file_store.ExcelFileStore._check_duplicate_values")
+def test_handle_duplicate_columns(mock_check_duplicate_values: MagicMock):
+    # Arrange
+    data = pd.DataFrame(
+        [  #  A    B    C    A    B    A    B
+            # 0    1    2    3    4    5    6
+            [101, 201, 301, 101, 201, 101, 201],
+            [102, 202, 302, 111, 202, 102, 202],
+            [103, 203, 303, 103, 203, 103, 203],
+        ],
+        columns=["A", "B", "C", "A", "B", "A", "B"],
+    )
+    store = ExcelFileStore()
+    mock_check_duplicate_values.return_value = ({4, 5, 6}, {3: "A_2"})
+
+    # Act
+    with capture_logs() as cap_log:
+        actual = store._handle_duplicate_columns(data=data, sheet_name="foo")
+
+    # Assert
+    assert len(cap_log) == 4
+    assert_log_exists(cap_log, "warning", "Column is renamed", col_name="A", new_name="A_2", col_idx=3)
+    assert_log_exists(cap_log, "debug", "Column is removed", col_name="B", col_idx=4)
+    assert_log_exists(cap_log, "debug", "Column is removed", col_name="A", col_idx=5)
+    assert_log_exists(cap_log, "debug", "Column is removed", col_name="B", col_idx=6)
+
+    expected = pd.DataFrame(
+        [  #  A    B    C   A_2
+            [101, 201, 301, 101],
+            [102, 202, 302, 111],
+            [103, 203, 303, 103],
+        ],
+        columns=["A", "B", "C", "A_2"],
+    )
+    pd.testing.assert_frame_equal(actual, expected)
+
+
+@patch("power_grid_model_io.data_stores.excel_file_store.ExcelFileStore._check_duplicate_values")
+def test_handle_duplicate_columns__multi(mock_check_duplicate_values: MagicMock):
+    # Arrange
+    data = pd.DataFrame(
+        [  # A,1  B,2  C,3  A,1  B,2  A,1  B,2
+            # 0    1    2    3    4    5    6
+            [101, 201, 301, 101, 201, 101, 201],
+            [102, 202, 302, 111, 202, 102, 202],
+            [103, 203, 303, 103, 203, 103, 203],
+        ],
+        columns=pd.MultiIndex.from_tuples([("A", 1), ("B", 2), ("C", 3), ("A", 1), ("B", 2), ("A", 1), ("B", 2)]),
+    )
+    store = ExcelFileStore()
+    mock_check_duplicate_values.return_value = ({4, 5, 6}, {3: ("A_2", 1)})
+
+    # Act
+    with capture_logs() as cap_log:
+        actual = store._handle_duplicate_columns(data=data, sheet_name="foo")
+
+    # Assert
+    assert len(cap_log) == 4
+    assert_log_exists(cap_log, "warning", "Column is renamed", col_name=("A", 1), new_name=("A_2", 1), col_idx=3)
+    assert_log_exists(cap_log, "debug", "Column is removed", col_name=("B", 2), col_idx=4)
+    assert_log_exists(cap_log, "debug", "Column is removed", col_name=("A", 1), col_idx=5)
+    assert_log_exists(cap_log, "debug", "Column is removed", col_name=("B", 2), col_idx=6)
+
+    expected = pd.DataFrame(
+        [  # A,1  B,2  C,3 A_2,1
+            [101, 201, 301, 101],
+            [102, 202, 302, 111],
+            [103, 203, 303, 103],
+        ],
+        columns=pd.MultiIndex.from_tuples([("A", 1), ("B", 2), ("C", 3), ("A_2", 1)]),
+    )
+    pd.testing.assert_frame_equal(actual, expected)
