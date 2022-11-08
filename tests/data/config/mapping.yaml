@@ -24,10 +24,10 @@ grid:
     sym_load: # for testing purpose, the same loads will be added twice, with different types
       - id:
           auto_id:
-            name: sym_load
-            key:
-              - id_number
-              - 1
+            name:
+              - sym_load
+              - const_impedence
+            key: id_number
         type: 1 # const_impedence
         node:
           auto_id:
@@ -36,10 +36,10 @@ grid:
         status: switching_status
       - id:
           auto_id:
-            name: sym_load
-            key:
-              - id_number
-              - 2
+            name:
+              - sym_load
+              - const_current
+            key: id_number
         type: 2 # const_current
         node:
           auto_id:
