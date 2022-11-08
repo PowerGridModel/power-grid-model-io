@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 
 from power_grid_model_io.converters.base_converter import BaseConverter
+from power_grid_model_io.data_stores.excel_file_store import ExcelFileStore
 
 
 class DummyConverter(BaseConverter[Dict[str, List[Dict[str, int]]]]):
@@ -105,9 +106,40 @@ def test_converter__load_asym_output_data(converter: DummyConverter):
     assert data == {"foo": 1}
 
 
-def test_converter__save_data(converter: DummyConverter):
+def test_converter__convert_data(converter: DummyConverter):
     # Act
     converter.convert(data={"foo": np.array([1])})
 
     # Assert
     converter._serialize_data.assert_called_once_with(data={"foo": np.array([1])}, extra_info=None)  # type: ignore
+
+
+def test_converter__save_data(converter: DummyConverter):
+    # No destination supplied
+    with pytest.raises(ValueError, match="No destination supplied!"):
+        converter.save(data={"foo": np.array([1])})
+
+    # Destination supplied as argument
+    destination = MagicMock()
+    converter.save(data={"foo": np.array([1])}, destination=destination)
+    destination.save.assert_called_once_with(data={"node": [{"id": 1}, {"id": 2}]})
+
+    # Destination supplied at instantiation
+    destination2 = MagicMock()
+    converter_2 = DummyConverter(destination=destination2)
+    converter_2.save(data={"foo": np.array([1])})
+    destination2.save.assert_called_once()
+
+
+def test_converter__load_data(converter: DummyConverter):
+    # No data supplied
+    with pytest.raises(ValueError, match="No data supplied!"):
+        converter._load_data(data=None)
+
+    data = converter._load_data(data={"node": [{"id": 1}, {"id": 2}]})
+    assert data == data
+
+    source = MagicMock()
+    converter_2 = DummyConverter(source=source)
+    converter_2._load_data(data=None)
+    source.load.assert_called_once()

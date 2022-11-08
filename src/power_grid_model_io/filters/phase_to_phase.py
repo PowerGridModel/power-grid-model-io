@@ -11,18 +11,9 @@ from typing import Tuple
 
 from power_grid_model import WindingType
 
-CONNECTION_PATTERN = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(\d|1[0-2])")
+from power_grid_model_io.filters import get_winding
 
-"""
-TODO: Implement Z winding
-"""
-WINDING_TYPES = {
-    "Y": WindingType.wye,
-    "YN": WindingType.wye_n,
-    "D": WindingType.delta,
-    "Z": WindingType.zigzag,
-    "ZN": WindingType.zigzag_n,
-}
+CONNECTION_PATTERN = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(\d|1[0-2])")
 
 
 def relative_no_load_current(i_0: float, p_0: float, s_nom: float, u_nom: float) -> float:
@@ -85,7 +76,7 @@ def get_winding_from(conn_str: str, neutral_grounding: bool = True) -> WindingTy
     Get the winding type, based on a textual encoding of the conn_str
     """
     winding_from, _, _ = _split_connection_string(conn_str)
-    return _get_winding(winding=winding_from, neutral_grounding=neutral_grounding)
+    return get_winding(winding=winding_from, neutral_grounding=neutral_grounding)
 
 
 def get_winding_to(conn_str: str, neutral_grounding: bool = True) -> WindingType:
@@ -93,7 +84,7 @@ def get_winding_to(conn_str: str, neutral_grounding: bool = True) -> WindingType
     Get the winding type, based on a textual encoding of the conn_str
     """
     _, winding_to, _ = _split_connection_string(conn_str)
-    return _get_winding(winding=winding_to, neutral_grounding=neutral_grounding)
+    return get_winding(winding=winding_to, neutral_grounding=neutral_grounding)
 
 
 def get_clock(conn_str: str) -> int:
@@ -115,13 +106,3 @@ def _split_connection_string(conn_str: str) -> Tuple[str, str, int]:
     if not match:
         raise ValueError(f"Invalid transformer connection string: '{conn_str}'")
     return match.group(1), match.group(2), int(match.group(3))
-
-
-def _get_winding(winding: str, neutral_grounding: bool) -> WindingType:
-    winding_type = WINDING_TYPES[winding.upper()]
-    if not neutral_grounding:
-        if winding_type == WindingType.wye_n:
-            return WindingType.wye
-        if winding_type == WindingType.zigzag_n:
-            return WindingType.zigzag
-    return winding_type
