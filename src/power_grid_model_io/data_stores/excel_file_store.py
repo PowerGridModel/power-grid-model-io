@@ -48,13 +48,19 @@ class ExcelFileStore(BaseDataStore[TabularData]):
 
     def files(self) -> Dict[str, Path]:
         """
-        Read-only accessor
+        The files as supplied in the constructor. Nota that the file names are read-only.
+
+        Returns: A copy of the file paths as set in the constructor.
         """
         return self._file_paths.copy()
 
     def load(self) -> TabularData:
         """
         Load one or more Excel file as tabular data.
+
+        Returns: The contents of all the Excel file supplied in the constructor. The tables of the main file will
+        have no prefix, while the tables of all the extra files will be prefixed with the name of the key word argument
+        as supplied in the constructor.
         """
         data: Dict[str, pd.DataFrame] = {}
         for name, path in self._file_paths.items():
@@ -74,6 +80,11 @@ class ExcelFileStore(BaseDataStore[TabularData]):
     def save(self, data: TabularData) -> None:
         """
         Store tabular data as one or more Excel file.
+
+        Args:
+            data: Tha data to store. The keys of the tables will be the names of the spread sheets in the excel
+            files. Table names with a prefix corresponding to the name of the key word argument as supplied in the
+            constructor will be stored in the associated files.
         """
 
         # First group all sheets per file. Each sheet name that starts with a file name is assigned to that file.

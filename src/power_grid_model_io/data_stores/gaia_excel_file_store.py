@@ -15,12 +15,17 @@ class GaiaExcelFileStore(ExcelFileStore):
     """
     Gaia Excel file store
 
-    Gaia Excel exports are quite simmilar to Vision excel exports. The names of the sheets and columns are quite
+    Gaia Excel exports are quite similar to Vision Excel exports. The names of the sheets and columns are quite
     different though, but that will be solved in the mapping file for the TabularConverter. Another difference is
     that Vision exports only one Excel file, where Gaia outputs a separate Excel file containing cable types etc.
     """
 
     def __init__(self, file_path: Path, types_file: Optional[Path] = None):
+        """
+        Args:
+            file_path: The main Gaia Excel export file
+            types_file: The Excel file storing cable types etc.
+        """
         if types_file is None:
             super().__init__(file_path)
         else:

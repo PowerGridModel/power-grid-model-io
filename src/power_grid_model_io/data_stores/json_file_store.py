@@ -32,13 +32,16 @@ class JsonFileStore(BaseDataStore[StructuredData]):
         if file_path.suffix.lower() != ".json":
             raise ValueError(f"JsonFile file should be a .json file, {file_path.suffix} provided.")
 
-    def set_indent(self, indent: Optional[int]):
+    def set_indent(self, indent: Optional[int]) -> None:
         """
-        Change the number of spaced used for each indent level (affects output only)
+        Change the number of spaces used for each indent level (affects output only)
+
+        Args:
+            indent: Number of spaces for each indent level. None = all json on a single line.
         """
         self._indent = indent
 
-    def set_compact(self, compact: bool):
+    def set_compact(self, compact: bool) -> None:
         """
         In compact mode, each object will be output on a single line. Note that the JsonFileStore is not very
         general; it assumes that data is either a dictionary of this format:
@@ -58,16 +61,30 @@ class JsonFileStore(BaseDataStore[StructuredData]):
         }
 
         or a list of those dictionaries.
+
+        Args:
+            compact: Boolean defining if the output should be stored compact or not
         """
         self._compact = compact
 
     def load(self) -> StructuredData:
+        """
+        Loads a JSON file, validates the structure and returns it in a native python data format
+
+        Returns: StructuredData
+        """
         with self._file_path.open(mode="r", encoding="utf-8") as file_pointer:
             data = json.load(file_pointer)
         self._validate(data=data)
         return data
 
     def save(self, data: StructuredData) -> None:
+        """
+        Saves the native python data format as a JSON file
+
+        Args:
+            data: StructuredData
+        """
         self._validate(data=data)
         self._file_path.parent.mkdir(parents=True, exist_ok=True)
         with self._file_path.open(mode="w", encoding="utf-8") as file_pointer:
