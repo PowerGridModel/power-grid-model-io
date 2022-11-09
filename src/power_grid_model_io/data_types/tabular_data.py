@@ -23,6 +23,16 @@ class TabularData:
     """
 
     def __init__(self, **tables: Union[pd.DataFrame, np.ndarray]):
+        """
+        Tabular data can either be a collection of pandas DataFrames and/or numpy structured arrays.
+        The key word arguments will define the keys of the data.
+
+        tabular_data = TabularData(foo=foo_data)
+        tabular_data["foo"] --> foo_data
+
+        Args:
+            **tables: A collection of pandas DataFrames and/or numpy structured arrays
+        """
         for table_name, table_data in tables.items():
             if not isinstance(table_data, (pd.DataFrame, np.ndarray)):
                 raise TypeError(
@@ -34,21 +44,34 @@ class TabularData:
         self._substitution: Optional[ValueMapping] = None
         self._log = structlog.get_logger(type(self).__name__)
 
-    def set_unit_multipliers(self, units: UnitMapping):
+    def set_unit_multipliers(self, units: UnitMapping) -> None:
         """
         Define unit multipliers.
+
+        Args:
+            units: A UnitMapping object defining all the units and their conversions (e.g. 1 MW = 1_000_000 W)
         """
         self._units = units
 
-    def set_substitutions(self, substitution: ValueMapping):
+    def set_substitutions(self, substitution: ValueMapping) -> None:
         """
         Define value substitutions
+
+        Args:
+            substitution: A ValueMapping defining all value substitutions (e.g. "yes" -> 1)
         """
         self._substitution = substitution
 
     def get_column(self, table_name: str, column_name: str) -> pd.Series:
         """
         Select a column from a table, while applying unit conversions and value substitutions
+
+        Args:
+            table_name: The name of the table as supplied in the constructor
+            column_name: The name of the column or "index" to get the index
+
+        Returns:
+            The required column, with unit conversions and value substitutions applied
         """
         table_data = self._data[table_name]
 
