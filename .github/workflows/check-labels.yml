@@ -15,11 +15,19 @@ on:
       - unlabeled
 
 jobs:
-  allowed-labels-merge:
-    if: contains(github.event.pull_request.labels.*.name, 'do-not-merge') || contains(github.event.pull_request.labels.*.name, 'needs-unit-tests')
+  do-not-merge:
+    if: contains(github.event.pull_request.labels.*.name, 'do-not-merge')
     runs-on: ubuntu-latest
     steps:
       - name: Fail if the pull request should not be merged
         run: |
-          echo "Pull request with this label should not be merged."
+          echo "This pull request should not be merged."
+          exit 1
+  needs-unit-tests:
+    if: contains(github.event.pull_request.labels.*.name, 'needs-unit-tests')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if the pull request needs more unit tests
+        run: |
+          echo "This pull request needs more unit tests."
           exit 1
