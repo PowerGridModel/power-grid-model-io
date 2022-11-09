@@ -1,0 +1,34 @@
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dynamic.grid.calculation@alliander.com>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+
+name: Check Labels
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - labeled
+      - unlabeled
+
+jobs:
+  do-not-merge:
+    if: contains(github.event.pull_request.labels.*.name, 'do-not-merge')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if the pull request should not be merged
+        run: |
+          echo "This pull request should not be merged."
+          exit 1
+  needs-unit-tests:
+    if: contains(github.event.pull_request.labels.*.name, 'needs-unit-tests')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if the pull request needs more unit tests
+        run: |
+          echo "This pull request needs more unit tests."
+          exit 1
+
