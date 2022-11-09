@@ -48,7 +48,7 @@ dev = [
 ]
 doc = [
     "sphinx",
-    "myst-parser",
+    "myst-nb",
     "sphinx_rtd_theme",
     "readthedocs-sphinx-search",
     "sphinx-hoverxref",
@@ -78,7 +78,7 @@ power_grid_model_io = ["config/**/*.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
-addopts = ["--cov=power_grid_model_io", "--cov-report=term", "--cov-report=html:cov_html", "--cov-fail-under=56.93"]
+addopts = ["--cov=power_grid_model_io", "--cov-report=term", "--cov-report=html:cov_html", "--cov-fail-under=82.67"]
 
 [tool.black]
 line-length = 120
@@ -91,6 +91,7 @@ line_length = 120
 [tool.pylint]
 max-line-length = 120
 ignore-paths = [
+    "docs/",
     "examples/",
     "tests/",
     "setup.py",

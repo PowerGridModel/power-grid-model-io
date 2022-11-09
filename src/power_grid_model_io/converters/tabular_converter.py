@@ -65,9 +65,7 @@ MappingFile = Dict[Literal["multipliers", "grid", "units", "substitutions"], Uni
 
 
 class TabularConverter(BaseConverter[TabularData]):
-    """
-    Tabular Data Converter: Load data from multiple tables and use a mapping file to convert the data to PGM
-    """
+    """Tabular Data Converter: Load data from multiple tables and use a mapping file to convert the data to PGM"""
 
     def __init__(
         self,
@@ -90,11 +88,16 @@ class TabularConverter(BaseConverter[TabularData]):
             self.set_mapping_file(mapping_file=mapping_file)
 
     def set_mapping_file(self, mapping_file: Path) -> None:
-        """
-        Read, parse and interpret a mapping file. This includes:
+        """Read, parse and interpret a mapping file. This includes:
          * the table to table mapping ('grid')
          * the unit conversions ('units')
          * the value substitutions ('substitutions') (e.g. enums or other one-on-one value mapping)
+
+        Args:
+          mapping_file: Path:
+
+        Returns:
+
         """
         # Read mapping
         if mapping_file.suffix.lower() != ".yaml":
@@ -114,8 +117,23 @@ class TabularConverter(BaseConverter[TabularData]):
             MultiplierMapping(cast(Multipliers, mapping["multipliers"])) if "multipliers" in mapping else None
         )
 
-    def _parse_data(self, data: TabularData, data_type: str, extra_info: Optional[ExtraInfoLookup] = None) -> Dataset:
+    def _parse_data(self, data: TabularData, data_type: str, extra_info: Optional[ExtraInfoLookup]) -> Dataset:
+        """This function parses tabular data and returns power-grid-model data
 
+        Args:
+          data: TabularData, i.e. a dictionary with the components as keys and pd.DataFrames as values, with
+        attribute names as columns and their values in the table
+          data_type: power-grid-model data type, i.e. "input" or "update"
+          extra_info: an optional dictionary where extra component info (that can't be specified in
+        power-grid-model data) can be specified
+          data: TabularData:
+          data_type: str:
+          extra_info: Optional[ExtraInfoLookup]:
+
+        Returns:
+          a power-grid-model dataset, i.e. a dictionary as {component: np.ndarray}
+
+        """
         # Apply units and substitutions to the data. Note that the conversions are 'lazy', i.e. the units and
         # substitutions will be applied the first time .get_column(table, field) is called.
         if self._units is not None:
@@ -162,6 +180,30 @@ class TabularConverter(BaseConverter[TabularData]):
         attributes: InstanceAttributes,
         extra_info: Optional[ExtraInfoLookup],
     ) -> Optional[np.ndarray]:
+        """
+        This function converts a single table/sheet of TabularData to a power-grid-model input/update array. One table
+        corresponds to one component
+
+        Args:
+          data: The full dataset with tabular data
+          data_type: The data type, i.e. "input" or "update"
+          table: The name of the table that should be converter
+          component: the component for which a power-grid-model array should be made
+          attributes: a dictionary with a mapping from the attribute names in the table to the corresponding
+        power-grid-model attribute names
+          extra_info: an optional dictionary where extra component info (that can't be specified in
+        power-grid-model data) can be specified
+          data: TabularData:
+          data_type: str:
+          table: str:
+          component: str:
+          attributes: InstanceAttributes:
+          extra_info: Optional[ExtraInfoLookup]:
+
+        Returns:
+          returns a power-grid-model structured array for one component
+
+        """
         if table not in data:
             return None
 
@@ -170,7 +212,7 @@ class TabularConverter(BaseConverter[TabularData]):
         try:
             pgm_data = initialize_array(data_type=data_type, component_type=component, shape=n_records)
         except KeyError as ex:
-            raise KeyError(f"Invalid component type '{component}'") from ex
+            raise KeyError(f"Invalid component type '{component}' or data type '{data_type}'") from ex
 
         if "id" not in attributes:
             raise KeyError(f"No mapping for the attribute 'id' for '{component}s'!")
@@ -202,6 +244,31 @@ class TabularConverter(BaseConverter[TabularData]):
         col_def: Any,
         extra_info: Optional[ExtraInfoLookup],
     ):
+        """This function updates one of the attributes of pgm_data, based on the corresponding table/column in a tabular
+        dataset
+
+        Args:
+          data: TabularData, i.e. a dictionary with the components as keys and pd.DataFrames as values, with
+        attribute names as columns and their values in the table
+          pgm_data: a power-grid-model input/update array for one component
+          table: the table name of the particular component in the tabular dataset
+          component: the corresponding component
+          attr: the name of the attribute that should be updated in the power-grid-model array
+          col_def: the name of the column where the attribute values can be found
+          extra_info: an optional dictionary where extra component info (that can't be specified in
+        power-grid-model data) can be specified
+          data: TabularData:
+          pgm_data: np.ndarray:
+          table: str:
+          component: str:
+          attr: str:
+          col_def: Any:
+          extra_info: Optional[ExtraInfoLookup]:
+
+        Returns:
+          the function updates pgm_data, it should not return something
+
+        """
         # To avoid mistakes, the attributes in the mapping should exist. There is one extra attribute called
         # 'extra' in which extra information can be captured.
         if attr not in pgm_data.dtype.names and attr != "extra":
@@ -220,7 +287,7 @@ class TabularConverter(BaseConverter[TabularData]):
             attr_data = self._handle_node_ref_column(data=data, table=table, col_def=col_def)
         elif attr == "measured_object":
             # The attribute "measured_object" can be a reference to different types of objects, as used by sensors.
-            raise NotImplementedError(f"{component}s are not implemented, because of the '{attr}' reference...")
+            raise NotImplementedError(f"{component}s are not supported, because of the '{attr}' reference...")
         elif attr == "extra":
             # Extra info must be linked to the object IDs, therefore the uuids should be known before extra info can
             # be parsed. Before this for loop, it is checked that "id" exists and it is placed at the front.
@@ -232,15 +299,28 @@ class TabularConverter(BaseConverter[TabularData]):
         else:
             attr_data = self._handle_column(data=data, table=table, component=component, attr=attr, col_def=col_def)
 
-        try:
-            pgm_data[attr] = attr_data
-        except ValueError as ex:
-            if "invalid literal" in str(ex) and isinstance(col_def, str):
-                # pylint: disable=raise-missing-from
-                raise ValueError(f"Possibly missing enum value for '{col_def}' column on '{table}' table: {ex}")
-            raise
+        pgm_data[attr] = attr_data
 
-    def _handle_column(self, data: TabularData, table: str, component: str, attr: str, col_def: Any) -> pd.DataFrame:
+    def _handle_column(self, data: TabularData, table: str, component: str, attr: str, col_def: Any) -> pd.Series:
+        """This function parses a column from the table and returns a pd.Series of the data
+
+        Args:
+          data: tabularData, i.e. a dictionary with the components as keys and pd.DataFrames as values, with
+        attribute names as columns and their values in the table
+          table: the table name of the particular component in the tabular dataset
+          component: the corresponding component
+          attr: the name of the attribute
+          col_def: the name of the column
+          data: TabularData:
+          table: str:
+          component: str:
+          attr: str:
+          col_def: Any:
+
+        Returns:
+          a pd.Series of the specific column
+
+        """
         attr_data = self._parse_col_def(data=data, table=table, col_def=col_def)
         if len(attr_data.columns) != 1:
             raise ValueError(f"DataFrame for {component}.{attr} should contain a single column ({attr_data.columns})")
@@ -248,10 +328,31 @@ class TabularConverter(BaseConverter[TabularData]):
 
     def _handle_id_column(
         self, data: TabularData, table: str, component: str, col_def: Any, extra_info: Optional[ExtraInfoLookup]
-    ) -> pd.DataFrame:
+    ) -> pd.Series:
+        """This function parses the id column from the table and assigns uuids using the _id_lookup. It then returns a
+        pd.Series of uuids
+
+        Args:
+          data: tabularData, i.e. a dictionary with the components as keys and pd.DataFrames as values, with
+        attribute names as columns and their values in the table
+          table: the table name of the particular component in the tabular dataset
+          component: the corresponding component
+          col_def: the name of the column where the ids are stored
+          extra_info: an optional dictionary where extra component info (that can't be specified in
+        power-grid-model data) can be specified
+          data: TabularData:
+          table: str:
+          component: str:
+          col_def: Any:
+          extra_info: Optional[ExtraInfoLookup]:
+
+        Returns:
+          a pd.Series of the specific column
+
+        """
 
         attr_data = self._parse_col_def(data=data, table=table, col_def=col_def)
-        uuids = attr_data.apply(lambda row: self._id_lookup(component, row), axis=1)
+        uuids = attr_data.apply(lambda row: self._id_lookup(component, row.tolist()), axis=1)
 
         if extra_info is not None:
             extra = attr_data.to_dict(orient="records")
@@ -263,8 +364,32 @@ class TabularConverter(BaseConverter[TabularData]):
         return uuids
 
     def _handle_extra_info(
-        self, data: TabularData, table: str, col_def: Any, uuids: np.ndarray, extra_info: Optional[ExtraInfoLookup]
+        self,
+        data: TabularData,
+        table: str,
+        col_def: Any,
+        uuids: np.ndarray,
+        extra_info: Optional[ExtraInfoLookup],
     ) -> None:
+        """This function can extract extra info from the tabular data and store it in the extra_info dict
+
+        Args:
+          data: tabularData, i.e. a dictionary with the components as keys and pd.DataFrames as values, with
+        attribute names as columns and their values in the table
+          table: the table name of the particular component in the tabular dataset
+          col_def: the name of the column that should be stored in extra_info
+          uuids: a numpy nd.array containing the uuids of the components
+          extra_info: an optional dictionary where extra component info (that can't be specified in
+        power-grid-model data) can be specified
+          data: TabularData:
+          table: str:
+          col_def: Any:
+          uuids: np.ndarray:
+          extra_info: Optional[ExtraInfoLookup]:
+
+        Returns:
+
+        """
         if extra_info is None:
             return
 
@@ -272,19 +397,23 @@ class TabularConverter(BaseConverter[TabularData]):
         for i, xtr in zip(uuids, extra):
             extra_info[i].update({k: v for k, v in xtr.items() if not isinstance(v, float) or not np.isnan(v)})
 
-    def _handle_node_ref_column(self, data: TabularData, table: str, col_def: Any) -> pd.DataFrame:
+    def _handle_node_ref_column(self, data: TabularData, table: str, col_def: Any) -> pd.Series:
         attr_data = self._parse_col_def(data=data, table=table, col_def=col_def)
-        attr_data = attr_data.apply(lambda row: self._id_lookup("node", row), axis=1)
+        attr_data = attr_data.apply(lambda row: self._id_lookup("node", row.tolist()), axis=1)
         return attr_data
 
     @staticmethod
     def _merge_pgm_data(data: Dict[str, List[np.ndarray]]) -> Dict[str, np.ndarray]:
-        """
-        During the conversion, multiple numpy arrays can be produced for the same type of component. These arrays
+        """During the conversion, multiple numpy arrays can be produced for the same type of component. These arrays
         should be concatenated to form one large table.
 
         Args:
-            data: For each component, one or more numpy structured arrays
+          data: For each component, one or more numpy structured arrays
+          data: Dict[str:
+          List[np.ndarray]]:
+
+        Returns:
+
         """
         merged = {}
         for component_name, data_set in data.items():
@@ -300,16 +429,23 @@ class TabularConverter(BaseConverter[TabularData]):
 
         return merged
 
-    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup] = None) -> TabularData:
+    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup]) -> TabularData:
         if extra_info is not None:
             raise NotImplementedError("Extra info can not (yet) be stored for tabular data")
         if isinstance(data, list):
-            raise NotImplementedError("Batch data can not(yet) be stored for tabular data")
+            raise NotImplementedError("Batch data can not (yet) be stored for tabular data")
         return TabularData(**data)
 
     def _parse_col_def(self, data: TabularData, table: str, col_def: Any) -> pd.DataFrame:
-        """
-        Interpret the column definition and extract/convert/create the data as a pandas DataFrame.
+        """Interpret the column definition and extract/convert/create the data as a pandas DataFrame.
+
+        Args:
+          data: TabularData:
+          table: str:
+          col_def: Any:
+
+        Returns:
+
         """
         if isinstance(col_def, (int, float)):
             return self._parse_col_def_const(data=data, table=table, col_def=col_def)
@@ -324,20 +460,36 @@ class TabularConverter(BaseConverter[TabularData]):
         raise TypeError(f"Invalid column definition: {col_def}")
 
     def _parse_col_def_const(self, data: TabularData, table: str, col_def: Union[int, float]) -> pd.DataFrame:
-        """
-        Create a single column pandas DataFrame containing the const value.
+        """Create a single column pandas DataFrame containing the const value.
+
+        Args:
+          data: TabularData:
+          table: str:
+          col_def: Union[int:
+          float]:
+
+        Returns:
+
         """
         assert isinstance(col_def, (int, float))
         return pd.DataFrame([col_def] * len(data[table]))
 
     def _parse_col_def_column_name(self, data: TabularData, table: str, col_def: str) -> pd.DataFrame:
-        """
-        Extract a column from the data. If the column doesn't exist, check if the col_def is a special float value,
+        """Extract a column from the data. If the column doesn't exist, check if the col_def is a special float value,
         like 'inf'. If that's the case, create a single column pandas DataFrame containing the const value.
+
+        Args:
+          data: TabularData:
+          table: str:
+          col_def: str:
+
+        Returns:
+
         """
         assert isinstance(col_def, str)
         table_data = data[table]
 
+        # If multiple columns are given in col_def, return the first column that exists in the dataset
         columns = [col_name.strip() for col_name in col_def.split("|")]
         for col_name in columns:
             if col_name in table_data or col_name == "index":
@@ -365,8 +517,15 @@ class TabularConverter(BaseConverter[TabularData]):
             return data
 
     def _parse_col_def_column_reference(self, data: TabularData, table: str, col_def: str) -> pd.DataFrame:
-        """
-        Find and extract a column from a different table.
+        """Find and extract a column from a different table.
+
+        Args:
+          data: TabularData:
+          table: str:
+          col_def: str:
+
+        Returns:
+
         """
         # pylint: disable=too-many-locals
         assert isinstance(col_def, str)
@@ -390,12 +549,20 @@ class TabularConverter(BaseConverter[TabularData]):
         val_column = self._parse_col_def_column_name(data=data, table=other_table, col_def=value_col_name)
         other = pd.concat([id_column, val_column], axis=1)
         result = ref_column.merge(other, how="left", left_on=ref_col_name, right_on=id_col_name)
-        return result[value_col_name]
+        return result[[value_col_name]]
 
     def _parse_col_def_function(self, data: TabularData, table: str, col_def: Dict[str, str]) -> pd.DataFrame:
-        """
-        Import the function by name and apply it to each row. The column definition may contain multiple functions,
+        """Import the function by name and apply it to each row. The column definition may contain multiple functions,
         a DataFrame with one column per function will be returned.
+
+        Args:
+          data: TabularData:
+          table: str:
+          col_def: Dict[str:
+          str]:
+
+        Returns:
+
         """
         assert isinstance(col_def, dict)
         data_frame = []
@@ -409,8 +576,15 @@ class TabularConverter(BaseConverter[TabularData]):
         return pd.concat(data_frame, axis=1)
 
     def _parse_col_def_composite(self, data: TabularData, table: str, col_def: list) -> pd.DataFrame:
-        """
-        Select multiple columns (each is created from a column definition) and return them as a new DataFrame.
+        """Select multiple columns (each is created from a column definition) and return them as a new DataFrame.
+
+        Args:
+          data: TabularData:
+          table: str:
+          col_def: list:
+
+        Returns:
+
         """
         assert isinstance(col_def, list)
         columns = [self._parse_col_def(data=data, table=table, col_def=sub_def) for sub_def in col_def]

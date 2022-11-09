@@ -1,0 +1,35 @@
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+#
+# SPDX-License-Identifier: MPL-2.0
+---
+grid:
+  nodes:
+    node:
+      id: id_number
+      u_rated: u_nom
+  lines:
+    line:
+      id: id_number
+      from_node: from_node_side
+  loads:
+    sym_load: # for testing purpose, the same loads will be added twice, with different types
+      - id: [id_number, 1]
+        type: 1 # const_impedence
+        node: node_id
+        status: switching_status
+      - id: [id_number, 2]
+        type: 2 # const_current
+        node: node_id
+        status: switching_status
+
+units:
+  A:
+  F:
+    µF: 0.000001
+  V:
+    kV: 1000.0
+
+substitutions:
+  from_node_side:
+    100: 1
+    200: 2
