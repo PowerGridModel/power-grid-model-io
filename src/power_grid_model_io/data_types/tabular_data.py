@@ -152,23 +152,43 @@ class TabularData:
     def __contains__(self, table_name: str) -> bool:
         """
         Mimic the dictionary 'in' operator
+
+        Args:
+            table_name: The name of the table as supplied in the constructor.
+
+        Returns: True if the table name was supplied in the constructor.
         """
         return table_name in self._data
 
-    def __getitem__(self, table_name: str):
+    def __getitem__(self, table_name: str) -> Union[pd.DataFrame, np.ndarray]:
         """
-        Mimic the dictionary [] operator
+        Mimic the dictionary [] operator. It returns the 'raw' table data as stored in memory. This can be either a
+        pandas DataFrame or a numpy structured array. It is possible that some unit conversions have been applied by
+        previous calls to get_column().
+
+        Args:
+            table_name: The name of the table as supplied in the constructor
+
+        Returns: The 'raw' table data
         """
         return self._data[table_name]
 
     def keys(self) -> Iterable[str]:
         """
         Mimic the dictionary .keys() function
+
+        Returns: An iterator over all table names as supplied in the constructor.
         """
+
         return self._data.keys()
 
     def items(self) -> Iterable[Tuple[str, Union[pd.DataFrame, np.ndarray]]]:
         """
         Mimic the dictionary .items() function
+
+        Returns: An iterator over the table names and the raw table data
         """
+
+        # Note: PyCharm complains about the type, but it is correct, as an ItemsView extends from
+        # AbstractSet[Tuple[_KT_co, _VT_co]], which actually is compatible with Iterable[_KT_co, _VT_co]
         return self._data.items()
