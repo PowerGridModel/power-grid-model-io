@@ -4,7 +4,7 @@
 
 from pathlib import Path
 from typing import Dict, Optional, Tuple
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import numpy as np
 import pandas as pd
@@ -511,9 +511,40 @@ def test_converter__parse_col_def_filter(
         assert_frame_equal(df, pd.DataFrame([3, 4]))
 
 
-def test_converter__parse_auto_id():
-    # TODO
-    pass
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._id_lookup")
+def test_converter__parse_auto_id(
+    mock_id_lookup: MagicMock, converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
+):
+    # name: str, key_col_def: str
+    mock_id_lookup.return_value = 10
+    converter._parse_auto_id(
+        data=tabular_data_no_units_no_substitutions, table="nodes", name="a", key_col_def="id_number"
+    )
+    mock_id_lookup.assert_has_calls([call(name="a", key=1), call(name="a", key=2)])
+
+    # name: List[str], key_col_def: str
+    mock_id_lookup.reset_mock()
+    mock_id_lookup.return_value = 10
+    converter._parse_auto_id(
+        data=tabular_data_no_units_no_substitutions, table="nodes", name=["a", "b"], key_col_def="id_number"
+    )
+    mock_id_lookup.assert_has_calls([call(name=("a", "b"), key=1), call(name=("a", "b"), key=2)])
+
+    # name: str, key_col_def: List[str]
+    mock_id_lookup.reset_mock()
+    mock_id_lookup.return_value = 10
+    converter._parse_auto_id(
+        data=tabular_data_no_units_no_substitutions, table="nodes", name="a", key_col_def=["id_number", "u_nom"]
+    )
+    mock_id_lookup.assert_has_calls([call(name="a", key=(1, 10.5e3)), call(name="a", key=(2, 400.0))])
+
+    # name: List[str], key_col_def: List[str]
+    mock_id_lookup.reset_mock()
+    mock_id_lookup.return_value = 10
+    converter._parse_auto_id(
+        data=tabular_data_no_units_no_substitutions, table="nodes", name=["a", "b"], key_col_def=["id_number", "u_nom"]
+    )
+    mock_id_lookup.assert_has_calls([call(name=("a", "b"), key=(1, 10.5e3)), call(name=("a", "b"), key=(2, 400.0))])
 
 
 @patch("power_grid_model_io.converters.tabular_converter.get_function")

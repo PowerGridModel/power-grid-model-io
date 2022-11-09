@@ -501,8 +501,7 @@ class TabularConverter(BaseConverter[TabularData]):
             if name == "auto_id":
                 if sorted(sub_def.keys()) != ["key", "name"]:
                     raise ValueError(f"Invalid auto_id definition: {sub_def}")
-                auto_id_name = tuple(sub_def["name"])
-                col_data = self._parse_auto_id(data=data, table=table, name=auto_id_name, key_col_def=sub_def["key"])
+                col_data = self._parse_auto_id(data=data, table=table, name=sub_def["name"], key_col_def=sub_def["key"])
             elif name == "multiply":
                 raise NotImplementedError(f"Column filter '{name}' not implemented")
             elif name == "function":
@@ -517,10 +516,18 @@ class TabularConverter(BaseConverter[TabularData]):
         return pd.concat(data_frames, axis=1)
 
     def _parse_auto_id(
-        self, data: TabularData, table: str, name: Union[str, Tuple[str, ...]], key_col_def: Dict[str, Any]
+        self, data: TabularData, table: str, name: Union[str, List[str]], key_col_def: Union[str, List[str]]
     ) -> pd.DataFrame:
+        typed_name: Union[str, Tuple[str, ...]] = tuple(name) if isinstance(name, list) else name
         col_data = self._parse_col_def(data=data, table=table, col_def=key_col_def)
-        return col_data.apply(lambda row: self._id_lookup(name=name, key=tuple(row.tolist())), axis=1, raw=True)
+
+        def auto_id_int(row: pd.Series):
+            return self._id_lookup(name=typed_name, key=row[0])
+
+        def auto_id_tuple(row: pd.Series):
+            return self._id_lookup(name=typed_name, key=tuple(row))
+
+        return col_data.apply(auto_id_int if len(col_data.columns) == 1 else auto_id_tuple, axis=1, raw=True)
 
     def _parse_col_def_function(self, data: TabularData, table: str, col_def: Dict[str, Any]) -> pd.DataFrame:
         """Import the function by name and apply it to each row. The column definition may contain multiple functions,

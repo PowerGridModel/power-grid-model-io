@@ -4,6 +4,7 @@
 """
 Automatic ID generator class
 """
+import collections
 from typing import Any, Dict, Hashable, List, Optional
 
 
@@ -65,11 +66,11 @@ class AutoID:
 
             # If no key is supplied, use the item as a key
         if key is None:
-            if item.__hash__ is None:
+            if not isinstance(item, collections.abc.Hashable):
                 raise TypeError(
                     f"Unhashable type: '{type(item).__name__}', please supply a 'key' argument or use hashable items"
                 )
-            key = item.__hash__()
+            key = item
 
         # If an ID was already generated for this key, return the previously generated id
         if key in self._keys:
