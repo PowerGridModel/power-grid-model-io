@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -35,6 +36,11 @@ def nodes_vl() -> pd.DataFrame:
 
 
 @pytest.fixture()
+def nodes_np() -> np.ndarray:
+    return np.array([(0, 150e3), (1, 10.5e3), (2, 400.0)], dtype=[("id", "i4"), ("u_rated", "f4")])
+
+
+@pytest.fixture()
 def lines() -> pd.DataFrame:
     return pd.DataFrame([(2, 0, 1), (3, 2, 3)], columns=("id", "from_node", "to_node"))
 
@@ -48,6 +54,30 @@ def test_tabular_data__get_column(nodes: pd.DataFrame, lines: pd.DataFrame):
 
     # Assert
     pd.testing.assert_series_equal(col_data, pd.Series([150e3, 10.5e3, 400.0], name="u_rated"))
+
+
+def test_tabular_data__get_column__numpy(nodes_np: np.ndarray):
+    # Arrange
+    data = TabularData(nodes=nodes_np)
+
+    # Act
+    col_data = data.get_column(table_name="nodes", column_name="u_rated")
+
+    # Assert
+    isinstance(col_data, pd.Series)
+    pd.testing.assert_series_equal(col_data, pd.Series([150e3, 10.5e3, 400.0], name="u_rated", dtype=np.float32))
+
+
+def test_tabular_data__get_column__numpy_is_a_reference(nodes_np: np.ndarray):
+    # Arrange
+    data = TabularData(nodes=nodes_np)
+
+    # Act
+    col_data = data.get_column(table_name="nodes", column_name="u_rated")
+    col_data[0] = 123.0  # << should update the source data
+
+    # Assert
+    np.testing.assert_array_equal(nodes_np["u_rated"], np.array([123.0, 10.5e3, 400.0]))
 
 
 def test_tabular_data__get_column__iso(nodes_iso: pd.DataFrame, lines: pd.DataFrame):
@@ -102,6 +132,18 @@ def test_tabular_data__get_column__substitution(nodes_vl: pd.DataFrame, lines: p
 
     # Assert
     pd.testing.assert_series_equal(col_data, pd.Series([150e3, 10.5e3, 400.0], name="u_rated"))
+
+
+def test_tabular_data__get_column__substitution__numpy(nodes_np: np.ndarray):
+    # Arrange
+    data = TabularData(nodes=nodes_np)
+    data.set_substitutions(ValueMapping({"id": {0: 100, 1: 101, 2: 102}}))
+
+    # Act
+    col_data = data.get_column(table_name="nodes", column_name="id")
+
+    # Assert
+    pd.testing.assert_series_equal(col_data, pd.Series([100, 101, 102], name="id"))
 
 
 def test_tabular_data__get_column__substitution_exception(nodes_vl: pd.DataFrame, lines: pd.DataFrame):
