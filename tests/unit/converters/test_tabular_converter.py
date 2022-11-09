@@ -567,6 +567,27 @@ def test_converter__parse_col_def_function(
     assert_frame_equal(multiplied_data, pd.DataFrame([4, 8, 10]))
 
 
+@patch("power_grid_model_io.converters.tabular_converter.get_function")
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def")
+def test_converter__parse_col_def_function__no_data(
+    mock_parse_col_def: MagicMock,
+    mock_get_function: MagicMock,
+    converter: TabularConverter,
+):
+    def multiply_by_two(value: int):
+        return value * 2
+
+    mock_get_function.return_value = multiply_by_two
+    mock_parse_col_def.return_value = pd.DataFrame()
+
+    with pytest.raises(ValueError, match="multiply_by_two.*empty DataFrame"):
+        converter._parse_col_def_function(
+            data=TabularData(nodes=pd.DataFrame([], columns=["u_nom"])),
+            table="nodes",
+            col_def={"multiply_by_two": "u_nom"},
+        )
+
+
 def test_converter__parse_col_def_composite(
     converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
 ):
