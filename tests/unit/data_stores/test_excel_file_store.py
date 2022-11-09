@@ -290,6 +290,18 @@ def test_remove_unnamed_column_placeholders__multi_second():
     pd.testing.assert_frame_equal(result, pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=columns))
 
 
+def test_remove_unnamed_column_placeholders__empty():
+    # Arrange
+    data = pd.DataFrame()
+    store = ExcelFileStore()
+
+    # Act
+    result = store._remove_unnamed_column_placeholders(data=data)
+
+    # Assert
+    pd.testing.assert_frame_equal(result, data)
+
+
 @patch("power_grid_model_io.data_stores.excel_file_store.ExcelFileStore._check_duplicate_values")
 def test_handle_duplicate_columns(mock_check_duplicate_values: MagicMock):
     # Arrange
@@ -360,6 +372,18 @@ def test_handle_duplicate_columns__multi(mock_check_duplicate_values: MagicMock)
         columns=pd.MultiIndex.from_tuples([("A", 1), ("B", 2), ("C", 3), ("A_2", 1), ("B_2", 2), ("A_3", 1)]),
     )
     pd.testing.assert_frame_equal(actual, expected)
+
+
+def test_handle_duplicate_columns__empty():
+    # Arrange
+    data = pd.DataFrame()
+    store = ExcelFileStore()
+
+    # Act
+    result = store._handle_duplicate_columns(data=data, sheet_name="foo")
+
+    # Assert
+    pd.testing.assert_frame_equal(result, data)
 
 
 @patch("power_grid_model_io.data_stores.excel_file_store.ExcelFileStore._group_columns_by_index")
