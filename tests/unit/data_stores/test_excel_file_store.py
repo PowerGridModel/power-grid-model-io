@@ -298,35 +298,34 @@ def test_remove_unnamed_column_placeholders__multi_seccond():
 def test_handle_duplicate_columns(mock_check_duplicate_values: MagicMock):
     # Arrange
     data = pd.DataFrame(
-        [  #  A    B    C    A    B    A    B
-            # 0    1    2    3    4    5    6
-            [101, 201, 301, 101, 201, 101, 201],
-            [102, 202, 302, 111, 202, 102, 202],
-            [103, 203, 303, 103, 203, 103, 203],
+        [  #  A    B    C    A    B    A
+            # 0    1    2    3    4    5
+            [101, 201, 301, 101, 201, 101],
+            [102, 202, 302, 111, 202, 102],
+            [103, 203, 303, 103, 203, 103],
         ],
-        columns=["A", "B", "C", "A", "B", "A", "B"],
+        columns=["A", "B", "C", "A", "B", "A"],
     )
     store = ExcelFileStore()
-    mock_check_duplicate_values.return_value = ({4, 5, 6}, {3: "A_2"})
+    mock_check_duplicate_values.return_value = {3: "A_2", 4: "B_2", 5: "A_3"}
 
     # Act
     with capture_logs() as cap_log:
         actual = store._handle_duplicate_columns(data=data, sheet_name="foo")
 
     # Assert
-    assert len(cap_log) == 4
+    assert len(cap_log) == 3
     assert_log_exists(cap_log, "warning", "Column is renamed", col_name="A", new_name="A_2", col_idx=3)
-    assert_log_exists(cap_log, "debug", "Column is removed", col_name="B", col_idx=4)
-    assert_log_exists(cap_log, "debug", "Column is removed", col_name="A", col_idx=5)
-    assert_log_exists(cap_log, "debug", "Column is removed", col_name="B", col_idx=6)
+    assert_log_exists(cap_log, "warning", "Column is renamed", col_name="B", new_name="B_2", col_idx=4)
+    assert_log_exists(cap_log, "warning", "Column is renamed", col_name="A", new_name="A_3", col_idx=5)
 
     expected = pd.DataFrame(
-        [  #  A    B    C   A_2
-            [101, 201, 301, 101],
-            [102, 202, 302, 111],
-            [103, 203, 303, 103],
+        [  #  A    B    C   A_2  B_2  A_3
+            [101, 201, 301, 101, 201, 101],
+            [102, 202, 302, 111, 202, 102],
+            [103, 203, 303, 103, 203, 103],
         ],
-        columns=["A", "B", "C", "A_2"],
+        columns=["A", "B", "C", "A_2", "B_2", "A_3"],
     )
     pd.testing.assert_frame_equal(actual, expected)
 
@@ -335,34 +334,95 @@ def test_handle_duplicate_columns(mock_check_duplicate_values: MagicMock):
 def test_handle_duplicate_columns__multi(mock_check_duplicate_values: MagicMock):
     # Arrange
     data = pd.DataFrame(
-        [  # A,1  B,2  C,3  A,1  B,2  A,1  B,2
-            # 0    1    2    3    4    5    6
-            [101, 201, 301, 101, 201, 101, 201],
-            [102, 202, 302, 111, 202, 102, 202],
-            [103, 203, 303, 103, 203, 103, 203],
+        [  # A,1  B,2  C,3  A,1  B,2  A,1
+            # 0    1    2    3    4    5
+            [101, 201, 301, 101, 201, 101],
+            [102, 202, 302, 111, 202, 102],
+            [103, 203, 303, 103, 203, 103],
         ],
-        columns=pd.MultiIndex.from_tuples([("A", 1), ("B", 2), ("C", 3), ("A", 1), ("B", 2), ("A", 1), ("B", 2)]),
+        columns=pd.MultiIndex.from_tuples([("A", 1), ("B", 2), ("C", 3), ("A", 1), ("B", 2), ("A", 1)]),
     )
     store = ExcelFileStore()
-    mock_check_duplicate_values.return_value = ({4, 5, 6}, {3: ("A_2", 1)})
+    mock_check_duplicate_values.return_value = {3: ("A_2", 1), 4: ("B_2", 2), 5: ("A_3", 1)}
 
     # Act
     with capture_logs() as cap_log:
         actual = store._handle_duplicate_columns(data=data, sheet_name="foo")
 
     # Assert
-    assert len(cap_log) == 4
+    assert len(cap_log) == 3
     assert_log_exists(cap_log, "warning", "Column is renamed", col_name=("A", 1), new_name=("A_2", 1), col_idx=3)
-    assert_log_exists(cap_log, "debug", "Column is removed", col_name=("B", 2), col_idx=4)
-    assert_log_exists(cap_log, "debug", "Column is removed", col_name=("A", 1), col_idx=5)
-    assert_log_exists(cap_log, "debug", "Column is removed", col_name=("B", 2), col_idx=6)
+    assert_log_exists(cap_log, "warning", "Column is renamed", col_name=("B", 2), new_name=("B_2", 2), col_idx=4)
+    assert_log_exists(cap_log, "warning", "Column is renamed", col_name=("A", 1), new_name=("A_3", 1), col_idx=5)
 
     expected = pd.DataFrame(
-        [  # A,1  B,2  C,3 A_2,1
-            [101, 201, 301, 101],
-            [102, 202, 302, 111],
-            [103, 203, 303, 103],
+        [  # A,1  B,2  C,3 A_2,1 B_2,2 A_3,1
+            [101, 201, 301, 101, 201, 101],
+            [102, 202, 302, 111, 202, 102],
+            [103, 203, 303, 103, 203, 103],
         ],
-        columns=pd.MultiIndex.from_tuples([("A", 1), ("B", 2), ("C", 3), ("A_2", 1)]),
+        columns=pd.MultiIndex.from_tuples([("A", 1), ("B", 2), ("C", 3), ("A_2", 1), ("B_2", 2), ("A_3", 1)]),
     )
     pd.testing.assert_frame_equal(actual, expected)
+
+
+@patch("power_grid_model_io.data_stores.excel_file_store.ExcelFileStore._group_columns_by_index")
+def test_check_duplicate_values(mock_group_columns: MagicMock):
+
+    # Arrange
+    data = pd.DataFrame(
+        [  # A,1  B,2  C,3  A,1  B,2  A,1
+            # 0    1    2    3    4    5
+            [101, 201, 301, 101, 201, 101],
+            [102, 202, 302, 111, 202, 102],
+            [103, 203, 303, 103, 203, 103],
+        ],
+        columns=["A", "B", "C", "A", "B", "A"],
+    )
+    store = ExcelFileStore()
+    mock_group_columns.return_value = {"A": {0, 3, 5}, "B": {1, 4}, "C": {2}}
+
+    # Act
+    with capture_logs() as cap_log:
+        result = store._check_duplicate_values(data=data, sheet_name="foo")
+
+    # Assert
+    assert len(cap_log) == 2
+    assert_log_exists(
+        cap_log, "error", "Found duplicate column names, with different data", col_name="A", col_idx=[0, 3, 5]
+    )
+    assert_log_exists(cap_log, "warning", "Found duplicate column names, with same data", col_name="B", col_idx=[1, 4])
+
+    assert result == {3: "A_2", 4: "B_2", 5: "A_3"}
+
+
+@patch("power_grid_model_io.data_stores.excel_file_store.ExcelFileStore._group_columns_by_index")
+def test_check_duplicate_values__multi(mock_group_columns: MagicMock):
+
+    # Arrange
+    data = pd.DataFrame(
+        [  # A,1  B,2  C,3  A,1  B,2  A,1
+            # 0    1    2    3    4    5
+            [101, 201, 301, 101, 201, 101],
+            [102, 202, 302, 111, 202, 102],
+            [103, 203, 303, 103, 203, 103],
+        ],
+        columns=pd.MultiIndex.from_tuples([("A", 1), ("B", 2), ("C", 3), ("A", 1), ("B", 2), ("A", 1)]),
+    )
+    store = ExcelFileStore()
+    mock_group_columns.return_value = {("A", 1): {0, 3, 5}, ("B", 2): {1, 4}, ("C", 3): {2}}
+
+    # Act
+    with capture_logs() as cap_log:
+        result = store._check_duplicate_values(data=data, sheet_name="foo")
+
+    # Assert
+    assert len(cap_log) == 2
+    assert_log_exists(
+        cap_log, "error", "Found duplicate column names, with different data", col_name=("A", 1), col_idx=[0, 3, 5]
+    )
+    assert_log_exists(
+        cap_log, "warning", "Found duplicate column names, with same data", col_name=("B", 2), col_idx=[1, 4]
+    )
+
+    assert result == {3: ("A_2", 1), 4: ("B_2", 2), 5: ("A_3", 1)}
