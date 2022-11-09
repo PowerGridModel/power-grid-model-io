@@ -107,9 +107,6 @@ class TabularData:
         except KeyError:
             return column_data
 
-        if substitutions is None:  # No substitution defined, for this column
-            return column_data
-
         def sub(value):
             try:
                 return substitutions[value]
@@ -125,15 +122,12 @@ class TabularData:
     def _apply_unit_conversion(self, table_data: pd.DataFrame, table: str, field: str) -> pd.Series:
         unit = table_data[field].columns[0]
 
-        if unit:
-            try:
-                if self._units is None:
-                    raise KeyError(unit)
-                multiplier, si_unit = self._units.get_unit_multiplier(unit)
-            except KeyError as ex:
-                raise KeyError(f"Unknown unit '{unit}' for column '{field}' in table '{table}'") from ex
-        else:
-            si_unit = unit
+        try:
+            if self._units is None:
+                raise KeyError(unit)
+            multiplier, si_unit = self._units.get_unit_multiplier(unit)
+        except KeyError as ex:
+            raise KeyError(f"Unknown unit '{unit}' for column '{field}' in table '{table}'") from ex
 
         if unit == si_unit:
             self._log.debug("No unit conversion needed", table=table, field=field, unit=unit)
@@ -144,10 +138,10 @@ class TabularData:
             try:
                 table_data[field] *= multiplier
             except TypeError as ex:
-                self._log.warning(
-                    f"The column '{field}' on table '{table}' does not seem to be numerical "
+                raise TypeError(
+                    f"The column '{field}' on table '{table}' (or the multiplier) does not seem to be numerical "
                     f"while trying to apply a multiplier ({multiplier}) for unit '{unit}': {ex}"
-                )
+                ) from ex
 
             # Replace the unit with the SI unit
             table_data.columns = table_data.columns.values

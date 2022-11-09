@@ -21,14 +21,14 @@ def nodes() -> pd.DataFrame:
 @pytest.fixture()
 def nodes_iso() -> pd.DataFrame:
     return pd.DataFrame(
-        [(0, 150e3), (1, 10.5e3), (2, 400.0)], columns=pd.MultiIndex.from_tuples((("id", None), ("u_rated", "V")))
+        [(0, 150e3), (1, 10.5e3), (2, 400.0)], columns=pd.MultiIndex.from_tuples((("id", ""), ("u_rated", "V")))
     )
 
 
 @pytest.fixture()
 def nodes_kv() -> pd.DataFrame:
     return pd.DataFrame(
-        [(0, 150), (1, 10.5), (2, 0.4)], columns=pd.MultiIndex.from_tuples((("id", None), ("u_rated", "kV")))
+        [(0, 150), (1, 10.5), (2, 0.4)], columns=pd.MultiIndex.from_tuples((("id", ""), ("u_rated", "kV")))
     )
 
 
@@ -47,7 +47,7 @@ def lines() -> pd.DataFrame:
     return pd.DataFrame([(2, 0, 1), (3, 2, 3)], columns=("id", "from_node", "to_node"))
 
 
-def test_constructur__invalid_type():
+def test_constructor__invalid_type():
     # Act / Assert
     with pytest.raises(TypeError, match=r"Invalid.*foo.*list"):
         TabularData(foo=[])  # type: ignore
@@ -121,13 +121,48 @@ def test_get_column__unit(nodes_kv: pd.DataFrame, lines: pd.DataFrame):
     pd.testing.assert_series_equal(col_data, pd.Series([150e3, 10.5e3, 400.0], name=("u_rated", "V")))
 
 
-def test_get_column__unit_exception(nodes_kv: pd.DataFrame, lines: pd.DataFrame):
+def test_get_column__missing_unit(nodes_kv: pd.DataFrame, lines: pd.DataFrame):
     # Arrange
     data = TabularData(nodes=nodes_kv, lines=lines)
 
     # Act / Assert
     with pytest.raises(KeyError, match=r"kV.+u_rated.+nodes"):
         data.get_column(table_name="nodes", column_name="u_rated")
+
+
+def test_get_column__invalid_multiplier(nodes_kv: pd.DataFrame, lines: pd.DataFrame):
+    # Arrange
+    data = TabularData(nodes=nodes_kv, lines=lines)
+    data.set_unit_multipliers(UnitMapping({"V": {"kV": "1000x"}}))  # type: ignore
+
+    # Act / Assert
+    with pytest.raises(TypeError, match=r"u_rated.+nodes.+does not seem to be numerical.+kV"):
+        data.get_column(table_name="nodes", column_name="u_rated")
+
+
+def test_get_column__non_numerical_value(lines: pd.DataFrame):
+    # Arrange
+    nodes_txt = pd.DataFrame(
+        [(0, "150 kV"), (1, "10.5 kV"), (2, "0.4 kV")],
+        columns=pd.MultiIndex.from_tuples([("id", ""), ("u_rated", "kV")]),
+    )
+    data = TabularData(nodes=nodes_txt, lines=lines)
+    data.set_unit_multipliers(UnitMapping({"V": {"kV": 1e3}}))
+
+    # Act / Assert
+    with pytest.raises(TypeError, match=r"u_rated.+nodes.+does not seem to be numerical.+kV"):
+        data.get_column(table_name="nodes", column_name="u_rated")
+
+
+def test_get_column__no_unit_conversion(nodes_kv: pd.DataFrame, lines: pd.DataFrame):
+    # Arrange
+    data = TabularData(nodes=nodes_kv, lines=lines)
+
+    # Act
+    col_data = data.get_column(table_name="nodes", column_name="id")
+
+    # Assert
+    pd.testing.assert_series_equal(col_data, pd.Series([0, 1, 2], name="id"))
 
 
 def test_get_column__substitution(nodes_vl: pd.DataFrame, lines: pd.DataFrame):
