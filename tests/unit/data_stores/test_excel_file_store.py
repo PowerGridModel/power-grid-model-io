@@ -15,7 +15,7 @@ from structlog.testing import capture_logs
 from power_grid_model_io.data_stores.excel_file_store import ExcelFileStore
 from power_grid_model_io.data_types.tabular_data import TabularData
 
-from ...utils import assert_log_exists, assert_log_match
+from ...utils import assert_log_exists
 
 PandasExcelData = Dict[str, pd.DataFrame]
 
@@ -106,23 +106,26 @@ def test_excel_file_store__files__read_only():
 @patch("power_grid_model_io.data_stores.excel_file_store.Path.open", mock_open())
 @patch("power_grid_model_io.data_stores.excel_file_store.pd.read_excel")
 def test_excel_file_store__load(
-    mock_re: MagicMock, mock_euci: MagicMock, mock_hdc: MagicMock, objects_excel: PandasExcelData
+    mock_read_excel: MagicMock,
+    mock_remove_unnamed_column_placeholders: MagicMock,
+    mock_handle_duplicate_columns: MagicMock,
+    objects_excel: PandasExcelData,
 ):
     # Arrange
     fs = ExcelFileStore(file_path=Path("input_data.xlsx"))
-    mock_re.return_value = objects_excel
-    mock_euci.side_effect = noop
-    mock_hdc.side_effect = noop
+    mock_read_excel.return_value = objects_excel
+    mock_remove_unnamed_column_placeholders.side_effect = noop
+    mock_handle_duplicate_columns.side_effect = noop
 
     # Act
     data = fs.load()
 
     # Assert
-    mock_re.assert_called_once()
-    assert mock_euci.call_args_list[0] == call(data=objects_excel["Nodes"], sheet_name="Nodes")
-    assert mock_euci.call_args_list[1] == call(data=objects_excel["Lines"], sheet_name="Lines")
-    assert mock_hdc.call_args_list[0] == call(data=objects_excel["Nodes"], sheet_name="Nodes")
-    assert mock_hdc.call_args_list[1] == call(data=objects_excel["Lines"], sheet_name="Lines")
+    mock_read_excel.assert_called_once()
+    assert mock_remove_unnamed_column_placeholders.call_args_list[0] == call(data=objects_excel["Nodes"])
+    assert mock_remove_unnamed_column_placeholders.call_args_list[1] == call(data=objects_excel["Lines"])
+    assert mock_handle_duplicate_columns.call_args_list[0] == call(data=objects_excel["Nodes"], sheet_name="Nodes")
+    assert mock_handle_duplicate_columns.call_args_list[1] == call(data=objects_excel["Lines"], sheet_name="Lines")
     pd.testing.assert_frame_equal(data["Nodes"], objects_excel["Nodes"])
     pd.testing.assert_frame_equal(data["Lines"], objects_excel["Lines"])
 
@@ -132,31 +135,31 @@ def test_excel_file_store__load(
 @patch("power_grid_model_io.data_stores.excel_file_store.Path.open", mock_open())
 @patch("power_grid_model_io.data_stores.excel_file_store.pd.read_excel")
 def test_excel_file_store__load__extra(
-    mock_re: MagicMock,
-    mock_euci: MagicMock,
-    mock_hdc: MagicMock,
+    mock_read_excel: MagicMock,
+    mock_remove_unnamed_column_placeholders: MagicMock,
+    mock_handle_duplicate_columns: MagicMock,
     objects_excel: PandasExcelData,
     specs_excel: PandasExcelData,
 ):
     # Arrange
     fs = ExcelFileStore(Path("input_data.xlsx"), foo=Path("foo_types.xlsx"))
-    mock_re.side_effect = (objects_excel, specs_excel)
-    mock_euci.side_effect = noop
-    mock_hdc.side_effect = noop
+    mock_read_excel.side_effect = (objects_excel, specs_excel)
+    mock_remove_unnamed_column_placeholders.side_effect = noop
+    mock_handle_duplicate_columns.side_effect = noop
 
     # Act
     data = fs.load()
 
     # Assert
-    assert mock_re.call_count == 2
-    assert mock_euci.call_args_list[0] == call(data=objects_excel["Nodes"], sheet_name="Nodes")
-    assert mock_euci.call_args_list[1] == call(data=objects_excel["Lines"], sheet_name="Lines")
-    assert mock_euci.call_args_list[2] == call(data=specs_excel["Colors"], sheet_name="Colors")
-    assert mock_euci.call_args_list[3] == call(data=specs_excel["Lines"], sheet_name="Lines")
-    assert mock_hdc.call_args_list[0] == call(data=objects_excel["Nodes"], sheet_name="Nodes")
-    assert mock_hdc.call_args_list[1] == call(data=objects_excel["Lines"], sheet_name="Lines")
-    assert mock_hdc.call_args_list[2] == call(data=specs_excel["Colors"], sheet_name="Colors")
-    assert mock_hdc.call_args_list[3] == call(data=specs_excel["Lines"], sheet_name="Lines")
+    assert mock_read_excel.call_count == 2
+    assert mock_remove_unnamed_column_placeholders.call_args_list[0] == call(data=objects_excel["Nodes"])
+    assert mock_remove_unnamed_column_placeholders.call_args_list[1] == call(data=objects_excel["Lines"])
+    assert mock_remove_unnamed_column_placeholders.call_args_list[2] == call(data=specs_excel["Colors"])
+    assert mock_remove_unnamed_column_placeholders.call_args_list[3] == call(data=specs_excel["Lines"])
+    assert mock_handle_duplicate_columns.call_args_list[0] == call(data=objects_excel["Nodes"], sheet_name="Nodes")
+    assert mock_handle_duplicate_columns.call_args_list[1] == call(data=objects_excel["Lines"], sheet_name="Lines")
+    assert mock_handle_duplicate_columns.call_args_list[2] == call(data=specs_excel["Colors"], sheet_name="Colors")
+    assert mock_handle_duplicate_columns.call_args_list[3] == call(data=specs_excel["Lines"], sheet_name="Lines")
     pd.testing.assert_frame_equal(data["Nodes"], objects_excel["Nodes"])
     pd.testing.assert_frame_equal(data["Lines"], objects_excel["Lines"])
     pd.testing.assert_frame_equal(data["foo.Colors"], specs_excel["Colors"])
@@ -168,15 +171,17 @@ def test_excel_file_store__load__extra(
 @patch("power_grid_model_io.data_stores.excel_file_store.Path.open", mock_open())
 @patch("power_grid_model_io.data_stores.excel_file_store.pd.read_excel")
 def test_excel_file_store__load__extra__duplicate_sheet_name(
-    mock_re: MagicMock, mock_euci: MagicMock, mock_hdc: MagicMock
+    mock_read_excel: MagicMock,
+    mock_remove_unnamed_column_placeholders: MagicMock,
+    mock_handle_duplicate_columns: MagicMock,
 ):
     # Arrange
     foo_data = {"bar.Nodes": pd.DataFrame()}
     bar_data = {"Nodes": pd.DataFrame()}
     fs = ExcelFileStore(Path("foo.xlsx"), bar=Path("bar.xlsx"))
-    mock_re.side_effect = (foo_data, bar_data)
-    mock_euci.side_effect = noop
-    mock_hdc.side_effect = noop
+    mock_read_excel.side_effect = (foo_data, bar_data)
+    mock_remove_unnamed_column_placeholders.side_effect = noop
+    mock_handle_duplicate_columns.side_effect = noop
 
     # Act / Assert
     with pytest.raises(ValueError, match=r"Duplicate sheet name.+bar\.Nodes"):
@@ -251,12 +256,9 @@ def test_remove_unnamed_column_placeholders():
     store = ExcelFileStore()
 
     # Act
-    with capture_logs() as cap_log:
-        result = store._remove_unnamed_column_placeholders(data=data, sheet_name="foo")
+    result = store._remove_unnamed_column_placeholders(data=data)
 
     # Assert
-    assert len(cap_log) == 1
-    assert_log_match(cap_log[0], "warning", "Column is renamed", col_name="Unnamed: 123_level_0")
     pd.testing.assert_frame_equal(result, pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=["ID", "", "X"]))
 
 
@@ -267,29 +269,23 @@ def test_remove_unnamed_column_placeholders__multi_first():
     store = ExcelFileStore()
 
     # Act
-    with capture_logs() as cap_log:
-        result = store._remove_unnamed_column_placeholders(data=data, sheet_name="foo")
+    result = store._remove_unnamed_column_placeholders(data=data)
 
     # Assert
-    assert len(cap_log) == 1
-    assert_log_match(cap_log[0], "warning", "Column is renamed", col_name="Unnamed: 123_level_0")
     columns = pd.MultiIndex.from_tuples([("ID", "A"), ("", "B"), ("X", "C")])
     pd.testing.assert_frame_equal(result, pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=columns))
 
 
-def test_remove_unnamed_column_placeholders__multi_seccond():
+def test_remove_unnamed_column_placeholders__multi_second():
     # Arrange
     columns = pd.MultiIndex.from_tuples([("ID", ""), ("B", "Unnamed: 123_level_1"), ("C", "kW")])
     data = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=columns)
     store = ExcelFileStore()
 
     # Act
-    with capture_logs() as cap_log:
-        result = store._remove_unnamed_column_placeholders(data=data, sheet_name="foo")
+    result = store._remove_unnamed_column_placeholders(data=data)
 
     # Assert
-    assert len(cap_log) == 1
-    assert_log_match(cap_log[0], "warning", "Column is renamed", col_name="Unnamed: 123_level_1")
     columns = pd.MultiIndex.from_tuples([("ID", ""), ("B", ""), ("C", "kW")])
     pd.testing.assert_frame_equal(result, pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=columns))
 
@@ -298,7 +294,7 @@ def test_remove_unnamed_column_placeholders__multi_seccond():
 def test_handle_duplicate_columns(mock_check_duplicate_values: MagicMock):
     # Arrange
     data = pd.DataFrame(
-        [  #  A    B    C    A    B    A
+        [  # A    B    C    A    B    A
             # 0    1    2    3    4    5
             [101, 201, 301, 101, 201, 101],
             [102, 202, 302, 111, 202, 102],
@@ -320,7 +316,7 @@ def test_handle_duplicate_columns(mock_check_duplicate_values: MagicMock):
     assert_log_exists(cap_log, "warning", "Column is renamed", col_name="A", new_name="A_3", col_idx=5)
 
     expected = pd.DataFrame(
-        [  #  A    B    C   A_2  B_2  A_3
+        [  # A    B    C   A_2  B_2  A_3
             [101, 201, 301, 101, 201, 101],
             [102, 202, 302, 111, 202, 102],
             [103, 203, 303, 103, 203, 103],
@@ -368,7 +364,6 @@ def test_handle_duplicate_columns__multi(mock_check_duplicate_values: MagicMock)
 
 @patch("power_grid_model_io.data_stores.excel_file_store.ExcelFileStore._group_columns_by_index")
 def test_check_duplicate_values(mock_group_columns: MagicMock):
-
     # Arrange
     data = pd.DataFrame(
         [  # A,1  B,2  C,3  A,1  B,2  A,1
@@ -398,7 +393,6 @@ def test_check_duplicate_values(mock_group_columns: MagicMock):
 
 @patch("power_grid_model_io.data_stores.excel_file_store.ExcelFileStore._group_columns_by_index")
 def test_check_duplicate_values__multi(mock_group_columns: MagicMock):
-
     # Arrange
     data = pd.DataFrame(
         [  # A,1  B,2  C,3  A,1  B,2  A,1
@@ -426,3 +420,25 @@ def test_check_duplicate_values__multi(mock_group_columns: MagicMock):
     )
 
     assert result == {3: ("A_2", 1), 4: ("B_2", 2), 5: ("A_3", 1)}
+
+
+def test_group_columns_by_index():
+    # Arrange
+    data = pd.DataFrame(columns=["A", "B", "C", "A", "B", "A"])
+
+    # Act
+    grouped = ExcelFileStore._group_columns_by_index(data=data)
+
+    # Assert
+    assert grouped == {"A": {0, 3, 5}, "B": {1, 4}, "C": {2}}
+
+
+def test_group_columns_by_index__multi():
+    # Arrange
+    data = pd.DataFrame(columns=pd.MultiIndex.from_tuples([("A", 1), ("B", 2), ("C", 3), ("A", 1), ("B", 2), ("A", 1)]))
+
+    # Act
+    grouped = ExcelFileStore._group_columns_by_index(data=data)
+
+    # Assert
+    assert grouped == {("A", 1): {0, 3, 5}, ("B", 2): {1, 4}, ("C", 3): {2}}

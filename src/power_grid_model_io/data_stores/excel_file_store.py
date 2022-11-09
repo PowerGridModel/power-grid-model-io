@@ -61,7 +61,7 @@ class ExcelFileStore(BaseDataStore[TabularData]):
             with path.open(mode="rb") as file_pointer:
                 spreadsheet = pd.read_excel(io=file_pointer, sheet_name=None, header=self._header_rows)
             for sheet_name, sheet_data in spreadsheet.items():
-                sheet_data = self._remove_unnamed_column_placeholders(data=sheet_data, sheet_name=sheet_name)
+                sheet_data = self._remove_unnamed_column_placeholders(data=sheet_data)
                 sheet_data = self._handle_duplicate_columns(data=sheet_data, sheet_name=sheet_name)
                 if name:
                     sheet_name = f"{name}.{sheet_name}"
@@ -100,15 +100,12 @@ class ExcelFileStore(BaseDataStore[TabularData]):
                         sheet_name=sheet_name,
                     )
 
-    def _remove_unnamed_column_placeholders(self, data: pd.DataFrame, sheet_name: str) -> pd.DataFrame:
+    def _remove_unnamed_column_placeholders(self, data: pd.DataFrame) -> pd.DataFrame:
         if data.empty:
             return data
 
-        def is_unnamed(col_name):
-            col_is_unnamed = self._unnamed_pattern.fullmatch(str(col_name))
-            if col_is_unnamed:
-                self._log.warning("Column is renamed", sheet_name=sheet_name, col_name=col_name, new_name="")
-            return col_is_unnamed
+        def is_unnamed(col_name) -> bool:
+            return bool(self._unnamed_pattern.fullmatch(str(col_name)))
 
         if data.columns.nlevels == 1:
             data.columns = pd.Index("" if is_unnamed(idx) else idx for idx in data.columns.values)
@@ -143,13 +140,11 @@ class ExcelFileStore(BaseDataStore[TabularData]):
 
         return data
 
-    def _check_duplicate_values(
-        self, sheet_name: str, data: pd.DataFrame
-    ) -> Union[Dict[int, str], Dict[int, Tuple[str, ...]]]:
+    def _check_duplicate_values(self, sheet_name: str, data: pd.DataFrame) -> Dict[int, Union[str, Tuple[str, ...]]]:
 
         grouped = self._group_columns_by_index(data=data)
 
-        to_rename: Dict[int, Tuple[str, ...]] = {}
+        to_rename: Dict[int, Union[str, Tuple[str, ...]]] = {}
 
         for col_name, col_idxs in grouped.items():
 
@@ -187,13 +182,11 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         return to_rename
 
     @staticmethod
-    def _group_columns_by_index(data: pd.DataFrame) -> Dict[Tuple[str, ...], Set[int]]:
-        grouped: Dict[Tuple[str, ...], Set[int]] = {}
+    def _group_columns_by_index(data: pd.DataFrame) -> Dict[Union[str, Tuple[str, ...]], Set[int]]:
+        grouped: Dict[Union[str, Tuple[str, ...]], Set[int]] = {}
         columns = data.columns.values
         for col_idx, col_name in enumerate(columns):
-            col_name = (col_name,) if not isinstance(col_name, tuple) else col_name
             if col_name not in grouped:
                 grouped[col_name] = set()
             grouped[col_name].add(col_idx)
-        print(grouped)
         return grouped
