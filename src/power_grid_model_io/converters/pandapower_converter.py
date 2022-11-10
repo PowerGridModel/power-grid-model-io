@@ -294,7 +294,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pp_switches = pp_switches[self.pp_data["switch"]["et"] == "t3"]
         pp_switches = pp_switches[["element", "bus", "closed"]]
 
-        # Join the switches with the lines twice, once for the from_bus and once for the to_bus
+        # Join the switches with the 3wtrafos three times, for the hv_bus, for the mv_bus and once for the lv_bus
         pp_1_switches = (
             pp_trafo3w[["index", "hv_bus"]]
             .merge(
