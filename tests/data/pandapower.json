@@ -24,7 +24,7 @@
   "transformer":
     [
       {"id": 10, "from_node": 0, "from_status": 1, "to_node": 1, "to_status": 1, "u1": 110000.0, "u2": 22000.0,
-        "sn": 40000000.0, "uk": 0.00322, "pk": 128800.0,  "i0": 0.00038, "p0": 11600, "winding_from": 2,
+        "sn": 40000000.0, "uk": 0.178, "pk": 128800.0,  "i0": 0.00038, "p0": 11600, "winding_from": 2,
         "winding_to": 1, "clock": 1, "tap_side": 0, "tap_pos": 2, "tap_min": 1, "tap_max": 3, "tap_size": 33000,
         "tap_nom": 2
       }
