@@ -11,6 +11,8 @@ from structlog.testing import capture_logs
 from power_grid_model_io.converters.pgm_json_converter import PgmJsonConverter
 from power_grid_model_io.data_types import ExtraInfoLookup
 
+from ...utils import assert_log_match
+
 
 @pytest.fixture
 def converter():
@@ -118,8 +120,7 @@ def test_converter__serialize_data(
     with capture_logs() as cap_log:
         structured_batch_data = converter._serialize_data(data=pgm_batch_data, extra_info={})
     assert structured_batch_data == [{"line": [{}, {}]}, {"line": [{}, {}]}, {"line": [{}, {}]}]
-    assert cap_log[0]["event"] == "Extra info is not supported for batch data export"
-    assert cap_log[0]["log_level"] == "warning"
+    assert_log_match(cap_log[0], "warning", "Extra info is not supported for batch data export")
 
 
 def test_converter__is_batch(
