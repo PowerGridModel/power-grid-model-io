@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -19,14 +21,14 @@ def nodes() -> pd.DataFrame:
 @pytest.fixture()
 def nodes_iso() -> pd.DataFrame:
     return pd.DataFrame(
-        [(0, 150e3), (1, 10.5e3), (2, 400.0)], columns=pd.MultiIndex.from_tuples((("id", None), ("u_rated", "V")))
+        [(0, 150e3), (1, 10.5e3), (2, 400.0)], columns=pd.MultiIndex.from_tuples((("id", ""), ("u_rated", "V")))
     )
 
 
 @pytest.fixture()
 def nodes_kv() -> pd.DataFrame:
     return pd.DataFrame(
-        [(0, 150), (1, 10.5), (2, 0.4)], columns=pd.MultiIndex.from_tuples((("id", None), ("u_rated", "kV")))
+        [(0, 150), (1, 10.5), (2, 0.4)], columns=pd.MultiIndex.from_tuples((("id", ""), ("u_rated", "kV")))
     )
 
 
@@ -45,7 +47,13 @@ def lines() -> pd.DataFrame:
     return pd.DataFrame([(2, 0, 1), (3, 2, 3)], columns=("id", "from_node", "to_node"))
 
 
-def test_tabular_data__get_column(nodes: pd.DataFrame, lines: pd.DataFrame):
+def test_constructor__invalid_type():
+    # Act / Assert
+    with pytest.raises(TypeError, match=r"Invalid.*foo.*list"):
+        TabularData(foo=[])  # type: ignore
+
+
+def test_get_column(nodes: pd.DataFrame, lines: pd.DataFrame):
     # Arrange
     data = TabularData(nodes=nodes, lines=lines)
 
@@ -56,7 +64,7 @@ def test_tabular_data__get_column(nodes: pd.DataFrame, lines: pd.DataFrame):
     pd.testing.assert_series_equal(col_data, pd.Series([150e3, 10.5e3, 400.0], name="u_rated"))
 
 
-def test_tabular_data__get_column__numpy(nodes_np: np.ndarray):
+def test_get_column__numpy(nodes_np: np.ndarray):
     # Arrange
     data = TabularData(nodes=nodes_np)
 
@@ -68,7 +76,7 @@ def test_tabular_data__get_column__numpy(nodes_np: np.ndarray):
     pd.testing.assert_series_equal(col_data, pd.Series([150e3, 10.5e3, 400.0], name="u_rated", dtype=np.float32))
 
 
-def test_tabular_data__get_column__numpy_is_a_reference(nodes_np: np.ndarray):
+def test_get_column__numpy_is_a_reference(nodes_np: np.ndarray):
     # Arrange
     data = TabularData(nodes=nodes_np)
 
@@ -80,7 +88,7 @@ def test_tabular_data__get_column__numpy_is_a_reference(nodes_np: np.ndarray):
     np.testing.assert_array_equal(nodes_np["u_rated"], np.array([123.0, 10.5e3, 400.0]))
 
 
-def test_tabular_data__get_column__iso(nodes_iso: pd.DataFrame, lines: pd.DataFrame):
+def test_get_column__iso(nodes_iso: pd.DataFrame, lines: pd.DataFrame):
     # Arrange
     data = TabularData(nodes=nodes_iso, lines=lines)
     data.set_unit_multipliers(UnitMapping({"V": None}))
@@ -92,7 +100,7 @@ def test_tabular_data__get_column__iso(nodes_iso: pd.DataFrame, lines: pd.DataFr
     pd.testing.assert_series_equal(col_data, pd.Series([150e3, 10.5e3, 400.0], name=("u_rated", "V")))
 
 
-def test_tabular_data__get_column__iso_exception(nodes_iso: pd.DataFrame, lines: pd.DataFrame):
+def test_get_column__iso_exception(nodes_iso: pd.DataFrame, lines: pd.DataFrame):
     # Arrange
     data = TabularData(nodes=nodes_iso, lines=lines)
 
@@ -101,7 +109,7 @@ def test_tabular_data__get_column__iso_exception(nodes_iso: pd.DataFrame, lines:
         data.get_column(table_name="nodes", column_name="u_rated")
 
 
-def test_tabular_data__get_column__unit(nodes_kv: pd.DataFrame, lines: pd.DataFrame):
+def test_get_column__unit(nodes_kv: pd.DataFrame, lines: pd.DataFrame):
     # Arrange
     data = TabularData(nodes=nodes_kv, lines=lines)
     data.set_unit_multipliers(UnitMapping({"V": {"kV": 1e3}}))
@@ -113,7 +121,7 @@ def test_tabular_data__get_column__unit(nodes_kv: pd.DataFrame, lines: pd.DataFr
     pd.testing.assert_series_equal(col_data, pd.Series([150e3, 10.5e3, 400.0], name=("u_rated", "V")))
 
 
-def test_tabular_data__get_column__unit_exception(nodes_kv: pd.DataFrame, lines: pd.DataFrame):
+def test_get_column__missing_unit(nodes_kv: pd.DataFrame, lines: pd.DataFrame):
     # Arrange
     data = TabularData(nodes=nodes_kv, lines=lines)
 
@@ -122,7 +130,42 @@ def test_tabular_data__get_column__unit_exception(nodes_kv: pd.DataFrame, lines:
         data.get_column(table_name="nodes", column_name="u_rated")
 
 
-def test_tabular_data__get_column__substitution(nodes_vl: pd.DataFrame, lines: pd.DataFrame):
+def test_get_column__invalid_multiplier(nodes_kv: pd.DataFrame, lines: pd.DataFrame):
+    # Arrange
+    data = TabularData(nodes=nodes_kv, lines=lines)
+    data.set_unit_multipliers(UnitMapping({"V": {"kV": "1000x"}}))  # type: ignore
+
+    # Act / Assert
+    with pytest.raises(TypeError, match=r"u_rated.+nodes.+does not seem to be numerical.+kV"):
+        data.get_column(table_name="nodes", column_name="u_rated")
+
+
+def test_get_column__non_numerical_value(lines: pd.DataFrame):
+    # Arrange
+    nodes_txt = pd.DataFrame(
+        [(0, "150 kV"), (1, "10.5 kV"), (2, "0.4 kV")],
+        columns=pd.MultiIndex.from_tuples([("id", ""), ("u_rated", "kV")]),
+    )
+    data = TabularData(nodes=nodes_txt, lines=lines)
+    data.set_unit_multipliers(UnitMapping({"V": {"kV": 1e3}}))
+
+    # Act / Assert
+    with pytest.raises(TypeError, match=r"u_rated.+nodes.+does not seem to be numerical.+kV"):
+        data.get_column(table_name="nodes", column_name="u_rated")
+
+
+def test_get_column__no_unit_conversion(nodes_kv: pd.DataFrame, lines: pd.DataFrame):
+    # Arrange
+    data = TabularData(nodes=nodes_kv, lines=lines)
+
+    # Act
+    col_data = data.get_column(table_name="nodes", column_name="id")
+
+    # Assert
+    pd.testing.assert_series_equal(col_data, pd.Series([0, 1, 2], name="id"))
+
+
+def test_get_column__substitution(nodes_vl: pd.DataFrame, lines: pd.DataFrame):
     # Arrange
     data = TabularData(nodes=nodes_vl, lines=lines)
     data.set_substitutions(ValueMapping({"u_rated": {"mv": 10500.0, "lv": 400.0, "hv": 150000.0}}))
@@ -134,7 +177,7 @@ def test_tabular_data__get_column__substitution(nodes_vl: pd.DataFrame, lines: p
     pd.testing.assert_series_equal(col_data, pd.Series([150e3, 10.5e3, 400.0], name="u_rated"))
 
 
-def test_tabular_data__get_column__substitution__numpy(nodes_np: np.ndarray):
+def test_get_column__substitution__numpy(nodes_np: np.ndarray):
     # Arrange
     data = TabularData(nodes=nodes_np)
     data.set_substitutions(ValueMapping({"id": {0: 100, 1: 101, 2: 102}}))
@@ -146,7 +189,7 @@ def test_tabular_data__get_column__substitution__numpy(nodes_np: np.ndarray):
     pd.testing.assert_series_equal(col_data, pd.Series([100, 101, 102], name="id"))
 
 
-def test_tabular_data__get_column__substitution_exception(nodes_vl: pd.DataFrame, lines: pd.DataFrame):
+def test_get_column__substitution_exception(nodes_vl: pd.DataFrame, lines: pd.DataFrame):
     # Arrange
     data = TabularData(nodes=nodes_vl, lines=lines)
     data.set_substitutions(ValueMapping({"u_rated": {"MV": 10500.0, "LV": 400.0, "HV": 150000.0}}))
@@ -156,7 +199,31 @@ def test_tabular_data__get_column__substitution_exception(nodes_vl: pd.DataFrame
         data.get_column(table_name="nodes", column_name="u_rated")
 
 
-def test_tabular_data__contains(nodes: pd.DataFrame, lines: pd.DataFrame):
+def test_get_column__index(nodes: pd.DataFrame, lines: pd.DataFrame):
+    # Arrange
+    data = TabularData(nodes=nodes, lines=lines)
+
+    # Act
+    nodes_idx = data.get_column(table_name="nodes", column_name="index")
+    lines_idx = data.get_column(table_name="lines", column_name="index")
+
+    # Assert
+    pd.testing.assert_series_equal(nodes_idx, pd.Series([0, 1, 2], name="index"))
+    pd.testing.assert_series_equal(lines_idx, pd.Series([0, 1], name="index"))
+
+
+@patch("power_grid_model_io.data_types.tabular_data.TabularData._apply_unit_conversion")
+def test_get_column__sanity_check(mock_unit_conversion: MagicMock, nodes_iso: pd.DataFrame, nodes_kv: pd.DataFrame):
+    # Arrange
+    data = TabularData(nodes=nodes_kv)
+    mock_unit_conversion.return_value = nodes_iso["u_rated"]
+
+    # Act / Assert
+    with pytest.raises(TypeError, match=r"u_rated.+unitless.+V"):
+        data.get_column(table_name="nodes", column_name="u_rated")
+
+
+def test_contains(nodes: pd.DataFrame, lines: pd.DataFrame):
     # Arrange
     data = TabularData(nodes=nodes, lines=lines)
 
@@ -165,7 +232,7 @@ def test_tabular_data__contains(nodes: pd.DataFrame, lines: pd.DataFrame):
     assert "lines" in data
 
 
-def test_tabular_data__keys(nodes: pd.DataFrame, lines: pd.DataFrame):
+def test_keys(nodes: pd.DataFrame, lines: pd.DataFrame):
     # Arrange
     data = TabularData(nodes=nodes, lines=lines)
 
@@ -176,7 +243,7 @@ def test_tabular_data__keys(nodes: pd.DataFrame, lines: pd.DataFrame):
     assert keys == ["nodes", "lines"]
 
 
-def test_tabular_data__items(nodes: pd.DataFrame, lines: pd.DataFrame):
+def test_items(nodes: pd.DataFrame, lines: pd.DataFrame):
     # Arrange
     data = TabularData(nodes=nodes, lines=lines)
 
