@@ -22,7 +22,7 @@ jobs:
         label: ['do-not-merge', 'needs-unit-tests']
     steps:
       - name: Check that the PR doesn't have the ${{ matrix.label }} label
-        if: contains(github.event.pull_request.labels.*.name, ${{ matrix.label }})
+        if: contains(github.event.pull_request.labels.*.name, matrix.label)
         run: |
-          echo "This pull request should not be merged (${{ matrix.label }}))"
+          echo "This pull request should not be merged (${{ matrix.label }})"
           exit 1
