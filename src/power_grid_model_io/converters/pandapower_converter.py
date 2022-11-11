@@ -80,6 +80,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         self._create_pgm_input_transformers()
         self._create_pgm_input_sym_gens()
         self._create_pgm_input_three_winding_transformers()
+        self._create_pgm_input_links()
 
     def _create_pgm_input_nodes(self):
         assert "node" not in self.pgm_data
