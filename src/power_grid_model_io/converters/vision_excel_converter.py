@@ -6,7 +6,7 @@ Vision Excel Converter: Load data from a Vision Excel export file and use a mapp
 """
 
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Tuple, Union
 
 from power_grid_model_io.converters.tabular_converter import TabularConverter
 from power_grid_model_io.data_stores.vision_excel_file_store import VisionExcelFileStore
@@ -25,3 +25,36 @@ class VisionExcelConverter(TabularConverter):
             raise FileNotFoundError(f"No Vision Excel mapping available for language '{language}'")
         source = VisionExcelFileStore(file_path=Path(source_file)) if source_file else None
         super().__init__(mapping_file=mapping_file, source=source)
+
+    def get_node_id(self, number: int) -> int:
+        """
+        Get the automatically assigned id of a node
+
+        TODO: Write unit tests for this method
+        """
+        return self._id_lookup(name="Nodes", key=number)
+
+    def get_branch_id(self, table: str, number: int, sub_number: Optional[int] = None) -> int:
+        """
+        Get the automatically assigned id of a branch (line, transformer, etc.)
+
+        TODO: Write unit tests for this method
+        """
+        key: Union[int, Tuple[int, int]] = number if sub_number is None else (number, sub_number)
+        return self._id_lookup(name=table, key=key)
+
+    def get_appliance_id(self, table: str, node_id: int, sub_number: int) -> int:
+        """
+        Get the automatically assigned id of an appliance (source, load, etc.)
+
+        TODO: Write unit tests for this method
+        """
+        return self._id_lookup(name=table, key=(node_id, sub_number))
+
+    def get_virtual_id(self, table: str, obj_name: str, node_id: int, sub_number: int) -> int:
+        """
+        Get the automatically assigned id of a vitual object (e.g. the internal node of a 'TansformerLoad')
+
+        TODO: Write unit tests for this method
+        """
+        return self._id_lookup(name=(table, obj_name), key=(node_id, sub_number))

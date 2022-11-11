@@ -5,7 +5,7 @@
 Abstract converter class
 """
 from abc import ABC, abstractmethod
-from typing import Generic, Hashable, List, Optional, Tuple, TypeVar
+from typing import Generic, Optional, Tuple, TypeVar, Union
 
 import structlog
 from power_grid_model.data_types import Dataset, SingleDataset
@@ -136,8 +136,8 @@ class BaseConverter(Generic[T], ABC):
             return self._source.load()
         raise ValueError("No data supplied!")
 
-    def _id_lookup(self, component: str, row: List[Hashable]) -> int:
-        return self._lookup(item=(component,) + tuple(row))
+    def _id_lookup(self, name: Union[str, Tuple[str, ...]], key: Union[int, Tuple[int, ...]]) -> int:
+        return self._lookup(item=(name, key))
 
     @abstractmethod  # pragma: nocover
     def _parse_data(self, data: T, data_type: str, extra_info: Optional[ExtraInfoLookup]) -> Dataset:
