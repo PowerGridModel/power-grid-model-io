@@ -31,8 +31,8 @@ class ExcelFileStore(BaseDataStore[TabularData]):
     def __init__(self, file_path: Optional[Path] = None, **extra_paths: Path):
         super().__init__()
 
-        # Create a list of all supplied file paths:
-        # [(None, file_path), [extra_name[0], extra_path[0]), [extra_name[1], extra_path[1]), ...]
+        # Create a dictionary of all supplied file paths:
+        # {"": file_path, extra_name[0]: extra_path[0], extra_name[1]: extra_path[1], ...}
         self._file_paths: Dict[str, Path] = {}
         if file_path is not None:
             self._file_paths[""] = file_path
@@ -48,7 +48,7 @@ class ExcelFileStore(BaseDataStore[TabularData]):
 
     def files(self) -> Dict[str, Path]:
         """
-        The files as supplied in the constructor. Nota that the file names are read-only.
+        The files as supplied in the constructor. Note that the file names are read-only.
 
         Returns: A copy of the file paths as set in the constructor.
         """
