@@ -16,7 +16,7 @@ on:
 
 jobs:
   allowed-labels-merge:
-    if: contains(github.event.pull_request.labels.*.name, 'do-not-merge') || contains(github.event.pull_request.labels.*.name, 'needs-unit-tests')
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'do-not-merge') || contains(github.event.pull_request.labels.*.name, 'needs-unit-tests') }}
     runs-on: ubuntu-latest
     steps:
       - name: Fail if the pull request should not be merged
