@@ -1,0 +1,32 @@
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dynamic.grid.calculation@alliander.com>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+
+name: Check Blocking Labels
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - labeled
+      - unlabeled
+
+jobs:
+  check-blocking-labels:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: do-not-merge
+        if: contains(github.event.pull_request.labels.*.name, 'do-not-merge')
+        run: |
+          echo "This pull request should not be merged (do-not-merge)"
+          exit 1
+
+      - name: needs-unit-tests
+        if: contains(github.event.pull_request.labels.*.name, 'needs-unit-tests')
+        run: |
+          echo "This pull request needs (more) unit tests before it may be merged (needs-unit-tests)"
+          exit 2
