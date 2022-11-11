@@ -15,7 +15,7 @@ on:
       - unlabeled
 
 jobs:
-  allowed-labels-merge:
+  check-blocking-labels:
     runs-on: ubuntu-latest
     steps:
 
