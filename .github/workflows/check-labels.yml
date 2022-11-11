@@ -17,14 +17,12 @@ on:
 jobs:
   allowed-labels-merge:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        label: ['do-not-merge', 'needs-unit-tests']
     steps:
-      - name: Fail if the pull request should not be merged
-        if: contains(github.event.pull_request.labels.*.name, 'do-not-merge')
+      - name: Check that the PR doesn't have the ${{ matrix.label }} label
+        if: contains(github.event.pull_request.labels.*.name, ${{ matrix.label }})
         run: |
-          echo "This pull request should not be merged (do-not-merge)"
+          echo "This pull request should not be merged (${{ matrix.label }}))"
           exit 1
-      - name: Fail if the pull request needs more unit tests
-        if: contains(github.event.pull_request.labels.*.name, 'needs-unit-tests')
-        run: |
-          echo "This pull request needs (more) unit tests before it may be merged (needs-unit-tests)"
-          exit 2
