@@ -5,7 +5,8 @@
       {"id": 1, "u_rated": 20000.0},
       {"id": 2, "u_rated": 20000.0},
       {"id": 3, "u_rated": 30100.0},
-      {"id": 4, "u_rated": 60000.0}
+      {"id": 4, "u_rated": 60000.0},
+      {"id": 5, "u_rated": 34000.0}
     ],
   "line":
     [
@@ -45,5 +46,9 @@
         "winding_1": 2, "winding_2": 1, "winding_3": 3, "clock_12": 1, "clock_13": 2, "tap_pos": 2, "tap_side": 2, "tap_min": 1, "tap_max": 3,
         "tap_nom": 2, "tap_size": 6600
       }
+    ],
+  "link":
+    [
+      {"id": 14, "from_node": 0, "to_node": 5, "from_status": 1, "to_status": 1}
     ]
 }

@@ -377,6 +377,29 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         self.pgm_data["three_winding_transformer"] = pgm_3wtransformers
 
+    def _create_pgm_input_links(self):
+        assert "link" not in self.pgm_data
+
+        # pp_buses = self.pp_data["bus"]
+
+        pp_switches = self.pp_data["switch"]
+        pp_switches = pp_switches[
+            self.pp_data["switch"]["et"] == "b"
+        ]  # This should take all the switches which are b2b
+
+        pgm_links = initialize_array(data_type="input", component_type="link", shape=len(pp_switches))
+        pgm_links["id"] = self._generate_ids("b2b-switch", pp_switches.index)
+        pgm_links["from_node"] = self._get_ids("bus", pp_switches["bus"])
+        pgm_links["to_node"] = self._get_ids("bus", pp_switches["element"])
+        pgm_links["from_status"] = pp_switches["closed"]
+        pgm_links["to_status"] = pp_switches["closed"]
+        # pgm_links["from_status"] = pp_buses.loc[pp_buses['index'] == self._get_ids("bus", pp_switches["bus"]),
+        # 'in_service']
+        # pgm_links["to_status"] = pp_buses.loc[pp_buses['index'] == self._get_ids("bus", pp_switches["element"]),
+        # 'in_service']
+
+        self.pgm_data["link"] = pgm_links
+
     def _generate_ids(self, key: str, pp_idx: pd.Index) -> np.arange:
         assert key not in self.idx_lookup
         n_objects = len(pp_idx)
