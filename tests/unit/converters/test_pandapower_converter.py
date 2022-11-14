@@ -58,7 +58,9 @@ def pp_example_simple() -> PandasData:
         tap_neutral=2,
     )
     pp.create_line(net, index=101, from_bus=103, to_bus=102, length_km=1.23, std_type="NAYY 4x150 SE")
-    pp.create_load(net, index=101, bus=103, p_mw=2.5, q_mvar=0.24, const_i_percent=26.0, const_z_percent=51.0)
+    pp.create_load(
+        net, index=101, bus=103, p_mw=2.5, q_mvar=0.24, const_i_percent=26.0, const_z_percent=51.0, cos_phi=2
+    )
     pp.create_switch(net, index=101, et="l", bus=103, element=101, closed=False)
     pp.create_switch(net, index=3021, et="b", bus=101, element=106, closed=True)
     pp.create_shunt(net, index=1201, in_service=True, bus=104, p_mw=2.1, q_mvar=31.5, step=3)
@@ -290,3 +292,33 @@ def test_get_3wtransformer_tap_size():
 
     # Assert
     np.testing.assert_array_equal(actual_tap_size, expected_tap_size)
+
+
+def test_get_load_p_specified():
+    # Arrange
+    pp_loads = pd.DataFrame(
+        [[20, 10.5, 400.0, 32.1], [62.0, 10.0, 400.0, 32.1], [None, 15.2, 400.0, 32.1]],
+        columns=["p_mw", "scaling", "sn_mva", "cos_phi"],
+    )
+    expected_value = np.array([672.0, 1984.0, None], dtype=np.float64)  # third is wrong
+
+    # Act
+    actual_value = PandaPowerConverter._get_load_p_specified(3.2, pp_loads)
+
+    # Assert
+    np.testing.assert_array_equal(actual_value, expected_value)
+
+
+# def test_get_load_q_specified():
+#     # Arrange
+#     pp_loads = pd.DataFrame(
+#         [[20, 10.5, 400.0, 32.1], [62.0, 10.0, 400.0, 32.1], [None, 15.2, 400.0, 32.1]],
+#         columns=["q_mva", "scaling", "sn_mva", "cos_phi"],
+#     )
+#     expected_value = np.array([672.0, 1984.0, None], dtype=np.float64)  # third is wrong
+#
+#     # Act
+#     actual_value = PandaPowerConverter._get_load_q_specified(3.2, pp_loads)
+#
+#     # Assert
+#     np.testing.assert_array_equal(actual_value, expected_value)

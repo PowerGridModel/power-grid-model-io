@@ -135,11 +135,11 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_lines["from_status"] = pp_lines["in_service"] & pp_from_switches["closed"]
         pgm_lines["to_node"] = self._get_ids("bus", pp_lines["to_bus"])
         pgm_lines["to_status"] = pp_lines["in_service"] & pp_to_switches["closed"]
-        pgm_lines["r1"] = pp_lines["r_ohm_per_km"] * pp_lines["length_km"]
-        pgm_lines["x1"] = pp_lines["x_ohm_per_km"] * pp_lines["length_km"]
-        pgm_lines["c1"] = pp_lines["c_nf_per_km"] * pp_lines["length_km"]
+        pgm_lines["r1"] = pp_lines["r_ohm_per_km"] * pp_lines["length_km"] / pp_lines["parallel"]
+        pgm_lines["x1"] = pp_lines["x_ohm_per_km"] * pp_lines["length_km"] / pp_lines["parallel"]
+        pgm_lines["c1"] = pp_lines["c_nf_per_km"] * pp_lines["length_km"] / pp_lines["parallel"]
         pgm_lines["tan1"] = 0.0
-        pgm_lines["i_n"] = pp_lines["max_i_ka"] * 1e3
+        pgm_lines["i_n"] = (pp_lines["max_i_ka"] * 1e3) * pp_lines["df"]
 
         self.pgm_data["line"] = pgm_lines
 
@@ -179,8 +179,8 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_sym_gens["id"] = self._generate_ids("sgen", pp_sgens.index)
         pgm_sym_gens["node"] = self._get_ids("bus", pp_sgens["bus"])
         pgm_sym_gens["status"] = pp_sgens["in_service"]
-        pgm_sym_gens["p_specified"] = pp_sgens["p_mw"] * 1e6
-        pgm_sym_gens["q_specified"] = pp_sgens["q_mvar"] * 1e6
+        pgm_sym_gens["p_specified"] = pp_sgens["p_mw"] * 1e6 * pp_sgens["scaling"]
+        pgm_sym_gens["q_specified"] = pp_sgens["q_mvar"] * 1e6 * pp_sgens["scaling"]
 
         self.pgm_data["sym_gen"] = pgm_sym_gens
 
@@ -201,22 +201,24 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_sym_loads["node"][:n_loads] = self._get_ids("bus", pp_loads["bus"])
         pgm_sym_loads["status"][:n_loads] = pp_loads["in_service"]
         pgm_sym_loads["type"][:n_loads] = LoadGenType.const_power
-        pgm_sym_loads["p_specified"][:n_loads] = const_p_multiplier * pp_loads["p_mw"]
-        pgm_sym_loads["q_specified"][:n_loads] = const_p_multiplier * pp_loads["q_mvar"]
+        pgm_sym_loads["p_specified"][:n_loads] = self._get_load_p_specified(const_p_multiplier, pp_loads)
+        pgm_sym_loads["q_specified"][:n_loads] = const_p_multiplier * pp_loads["q_mvar"] * pp_loads["scaling"]
 
         pgm_sym_loads["id"][n_loads : 2 * n_loads] = self._generate_ids("sym_load_const_impedance", pp_loads.index)
         pgm_sym_loads["node"][n_loads : 2 * n_loads] = self._get_ids("bus", pp_loads["bus"])
         pgm_sym_loads["status"][n_loads : 2 * n_loads] = pp_loads["in_service"]
         pgm_sym_loads["type"][n_loads : 2 * n_loads] = LoadGenType.const_impedance
-        pgm_sym_loads["p_specified"][n_loads : 2 * n_loads] = const_z_multiplier * pp_loads["p_mw"]
-        pgm_sym_loads["q_specified"][n_loads : 2 * n_loads] = const_z_multiplier * pp_loads["q_mvar"]
+        pgm_sym_loads["p_specified"][n_loads : 2 * n_loads] = self._get_load_p_specified(const_z_multiplier, pp_loads)
+        pgm_sym_loads["q_specified"][n_loads : 2 * n_loads] = (
+            const_z_multiplier * pp_loads["q_mvar"] * pp_loads["scaling"]
+        )
 
         pgm_sym_loads["id"][-n_loads:] = self._generate_ids("sym_load_const_current", pp_loads.index)
         pgm_sym_loads["node"][-n_loads:] = self._get_ids("bus", pp_loads["bus"])
         pgm_sym_loads["status"][-n_loads:] = pp_loads["in_service"]
         pgm_sym_loads["type"][-n_loads:] = LoadGenType.const_current
-        pgm_sym_loads["p_specified"][-n_loads:] = const_i_multiplier * pp_loads["p_mw"]
-        pgm_sym_loads["q_specified"][-n_loads:] = const_i_multiplier * pp_loads["q_mvar"]
+        pgm_sym_loads["p_specified"][-n_loads:] = self._get_load_p_specified(const_i_multiplier, pp_loads)
+        pgm_sym_loads["q_specified"][-n_loads:] = const_i_multiplier * pp_loads["q_mvar"] * pp_loads["scaling"]
 
         self.pgm_data["sym_load"] = pgm_sym_loads
 
@@ -266,13 +268,13 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_transformers["u1"] = pp_trafo["vn_hv_kv"] * 1e3
         pgm_transformers["u2"] = pp_trafo["vn_lv_kv"] * 1e3
         pgm_transformers["sn"] = pp_trafo["sn_mva"] * 1e6
-        pgm_transformers["uk"] = pp_trafo["vk_percent"] * 1e-2
-        pgm_transformers["pk"] = (pp_trafo["vkr_percent"] * 1e-2) * (pp_trafo["sn_mva"] * 1e6)
-        pgm_transformers["i0"] = pp_trafo["i0_percent"] * 1e-2
-        pgm_transformers["p0"] = pp_trafo["pfe_kw"] * 1e3
+        pgm_transformers["uk"] = pp_trafo["vk_percent"] * 1e-2 / pp_trafo["parallel"]
+        pgm_transformers["pk"] = (pp_trafo["vkr_percent"] * 1e-2) * (pp_trafo["sn_mva"] * 1e6) / pp_trafo["parallel"]
+        pgm_transformers["i0"] = pp_trafo["i0_percent"] * 1e-2 / pp_trafo["parallel"]
+        pgm_transformers["p0"] = pp_trafo["pfe_kw"] * 1e3 / pp_trafo["parallel"]
         pgm_transformers["winding_from"] = pp_trafo["vector_group"].apply(get_transformer_winding_from)
         pgm_transformers["winding_to"] = pp_trafo["vector_group"].apply(get_transformer_winding_to)
-        pgm_transformers["clock"] = (round(pp_trafo["shift_degree"] / 30) % 12).astype(np.int8)
+        pgm_transformers["clock"] = round(pp_trafo["shift_degree"] / 30) % 12
         pgm_transformers["tap_pos"] = pp_trafo["tap_pos"]
         pgm_transformers["tap_side"] = self._get_transformer_tap_side(pp_trafo["tap_side"])
         pgm_transformers["tap_min"] = pp_trafo["tap_min"]
@@ -367,8 +369,8 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_3wtransformers["winding_1"] = pp_trafo3w["vector_group"].apply(get_3wdgtransformer_winding_1)
         pgm_3wtransformers["winding_2"] = pp_trafo3w["vector_group"].apply(get_3wdgtransformer_winding_2)
         pgm_3wtransformers["winding_3"] = pp_trafo3w["vector_group"].apply(get_3wdgtransformer_winding_3)
-        pgm_3wtransformers["clock_12"] = (round(pp_trafo3w["shift_mv_degree"] / 30.0) % 12).astype(np.int8)
-        pgm_3wtransformers["clock_13"] = (round(pp_trafo3w["shift_lv_degree"] / 30.0) % 12).astype(np.int8)
+        pgm_3wtransformers["clock_12"] = round(pp_trafo3w["shift_mv_degree"] / 30.0) % 12
+        pgm_3wtransformers["clock_13"] = round(pp_trafo3w["shift_lv_degree"] / 30.0) % 12
         pgm_3wtransformers["tap_pos"] = pp_trafo3w["tap_pos"]
         pgm_3wtransformers["tap_side"] = self._get_3wtransformer_tap_side(pp_trafo3w["tap_side"])
         pgm_3wtransformers["tap_min"] = pp_trafo3w["tap_min"]
@@ -458,3 +460,32 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         tap_size[tap_side_lv] = tap_step_multiplier[tap_side_lv] * pp_3wtrafo["vn_lv_kv"][tap_side_lv]
 
         return tap_size
+
+    @staticmethod
+    def _get_load_p_specified(multiplier: float, pp_loads: pd.DataFrame) -> np.ndarray:
+        none_pmw = np.array(pp_loads["p_mw"] is None)
+        is_pmw = np.array(pp_loads["p_mw"] is not None)
+
+        p_specified = np.empty(shape=len(pp_loads), dtype=np.float64)
+
+        p_specified[none_pmw] = pp_loads["sn_mva"] * pp_loads["cos_phi"]
+        p_specified[is_pmw] = multiplier * pp_loads["p_mw"] * pp_loads["scaling"]
+
+        return p_specified
+
+    # @staticmethod
+    # def _get_load_q_specified(multiplier: float, pp_loads: pd.DataFrame) -> np.ndarray:
+    #     none_qmva = np.array(pp_loads["q_mva"] is None)
+    #     is_qmva = np.array(pp_loads["q_mva"] is not None)
+    #
+    #     q_specified = np.empty(shape=len(pp_loads), dtype=np.float64)
+    #
+    #     q_specified[none_qmva] = pp_loads["sn_mva"] * math.sqrt(1 - (pp_loads["cos_phi"] * pp_loads["cos_phi"]))
+    #     q_specified[is_qmva] = multiplier * pp_loads["q_mvar"] * pp_loads["scaling"]
+    #
+    #     return q_specified
+
+    # if pp_loads["q_mvar"] is None:  # if q_mvar is not specified then we do sn_mva * (1 - (cos_phi*cos_phi))sqrrt
+    #     return pp_loads["sn_mva"] * math.sqrt(1 - (pp_loads["cos_phi"] * pp_loads["cos_phi"]))
+    # else:
+    #     return multiplier * pp_loads["q_mvar"] * pp_loads["scaling"]
