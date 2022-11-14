@@ -463,13 +463,13 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
     @staticmethod
     def _get_load_p_specified(multiplier: float, pp_loads: pd.DataFrame) -> np.ndarray:
-        none_pmw = np.array(pp_loads["p_mw"] is None)
-        is_pmw = np.array(pp_loads["p_mw"] is not None)
+        none_pmw = np.isnan(pp_loads["p_mw"])
+        is_pmw = ~none_pmw
 
         p_specified = np.empty(shape=len(pp_loads), dtype=np.float64)
 
-        p_specified[none_pmw] = pp_loads["sn_mva"] * pp_loads["cos_phi"]
-        p_specified[is_pmw] = multiplier * pp_loads["p_mw"] * pp_loads["scaling"]
+        p_specified[none_pmw] = pp_loads["sn_mva"][none_pmw] * pp_loads["cos_phi"][none_pmw]
+        p_specified[is_pmw] = multiplier * pp_loads["p_mw"][is_pmw] * pp_loads["scaling"][is_pmw]
 
         return p_specified
 

@@ -297,10 +297,10 @@ def test_get_3wtransformer_tap_size():
 def test_get_load_p_specified():
     # Arrange
     pp_loads = pd.DataFrame(
-        [[20, 10.5, 400.0, 32.1], [62.0, 10.0, 400.0, 32.1], [None, 15.2, 400.0, 32.1]],
+        [[20, 10.5, 400.0, 32.1], [62.0, 10.0, 400.0, 32.1], [None, 15.2, 400.0, 2]],
         columns=["p_mw", "scaling", "sn_mva", "cos_phi"],
     )
-    expected_value = np.array([672.0, 1984.0, None], dtype=np.float64)  # third is wrong
+    expected_value = np.array([672.0, 1984.0, 800.0], dtype=np.float64)
 
     # Act
     actual_value = PandaPowerConverter._get_load_p_specified(3.2, pp_loads)
