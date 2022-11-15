@@ -97,44 +97,12 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         pp_lines = self.pp_data["line"]
 
-        # Add an extra column called 'index' containing the index values, which we need to do the join with switches
-        pp_lines["index"] = pp_lines.index
-
-        # Select the appropriate switches and columns
-        pp_switches = self.pp_data["switch"]
-        pp_switches = pp_switches[self.pp_data["switch"]["et"] == "l"]
-        pp_switches = pp_switches[["element", "bus", "closed"]]
-
-        # Join the switches with the lines twice, once for the from_bus and once for the to_bus
-        pp_from_switches = (
-            pp_lines[["index", "from_bus"]]
-            .merge(
-                pp_switches,
-                how="left",
-                left_on=["index", "from_bus"],
-                right_on=["element", "bus"],
-            )
-            .fillna(True)
-            .set_index(pp_lines.index)
-        )
-        pp_to_switches = (
-            pp_lines[["index", "to_bus"]]
-            .merge(
-                pp_switches,
-                how="left",
-                left_on=["index", "to_bus"],
-                right_on=["element", "bus"],
-            )
-            .fillna(True)
-            .set_index(pp_lines.index)
-        )
-
         pgm_lines = initialize_array(data_type="input", component_type="line", shape=len(pp_lines))
         pgm_lines["id"] = self._generate_ids("line", pp_lines.index)
         pgm_lines["from_node"] = self._get_ids("bus", pp_lines["from_bus"])
-        pgm_lines["from_status"] = pp_lines["in_service"] & pp_from_switches["closed"]
+        pgm_lines["from_status"] = pp_lines["in_service"] & (self.get_switch_states(pp_lines, "line").iloc[0, :])
         pgm_lines["to_node"] = self._get_ids("bus", pp_lines["to_bus"])
-        pgm_lines["to_status"] = pp_lines["in_service"] & pp_to_switches["closed"]
+        pgm_lines["to_status"] = pp_lines["in_service"] & (self.get_switch_states(pp_lines, "line").iloc[1, :])
         pgm_lines["r1"] = pp_lines["r_ohm_per_km"] * pp_lines["length_km"] / pp_lines["parallel"]
         pgm_lines["x1"] = pp_lines["x_ohm_per_km"] * pp_lines["length_km"] / pp_lines["parallel"]
         pgm_lines["c1"] = pp_lines["c_nf_per_km"] * pp_lines["length_km"] / pp_lines["parallel"]
@@ -153,6 +121,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_sources["node"] = self._get_ids("bus", pp_ext_grid["bus"])
         pgm_sources["status"] = pp_ext_grid["in_service"]
         pgm_sources["u_ref"] = pp_ext_grid["vm_pu"]
+        pgm_sources["sk"] = pp_ext_grid["s_sc_max_mva"] * 1e6
 
         self.pgm_data["source"] = pgm_sources
 
@@ -161,12 +130,14 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         pp_shunt = self.pp_data["shunt"]
 
+        vn_kv_2 = pp_shunt["vn_kv"] * pp_shunt["vn_kv"]
+
         pgm_shunts = initialize_array(data_type="input", component_type="shunt", shape=len(pp_shunt))
         pgm_shunts["id"] = self._generate_ids("shunt", pp_shunt.index)
         pgm_shunts["node"] = self._get_ids("bus", pp_shunt["bus"])
         pgm_shunts["status"] = pp_shunt["in_service"]
-        pgm_shunts["g1"] = (pp_shunt["p_mw"] * 1e6) / ((pp_shunt["vn_kv"] * 1e3) * (pp_shunt["vn_kv"] * 1e3))
-        pgm_shunts["b1"] = (pp_shunt["q_mvar"] * 1e6) / ((pp_shunt["vn_kv"] * 1e3) * (pp_shunt["vn_kv"] * 1e3))
+        pgm_shunts["g1"] = pp_shunt["p_mw"] / vn_kv_2
+        pgm_shunts["b1"] = pp_shunt["q_mvar"] / vn_kv_2
 
         self.pgm_data["shunt"] = pgm_shunts
 
@@ -201,14 +172,16 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_sym_loads["node"][:n_loads] = self._get_ids("bus", pp_loads["bus"])
         pgm_sym_loads["status"][:n_loads] = pp_loads["in_service"]
         pgm_sym_loads["type"][:n_loads] = LoadGenType.const_power
-        pgm_sym_loads["p_specified"][:n_loads] = self._get_load_p_specified(const_p_multiplier, pp_loads)
+        pgm_sym_loads["p_specified"][:n_loads] = const_p_multiplier * pp_loads["p_mw"] * pp_loads["scaling"]
         pgm_sym_loads["q_specified"][:n_loads] = const_p_multiplier * pp_loads["q_mvar"] * pp_loads["scaling"]
 
         pgm_sym_loads["id"][n_loads : 2 * n_loads] = self._generate_ids("sym_load_const_impedance", pp_loads.index)
         pgm_sym_loads["node"][n_loads : 2 * n_loads] = self._get_ids("bus", pp_loads["bus"])
         pgm_sym_loads["status"][n_loads : 2 * n_loads] = pp_loads["in_service"]
         pgm_sym_loads["type"][n_loads : 2 * n_loads] = LoadGenType.const_impedance
-        pgm_sym_loads["p_specified"][n_loads : 2 * n_loads] = self._get_load_p_specified(const_z_multiplier, pp_loads)
+        pgm_sym_loads["p_specified"][n_loads : 2 * n_loads] = (
+            const_z_multiplier * pp_loads["p_mw"] * pp_loads["scaling"]
+        )
         pgm_sym_loads["q_specified"][n_loads : 2 * n_loads] = (
             const_z_multiplier * pp_loads["q_mvar"] * pp_loads["scaling"]
         )
@@ -217,7 +190,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_sym_loads["node"][-n_loads:] = self._get_ids("bus", pp_loads["bus"])
         pgm_sym_loads["status"][-n_loads:] = pp_loads["in_service"]
         pgm_sym_loads["type"][-n_loads:] = LoadGenType.const_current
-        pgm_sym_loads["p_specified"][-n_loads:] = self._get_load_p_specified(const_i_multiplier, pp_loads)
+        pgm_sym_loads["p_specified"][-n_loads:] = const_i_multiplier * pp_loads["p_mw"] * pp_loads["scaling"]
         pgm_sym_loads["q_specified"][-n_loads:] = const_i_multiplier * pp_loads["q_mvar"] * pp_loads["scaling"]
 
         self.pgm_data["sym_load"] = pgm_sym_loads
@@ -227,44 +200,14 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         pp_trafo = self.pp_data["trafo"]
 
-        # Add an extra column called 'index' containing the index values, which we need to do the join with switches
-        pp_trafo["index"] = pp_trafo.index
-
-        # Select the appropriate switches and columns
-        pp_switches = self.pp_data["switch"]
-        pp_switches = pp_switches[self.pp_data["switch"]["et"] == "t"]
-        pp_switches = pp_switches[["element", "bus", "closed"]]
-
-        # Join the switches with the trafo twice, once for the from_bus and once for the to_bus
-        pp_from_switches = (
-            pp_trafo[["index", "hv_bus"]]
-            .merge(
-                pp_switches,
-                how="left",
-                left_on=["index", "hv_bus"],
-                right_on=["element", "bus"],
-            )
-            .fillna(True)
-            .set_index(pp_trafo.index)
-        )
-        pp_to_switches = (
-            pp_trafo[["index", "lv_bus"]]
-            .merge(
-                pp_switches,
-                how="left",
-                left_on=["index", "lv_bus"],
-                right_on=["element", "bus"],
-            )
-            .fillna(True)
-            .set_index(pp_trafo.index)
-        )
-
         pgm_transformers = initialize_array(data_type="input", component_type="transformer", shape=len(pp_trafo))
         pgm_transformers["id"] = self._generate_ids("trafo", pp_trafo.index)
         pgm_transformers["from_node"] = self._get_ids("bus", pp_trafo["hv_bus"])
-        pgm_transformers["from_status"] = pp_trafo["in_service"] & pp_from_switches["closed"]
+        pgm_transformers["from_status"] = pp_trafo["in_service"] & (
+            self.get_switch_states(pp_trafo, "trafo").iloc[0, :]
+        )
         pgm_transformers["to_node"] = self._get_ids("bus", pp_trafo["lv_bus"])
-        pgm_transformers["to_status"] = pp_trafo["in_service"] & pp_to_switches["closed"]
+        pgm_transformers["to_status"] = pp_trafo["in_service"] & (self.get_switch_states(pp_trafo, "trafo").iloc[1, :])
         pgm_transformers["u1"] = pp_trafo["vn_hv_kv"] * 1e3
         pgm_transformers["u2"] = pp_trafo["vn_lv_kv"] * 1e3
         pgm_transformers["sn"] = pp_trafo["sn_mva"] * 1e6
@@ -289,49 +232,6 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         pp_trafo3w = self.pp_data["trafo3w"]
 
-        # Add an extra column called 'index' containing the index values, which we need to do the join with switches
-        pp_trafo3w["index"] = pp_trafo3w.index
-
-        # Select the appropriate switches and columns
-        pp_switches = self.pp_data["switch"]
-        pp_switches = pp_switches[self.pp_data["switch"]["et"] == "t3"]
-        pp_switches = pp_switches[["element", "bus", "closed"]]
-
-        # Join the switches with the 3wtrafos three times, for the hv_bus, for the mv_bus and once for the lv_bus
-        pp_1_switches = (
-            pp_trafo3w[["index", "hv_bus"]]
-            .merge(
-                pp_switches,
-                how="left",
-                left_on=["index", "hv_bus"],
-                right_on=["element", "bus"],
-            )
-            .fillna(True)
-            .set_index(pp_trafo3w.index)
-        )
-        pp_2_switches = (
-            pp_trafo3w[["index", "mv_bus"]]
-            .merge(
-                pp_switches,
-                how="left",
-                left_on=["index", "mv_bus"],
-                right_on=["element", "bus"],
-            )
-            .fillna(True)
-            .set_index(pp_trafo3w.index)
-        )
-        pp_3_switches = (
-            pp_trafo3w[["index", "lv_bus"]]
-            .merge(
-                pp_switches,
-                how="left",
-                left_on=["index", "lv_bus"],
-                right_on=["element", "bus"],
-            )
-            .fillna(True)
-            .set_index(pp_trafo3w.index)
-        )
-
         pgm_3wtransformers = initialize_array(
             data_type="input", component_type="three_winding_transformer", shape=len(pp_trafo3w)
         )
@@ -339,9 +239,15 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_3wtransformers["node_1"] = self._get_ids("bus", pp_trafo3w["hv_bus"])
         pgm_3wtransformers["node_2"] = self._get_ids("bus", pp_trafo3w["mv_bus"])
         pgm_3wtransformers["node_3"] = self._get_ids("bus", pp_trafo3w["lv_bus"])
-        pgm_3wtransformers["status_1"] = pp_trafo3w["in_service"] & pp_1_switches["closed"]
-        pgm_3wtransformers["status_2"] = pp_trafo3w["in_service"] & pp_2_switches["closed"]
-        pgm_3wtransformers["status_3"] = pp_trafo3w["in_service"] & pp_3_switches["closed"]
+        pgm_3wtransformers["status_1"] = pp_trafo3w["in_service"] & (
+            self.get_trafo_switch_states(pp_trafo3w).iloc[0, :]
+        )
+        pgm_3wtransformers["status_2"] = pp_trafo3w["in_service"] & (
+            self.get_trafo_switch_states(pp_trafo3w).iloc[1, :]
+        )
+        pgm_3wtransformers["status_3"] = pp_trafo3w["in_service"] & (
+            self.get_trafo_switch_states(pp_trafo3w).iloc[2, :]
+        )
         pgm_3wtransformers["u1"] = pp_trafo3w["vn_hv_kv"] * 1e3
         pgm_3wtransformers["u2"] = pp_trafo3w["vn_mv_kv"] * 1e3
         pgm_3wtransformers["u3"] = pp_trafo3w["vn_lv_kv"] * 1e3
@@ -352,16 +258,16 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_3wtransformers["uk_13"] = pp_trafo3w["vk_lv_percent"] * 1e-2
         pgm_3wtransformers["uk_23"] = pp_trafo3w["vk_mv_percent"] * 1e-2
 
-        pgm_3wtransformers["pk_12"] = (pp_trafo3w["vkr_hv_percent"] * 1e-2) * (
-            pp_trafo3w[["sn_hv_mva", "sn_mv_mva"]].min(axis=1) * 1e6
+        pgm_3wtransformers["pk_12"] = (
+            pp_trafo3w["vkr_hv_percent"] * (pp_trafo3w[["sn_hv_mva", "sn_mv_mva"]].min(axis=1)) * (1e-2 * 1e6)
         )
 
-        pgm_3wtransformers["pk_13"] = (pp_trafo3w["vkr_lv_percent"] * 1e-2) * (
-            pp_trafo3w[["sn_hv_mva", "sn_lv_mva"]].min(axis=1) * 1e6
+        pgm_3wtransformers["pk_13"] = (
+            pp_trafo3w["vkr_lv_percent"] * (pp_trafo3w[["sn_hv_mva", "sn_lv_mva"]].min(axis=1)) * (1e-2 * 1e6)
         )
 
-        pgm_3wtransformers["pk_23"] = (pp_trafo3w["vkr_mv_percent"] * 1e-2) * (
-            pp_trafo3w[["sn_mv_mva", "sn_lv_mva"]].min(axis=1) * 1e6
+        pgm_3wtransformers["pk_23"] = (
+            pp_trafo3w["vkr_mv_percent"] * (pp_trafo3w[["sn_mv_mva", "sn_lv_mva"]].min(axis=1)) * (1e-2 * 1e6)
         )
 
         pgm_3wtransformers["i0"] = pp_trafo3w["i0_percent"] * 1e-2
@@ -396,10 +302,6 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_links["to_node"] = self._get_ids("bus", pp_switches["element"])
         pgm_links["from_status"] = pp_switches["closed"]
         pgm_links["to_status"] = pp_switches["closed"]
-        # pgm_links["from_status"] = pp_buses.loc[pp_buses['index'] == self._get_ids("bus", pp_switches["bus"]),
-        # 'in_service']
-        # pgm_links["to_status"] = pp_buses.loc[pp_buses['index'] == self._get_ids("bus", pp_switches["element"]),
-        # 'in_service']
 
         self.pgm_data["link"] = pgm_links
 
@@ -461,31 +363,98 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         return tap_size
 
-    @staticmethod
-    def _get_load_p_specified(multiplier: float, pp_loads: pd.DataFrame) -> np.ndarray:
-        none_pmw = np.isnan(pp_loads["p_mw"])
-        is_pmw = ~none_pmw
+    def get_switch_states(self, component: pd.DataFrame, name: str) -> pd.DataFrame:
+        """
+        Return switch states of either lines or transformers
+        """
+        if name == "line":
+            element_type = "l"
+            bus1 = "from_bus"
+            bus2 = "to_bus"
+            component["index"] = component.index
+        else:
+            element_type = "t"
+            bus1 = "hv_bus"
+            bus2 = "lv_bus"
+            component["index"] = component.index
 
-        p_specified = np.empty(shape=len(pp_loads), dtype=np.float64)
+        # Select the appropriate switches and columns
+        pp_switches = self.pp_data["switch"]
+        pp_switches = pp_switches[self.pp_data["switch"]["et"] == element_type]
+        pp_switches = pp_switches[["element", "bus", "closed"]]
 
-        p_specified[none_pmw] = pp_loads["sn_mva"][none_pmw] * pp_loads["cos_phi"][none_pmw]
-        p_specified[is_pmw] = multiplier * pp_loads["p_mw"][is_pmw] * pp_loads["scaling"][is_pmw]
+        # Join the switches with the lines twice, once for the from_bus and once for the to_bus
+        pp_from_switches = (
+            component[["index", bus1]]
+            .merge(
+                pp_switches,
+                how="left",
+                left_on=["index", bus1],
+                right_on=["element", "bus"],
+            )
+            .fillna(True)
+            .set_index(component.index)
+        )
+        pp_to_switches = (
+            component[["index", bus2]]
+            .merge(
+                pp_switches,
+                how="left",
+                left_on=["index", bus2],
+                right_on=["element", "bus"],
+            )
+            .fillna(True)
+            .set_index(component.index)
+        )
+        return pd.DataFrame((pp_from_switches["closed"], pp_to_switches["closed"]))
 
-        return p_specified
+    def get_trafo_switch_states(self, component: pd.DataFrame) -> pd.DataFrame:
+        """
+        Return switch states of three winding transformer
+        """
+        element_type = "t3"
+        bus1 = "hv_bus"
+        bus2 = "mv_bus"
+        bus3 = "lv_bus"
+        component["index"] = component.index
 
-    # @staticmethod
-    # def _get_load_q_specified(multiplier: float, pp_loads: pd.DataFrame) -> np.ndarray:
-    #     none_qmva = np.array(pp_loads["q_mva"] is None)
-    #     is_qmva = np.array(pp_loads["q_mva"] is not None)
-    #
-    #     q_specified = np.empty(shape=len(pp_loads), dtype=np.float64)
-    #
-    #     q_specified[none_qmva] = pp_loads["sn_mva"] * math.sqrt(1 - (pp_loads["cos_phi"] * pp_loads["cos_phi"]))
-    #     q_specified[is_qmva] = multiplier * pp_loads["q_mvar"] * pp_loads["scaling"]
-    #
-    #     return q_specified
+        # Select the appropriate switches and columns
+        pp_switches = self.pp_data["switch"]
+        pp_switches = pp_switches[self.pp_data["switch"]["et"] == element_type]
+        pp_switches = pp_switches[["element", "bus", "closed"]]
 
-    # if pp_loads["q_mvar"] is None:  # if q_mvar is not specified then we do sn_mva * (1 - (cos_phi*cos_phi))sqrrt
-    #     return pp_loads["sn_mva"] * math.sqrt(1 - (pp_loads["cos_phi"] * pp_loads["cos_phi"]))
-    # else:
-    #     return multiplier * pp_loads["q_mvar"] * pp_loads["scaling"]
+        # Join the switches with the lines twice, once for the from_bus and once for the to_bus
+        pp_1_switches = (
+            component[["index", bus1]]
+            .merge(
+                pp_switches,
+                how="left",
+                left_on=["index", bus1],
+                right_on=["element", "bus"],
+            )
+            .fillna(True)
+            .set_index(component.index)
+        )
+        pp_2_switches = (
+            component[["index", bus2]]
+            .merge(
+                pp_switches,
+                how="left",
+                left_on=["index", bus2],
+                right_on=["element", "bus"],
+            )
+            .fillna(True)
+            .set_index(component.index)
+        )
+        pp_3_switches = (
+            component[["index", bus3]]
+            .merge(
+                pp_switches,
+                how="left",
+                left_on=["index", bus3],
+                right_on=["element", "bus"],
+            )
+            .fillna(True)
+            .set_index(component.index)
+        )
+        return pd.DataFrame((pp_1_switches["closed"], pp_2_switches["closed"], pp_3_switches["closed"]))

@@ -35,7 +35,7 @@ def pp_example_simple() -> PandasData:
     pp.create_bus(net, index=104, vn_kv=30.1)
     pp.create_bus(net, index=105, vn_kv=60)
     pp.create_bus(net, index=106, vn_kv=34)
-    pp.create_ext_grid(net, index=1, in_service=True, bus=101, vm_pu=31.02)
+    pp.create_ext_grid(net, index=1, in_service=True, bus=101, vm_pu=31.02, s_sc_max_mva=3.0)
     pp.create_transformer_from_parameters(
         net,
         index=101,
@@ -292,33 +292,3 @@ def test_get_3wtransformer_tap_size():
 
     # Assert
     np.testing.assert_array_equal(actual_tap_size, expected_tap_size)
-
-
-def test_get_load_p_specified():
-    # Arrange
-    pp_loads = pd.DataFrame(
-        [[20, 10.5, 400.0, 32.1], [62.0, 10.0, 400.0, 32.1], [None, 15.2, 400.0, 2]],
-        columns=["p_mw", "scaling", "sn_mva", "cos_phi"],
-    )
-    expected_value = np.array([672.0, 1984.0, 800.0], dtype=np.float64)
-
-    # Act
-    actual_value = PandaPowerConverter._get_load_p_specified(3.2, pp_loads)
-
-    # Assert
-    np.testing.assert_array_equal(actual_value, expected_value)
-
-
-# def test_get_load_q_specified():
-#     # Arrange
-#     pp_loads = pd.DataFrame(
-#         [[20, 10.5, 400.0, 32.1], [62.0, 10.0, 400.0, 32.1], [None, 15.2, 400.0, 32.1]],
-#         columns=["q_mva", "scaling", "sn_mva", "cos_phi"],
-#     )
-#     expected_value = np.array([672.0, 1984.0, None], dtype=np.float64)  # third is wrong
-#
-#     # Act
-#     actual_value = PandaPowerConverter._get_load_q_specified(3.2, pp_loads)
-#
-#     # Assert
-#     np.testing.assert_array_equal(actual_value, expected_value)
