@@ -6,11 +6,12 @@
 name: Check Blocking Labels
 
 on:
+  workflow_dispatch:
   pull_request:
     branches:
-      - main
     types:
       - opened
+      - synchronize
       - labeled
       - unlabeled
 
