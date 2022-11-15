@@ -8,7 +8,6 @@ name: Check Blocking Labels
 on:
   pull_request:
     branches:
-      - main
     types:
       - opened
       - labeled
