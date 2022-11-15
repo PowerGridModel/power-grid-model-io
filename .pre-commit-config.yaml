@@ -28,9 +28,15 @@ repos:
         types: [ python ]
         args: [ "--rcfile=pyproject.toml" ]
         require_serial: true
-      - id: pytest
-        name: pytest
+      - id: unit tests
+        name: unit tests
         entry: pytest
         language: system
         pass_filenames: false
         always_run: true
+      - id: validation tests
+        name: validation tests
+        entry: pytest
+        language: system
+        pass_filenames: false
+        args: [ "tests/validation", "--no-cov" ]
