@@ -9,7 +9,7 @@
     ],
   "line":
     [
-      {"id": 4, "from_node": 0, "to_node": 1},
+      {"id": 4, "from_node": 0, "to_node": 1, "Name": "cable1"},
       {"id": 6, "from_node": 0, "to_node": 1}
     ],
   "link":
