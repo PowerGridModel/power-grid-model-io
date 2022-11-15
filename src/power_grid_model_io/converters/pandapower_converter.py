@@ -105,9 +105,14 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_lines["to_status"] = pp_lines["in_service"] & (self.get_switch_states(pp_lines, "line").iloc[1, :])
         pgm_lines["r1"] = pp_lines["r_ohm_per_km"] * pp_lines["length_km"] / pp_lines["parallel"]
         pgm_lines["x1"] = pp_lines["x_ohm_per_km"] * pp_lines["length_km"] / pp_lines["parallel"]
-        pgm_lines["c1"] = pp_lines["c_nf_per_km"] * pp_lines["length_km"] / pp_lines["parallel"]
-        pgm_lines["tan1"] = 0.0
-        pgm_lines["i_n"] = (pp_lines["max_i_ka"] * 1e3) * pp_lines["df"]
+        pgm_lines["c1"] = pp_lines["c_nf_per_km"] * pp_lines["length_km"] * pp_lines["parallel"]
+        # tan1 = R_1/Xc_1 = (1 / (g*1e-6)) / ( 1 / (2*pi*f*c*1e-9))  = 2*pi*f*c*1e-3 / g
+        pgm_lines["tan1"] = (
+            (2 * 1e-3 * np.pi * self.pp_data["f_hz"])
+            * pp_lines["c_nf_per_km"]
+            / (pgm_lines["g_us_per_km "] * pp_lines["parallel"])
+        )
+        pgm_lines["i_n"] = (pp_lines["max_i_ka"] * 1e3) * pp_lines["df"] * pp_lines["parallel"]
 
         self.pgm_data["line"] = pgm_lines
 
@@ -136,8 +141,8 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_shunts["id"] = self._generate_ids("shunt", pp_shunt.index)
         pgm_shunts["node"] = self._get_ids("bus", pp_shunt["bus"])
         pgm_shunts["status"] = pp_shunt["in_service"]
-        pgm_shunts["g1"] = pp_shunt["p_mw"] / vn_kv_2
-        pgm_shunts["b1"] = pp_shunt["q_mvar"] / vn_kv_2
+        pgm_shunts["g1"] = pp_shunt["p_mw"] * pp_shunt["step"] / vn_kv_2
+        pgm_shunts["b1"] = pp_shunt["q_mvar"] * pp_shunt["step"] / vn_kv_2
 
         self.pgm_data["shunt"] = pgm_shunts
 
@@ -210,11 +215,11 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_transformers["to_status"] = pp_trafo["in_service"] & (self.get_switch_states(pp_trafo, "trafo").iloc[1, :])
         pgm_transformers["u1"] = pp_trafo["vn_hv_kv"] * 1e3
         pgm_transformers["u2"] = pp_trafo["vn_lv_kv"] * 1e3
-        pgm_transformers["sn"] = pp_trafo["sn_mva"] * 1e6
-        pgm_transformers["uk"] = pp_trafo["vk_percent"] * 1e-2 / pp_trafo["parallel"]
-        pgm_transformers["pk"] = (pp_trafo["vkr_percent"] * 1e-2) * (pp_trafo["sn_mva"] * 1e6) / pp_trafo["parallel"]
-        pgm_transformers["i0"] = pp_trafo["i0_percent"] * 1e-2 / pp_trafo["parallel"]
-        pgm_transformers["p0"] = pp_trafo["pfe_kw"] * 1e3 / pp_trafo["parallel"]
+        pgm_transformers["sn"] = pp_trafo["sn_mva"] * pp_trafo["parallel"] * 1e6
+        pgm_transformers["uk"] = pp_trafo["vk_percent"] * 1e-2
+        pgm_transformers["pk"] = (pp_trafo["vkr_percent"] * 1e-2) * (pp_trafo["sn_mva"] * 1e6) * pp_trafo["parallel"]
+        pgm_transformers["i0"] = pp_trafo["i0_percent"] * 1e-2
+        pgm_transformers["p0"] = pp_trafo["pfe_kw"] * pp_trafo["parallel"] * 1e3
         pgm_transformers["winding_from"] = pp_trafo["vector_group"].apply(get_transformer_winding_from)
         pgm_transformers["winding_to"] = pp_trafo["vector_group"].apply(get_transformer_winding_to)
         pgm_transformers["clock"] = round(pp_trafo["shift_degree"] / 30) % 12
