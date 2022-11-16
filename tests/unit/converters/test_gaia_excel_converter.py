@@ -33,7 +33,7 @@ def test_initialization():
         MockFileStore.assert_called_once()
 
 
-def test_converter__id_lookup(converter: GaiaExcelConverter):
+def test_id_lookup(converter: GaiaExcelConverter):
     row_1 = pd.Series([4.0, 5.0, 6.0], index=["a.b", "c.d.e", "a.c"])
     row_2 = pd.Series([1.0, 5.0, 6.0], index=["a.b", "c.d.e", "a.c"])  # change in values
     row_3 = pd.Series([4.0, 5.0, 6.0], index=["z.b", "c.d.e", "a.c"])  # change in index
