@@ -146,9 +146,8 @@ class BaseConverter(Generic[T], ABC):
 
         Returns: A unique id
         """
-        if isinstance(name, list):
-            name = tuple(name)
-        return self._auto_id(item=(name, tuple(key.items())))
+        auto_id_key = (tuple(name), tuple(sorted(key.items())))
+        return self._auto_id(item=(name, key), key=auto_id_key)
 
     def lookup_id(self, pgm_id: int) -> Tuple[Union[str, List[str]], Dict[str, int]]:
         """
@@ -159,10 +158,7 @@ class BaseConverter(Generic[T], ABC):
 
         Returns: The original name / key combination
         """
-        name, key = self._auto_id[pgm_id]
-        if isinstance(name, tuple):
-            name = list(name)
-        return name, dict(key)
+        return self._auto_id[pgm_id]
 
     @abstractmethod  # pragma: nocover
     def _parse_data(self, data: T, data_type: str, extra_info: Optional[ExtraInfoLookup]) -> Dataset:

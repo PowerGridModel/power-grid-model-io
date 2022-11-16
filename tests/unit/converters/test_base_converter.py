@@ -146,19 +146,25 @@ def test_load_data(converter: DummyConverter):
 
 def test_get_id(converter: DummyConverter):
     # Arrange / Act / Assert
-    assert converter.get_id(name="node", key={"a": 4, "b": 5, "c": 6}) == 0
-    assert converter.get_id(name="node", key={"a": 1, "b": 5, "c": 6}) == 1  # change in values
-    assert converter.get_id(name="node", key={"a": 4, "b": 5, "x": 6}) == 2  # change in index
-    assert converter.get_id(name="node", key={"a": 4, "b": 5, "c": 6}) == 0  # duplicate value
+    assert converter.get_id(name="node", key={"a": 1, "b": 2}) == 0
+    assert converter.get_id(name="node", key={"a": 1, "b": 3}) == 1  # change in values
+    assert converter.get_id(name="node", key={"a": 1, "c": 2}) == 2  # change in index
+    assert converter.get_id(name=("foo", "bar"), key={"a": 1, "b": 2}) == 3  # change in name
+    assert converter.get_id(name=["foo", "bar"], key={"a": 1, "b": 2}) == 3  # tuple and list are indistinguishable
+    assert converter.get_id(name="node", key={"a": 1, "b": 2}) == 0  # duplicate name / indices / values
 
 
 def test_lookup_id(converter: DummyConverter):
     # Arrange
-    converter.get_id(name="node", key={"a": 4, "b": 5, "c": 6})
-    converter.get_id(name="node", key={"a": 1, "b": 5, "c": 6})  # change in values
-    converter.get_id(name="node", key={"a": 4, "b": 5, "x": 6})  # change in index
+    converter.get_id(name="node", key={"a": 1, "b": 2})
+    converter.get_id(name="node", key={"a": 1, "b": 3})  # change in values
+    converter.get_id(name="node", key={"a": 1, "c": 2})  # change in index
+    converter.get_id(name=("foo", "bar"), key={"a": 1, "b": 2})  # change in name
+    converter.get_id(name=["foo", "bar"], key={"a": 1, "b": 2})  # tuple and list are indistinguishable
+    converter.get_id(name="node", key={"a": 1, "b": 2})  # duplicate name / indices / values
 
     # Act / Assert
-    assert converter.lookup_id(pgm_id=0) == ("node", {"a": 4, "b": 5, "c": 6})
-    assert converter.lookup_id(pgm_id=1) == ("node", {"a": 1, "b": 5, "c": 6})
-    assert converter.lookup_id(pgm_id=2) == ("node", {"a": 4, "b": 5, "x": 6})
+    assert converter.lookup_id(pgm_id=0) == ("node", {"a": 1, "b": 2})
+    assert converter.lookup_id(pgm_id=1) == ("node", {"a": 1, "b": 3})
+    assert converter.lookup_id(pgm_id=2) == ("node", {"a": 1, "c": 2})
+    assert converter.lookup_id(pgm_id=3) == (["foo", "bar"], {"a": 1, "b": 2})
