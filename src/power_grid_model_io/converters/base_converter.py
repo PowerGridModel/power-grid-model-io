@@ -5,7 +5,7 @@
 Abstract converter class
 """
 from abc import ABC, abstractmethod
-from typing import Generic, Optional, Tuple, TypeVar, Union
+from typing import Dict, Generic, List, Mapping, Optional, Tuple, TypeVar, Union
 
 import structlog
 from power_grid_model.data_types import Dataset, SingleDataset
@@ -27,7 +27,7 @@ class BaseConverter(Generic[T], ABC):
         self._log = structlog.get_logger(type(self).__name__)
         self._source = source
         self._destination = destination
-        self._lookup = AutoID()
+        self._auto_id = AutoID()
 
     def load_input_data(self, data: Optional[T] = None) -> Tuple[SingleDataset, ExtraInfoLookup]:
         """Load input data and extra info
@@ -136,8 +136,33 @@ class BaseConverter(Generic[T], ABC):
             return self._source.load()
         raise ValueError("No data supplied!")
 
-    def _id_lookup(self, name: Union[str, Tuple[str, ...]], key: Union[int, Tuple[int, ...]]) -> int:
-        return self._lookup(item=(name, key))
+    def get_id(self, name: Union[str, List[str], Tuple[str, ...]], key: Mapping[str, int]) -> int:
+        """
+        Get a unique numerical ID for the name / key combination
+
+        Args:
+            name: Component name (e.g. "Node" or ["Transformer", "Internal node"])
+            key: Component identifier (e.g. {"name": "node1"} or {"number": 1, "sub_number": 2})
+
+        Returns: A unique id
+        """
+        if isinstance(name, list):
+            name = tuple(name)
+        return self._auto_id(item=(name, tuple(key.items())))
+
+    def lookup_id(self, pgm_id: int) -> Tuple[Union[str, List[str]], Dict[str, int]]:
+        """
+        Retrieve the original name / key combination of a pgm object
+
+        Args:
+            pgm_id: a unique numerical ID
+
+        Returns: The original name / key combination
+        """
+        name, key = self._auto_id[pgm_id]
+        if isinstance(name, tuple):
+            name = list(name)
+        return name, dict(key)
 
     @abstractmethod  # pragma: nocover
     def _parse_data(self, data: T, data_type: str, extra_info: Optional[ExtraInfoLookup]) -> Dataset:

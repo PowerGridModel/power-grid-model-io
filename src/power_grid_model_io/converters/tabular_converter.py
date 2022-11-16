@@ -7,7 +7,7 @@ Tabular Data Converter: Load data from multiple tables and use a mapping file to
 
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Literal, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -46,7 +46,6 @@ and:
 ]           separator
 $           End of the string
 """
-
 
 MappingFile = Dict[Literal["multipliers", "grid", "units", "substitutions"], Union[Multipliers, Tables, Units, Values]]
 
@@ -511,18 +510,29 @@ class TabularConverter(BaseConverter[TabularData]):
         return pd.concat(data_frames, axis=1)
 
     def _parse_auto_id(
-        self, data: TabularData, table: str, name: Union[str, List[str]], key_col_def: Union[str, List[str]]
+        self,
+        data: TabularData,
+        table: str,
+        name: Union[str, List[str]],
+        key_col_def: Union[str, List[str], Dict[str, str]],
     ) -> pd.DataFrame:
-        typed_name: Union[str, Tuple[str, ...]] = tuple(name) if isinstance(name, list) else name
+
+        if isinstance(key_col_def, dict):
+            key_names = list(key_col_def.keys())
+            key_col_def = list(key_col_def.values())
+        elif isinstance(key_col_def, list):
+            key_names = key_col_def
+        elif isinstance(key_col_def, str):
+            key_names = [key_col_def]
+        else:
+            raise TypeError(f"Invalid key definition type: {type(key_col_def).__name__}")
+
         col_data = self._parse_col_def(data=data, table=table, col_def=key_col_def)
 
-        def auto_id_int(row: pd.Series):
-            return self._id_lookup(name=typed_name, key=row[0])
+        def auto_id(row: pd.Series):
+            return self.get_id(name=name, key=dict(zip(key_names, row)))
 
-        def auto_id_tuple(row: pd.Series):
-            return self._id_lookup(name=typed_name, key=tuple(row))
-
-        return col_data.apply(auto_id_int if len(col_data.columns) == 1 else auto_id_tuple, axis=1, raw=True)
+        return col_data.apply(auto_id, axis=1, raw=True)
 
     def _parse_col_def_function(self, data: TabularData, table: str, col_def: Dict[str, Any]) -> pd.DataFrame:
         """Import the function by name and apply it to each row. The column definition may contain multiple functions,

@@ -19,7 +19,8 @@ grid:
       from_node:
         auto_id:
           name: node
-          key: from_node_side
+          key:
+            id_number: from_node_side
   loads:
     sym_load: # for testing purpose, the same loads will be added twice, with different types
       - id:
@@ -32,7 +33,8 @@ grid:
         node:
           auto_id:
             name: node
-            key: node_id
+            key:
+              id_number: node_id
         status: switching_status
       - id:
           auto_id:
@@ -44,7 +46,8 @@ grid:
         node:
           auto_id:
             name: node
-            key: node_id
+            key:
+              id_number: node_id
         status: switching_status
 
 units:

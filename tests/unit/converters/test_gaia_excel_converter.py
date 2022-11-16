@@ -31,17 +31,3 @@ def test_initialization():
 
         GaiaExcelConverter(source_file="source_file")
         MockFileStore.assert_called_once()
-
-
-def test_id_lookup(converter: GaiaExcelConverter):
-    row_1 = pd.Series([4.0, 5.0, 6.0], index=["a.b", "c.d.e", "a.c"])
-    row_2 = pd.Series([1.0, 5.0, 6.0], index=["a.b", "c.d.e", "a.c"])  # change in values
-    row_3 = pd.Series([4.0, 5.0, 6.0], index=["z.b", "c.d.e", "a.c"])  # change in index
-
-    assert converter._id_lookup(name="node", key=tuple(row_1)) == 0
-    assert converter._id_lookup(name="node", key=tuple(row_2)) == 1
-    assert converter._id_lookup(name="node", key=tuple(row_3)) == 0
-    assert converter._id_lookup(name="node", key=tuple(row_1)) == 0
-
-    assert converter._lookup[0] == ("node", (4.0, 5.0, 6.0))
-    assert converter._lookup[1] == ("node", (1.0, 5.0, 6.0))
