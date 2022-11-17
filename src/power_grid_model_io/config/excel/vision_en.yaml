@@ -11,7 +11,6 @@ grid:
           key: Number
       u_rated: Unom
       extra:
-        - Number
         - ID
         - Name
   Cables:
@@ -42,7 +41,6 @@ grid:
       tan0: 0
       i_n: Inom'
       extra:
-        - Number
         - ID
         - Name
   Links:
@@ -64,7 +62,6 @@ grid:
             Number: To.Number
       to_status: To.Switch state
       extra:
-        - Number
         - ID
         - Name
   Reactance coils:
@@ -95,7 +92,6 @@ grid:
       tan0: 0
       i_n: Inom
       extra:
-        - Number
         - ID
         - Name
   Transformers:
@@ -154,7 +150,6 @@ grid:
       r_grounding_to: Re2
       x_grounding_to: Xe2
       extra:
-        - Number
         - ID
         - Name
   Special transformers:
@@ -205,7 +200,6 @@ grid:
       r_grounding_to: 0
       x_grounding_to: 0
       extra:
-        - Number
         - ID
         - Name
   Transformer loads:
@@ -266,8 +260,6 @@ grid:
       r_grounding_to: 0
       x_grounding_to: 0
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
     node:
@@ -281,8 +273,6 @@ grid:
             - Subnumber
       u_rated: Unom2
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
     sym_load:
@@ -313,8 +303,6 @@ grid:
           - Load.Q
           - Nodes!Simultaneity[Number=Node.Number]
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
     sym_gen:
@@ -339,8 +327,6 @@ grid:
         p_specified: Generation.P
         q_specified: Generation.Q
         extra:
-          - Node.Number
-          - Subnumber
           - ID
           - Name
       - id:
@@ -367,8 +353,6 @@ grid:
             - PV.Pnom
             - 1
         extra:
-          - Node.Number
-          - Subnumber
           - ID
           - Name
   Sources:
@@ -390,8 +374,6 @@ grid:
       rx_ratio: R/X
       z01_ratio: Z0/Z1
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
   Synchronous generators:
@@ -417,8 +399,6 @@ grid:
             - cos phi
           - Q
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
   Wind turbines:
@@ -451,8 +431,6 @@ grid:
               - Wind speed
           - cos phi
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
   Loads:
@@ -479,8 +457,6 @@ grid:
           - Q
           - Nodes!Simultaneity[Number=Node.Number]
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
   Zigzag transformers:
@@ -508,8 +484,6 @@ grid:
           - R0
           - X0
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
   Pvs:
@@ -538,8 +512,6 @@ grid:
               - Inverter.Pnom | Inverter.Snom
           - Inverter.cos phi
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
 units:

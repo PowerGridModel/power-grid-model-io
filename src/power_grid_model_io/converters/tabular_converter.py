@@ -270,32 +270,12 @@ class TabularConverter(BaseConverter[TabularData]):
             # Extra info should not be added to the numpy arrays, so let's continue to the next attribute
             return
 
-        pgm_data[attr] = self._handle_column(data=data, table=table, component=component, attr=attr, col_def=col_def)
+        attr_data = self._parse_col_def(data=data, table=table, col_def=col_def, extra_info=extra_info)
 
-    def _handle_column(self, data: TabularData, table: str, component: str, attr: str, col_def: Any) -> pd.Series:
-        """This function parses a column from the table and returns a pd.Series of the data
-
-        Args:
-          data: tabularData, i.e. a dictionary with the components as keys and pd.DataFrames as values, with
-        attribute names as columns and their values in the table
-          table: the table name of the particular component in the tabular dataset
-          component: the corresponding component
-          attr: the name of the attribute
-          col_def: the name of the column
-          data: TabularData:
-          table: str:
-          component: str:
-          attr: str:
-          col_def: Any:
-
-        Returns:
-          a pd.Series of the specific column
-
-        """
-        attr_data = self._parse_col_def(data=data, table=table, col_def=col_def)
         if len(attr_data.columns) != 1:
             raise ValueError(f"DataFrame for {component}.{attr} should contain a single column ({attr_data.columns})")
-        return attr_data.iloc[:, 0]
+
+        pgm_data[attr] = attr_data.iloc[:, 0]
 
     def _handle_extra_info(
         self,
@@ -327,7 +307,7 @@ class TabularConverter(BaseConverter[TabularData]):
         if extra_info is None:
             return
 
-        extra = self._parse_col_def(data=data, table=table, col_def=col_def).to_dict(orient="records")
+        extra = self._parse_col_def(data=data, table=table, col_def=col_def, extra_info=None).to_dict(orient="records")
         for i, xtr in zip(uuids, extra):
             xtr = {k: v for k, v in xtr.items() if not isinstance(v, float) or not np.isnan(v)}
             if xtr:
@@ -370,13 +350,16 @@ class TabularConverter(BaseConverter[TabularData]):
             raise NotImplementedError("Batch data can not (yet) be stored for tabular data")
         return TabularData(**data)
 
-    def _parse_col_def(self, data: TabularData, table: str, col_def: Any) -> pd.DataFrame:
+    def _parse_col_def(
+        self, data: TabularData, table: str, col_def: Any, extra_info: Optional[ExtraInfoLookup]
+    ) -> pd.DataFrame:
         """Interpret the column definition and extract/convert/create the data as a pandas DataFrame.
 
         Args:
           data: TabularData:
           table: str:
           col_def: Any:
+          extra_info: Optional[ExtraInfoLookup]:
 
         Returns:
 
@@ -388,7 +371,7 @@ class TabularConverter(BaseConverter[TabularData]):
                 return self._parse_col_def_column_reference(data=data, table=table, col_def=col_def)
             return self._parse_col_def_column_name(data=data, table=table, col_def=col_def)
         if isinstance(col_def, dict):
-            return self._parse_col_def_filter(data=data, table=table, col_def=col_def)
+            return self._parse_col_def_filter(data=data, table=table, col_def=col_def, extra_info=extra_info)
         if isinstance(col_def, list):
             return self._parse_col_def_composite(data=data, table=table, col_def=col_def)
         raise TypeError(f"Invalid column definition: {col_def}")
@@ -485,7 +468,9 @@ class TabularConverter(BaseConverter[TabularData]):
         result = ref_column.merge(other, how="left", left_on=ref_col_name, right_on=id_col_name)
         return result[[value_col_name]]
 
-    def _parse_col_def_filter(self, data: TabularData, table: str, col_def: Dict[str, Any]) -> pd.DataFrame:
+    def _parse_col_def_filter(
+        self, data: TabularData, table: str, col_def: Dict[str, Any], extra_info: Optional[ExtraInfoLookup]
+    ) -> pd.DataFrame:
         """
         Parse column filters like 'auto_id', 'reference', 'function', etc
         """
@@ -495,7 +480,9 @@ class TabularConverter(BaseConverter[TabularData]):
             if name == "auto_id":
                 if sorted(sub_def.keys()) != ["key", "name"]:
                     raise ValueError(f"Invalid auto_id definition: {sub_def}")
-                col_data = self._parse_auto_id(data=data, table=table, name=sub_def["name"], key_col_def=sub_def["key"])
+                col_data = self._parse_auto_id(
+                    data=data, table=table, name=sub_def["name"], key_col_def=sub_def["key"], extra_info=extra_info
+                )
             elif name == "multiply":
                 raise NotImplementedError(f"Column filter '{name}' not implemented")
             elif name == "function":
@@ -515,6 +502,7 @@ class TabularConverter(BaseConverter[TabularData]):
         table: str,
         name: Union[str, List[str]],
         key_col_def: Union[str, List[str], Dict[str, str]],
+        extra_info: Optional[ExtraInfoLookup],
     ) -> pd.DataFrame:
 
         if isinstance(key_col_def, dict):
@@ -527,10 +515,14 @@ class TabularConverter(BaseConverter[TabularData]):
         else:
             raise TypeError(f"Invalid key definition type: {type(key_col_def).__name__}")
 
-        col_data = self._parse_col_def(data=data, table=table, col_def=key_col_def)
+        col_data = self._parse_col_def(data=data, table=table, col_def=key_col_def, extra_info=None)
 
-        def auto_id(row: pd.Series):
-            return self.get_id(name=name, key=dict(zip(key_names, row)))
+        def auto_id(row: np.ndarray):
+            key = dict(zip(key_names, row))
+            pgm_id = self.get_id(name=name, key=key)
+            if extra_info is not None and pgm_id not in extra_info:
+                extra_info[pgm_id] = {"auto_id": {"name": name, "key": key}}
+            return pgm_id
 
         return col_data.apply(auto_id, axis=1, raw=True)
 
@@ -551,7 +543,7 @@ class TabularConverter(BaseConverter[TabularData]):
         data_frame = []
         for fn_name, sub_def in col_def.items():
             fn_ptr = get_function(fn_name)
-            col_data = self._parse_col_def(data=data, table=table, col_def=sub_def)
+            col_data = self._parse_col_def(data=data, table=table, col_def=sub_def, extra_info=None)
             if col_data.empty:
                 raise ValueError(f"Cannot apply function {fn_name} to an empty DataFrame")
             col_data = col_data.apply(lambda row, fn=fn_ptr: fn(*row), axis=1, raw=True)
@@ -570,5 +562,5 @@ class TabularConverter(BaseConverter[TabularData]):
 
         """
         assert isinstance(col_def, list)
-        columns = [self._parse_col_def(data=data, table=table, col_def=sub_def) for sub_def in col_def]
+        columns = [self._parse_col_def(data=data, table=table, col_def=sub_def, extra_info=None) for sub_def in col_def]
         return pd.concat(columns, axis=1)
