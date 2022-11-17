@@ -1,0 +1,46 @@
+{
+  "node":
+    [
+      {"id": 0},
+      {"id": 1},
+      {"id": 2},
+      {"id": 3},
+      {"id": 10}
+    ],
+  "line":
+    [
+      {"id": 4, "from_node": 0, "to_node": 1},
+      {"id": 6, "from_node": 0, "to_node": 1}
+    ],
+  "link":
+    [
+      {"id": 5, "from_node": 0, "to_node": 1}
+    ],
+  "transformer":
+    [
+      {"id": 7, "from_node": 1, "to_node": 2},
+      {"id": 8, "from_node": 1, "to_node": 3},
+      {"id": 9, "from_node": 2, "to_node": 10}
+    ],
+  "sym_load":
+    [
+      {"id": 11, "node": 10},
+      {"id": 17, "node": 2}
+    ],
+  "sym_gen":
+    [
+      {"id": 12, "node": 10},
+      {"id": 13, "node": 10},
+      {"id": 15, "node": 3},
+      {"id": 16, "node": 2},
+      {"id": 19, "node": 2}
+    ],
+  "source":
+    [
+      {"id": 14, "node": 0}
+    ],
+  "shunt":
+    [
+      {"id": 18, "node": 2}
+    ]
+}
