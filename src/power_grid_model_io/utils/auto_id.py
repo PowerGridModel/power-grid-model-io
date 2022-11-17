@@ -42,7 +42,7 @@ class AutoID:
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._keys: Dict[Hashable, int] = {}
         self._items: List[Any] = []
 

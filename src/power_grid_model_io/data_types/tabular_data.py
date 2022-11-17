@@ -77,7 +77,7 @@ class TabularData:
 
         # If the index 'column' is requested, but no column called 'index' exist,
         # return the index of the dataframe as if it were an actual column.
-        if column_name == "index" and column_name not in table_data:
+        if column_name == "index" and "index" not in table_data and hasattr(table_data, "index"):
             return pd.Series(table_data.index, name="index")
 
         column_data = table_data[column_name]
