@@ -10,9 +10,10 @@ wheelhouse/
 
 # temporary_files
 __pycache__/
+.coverage
+.ipynb_checkpoints/
 .mypy_cache/
 .pytest_cache/
-.coverage
 cov_html/
 
 # Virtual environment
