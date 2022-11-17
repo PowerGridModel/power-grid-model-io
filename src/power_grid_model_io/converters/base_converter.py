@@ -136,9 +136,9 @@ class BaseConverter(Generic[T], ABC):
             return self._source.load()
         raise ValueError("No data supplied!")
 
-    def get_id(self, name: Union[str, List[str], Tuple[str, ...]], key: Mapping[str, int]) -> int:
+    def _get_id(self, name: Union[str, List[str], Tuple[str, ...]], key: Mapping[str, int]) -> int:
         """
-        Get a unique numerical ID for the name / key combination
+        Get a unique numerical ID for the supplied name / key combination
 
         Args:
             name: Component name (e.g. "Node" or ["Transformer", "Internal node"])
@@ -147,6 +147,21 @@ class BaseConverter(Generic[T], ABC):
         Returns: A unique id
         """
         auto_id_key = (tuple(name), tuple(sorted(key.items())))
+        return self._auto_id(item=(name, key), key=auto_id_key)
+
+    def get_id(self, name: Union[str, List[str], Tuple[str, ...]], key: Mapping[str, int]) -> int:
+        """
+        Get a the numerical ID previously associated with the supplied name / key combination
+
+        Args:
+            name: Component name (e.g. "Node" or ["Transformer", "Internal node"])
+            key: Component identifier (e.g. {"name": "node1"} or {"number": 1, "sub_number": 2})
+
+        Returns: The associated id
+        """
+        auto_id_key = (tuple(name), tuple(sorted(key.items())))
+        if auto_id_key not in self._auto_id:
+            raise KeyError((name, key))
         return self._auto_id(item=(name, key), key=auto_id_key)
 
     def lookup_id(self, pgm_id: int) -> Tuple[Union[str, List[str]], Dict[str, int]]:

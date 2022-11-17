@@ -492,7 +492,7 @@ def test_parse_col_def_filter(converter: TabularConverter, tabular_data_no_units
         assert_frame_equal(df, pd.DataFrame([3, 4]))
 
 
-@patch("power_grid_model_io.converters.tabular_converter.TabularConverter.get_id")
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._get_id")
 def test_parse_auto_id(
     mock_get_id: MagicMock, converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
 ):
