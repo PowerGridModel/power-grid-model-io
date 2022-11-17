@@ -43,6 +43,35 @@ grid:
         - Number
         - ID
         - Name
+  Lines:
+    line:
+      id:
+        auto_id:
+          name: Lines
+          key: Number
+      from_node:
+        auto_id:
+          name: Nodes
+          key: From.Number
+      from_status: From.Switch state
+      to_node:
+        auto_id:
+          name: Nodes
+          key: To.Number
+      to_status: To.Switch state
+      r1: R
+      x1: X
+      c1: C
+      tan1: 0
+      r0: R0
+      x0: X0
+      c0: C0
+      tan0: 0
+      i_n: Inom'
+      extra:
+        - Number
+        - ID
+        - Name
   Links:
     link:
       id:
@@ -491,6 +520,30 @@ grid:
         power_grid_model_io.filters.complex_inverse_imaginary_part:
           - R0
           - X0
+      extra:
+        - Node.Number
+        - Subnumber
+        - ID
+        - Name
+  Capacitors:
+    shunt:
+      id:
+        auto_id:
+        name: Capacitors
+        key:
+          - Node.Number
+          - Subnumber
+      node:
+        auto_id:
+          name: Nodes
+          key: Node.Number
+      g1: 0
+      b1:
+        power_grid_model_io.filters.phase_to_phase.reactive_power_to_susceptance:
+          - Q
+          - Unom
+      g0: 0
+      b0: 0
       extra:
         - Node.Number
         - Subnumber
