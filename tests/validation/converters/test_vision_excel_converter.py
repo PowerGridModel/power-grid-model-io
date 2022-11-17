@@ -4,7 +4,7 @@
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Tuple
+from typing import List, Tuple
 
 import pandas as pd
 import pytest
@@ -13,7 +13,7 @@ from power_grid_model.data_types import SingleDataset
 from power_grid_model_io.converters.vision_excel_converter import VisionExcelConverter
 from power_grid_model_io.data_types import ExtraInfoLookup
 
-from ..utils import component_attributes, load_json_single_dataset, select_values
+from ..utils import component_attributes, component_objects, load_json_single_dataset, select_values
 
 DATA_PATH = Path(__file__).parents[2] / "data" / "vision"
 SOURCE_FILE = DATA_PATH / "vision_validation.xlsx"
@@ -47,7 +47,7 @@ def test_input_data(actual, expected):
     assert len(expected) <= len(actual)
 
 
-@pytest.mark.parametrize(("component", "attribute"), component_attributes(DATA_PATH / "vision_validation.json"))
+@pytest.mark.parametrize(("component", "attribute"), component_attributes(VALIDATION_FILE))
 def test_attributes(actual, expected, component: str, attribute: str):
     """
     For each attribute, check if the actual values are consistent with the expected values
@@ -63,7 +63,11 @@ def test_attributes(actual, expected, component: str, attribute: str):
     pd.testing.assert_series_equal(actual_values, expected_values)
 
 
-def test_extra_info(actual, expected):
+@pytest.mark.parametrize(
+    ("component", "obj_ids"),
+    (pytest.param(component, objects, id=component) for component, objects in component_objects(VALIDATION_FILE)),
+)
+def test_extra_info(actual, expected, component: str, obj_ids: List[int]):
     """
     For each object, check if the actual extra info is consistent with the expected extra info
     """
@@ -72,7 +76,36 @@ def test_extra_info(actual, expected):
     _, expected_extra_info = expected
 
     # Assert
-    for obj_id, extra_info in expected_extra_info.items():
-        assert obj_id in actual_extra_info
+
+    # We'll collect all errors, instead of terminating at the first error
+    errors = []
+
+    # Check each object in this component
+    for obj_id in obj_ids:
+
+        # If there is no extra_info available in the validation data, just skip this object
+        if obj_id not in expected_extra_info:
+            continue
+
+        # If the object doesn't exist in the actual data, that's an error
+        if obj_id not in actual_extra_info:
+            errors.append(f"Expected {component} #{obj_id}, but it is missing.")
+            continue
+
+        # Now for each extra_info in the validation file, check if it matches the actual extra info
+        act = actual_extra_info[obj_id]
         for key, value in expected_extra_info[obj_id].items():
-            assert actual_extra_info[obj_id][key] == value
+
+            # If the extra_info doesn't exist, that's an error
+            if key not in act:
+                errors.append(f"Expected extra info '{key}' for {component} #{obj_id}, but it is missing.")
+
+            # If the values don't match, that's an error
+            elif act[key] != value:
+                errors.append(
+                    f"Expected extra info '{key}' for {component} #{obj_id} to be {value}, " f"but it is {act[key]}."
+                )
+
+    # Raise a value error, containing all the errors at once
+    if errors:
+        raise ValueError("\n" + "\n".join(errors))

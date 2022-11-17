@@ -30,6 +30,26 @@ def load_json_file(file_path: Path) -> StructuredData:
     return data
 
 
+def component_objects(json_path: Path) -> Generator[Tuple[str, List[int]], None, None]:
+    """
+    Read the json file (only the components and their ids are are used, i.e. the component names and attribute name)
+
+    Args:
+        json_path: The source json file (e.g. input.json)
+
+    Yields: A tuple (component, ids) for each component available in the json file
+
+    """
+    data = load_json_file(json_path)
+    assert isinstance(data, dict)
+
+    # Loop over all components in the validation file (in alphabetical order)
+    for component, objects in sorted(data.items(), key=lambda x: x[0]):
+        obj_ids = [obj["id"] for obj in objects]
+        if obj_ids:
+            yield component, obj_ids
+
+
 def component_attributes(json_path: Path, data_type: str = "input") -> Generator[Tuple[str, str], None, None]:
     """
     Read the json file (only the structure is used, i.e. the component names and attribute name)
@@ -89,6 +109,12 @@ def select_values(actual: SingleDataset, expected: SingleDataset, component: str
         mask = ~pd.isna(expected_values)
 
     # Use only the actual_values for which we have expected values
+    missing_idx = set(expected_values.index) - set(actual_values.index)
+    if len(missing_idx) == 1:
+        raise KeyError(f"Expected {component} #{missing_idx.pop()}, but it is missing.")
+    elif len(missing_idx) > 1:
+        raise KeyError(f"Expected {component}s {missing_idx}, but they are missing.")
+
     actual_values = actual_values[expected_values.index][mask]
     expected_values = expected_values[mask]
 
