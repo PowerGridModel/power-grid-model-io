@@ -36,6 +36,7 @@ def component_attributes(json_path: Path, data_type: str = "input") -> Generator
 
     Args:
         json_path: The source json file (e.g. input.json)
+        data_type: The pgm data type; this determines which attributes are considered pgm attributes
 
     Yields: A tuple (component, attribute) for each attribute available in the json file
 
@@ -47,7 +48,9 @@ def component_attributes(json_path: Path, data_type: str = "input") -> Generator
     for component, objects in sorted(data.items(), key=lambda x: x[0]):
 
         # Create a set of attribute names for each object, then take the union of all those sets
-        unique_attributes = set().union(*(set(obj.keys()) for obj in objects))
+        pgm_attr = set(power_grid_meta_data[data_type][component]["dtype"].names)
+        obj_keys = (set(obj.keys()) & pgm_attr for obj in objects)
+        unique_attributes = set().union(*obj_keys)
 
         # Yield the data for each attribute (in alphabetical order)
         for attribute in sorted(unique_attributes):
@@ -93,7 +96,27 @@ def select_values(actual: SingleDataset, expected: SingleDataset, component: str
     return actual_values, expected_values
 
 
-def load_json_single_dataset(file_path: Path, data_type: str = "input") -> SingleDataset:
+def extract_extra_info(data: SinglePythonDataset, data_type: str = "input") -> ExtraInfoLookup:
+    """
+    Reads the dataset and collect all arguments that aren't pgm attributes
+
+    Args:
+        data: A dictionary containing all the components
+        data_type: The pgm data type; this determines which attributes are considered pgm attributes
+
+    Returns: A dictionary indexed on the object id and containing the extra info for all the objects.
+    """
+    extra_info: ExtraInfoLookup = {}
+    for component, objects in data.items():
+        pgm_attr = set(power_grid_meta_data[data_type][component]["dtype"].names)
+        for obj in objects:
+            obj_extra_info = {attr: val for attr, val in obj.items() if attr not in pgm_attr}
+            if obj_extra_info:
+                extra_info[obj["id"]] = obj_extra_info
+    return extra_info
+
+
+def load_json_single_dataset(file_path: Path, data_type: str = "input") -> Tuple[SingleDataset, ExtraInfoLookup]:
     """
     Loads and parses a json file in the most basic way, without using power_grid_model_io functions.
 
@@ -101,10 +124,11 @@ def load_json_single_dataset(file_path: Path, data_type: str = "input") -> Singl
         file_path: The json file path
         data_type: The pgm data type; this determines which attributes are considered pgm attributes
 
-    Returns: A native pgm dataset
+    Returns: A native pgm dataset and an extra info lookup table
 
     """
     raw_data = load_json_file(file_path)
     assert isinstance(raw_data, dict)
     dataset = convert_python_single_dataset_to_single_dataset(data=raw_data, data_type=data_type, ignore_extra=True)
-    return dataset
+    extra_info = extract_extra_info(raw_data)
+    return dataset, extra_info

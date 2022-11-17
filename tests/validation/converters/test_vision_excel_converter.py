@@ -22,25 +22,21 @@ VALIDATION_FILE = DATA_PATH / "vision_validation.json"
 
 @pytest.fixture
 @lru_cache
-def actual() -> SingleDataset:
+def actual() -> Tuple[SingleDataset, ExtraInfoLookup]:
     """
     Read the excel file and do the conversion (extra info won't be used, for now)
     """
-
-    # Arrange
-    actual_data, _actual_extra_info = VisionExcelConverter(SOURCE_FILE).load_input_data()
-    return actual_data
+    actual_data, actual_extra_info = VisionExcelConverter(SOURCE_FILE).load_input_data()
+    return actual_data, actual_extra_info
 
 
 @pytest.fixture
-def expected() -> SingleDataset:
+def expected() -> Tuple[SingleDataset, ExtraInfoLookup]:
     """
     Read the json file (extra info is currently not tested and therefore not allowed)
     """
-
-    # Arrange
-    expected_data = load_json_single_dataset(VALIDATION_FILE)
-    return expected_data
+    expected_data, expected_extra_info = load_json_single_dataset(VALIDATION_FILE)
+    return expected_data, expected_extra_info
 
 
 def test_input_data(actual, expected):
@@ -56,9 +52,27 @@ def test_attributes(actual, expected, component: str, attribute: str):
     """
     For each attribute, check if the actual values are consistent with the expected values
     """
+    # Arrange
+    actual_data, _ = actual
+    expected_data, _ = expected
 
     # Act
-    actual_values, expected_values = select_values(actual, expected, component, attribute)
+    actual_values, expected_values = select_values(actual_data, expected_data, component, attribute)
 
     # Assert
     pd.testing.assert_series_equal(actual_values, expected_values)
+
+
+def test_extra_info(actual, expected):
+    """
+    For each object, check if the actual extra info is consistent with the expected extra info
+    """
+    # Arrange
+    _, actual_extra_info = actual
+    _, expected_extra_info = expected
+
+    # Assert
+    for obj_id, extra_info in expected_extra_info.items():
+        assert obj_id in actual_extra_info
+        for key, value in expected_extra_info[obj_id].items():
+            assert actual_extra_info[obj_id][key] == value
