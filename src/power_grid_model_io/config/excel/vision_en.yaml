@@ -10,7 +10,10 @@ grid:
           name: Nodes
           key: Number
       u_rated: Unom
-      extra: ID
+      extra:
+        - Number
+        - ID
+        - Name
   Cables:
     line:
       id:
@@ -37,8 +40,9 @@ grid:
       tan0: 0
       i_n: Inom'
       extra:
-        - Name
+        - Number
         - ID
+        - Name
   Links:
     link:
       id:
@@ -55,6 +59,10 @@ grid:
           name: Nodes
           key: To.Number
       to_status: To.Switch state
+      extra:
+        - Number
+        - ID
+        - Name
   Reactance coils:
     line:
       id:
@@ -81,14 +89,15 @@ grid:
       tan0: 0
       i_n: Inom
       extra:
-        - Name
+        - Number
         - ID
+        - Name
   Transformers:
     transformer:
       id:
         auto_id:
           name: Transformers
-          key: From.Number
+          key: Number
       from_node:
         auto_id:
           name: Nodes
@@ -137,14 +146,15 @@ grid:
       r_grounding_to: Re2
       x_grounding_to: Xe2
       extra:
-        - Name
+        - Number
         - ID
+        - Name
   Special transformers:
     transformer:
       id:
         auto_id:
           name: Special transformers
-          key: From.Number
+          key: Number
       from_node:
         auto_id:
           name: Nodes
@@ -185,8 +195,9 @@ grid:
       r_grounding_to: 0
       x_grounding_to: 0
       extra:
-        - Name
+        - Number
         - ID
+        - Name
   Transformer loads:
     transformer:
       id:
@@ -244,8 +255,10 @@ grid:
       r_grounding_to: 0
       x_grounding_to: 0
       extra:
-        - Name
+        - Node.Number
+        - Subnumber
         - ID
+        - Name
     node:
       id:
         auto_id:
@@ -256,7 +269,11 @@ grid:
             - Node.Number
             - Subnumber
       u_rated: Unom2
-      extra: ID
+      extra:
+        - Node.Number
+        - Subnumber
+        - ID
+        - Name
     sym_load:
       id:
         auto_id:
@@ -285,8 +302,10 @@ grid:
           - Load.Q
           - Nodes!Simultaneity[Number=Node.Number]
       extra:
-        - Name
+        - Node.Number
+        - Subnumber
         - ID
+        - Name
     sym_gen:
       - id:
           auto_id:
@@ -308,7 +327,11 @@ grid:
         type: 0
         p_specified: Generation.P
         q_specified: Generation.Q
-        extra: Name
+        extra:
+          - Node.Number
+          - Subnumber
+          - ID
+          - Name
       - id:
           auto_id:
             name:
@@ -332,7 +355,11 @@ grid:
           power_grid_model_io.filters.phase_to_phase.reactive_power:
             - PV.Pnom
             - 1
-        extra: Name
+        extra:
+          - Node.Number
+          - Subnumber
+          - ID
+          - Name
   Sources:
     source:
       id:
@@ -350,6 +377,11 @@ grid:
       sk: Sk"nom
       rx_ratio: R/X
       z01_ratio: Z0/Z1
+      extra:
+        - Node.Number
+        - Subnumber
+        - ID
+        - Name
   Synchronous generators:
     sym_gen:
       id:
@@ -371,7 +403,11 @@ grid:
             - Pref
             - cos phi
           - Q
-      extra: Name
+      extra:
+        - Node.Number
+        - Subnumber
+        - ID
+        - Name
   Wind turbines:
     sym_gen:
       id:
@@ -400,7 +436,11 @@ grid:
               - Pnom
               - Wind speed
           - cos phi
-      extra: Name
+      extra:
+        - Node.Number
+        - Subnumber
+        - ID
+        - Name
   Loads:
     sym_load:
       id:
@@ -424,8 +464,10 @@ grid:
           - Q
           - Nodes!Simultaneity[Number=Node.Number]
       extra:
-        - Name
+        - Node.Number
+        - Subnumber
         - ID
+        - Name
   Zigzag transformers:
     shunt:
       id:
@@ -450,8 +492,10 @@ grid:
           - R0
           - X0
       extra:
-        - Name
+        - Node.Number
+        - Subnumber
         - ID
+        - Name
   Pvs:
     sym_gen:
       id:
@@ -476,7 +520,11 @@ grid:
               - Pnom
               - Inverter.Pnom | Inverter.Snom
           - Inverter.cos phi
-      extra: Name
+      extra:
+        - Node.Number
+        - Subnumber
+        - ID
+        - Name
 units:
   A:
   F:
