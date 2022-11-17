@@ -11,7 +11,7 @@ from power_grid_model import power_grid_meta_data
 
 from .utils import component_attributes, select_values
 
-MOCK_JSON_DATA = '{"node":[{"id": 0, "foo": 0},{"id": 0, "bar": 0}], "line": [{"id": 0, "baz": 0}]}'
+MOCK_JSON_DATA = '{"node":[{"id":0,"u_rated":0.0},{"id":0,"u_rated":0.0}],"line":[{"id":0,"i_n": 0}]}'
 
 
 @patch("pathlib.Path.open", mock_open(read_data=MOCK_JSON_DATA))
@@ -20,7 +20,7 @@ def test_component_attributes():
     generator = component_attributes(Path("test.json"))
 
     # Assert
-    assert list(generator) == [("line", "baz"), ("line", "id"), ("node", "bar"), ("node", "foo"), ("node", "id")]
+    assert list(generator) == [("line", "i_n"), ("line", "id"), ("node", "id"), ("node", "u_rated")]
 
 
 def test_select_values():
