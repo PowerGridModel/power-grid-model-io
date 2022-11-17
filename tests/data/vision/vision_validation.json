@@ -1,46 +1,46 @@
 {
   "node":
     [
-      {"id": 0},
-      {"id": 1},
-      {"id": 2},
-      {"id": 3},
-      {"id": 10}
+      {"id": 0, "Number": 1, "Name": "node1"},
+      {"id": 1, "Number": 2, "Name": "node2"},
+      {"id": 2, "Number": 3, "Name": "node3"},
+      {"id": 3, "Number": 4, "Name": "node4"},
+      {"id": 10, "Node.Number": 3, "Subnumber": 4, "Name": "transformer_load_1"}
     ],
   "line":
     [
-      {"id": 4, "from_node": 0, "to_node": 1},
-      {"id": 6, "from_node": 0, "to_node": 1}
+      {"id": 4, "from_node": 0, "to_node": 1, "Name": "cable1"},
+      {"id": 6, "from_node": 0, "to_node": 1, "Number": 1, "Name": "rcoil1"}
     ],
   "link":
     [
-      {"id": 5, "from_node": 0, "to_node": 1}
+      {"id": 5, "from_node": 0, "to_node": 1, "Number": 1, "Name": "link1"}
     ],
   "transformer":
     [
-      {"id": 7, "from_node": 1, "to_node": 2},
-      {"id": 8, "from_node": 1, "to_node": 3},
-      {"id": 9, "from_node": 2, "to_node": 10}
+      {"id": 7, "from_node": 1, "to_node": 2, "Number": 1, "Name": "transformer1"},
+      {"id": 8, "from_node": 1, "to_node": 3, "Number": 1, "Name": "special_trans1"},
+      {"id": 9, "from_node": 2, "to_node": 10,"Node.Number": 3, "Subnumber": 4, "Name": "transformer_load_1"}
     ],
   "sym_load":
     [
-      {"id": 11, "node": 10},
-      {"id": 17, "node": 2}
+      {"id": 11, "node": 10, "Node.Number": 3, "Subnumber": 4, "Name": "transformer_load_1"},
+      {"id": 17, "node": 2, "Node.Number": 3, "Subnumber": 6, "Name": "load1"}
     ],
   "sym_gen":
     [
-      {"id": 12, "node": 10},
-      {"id": 13, "node": 10},
-      {"id": 15, "node": 3},
-      {"id": 16, "node": 2},
-      {"id": 19, "node": 2}
+      {"id": 12, "node": 10, "Node.Number": 3, "Subnumber": 4, "Name": "transformer_load_1"},
+      {"id": 13, "node": 10, "Node.Number": 3, "Subnumber": 4, "Name": "transformer_load_1"},
+      {"id": 15, "node": 3, "Node.Number": 4, "Subnumber": 2, "Name": "syngen1"},
+      {"id": 16, "node": 2, "Node.Number": 3, "Subnumber": 3, "Name": "wind1"},
+      {"id": 19, "node": 2, "Node.Number": 3, "Subnumber": 1, "Name": "pv1"}
     ],
   "source":
     [
-      {"id": 14, "node": 0}
+      {"id": 14, "node": 0, "Node.Number": 1, "Subnumber": 1, "Name": "source1"}
     ],
   "shunt":
     [
-      {"id": 18, "node": 2}
+      {"id": 18, "node": 2, "Node.Number": 3, "Subnumber": 5, "Name": "zztrans1"}
     ]
 }
