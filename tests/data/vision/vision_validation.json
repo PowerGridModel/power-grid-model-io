@@ -37,10 +37,10 @@
     ],
   "source":
     [
-      {"id": 14, "node": 0, "Node.Number": 1, "Subnumber": 1, "x": 123, "Name": "source1"}
+      {"id": 14, "node": 0, "Node.Number": 1, "Subnumber": 1, "Name": "source1"}
     ],
   "shunt":
     [
-      {"id": 18, "node": 2, "Node.Number": 3, "Subnumber": 7, "Name": "zztrans1"}
+      {"id": 18, "node": 2, "Node.Number": 3, "Subnumber": 5, "Name": "zztrans1"}
     ]
 }
