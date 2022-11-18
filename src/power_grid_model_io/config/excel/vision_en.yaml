@@ -549,6 +549,32 @@ grid:
         - Subnumber
         - ID
         - Name
+  Reactors:
+    shunt:
+      id:
+        auto_id:
+        name: Reactors
+        key:
+          - Node.Number
+          - Subnumber
+      node:
+        auto_id:
+          name: Nodes
+          key: Node.Number
+      g1: 0
+      b1:
+        power_grid_model_io.filters.multiply:
+          - power_grid_model_io.filters.phase_to_phase.reactive_power_to_susceptance:
+             - Q
+             - Unom
+          - -1
+      g0: 0
+      b0: 0
+      extra:
+        - Node.Number
+        - Subnumber
+        - ID
+        - Name
   Pvs:
     sym_gen:
       id:
@@ -564,15 +590,19 @@ grid:
       status: Switch state
       type: 0
       p_specified:
-        min:
-          - Pnom
-          - Inverter.Pnom | Inverter.Snom
-      q_specified:
-        power_grid_model_io.filters.phase_to_phase.reactive_power:
+        power_grid_model_io.filters.multiply:
           - min:
-              - Pnom
-              - Inverter.Pnom | Inverter.Snom
-          - Inverter.cos phi
+             - Pnom
+             - Inverter.Pnom | Inverter.Snom
+          - Scaling
+      q_specified:
+        power_grid_model_io.filters.multiply:
+          - power_grid_model_io.filters.phase_to_phase.reactive_power:
+             - min:
+                 - Pnom
+                 - Inverter.Pnom | Inverter.Snom
+             - Inverter.cos phi
+          - Scaling
       extra:
         - Node.Number
         - Subnumber
