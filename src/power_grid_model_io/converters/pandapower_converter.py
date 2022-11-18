@@ -142,7 +142,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_shunts["node"] = self._get_ids("bus", pp_shunt["bus"])
         pgm_shunts["status"] = pp_shunt["in_service"]
         pgm_shunts["g1"] = pp_shunt["p_mw"] * pp_shunt["step"] / vn_kv_2
-        pgm_shunts["b1"] = pp_shunt["q_mvar"] * pp_shunt["step"] / vn_kv_2
+        pgm_shunts["b1"] = - pp_shunt["q_mvar"] * pp_shunt["step"] / vn_kv_2
 
         self.pgm_data["shunt"] = pgm_shunts
 
