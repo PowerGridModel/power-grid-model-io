@@ -529,10 +529,10 @@ grid:
     shunt:
       id:
         auto_id:
-        name: Capacitors
-        key:
-          - Node.Number
-          - Subnumber
+          name: Capacitors
+          key:
+            - Node.Number
+            - Subnumber
       node:
         auto_id:
           name: Nodes
@@ -553,10 +553,10 @@ grid:
     shunt:
       id:
         auto_id:
-        name: Reactors
-        key:
-          - Node.Number
-          - Subnumber
+          name: Reactors
+          key:
+            - Node.Number
+            - Subnumber
       node:
         auto_id:
           name: Nodes
@@ -631,6 +631,7 @@ units:
   one:
     pu: 1.0
     "%": 0.01
+    "‰": 0.001
 
 substitutions:
   ".*Switch state":
