@@ -537,6 +537,7 @@ grid:
         auto_id:
           name: Nodes
           key: Node.Number
+      status: Switch state
       g1: 0
       b1:
         power_grid_model_io.filters.phase_to_phase.reactive_power_to_susceptance:
@@ -561,6 +562,7 @@ grid:
         auto_id:
           name: Nodes
           key: Node.Number
+      status: Switch state
       g1: 0
       b1:
         power_grid_model_io.filters.multiply:
