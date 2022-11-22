@@ -43,6 +43,36 @@ grid:
       extra:
         - ID
         - Name
+  Lines:
+    line:
+      id:
+        auto_id:
+          name: Lines
+          key: Number
+      from_node:
+        auto_id:
+          name: Nodes
+          key:
+            Number: From.Number
+      from_status: From.Switch state
+      to_node:
+        auto_id:
+          name: Nodes
+          key:
+            Number: To.Number
+      to_status: To.Switch state
+      r1: R
+      x1: X
+      c1: C
+      tan1: 0
+      r0: R0
+      x0: X0
+      c0: C0
+      tan0: 0
+      i_n: Inom'
+      extra:
+        - ID
+        - Name
   Links:
     link:
       id:
@@ -486,6 +516,56 @@ grid:
       extra:
         - ID
         - Name
+  Capacitors:
+    shunt:
+      id:
+        auto_id:
+          name: Capacitors
+          key:
+            - Node.Number
+            - Subnumber
+      node:
+        auto_id:
+          name: Nodes
+          key:
+            Number: Node.Number
+      status: Switch state
+      g1: 0
+      b1:
+        power_grid_model_io.filters.phase_to_phase.reactive_power_to_susceptance:
+          - Q
+          - Unom
+      g0: 0
+      b0: 0
+      extra:
+        - ID
+        - Name
+  Reactors:
+    shunt:
+      id:
+        auto_id:
+          name: Reactors
+          key:
+            - Node.Number
+            - Subnumber
+      node:
+        auto_id:
+          name: Nodes
+          key:
+            Number: Node.Number
+      status: Switch state
+      g1: 0
+      b1:
+        power_grid_model_io.filters.multiply:
+          - power_grid_model_io.filters.phase_to_phase.reactive_power_to_susceptance:
+             - Q
+             - Unom
+          - -1
+      g0: 0
+      b0: 0
+      extra:
+        - ID
+        - Name
   Pvs:
     sym_gen:
       id:
@@ -502,15 +582,19 @@ grid:
       status: Switch state
       type: 0
       p_specified:
-        min:
-          - Pnom
-          - Inverter.Pnom | Inverter.Snom
-      q_specified:
-        power_grid_model_io.filters.phase_to_phase.reactive_power:
+        power_grid_model_io.filters.multiply:
           - min:
-              - Pnom
-              - Inverter.Pnom | Inverter.Snom
-          - Inverter.cos phi
+             - Pnom
+             - Inverter.Pnom | Inverter.Snom
+          - Scaling
+      q_specified:
+        power_grid_model_io.filters.multiply:
+          - power_grid_model_io.filters.phase_to_phase.reactive_power:
+             - min:
+                 - Pnom
+                 - Inverter.Pnom | Inverter.Snom
+             - Inverter.cos phi
+          - Scaling
       extra:
         - ID
         - Name
@@ -537,6 +621,7 @@ units:
   one:
     pu: 1.0
     "%": 0.01
+    "‰": 0.001
 
 substitutions:
   ".*Switch state":
