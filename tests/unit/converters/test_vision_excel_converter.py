@@ -12,22 +12,22 @@ from power_grid_model_io.converters.vision_excel_converter import VisionExcelCon
 def converter() -> VisionExcelConverter:
     # Arrange
     converter = VisionExcelConverter()
-    converter.get_id("Nodes", {"Number": 1})  # node: 0
-    converter.get_id("Cables", {"Number": 1})  # branch: 1
-    converter.get_id("Links", {"Number": 1})  # branch: 2
-    converter.get_id("Reactance coils", {"Number": 1})  # branch: 3
-    converter.get_id("Special transformers", {"Number": 1})  # branch: 4
-    converter.get_id(["Transformer loads", "transformer"], {"Node.Number": 1, "Subnumber": 2})  # virtual: 5
-    converter.get_id(["Transformer loads", "internal_node"], {"Node.Number": 1, "Subnumber": 2})  # virtual:  6
-    converter.get_id(["Transformer loads", "load"], {"Node.Number": 1, "Subnumber": 2})  # virtual:  7
-    converter.get_id(["Transformer loads", "generation"], {"Node.Number": 1, "Subnumber": 2})  # virtual:  8
-    converter.get_id(["Transformer loads", "pv_generation"], {"Node.Number": 1, "Subnumber": 2})  # virtual:  9
-    converter.get_id("Sources", {"Node.Number": 1, "Subnumber": 2})  # appliance: 10
-    converter.get_id("Synchronous generators", {"Node.Number": 1, "Subnumber": 2})  # appliance: 11
-    converter.get_id("Wind turbines", {"Node.Number": 1, "Subnumber": 2})  # appliance: 12
-    converter.get_id("Loads", {"Node.Number": 1, "Subnumber": 2})  # appliance: 13
-    converter.get_id("Zigzag transformers", {"Node.Number": 1, "Subnumber": 2})  # appliance: 14
-    converter.get_id("Pvs", {"Node.Number": 1, "Subnumber": 2})  # appliance: 15
+    converter._get_id("Nodes", {"Number": 1})  # node: 0
+    converter._get_id("Cables", {"Number": 1})  # branch: 1
+    converter._get_id("Links", {"Number": 1})  # branch: 2
+    converter._get_id("Reactance coils", {"Number": 1})  # branch: 3
+    converter._get_id("Special transformers", {"Number": 1})  # branch: 4
+    converter._get_id(["Transformer loads", "transformer"], {"Node.Number": 1, "Subnumber": 2})  # virtual: 5
+    converter._get_id(["Transformer loads", "internal_node"], {"Node.Number": 1, "Subnumber": 2})  # virtual:  6
+    converter._get_id(["Transformer loads", "load"], {"Node.Number": 1, "Subnumber": 2})  # virtual:  7
+    converter._get_id(["Transformer loads", "generation"], {"Node.Number": 1, "Subnumber": 2})  # virtual:  8
+    converter._get_id(["Transformer loads", "pv_generation"], {"Node.Number": 1, "Subnumber": 2})  # virtual:  9
+    converter._get_id("Sources", {"Node.Number": 1, "Subnumber": 2})  # appliance: 10
+    converter._get_id("Synchronous generators", {"Node.Number": 1, "Subnumber": 2})  # appliance: 11
+    converter._get_id("Wind turbines", {"Node.Number": 1, "Subnumber": 2})  # appliance: 12
+    converter._get_id("Loads", {"Node.Number": 1, "Subnumber": 2})  # appliance: 13
+    converter._get_id("Zigzag transformers", {"Node.Number": 1, "Subnumber": 2})  # appliance: 14
+    converter._get_id("Pvs", {"Node.Number": 1, "Subnumber": 2})  # appliance: 15
     return converter
 
 
@@ -53,6 +53,9 @@ def test_get_node_id(converter: VisionExcelConverter):
     # Act / Assert
     assert converter.get_node_id(number=1) == 0
 
+    with pytest.raises(KeyError):
+        converter.get_node_id(number=2)
+
 
 def test_get_branch_id(converter: VisionExcelConverter):
     # Act / Assert
@@ -60,6 +63,12 @@ def test_get_branch_id(converter: VisionExcelConverter):
     assert converter.get_branch_id(table="Links", number=1) == 2
     assert converter.get_branch_id(table="Reactance coils", number=1) == 3
     assert converter.get_branch_id(table="Special transformers", number=1) == 4
+
+    with pytest.raises(KeyError):
+        converter.get_branch_id(table="Dummy", number=1)
+
+    with pytest.raises(KeyError):
+        converter.get_branch_id(table="Cables", number=2)
 
 
 def test_get_virtual_id(converter: VisionExcelConverter):
@@ -74,6 +83,18 @@ def test_get_virtual_id(converter: VisionExcelConverter):
         converter.get_virtual_id(table="Transformer loads", obj_name="pv_generation", node_number=1, sub_number=2) == 9
     )
 
+    with pytest.raises(KeyError):
+        converter.get_virtual_id(table="Dummy", obj_name="transformer", node_number=1, sub_number=2)
+
+    with pytest.raises(KeyError):
+        converter.get_virtual_id(table="Transformer loads", obj_name="Dummy", node_number=1, sub_number=2)
+
+    with pytest.raises(KeyError):
+        converter.get_virtual_id(table="Transformer loads", obj_name="transformer", node_number=2, sub_number=2)
+
+    with pytest.raises(KeyError):
+        converter.get_virtual_id(table="Transformer loads", obj_name="transformer", node_number=1, sub_number=3)
+
 
 def test_get_appliance_id(converter: VisionExcelConverter):
     # Act / Assert
@@ -83,3 +104,12 @@ def test_get_appliance_id(converter: VisionExcelConverter):
     assert converter.get_appliance_id(table="Loads", node_number=1, sub_number=2) == 13
     assert converter.get_appliance_id(table="Zigzag transformers", node_number=1, sub_number=2) == 14
     assert converter.get_appliance_id(table="Pvs", node_number=1, sub_number=2) == 15
+
+    with pytest.raises(KeyError):
+        converter.get_appliance_id(table="Dummy", node_number=1, sub_number=2)
+
+    with pytest.raises(KeyError):
+        converter.get_appliance_id(table="Sources", node_number=2, sub_number=2)
+
+    with pytest.raises(KeyError):
+        converter.get_appliance_id(table="Sources", node_number=1, sub_number=3)

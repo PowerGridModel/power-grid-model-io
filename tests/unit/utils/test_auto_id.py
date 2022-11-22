@@ -17,6 +17,11 @@ def test_auto_id__without_items():
     with raises(IndexError):
         _ = auto_id[3]
 
+    assert 0 in auto_id
+    assert 1 in auto_id
+    assert 2 in auto_id
+    assert 3 not in auto_id
+
 
 def test_auto_id__with_hashable_items():
     auto_id = AutoID()
@@ -27,6 +32,13 @@ def test_auto_id__with_hashable_items():
     assert auto_id[1] == "Bravo"
     with raises(IndexError):
         _ = auto_id[2]
+
+    assert 0 in auto_id
+    assert 1 in auto_id
+    assert 2 not in auto_id
+    assert "Alpha" in auto_id
+    assert "Bravo" in auto_id
+    assert "Charly" not in auto_id
 
 
 def test_auto_id__with_non_hashable_items():
@@ -40,6 +52,15 @@ def test_auto_id__with_non_hashable_items():
     assert auto_id[1] == {"name": "Bravo"}
     with raises(IndexError):
         _ = auto_id[2]
+
+    assert 0 in auto_id
+    assert 1 in auto_id
+    assert 2 not in auto_id
+    assert "Alpha" in auto_id
+    assert "Bravo" in auto_id
+    assert "Charly" not in auto_id
+    assert {"name": "Alpha"} not in auto_id
+    assert {"name": "Bravo"} not in auto_id
 
 
 def test_auto_id__with_clashing_keys():

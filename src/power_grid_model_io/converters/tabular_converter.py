@@ -544,7 +544,7 @@ class TabularConverter(BaseConverter[TabularData]):
         col_data = self._parse_col_def(data=data, table=table, col_def=key_col_def)
 
         def auto_id(row: pd.Series):
-            return self.get_id(name=name, key=dict(zip(key_names, row)))
+            return self._get_id(name=name, key=dict(zip(key_names, row)))
 
         return col_data.apply(auto_id, axis=1, raw=True)
 
