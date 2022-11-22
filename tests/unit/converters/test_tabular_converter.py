@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Optional, Tuple
 from unittest.mock import MagicMock, call, patch
 
 import numpy as np
@@ -303,17 +303,6 @@ def test_serialize_data(converter: TabularConverter, pgm_node_empty: SingleDatas
     assert (tabular_data._data["node"]["u_rated"] == np.array([3.0, 4.0])).all()
 
 
-def test_id_lookup(converter: TabularConverter):
-    a01 = converter._id_lookup(name="a", key=(0, 1))
-    b0 = converter._id_lookup(name="b", key=0)
-    b0_ = converter._id_lookup(name="b", key=0)
-    a0 = converter._id_lookup(name="a", key=0)
-    assert a01 == 0
-    assert b0 == 1
-    assert b0_ == 1
-    assert a0 == 2
-
-
 def test_parse_col_def(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
     with pytest.raises(TypeError, match=r"Invalid column definition: \(\)"):
         converter._parse_col_def(data=tabular_data_no_units_no_substitutions, table="table_name", col_def=())
@@ -503,40 +492,78 @@ def test_parse_col_def_filter(converter: TabularConverter, tabular_data_no_units
         assert_frame_equal(df, pd.DataFrame([3, 4]))
 
 
-@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._id_lookup")
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter.get_id")
 def test_parse_auto_id(
-    mock_id_lookup: MagicMock, converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
+    mock_get_id: MagicMock, converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
 ):
     # name: str, key_col_def: str
-    mock_id_lookup.return_value = 10
+    mock_get_id.return_value = 10
     converter._parse_auto_id(
         data=tabular_data_no_units_no_substitutions, table="nodes", name="a", key_col_def="id_number"
     )
-    mock_id_lookup.assert_has_calls([call(name="a", key=1), call(name="a", key=2)])
+    mock_get_id.assert_has_calls([call(name="a", key={"id_number": 1}), call(name="a", key={"id_number": 2})])
 
     # name: List[str], key_col_def: str
-    mock_id_lookup.reset_mock()
-    mock_id_lookup.return_value = 10
+    mock_get_id.reset_mock()
+    mock_get_id.return_value = 10
     converter._parse_auto_id(
         data=tabular_data_no_units_no_substitutions, table="nodes", name=["a", "b"], key_col_def="id_number"
     )
-    mock_id_lookup.assert_has_calls([call(name=("a", "b"), key=1), call(name=("a", "b"), key=2)])
+    mock_get_id.assert_has_calls(
+        [call(name=["a", "b"], key={"id_number": 1}), call(name=["a", "b"], key={"id_number": 2})]
+    )
 
     # name: str, key_col_def: List[str]
-    mock_id_lookup.reset_mock()
-    mock_id_lookup.return_value = 10
+    mock_get_id.reset_mock()
+    mock_get_id.return_value = 10
     converter._parse_auto_id(
         data=tabular_data_no_units_no_substitutions, table="nodes", name="a", key_col_def=["id_number", "u_nom"]
     )
-    mock_id_lookup.assert_has_calls([call(name="a", key=(1, 10.5e3)), call(name="a", key=(2, 400.0))])
+    mock_get_id.assert_has_calls(
+        [call(name="a", key={"id_number": 1, "u_nom": 10.5e3}), call(name="a", key={"id_number": 2, "u_nom": 400.0})]
+    )
 
     # name: List[str], key_col_def: List[str]
-    mock_id_lookup.reset_mock()
-    mock_id_lookup.return_value = 10
+    mock_get_id.reset_mock()
+    mock_get_id.return_value = 10
     converter._parse_auto_id(
         data=tabular_data_no_units_no_substitutions, table="nodes", name=["a", "b"], key_col_def=["id_number", "u_nom"]
     )
-    mock_id_lookup.assert_has_calls([call(name=("a", "b"), key=(1, 10.5e3)), call(name=("a", "b"), key=(2, 400.0))])
+    mock_get_id.assert_has_calls(
+        [
+            call(name=["a", "b"], key={"id_number": 1, "u_nom": 10.5e3}),
+            call(name=["a", "b"], key={"id_number": 2, "u_nom": 400.0}),
+        ]
+    )
+
+    # name: str, key_col_def: Dict[str, str]
+    mock_get_id.reset_mock()
+    mock_get_id.return_value = 10
+    converter._parse_auto_id(
+        data=tabular_data_no_units_no_substitutions,
+        table="nodes",
+        name="a",
+        key_col_def={"id": "id_number", "u": "u_nom"},
+    )
+    mock_get_id.assert_has_calls(
+        [call(name="a", key={"id": 1, "u": 10.5e3}), call(name="a", key={"id": 2, "u": 400.0})]
+    )
+
+    # name: List[str], key_col_def: Dict[str, str]
+    mock_get_id.reset_mock()
+    mock_get_id.return_value = 10
+    converter._parse_auto_id(
+        data=tabular_data_no_units_no_substitutions,
+        table="nodes",
+        name=["a", "b"],
+        key_col_def={"id": "id_number", "u": "u_nom"},
+    )
+    mock_get_id.assert_has_calls(
+        [call(name=["a", "b"], key={"id": 1, "u": 10.5e3}), call(name=["a", "b"], key={"id": 2, "u": 400.0})]
+    )
+
+    with pytest.raises(TypeError, match="Invalid key definition type: tuple"):
+        converter._parse_auto_id(data=None, table="", name="", key_col_def=("id_number", "u_nom"))  # type: ignore
 
 
 @patch("power_grid_model_io.converters.tabular_converter.get_function")

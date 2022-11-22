@@ -9,7 +9,6 @@ import numpy as np
 import pytest
 
 from power_grid_model_io.converters.base_converter import BaseConverter
-from power_grid_model_io.data_stores.excel_file_store import ExcelFileStore
 
 
 class DummyConverter(BaseConverter[Dict[str, List[Dict[str, int]]]]):
@@ -143,3 +142,29 @@ def test_load_data(converter: DummyConverter):
     converter_2 = DummyConverter(source=source)
     converter_2._load_data(data=None)
     source.load.assert_called_once()
+
+
+def test_get_id(converter: DummyConverter):
+    # Arrange / Act / Assert
+    assert converter.get_id(name="node", key={"a": 1, "b": 2}) == 0
+    assert converter.get_id(name="node", key={"a": 1, "b": 3}) == 1  # change in values
+    assert converter.get_id(name="node", key={"a": 1, "c": 2}) == 2  # change in index
+    assert converter.get_id(name=("foo", "bar"), key={"a": 1, "b": 2}) == 3  # change in name
+    assert converter.get_id(name=["foo", "bar"], key={"a": 1, "b": 2}) == 3  # tuple and list are indistinguishable
+    assert converter.get_id(name="node", key={"a": 1, "b": 2}) == 0  # duplicate name / indices / values
+
+
+def test_lookup_id(converter: DummyConverter):
+    # Arrange
+    converter.get_id(name="node", key={"a": 1, "b": 2})
+    converter.get_id(name="node", key={"a": 1, "b": 3})  # change in values
+    converter.get_id(name="node", key={"a": 1, "c": 2})  # change in index
+    converter.get_id(name=("foo", "bar"), key={"a": 1, "b": 2})  # change in name
+    converter.get_id(name=["foo", "bar"], key={"a": 1, "b": 2})  # tuple and list are indistinguishable
+    converter.get_id(name="node", key={"a": 1, "b": 2})  # duplicate name / indices / values
+
+    # Act / Assert
+    assert converter.lookup_id(pgm_id=0) == ("node", {"a": 1, "b": 2})
+    assert converter.lookup_id(pgm_id=1) == ("node", {"a": 1, "b": 3})
+    assert converter.lookup_id(pgm_id=2) == ("node", {"a": 1, "c": 2})
+    assert converter.lookup_id(pgm_id=3) == (["foo", "bar"], {"a": 1, "b": 2})
