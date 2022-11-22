@@ -1,50 +1,50 @@
 {
   "node":
     [
-      {"id": 0, "Number": 1, "Name": "node1"},
-      {"id": 1, "Number": 2, "Name": "node2"},
-      {"id": 2, "Number": 3, "Name": "node3"},
-      {"id": 3, "Number": 4, "Name": "node4"},
-      {"id": 4, "Number": 5},
-      {"id": 12, "Node.Number": 3, "Subnumber": 4, "Name": "transformer_load_1"}
+      {"id": 0, "auto_id": {"name": "Nodes", "key": {"Number": 1}}, "Name": "node1"},
+      {"id": 1, "auto_id": {"name": "Nodes", "key": {"Number": 2}}, "Name": "node2"},
+      {"id": 2, "auto_id": {"name": "Nodes", "key": {"Number": 3}}, "Name": "node3"},
+      {"id": 3, "auto_id": {"name": "Nodes", "key": {"Number": 4}}, "Name": "node4"},
+      {"id": 4, "auto_id": {"name": "Nodes", "key": {"Number": 5}}},
+      {"id": 12, "auto_id": {"name": ["Transformer loads", "internal_node"], "key": {"Node.Number": 3, "Subnumber": 4}}, "Name": "transformer_load_1"}
     ],
   "line":
     [
-      {"id": 5, "from_node": 0, "to_node": 1, "Number": 1, "Name": "cable1"},
-      {"id": 6, "from_node": 0, "to_node": 1, "Number": 1, "Name": "line1"},
-      {"id": 8, "from_node": 0, "to_node": 1, "Number": 1, "Name": "rcoil1"}
+      {"id": 5, "from_node": 0, "to_node": 1, "auto_id": {"name": "Cables", "key": {"Number":  1}}, "Name": "cable1"},
+      {"id": 6, "from_node": 0, "to_node": 1, "auto_id": {"name": "Lines", "key": {"Number":  1}}, "Name": "line1"},
+      {"id": 8, "from_node": 0, "to_node": 1, "auto_id": {"name": "Reactance coils", "key": {"Number":  1}}, "Name": "rcoil1"}
     ],
   "link":
     [
-      {"id": 7, "from_node": 0, "to_node": 1, "Number": 1, "Name": "link1"}
+      {"id": 7, "from_node": 0, "to_node": 1, "auto_id": {"name": "Links", "key": {"Number":  1}}, "Name": "link1"}
     ],
   "transformer":
     [
-      {"id": 9, "from_node": 1, "to_node": 2, "Number": 1, "Name": "transformer1"},
-      {"id": 10, "from_node": 1, "to_node": 3,  "Number": 1, "Name": "special_trans1"},
-      {"id": 11, "from_node": 2, "to_node": 12, "Node.Number": 3, "Subnumber": 4, "Name": "transformer_load_1"}
+      {"id": 9, "from_node": 1, "to_node": 2, "auto_id": {"name": "Transformers", "key": {"Number":  1}}, "Name": "transformer1"},
+      {"id": 10, "from_node": 1, "to_node": 3, "auto_id": {"name": "Special transformers", "key": {"Number":  1}}, "Name": "special_trans1"},
+      {"id": 11, "from_node": 2, "to_node": 12, "auto_id": {"name": ["Transformer loads", "transformer"], "key": {"Node.Number": 3, "Subnumber": 4}}, "Name": "transformer_load_1"}
     ],
   "sym_load":
     [
-      {"id": 13, "node": 12, "Node.Number": 3, "Subnumber": 4, "Name": "transformer_load_1"},
-      {"id": 19, "node": 2, "Node.Number": 3, "Subnumber": 6, "Name": "load1"}
+      {"id": 13, "node": 12, "auto_id": {"name": ["Transformer loads", "load"], "key": {"Node.Number": 3, "Subnumber": 4}}, "Name": "transformer_load_1"},
+      {"id": 19, "node": 2, "auto_id": {"name": "Loads", "key": {"Node.Number": 3, "Subnumber": 6}}, "Name": "load1"}
     ],
   "sym_gen":
     [
-      {"id": 14, "node": 12, "Node.Number": 3, "Subnumber": 4, "Name": "transformer_load_1"},
-      {"id": 15, "node": 12, "Node.Number": 3, "Subnumber": 4, "Name": "transformer_load_1"},
-      {"id": 17, "node": 3, "Node.Number": 4, "Subnumber": 2, "Name": "syngen1"},
-      {"id": 18, "node": 2, "Node.Number": 3, "Subnumber": 3, "Name": "wind1"},
-      {"id": 23, "node": 2, "Node.Number": 3, "Subnumber": 1, "Name": "pv1"}
+      {"id": 14, "node": 12, "auto_id": {"name": ["Transformer loads", "generation"], "key": {"Node.Number": 3, "Subnumber": 4}}, "Name": "transformer_load_1"},
+      {"id": 15, "node": 12, "auto_id": {"name": ["Transformer loads", "pv_generation"], "key": {"Node.Number": 3, "Subnumber": 4}}, "Name": "transformer_load_1"},
+      {"id": 17, "node": 3, "auto_id": {"name": "Synchronous generators", "key": {"Node.Number": 4, "Subnumber": 2}}, "Name": "syngen1"},
+      {"id": 18, "node": 2, "auto_id": {"name": "Wind turbines", "key": {"Node.Number": 3, "Subnumber": 3}}, "Name": "wind1"},
+      {"id": 23, "node": 2, "auto_id": {"name": "Pvs", "key": {"Node.Number": 3, "Subnumber": 1}}, "Name": "pv1"}
     ],
   "source":
     [
-      {"id": 16, "node": 0, "Node.Number": 1, "Subnumber": 1, "Name": "source1"}
+      {"id": 16, "node": 0, "auto_id": {"name": "Sources", "key": {"Node.Number": 1, "Subnumber": 1}}, "Name": "source1"}
     ],
   "shunt":
     [
-      {"id": 20, "node": 2, "Node.Number": 3, "Subnumber": 5, "Name": "zztrans1"},
-      {"id": 21, "node": 3, "Node.Number": 4, "Subnumber": 9, "Name": "shunt1"},
-      {"id": 22, "node": 3, "Node.Number": 4, "Subnumber": 1}
+      {"id": 20, "node": 2, "auto_id": {"name": "Zigzag transformers", "key": {"Node.Number": 3, "Subnumber": 5}}, "Name": "zztrans1"},
+      {"id": 21, "node": 3, "auto_id": {"name": "Capacitors", "key": {"Node.Number": 4, "Subnumber": 9}}, "Name": "shunt1"},
+      {"id": 22, "node": 3, "auto_id": {"name": "Reactors", "key": {"Node.Number": 4, "Subnumber": 1}}}
     ]
 }

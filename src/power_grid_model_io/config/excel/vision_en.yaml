@@ -11,7 +11,6 @@ grid:
           key: Number
       u_rated: Unom
       extra:
-        - Number
         - ID
         - Name
   Cables:
@@ -23,12 +22,14 @@ grid:
       from_node:
         auto_id:
           name: Nodes
-          key: From.Number
+          key:
+            Number: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
           name: Nodes
-          key: To.Number
+          key:
+            Number: To.Number
       to_status: To.Switch state
       r1: R
       x1: X
@@ -40,7 +41,6 @@ grid:
       tan0: 0
       i_n: Inom'
       extra:
-        - Number
         - ID
         - Name
   Lines:
@@ -52,12 +52,14 @@ grid:
       from_node:
         auto_id:
           name: Nodes
-          key: From.Number
+          key:
+            Number: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
           name: Nodes
-          key: To.Number
+          key:
+            Number: To.Number
       to_status: To.Switch state
       r1: R
       x1: X
@@ -69,7 +71,6 @@ grid:
       tan0: 0
       i_n: Inom'
       extra:
-        - Number
         - ID
         - Name
   Links:
@@ -81,15 +82,16 @@ grid:
       from_node:
         auto_id:
           name: Nodes
-          key: From.Number
+          key:
+            Number: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
           name: Nodes
-          key: To.Number
+          key:
+            Number: To.Number
       to_status: To.Switch state
       extra:
-        - Number
         - ID
         - Name
   Reactance coils:
@@ -101,12 +103,14 @@ grid:
       from_node:
         auto_id:
           name: Nodes
-          key: From.Number
+          key:
+            Number: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
           name: Nodes
-          key: To.Number
+          key:
+            Number: To.Number
       to_status: To.Switch state
       r1: R
       x1: X
@@ -118,7 +122,6 @@ grid:
       tan0: 0
       i_n: Inom
       extra:
-        - Number
         - ID
         - Name
   Transformers:
@@ -130,12 +133,14 @@ grid:
       from_node:
         auto_id:
           name: Nodes
-          key: From.Number
+          key:
+            Number: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
           name: Nodes
-          key: To.Number
+          key:
+            Number: To.Number
       to_status: To.Switch state
       u1: Unom1
       u2: Unom2
@@ -175,7 +180,6 @@ grid:
       r_grounding_to: Re2
       x_grounding_to: Xe2
       extra:
-        - Number
         - ID
         - Name
   Special transformers:
@@ -187,12 +191,14 @@ grid:
       from_node:
         auto_id:
           name: Nodes
-          key: From.Number
+          key:
+            Number: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
           name: Nodes
-          key: To.Number
+          key:
+            Number: To.Number
       to_status: To.Switch state
       u1: Unom1
       u2: Unom2
@@ -224,7 +230,6 @@ grid:
       r_grounding_to: 0
       x_grounding_to: 0
       extra:
-        - Number
         - ID
         - Name
   Transformer loads:
@@ -240,7 +245,8 @@ grid:
       from_node:
         auto_id:
           name: Nodes
-          key: Node.Number
+          key:
+            Number: Node.Number
       to_node:
         auto_id:
           name:
@@ -284,8 +290,6 @@ grid:
       r_grounding_to: 0
       x_grounding_to: 0
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
     node:
@@ -299,8 +303,6 @@ grid:
             - Subnumber
       u_rated: Unom2
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
     sym_load:
@@ -331,8 +333,6 @@ grid:
           - Load.Q
           - Nodes!Simultaneity[Number=Node.Number]
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
     sym_gen:
@@ -357,8 +357,6 @@ grid:
         p_specified: Generation.P
         q_specified: Generation.Q
         extra:
-          - Node.Number
-          - Subnumber
           - ID
           - Name
       - id:
@@ -385,8 +383,6 @@ grid:
             - PV.Pnom
             - 1
         extra:
-          - Node.Number
-          - Subnumber
           - ID
           - Name
   Sources:
@@ -400,15 +396,14 @@ grid:
       node:
         auto_id:
           name: Nodes
-          key: Node.Number
+          key:
+            Number: Node.Number
       status: Switch state
       u_ref: Uref
       sk: Sk"nom
       rx_ratio: R/X
       z01_ratio: Z0/Z1
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
   Synchronous generators:
@@ -422,7 +417,8 @@ grid:
       node:
         auto_id:
           name: Nodes
-          key: Node.Number
+          key:
+            Number: Node.Number
       status: Switch state
       type: 0
       p_specified: Pref
@@ -433,8 +429,6 @@ grid:
             - cos phi
           - Q
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
   Wind turbines:
@@ -448,7 +442,8 @@ grid:
       node:
         auto_id:
           name: Nodes
-          key: Node.Number
+          key:
+            Number: Node.Number
       status: Switch state
       type: 1
       p_specified:
@@ -466,8 +461,6 @@ grid:
               - Wind speed
           - cos phi
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
   Loads:
@@ -481,7 +474,8 @@ grid:
       node:
         auto_id:
           name: Nodes
-          key: Node.Number
+          key:
+            Number: Node.Number
       status: Switch state
       type: Behaviour
       p_specified:
@@ -493,8 +487,6 @@ grid:
           - Q
           - Nodes!Simultaneity[Number=Node.Number]
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
   Zigzag transformers:
@@ -508,7 +500,8 @@ grid:
       node:
         auto_id:
           name: Nodes
-          key: Node.Number
+          key:
+            Number: Node.Number
       status: Switch state
       g1: 0
       b1: 0
@@ -521,8 +514,6 @@ grid:
           - R0
           - X0
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
   Capacitors:
@@ -536,7 +527,8 @@ grid:
       node:
         auto_id:
           name: Nodes
-          key: Node.Number
+          key:
+            Number: Node.Number
       status: Switch state
       g1: 0
       b1:
@@ -546,8 +538,6 @@ grid:
       g0: 0
       b0: 0
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
   Reactors:
@@ -561,7 +551,8 @@ grid:
       node:
         auto_id:
           name: Nodes
-          key: Node.Number
+          key:
+            Number: Node.Number
       status: Switch state
       g1: 0
       b1:
@@ -573,8 +564,6 @@ grid:
       g0: 0
       b0: 0
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
   Pvs:
@@ -588,7 +577,8 @@ grid:
       node:
         auto_id:
           name: Nodes
-          key: Node.Number
+          key:
+            Number: Node.Number
       status: Switch state
       type: 0
       p_specified:
@@ -606,8 +596,6 @@ grid:
              - Inverter.cos phi
           - Scaling
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
 units:
