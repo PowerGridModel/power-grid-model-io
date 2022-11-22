@@ -518,7 +518,7 @@ def test_parse_auto_id__str_str_none(
     mock_get_id.assert_has_calls([call(name="a", key={"id_number": 1}), call(name="a", key={"id_number": 2})])
 
 
-@patch("power_grid_model_io.converters.tabular_converter.TabularConverter.get_id")
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._get_id")
 def test_parse_auto_id__str_str_dict(
     mock_get_id: MagicMock, converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
 ):
@@ -537,7 +537,7 @@ def test_parse_auto_id__str_str_dict(
     assert extra_info[102] == {"auto_id": {"name": "a", "key": {"id_number": 2}}}
 
 
-@patch("power_grid_model_io.converters.tabular_converter.TabularConverter.get_id")
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._get_id")
 def test_parse_auto_id__list_str_dict(
     mock_get_id: MagicMock, converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
 ):
@@ -558,7 +558,7 @@ def test_parse_auto_id__list_str_dict(
     assert extra_info[102] == {"auto_id": {"name": ["a", "b"], "key": {"id_number": 2}}}
 
 
-@patch("power_grid_model_io.converters.tabular_converter.TabularConverter.get_id")
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._get_id")
 def test_parse_auto_id__str_list_dict(
     mock_get_id: MagicMock, converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
 ):
@@ -579,7 +579,7 @@ def test_parse_auto_id__str_list_dict(
     assert extra_info[102] == {"auto_id": {"name": "a", "key": {"id_number": 2, "u_nom": 400.0}}}
 
 
-@patch("power_grid_model_io.converters.tabular_converter.TabularConverter.get_id")
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._get_id")
 def test_parse_auto_id__list_list_dict(
     mock_get_id: MagicMock, converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
 ):
@@ -603,7 +603,7 @@ def test_parse_auto_id__list_list_dict(
     assert extra_info[102] == {"auto_id": {"name": ["a", "b"], "key": {"id_number": 2, "u_nom": 400.0}}}
 
 
-@patch("power_grid_model_io.converters.tabular_converter.TabularConverter.get_id")
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._get_id")
 def test_parse_auto_id__str_dict_dict(
     mock_get_id: MagicMock, converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
 ):
@@ -624,7 +624,7 @@ def test_parse_auto_id__str_dict_dict(
     assert extra_info[102] == {"auto_id": {"name": "a", "key": {"id": 2, "u": 400.0}}}
 
 
-@patch("power_grid_model_io.converters.tabular_converter.TabularConverter.get_id")
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._get_id")
 def test_parse_auto_id__list_dict_dict(
     mock_get_id: MagicMock, converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
 ):
