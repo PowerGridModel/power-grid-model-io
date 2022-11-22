@@ -6,11 +6,12 @@
 name: Check Blocking Labels
 
 on:
+  workflow_dispatch:
   pull_request:
     branches:
-      - main
     types:
       - opened
+      - synchronize
       - labeled
       - unlabeled
 
@@ -25,8 +26,14 @@ jobs:
           echo "This pull request should not be merged (do-not-merge)"
           exit 1
 
+      - name: merge-target-first
+        if: contains(github.event.pull_request.labels.*.name, 'merge-target-first')
+        run: |
+          echo "The target branch of this PR should be merged first (merge-target-first)"
+          exit 2
+
       - name: needs-unit-tests
         if: contains(github.event.pull_request.labels.*.name, 'needs-unit-tests')
         run: |
           echo "This pull request needs (more) unit tests before it may be merged (needs-unit-tests)"
-          exit 2
+          exit 3

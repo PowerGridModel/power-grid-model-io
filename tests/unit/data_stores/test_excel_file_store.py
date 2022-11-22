@@ -40,7 +40,7 @@ def noop(data: pd.DataFrame, *_args, **_kwargs) -> pd.DataFrame:
     return data
 
 
-def test_excel_file_store__constructor():
+def test_constructor():
     # Arrange / Act
     fs = ExcelFileStore()  # no exception
 
@@ -48,7 +48,7 @@ def test_excel_file_store__constructor():
     assert fs.files() == {}
 
 
-def test_excel_file_store__constructor__arg():
+def test_constructor__arg():
     # Arrange / Act
     fs = ExcelFileStore(Path("A.xlsx"))
 
@@ -56,7 +56,7 @@ def test_excel_file_store__constructor__arg():
     assert fs.files() == {"": Path("A.xlsx")}
 
 
-def test_excel_file_store__constructor__arg_kwargs():
+def test_constructor__arg_kwargs():
     # Arrange / Act
     fs = ExcelFileStore(Path("A.xlsx"), foo=Path("B.xlsx"), bar=Path("C.xls"))
 
@@ -64,7 +64,7 @@ def test_excel_file_store__constructor__arg_kwargs():
     assert fs.files() == {"": Path("A.xlsx"), "foo": Path("B.xlsx"), "bar": Path("C.xls")}
 
 
-def test_excel_file_store__constructor__kwargs():
+def test_constructor__kwargs():
     # Arrange / Act
     fs = ExcelFileStore(foo=Path("A.xlsx"), bar=Path("B.xls"))
 
@@ -72,23 +72,23 @@ def test_excel_file_store__constructor__kwargs():
     assert fs.files() == {"foo": Path("A.xlsx"), "bar": Path("B.xls")}
 
 
-def test_excel_file_store__constructor__too_many_args():
+def test_constructor__too_many_args():
     # Too many (> 1) unnamed arguments
     with pytest.raises(TypeError, match=r"1 to 2.*positional arguments.*3.*given"):
         ExcelFileStore(Path("A.xlsx"), Path("B.xls"))  # type: ignore
 
 
-def test_excel_file_store__constructor__invalid_main_file():
+def test_constructor__invalid_main_file():
     with pytest.raises(ValueError, match=r"Excel.*\.docx"):
         ExcelFileStore(Path("A.docx"))
 
 
-def test_excel_file_store__constructor__invalid_named_file():
+def test_constructor__invalid_named_file():
     with pytest.raises(ValueError, match=r"Extra.*\.docx"):
         ExcelFileStore(Path("A.xlsx"), extra=Path("B.docx"))
 
 
-def test_excel_file_store__files__read_only():
+def test_files__read_only():
     # Arrange
     fs = ExcelFileStore(Path("A.xlsx"), extra=Path("B.xlsx"))
     files = fs.files()
@@ -105,7 +105,7 @@ def test_excel_file_store__files__read_only():
 @patch("power_grid_model_io.data_stores.excel_file_store.ExcelFileStore._remove_unnamed_column_placeholders")
 @patch("power_grid_model_io.data_stores.excel_file_store.Path.open", mock_open())
 @patch("power_grid_model_io.data_stores.excel_file_store.pd.read_excel")
-def test_excel_file_store__load(
+def test_load(
     mock_read_excel: MagicMock,
     mock_remove_unnamed_column_placeholders: MagicMock,
     mock_handle_duplicate_columns: MagicMock,
@@ -134,7 +134,7 @@ def test_excel_file_store__load(
 @patch("power_grid_model_io.data_stores.excel_file_store.ExcelFileStore._remove_unnamed_column_placeholders")
 @patch("power_grid_model_io.data_stores.excel_file_store.Path.open", mock_open())
 @patch("power_grid_model_io.data_stores.excel_file_store.pd.read_excel")
-def test_excel_file_store__load__extra(
+def test_load__extra(
     mock_read_excel: MagicMock,
     mock_remove_unnamed_column_placeholders: MagicMock,
     mock_handle_duplicate_columns: MagicMock,
@@ -170,7 +170,7 @@ def test_excel_file_store__load__extra(
 @patch("power_grid_model_io.data_stores.excel_file_store.ExcelFileStore._remove_unnamed_column_placeholders")
 @patch("power_grid_model_io.data_stores.excel_file_store.Path.open", mock_open())
 @patch("power_grid_model_io.data_stores.excel_file_store.pd.read_excel")
-def test_excel_file_store__load__extra__duplicate_sheet_name(
+def test_load__extra__duplicate_sheet_name(
     mock_read_excel: MagicMock,
     mock_remove_unnamed_column_placeholders: MagicMock,
     mock_handle_duplicate_columns: MagicMock,
@@ -190,7 +190,7 @@ def test_excel_file_store__load__extra__duplicate_sheet_name(
 
 @patch("power_grid_model_io.data_stores.excel_file_store.pd.ExcelWriter")
 @patch("power_grid_model_io.data_stores.excel_file_store.pd.DataFrame.to_excel")
-def test_excel_file_store__save(mock_to_excel: MagicMock, mock_excel_writer: MagicMock):
+def test_save(mock_to_excel: MagicMock, mock_excel_writer: MagicMock):
     # Arrange
     data = TabularData(
         foo=pd.DataFrame([(1, 2.3)], columns=["id", "foo_val"]),
@@ -209,7 +209,7 @@ def test_excel_file_store__save(mock_to_excel: MagicMock, mock_excel_writer: Mag
 
 @patch("power_grid_model_io.data_stores.excel_file_store.pd.ExcelWriter")
 @patch("power_grid_model_io.data_stores.excel_file_store.pd.DataFrame.to_excel")
-def test_excel_file_store__save__multiple_files(mock_to_excel: MagicMock, mock_excel_writer):
+def test_save__multiple_files(mock_to_excel: MagicMock, mock_excel_writer):
     # Arrange
     data = TabularData(
         **{
