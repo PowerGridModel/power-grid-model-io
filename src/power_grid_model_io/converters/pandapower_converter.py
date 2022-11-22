@@ -42,6 +42,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         self.pgm_data: Dataset = {}
         self.pp_output_data: PandasData = {}
         self.pgm_output_data: Dataset = {}
+        self.pgm_nodes_lookup: pd.DataFrame = pd.DataFrame()
         self.idx: Dict[str, pd.Series] = {}
         self.idx_lookup: Dict[str, pd.Series] = {}
         self.next_idx = 0
@@ -55,6 +56,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         # Set pandas data
         self.pp_data = data
+
         # Convert
         if data_type == "input":
             self._create_input_data()
@@ -73,15 +75,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         return self.pgm_data
 
     def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup] = None) -> PandasData:
-        # Clear pp data
-        self.pp_output_data = {}
-
-        self.pgm_output_data = data
-
-        # Convert
-        self._create_output_data()
-
-        # Construct extra_info
+        # If extra_info is supplied idx_lookup should be created accordingly
         if extra_info is not None:
             pass
             # TODO: Construct extra info from self.idx_lookup
@@ -89,6 +83,15 @@ class PandaPowerConverter(BaseConverter[PandasData]):
             #     0: {"table": "bus", "index": 1},
             #     1: {"table": "bus", "index": 2}
             #  }
+
+        # Clear pp data
+        self.pgm_nodes_lookup = pd.DataFrame()
+        self.pp_output_data = {}
+
+        self.pgm_output_data = data
+
+        # Convert
+        self._create_output_data()
 
         return self.pp_output_data
 
@@ -334,16 +337,24 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         self.pgm_data["link"] = pgm_links
 
-    def _pp_buses_output(self):  # different funciton name, we arent creating anything
+    def _pp_buses_output(self):  # different function name, we arent creating anything
         assert "bus" not in self.pp_output_data
 
         pgm_nodes = self.pgm_output_data["node"]  # we probably need result data and not input data
 
-        pp_output_buses = pd.DataFrame(columns=["vm_pu", "va_degree", "p_mw", "q_mvar"])
-        pp_output_buses["vm_pu"] = pgm_nodes["u_pu"]  # u_pu
-        pp_output_buses["va_degree"] = self._get_degrees(
-            pgm_nodes["u_angle"]
-        )  # u_angle *180 /pi  def radians to degree
+        self.pgm_nodes_lookup = pd.DataFrame(
+            [pgm_nodes["u_pu"], self._get_degrees(pgm_nodes["u_angle"])],
+            columns=["u_pu", "u_angle_deg"],
+            index=pgm_nodes["id"],
+        )
+
+        pp_output_buses = pd.DataFrame(
+            columns=["vm_pu", "va_degree", "p_mw", "q_mvar"],
+            index=self._get_ids("line", pgm_nodes["id"]),
+        )
+
+        pp_output_buses["vm_pu"] = self.pgm_nodes_lookup["u_pu"]  # u_pu
+        pp_output_buses["va_degree"] = self.pgm_nodes_lookup["u_angle_deg"]  # u_angle * 180 / pi
         # pp_output_buses["p_mw"] = # p_to and p_from connected to the bus have to be summed up
         # pp_output_buses["q_mvar"] = # q_to and q_from connected to the bus have to be summed up
 
@@ -355,7 +366,6 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_output_lines = self.pgm_output_data["line"]
 
         pp_output_lines = pd.DataFrame(
-            index=self._get_ids("line", pgm_output_lines["id"]),
             columns=[
                 "p_from_mw",
                 "q_from_mvar",
@@ -371,22 +381,12 @@ class PandaPowerConverter(BaseConverter[PandasData]):
                 "va_from_degree",
                 "va_to_degree",
                 "loading_percent",
-            ]
+            ],
+            index=self._get_ids("line", pgm_output_lines["id"]),
         )
 
-        ###
-        pgm_output_nodes = self.pgm_output_data["node"]
-        from_nodes = (
-            pp_output_lines["from_node"]
-            .merge(
-                pp_output_nodes[["id", "u_pu"]],
-                how="inner",
-                left_on=["from_node"],
-                right_on=["id"],
-            )
-            .set_index(pp_output_lines.index)
-        )
-        ###
+        from_nodes = self.pgm_nodes_lookup[pgm_output_lines["from_node"]]
+        to_nodes = self.pgm_nodes_lookup[pgm_output_lines["to_node"]]
 
         pp_output_lines["p_from_mw"] = pgm_output_lines["p_from"] * 1e-6  # p_from * 1e6
         pp_output_lines["q_from_mvar"] = pgm_output_lines["q_from"] * 1e-6  # q_from
@@ -397,11 +397,10 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pp_output_lines["i_from_ka"] = pgm_output_lines["i_from"] * 1e-3  # i_from
         pp_output_lines["i_to_ka"] = pgm_output_lines["i_to"] * 1e-3  # i_to
         pp_output_lines["i_ka"] = pgm_output_lines[["i_from", "i_to"]].max(axis=1) * 1e-3  # max(i_from, i_to)
-        pp_output_lines["vm_from_pu"] = pgm_output_lines["from_node"] * pgm_nodes["i_from"]  # u_pu of the bus that
-        # is at from_node
-        # pp_output_lines["vm_to_pu"] = # u_pu of the bus that is at to_node
-        # pp_output_lines["va_from_degree"] = # u_angle *180 /pi    def radians to degree/ at the from_bus
-        # pp_output_lines["va_to_degree"] = # u_angle *180 /pi    def radians to degree/ at the to_bus
+        pp_output_lines["vm_from_pu"] = from_nodes["u_pu"]  # u_pu of the bus that is at from_node
+        pp_output_lines["vm_to_pu"] = to_nodes["u_pu"]  # u_pu of the bus that is at to_node
+        pp_output_lines["va_from_degree"] = from_nodes["u_angle_deg"]  # u_angle * 180 / pi at the from_bus
+        pp_output_lines["va_to_degree"] = to_nodes["u_angle_deg"]  # u_angle * 180 / pi at the to_bus
         pp_output_lines["loading_percent"] = pgm_output_lines["loading"] * 1e2  # loading * 100
 
         self.pp_output_data["line"] = pp_output_lines
@@ -672,25 +671,6 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pp_3_switches = self.get_individual_switch_states(component, pp_switches, bus3)
 
         return pd.DataFrame((pp_1_switches["closed"], pp_2_switches["closed"], pp_3_switches["closed"]))
-
-    @staticmethod
-    def get_voltage_manitude(component: pd.DataFrame, switches: pd.DataFrame, bus: str) -> pd.Series:
-        """
-        Return the state of individual switch. Can be open or closed.
-        """
-        switch_state = (
-            component[["index", bus]]
-            .merge(
-                switches,
-                how="left",
-                left_on=["index", bus],
-                right_on=["element", "bus"],
-            )
-            .fillna(True)
-            .set_index(component.index)
-        )
-
-        return switch_state
 
     @staticmethod
     def _get_degrees(radians: float) -> int:

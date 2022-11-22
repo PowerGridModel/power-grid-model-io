@@ -16,7 +16,7 @@ from power_grid_model_io.converters.pandapower_converter import PandaPowerConver
 
 from ...utils import assert_struct_array_equal
 
-DATA_DIR = Path(__file__).parent.parent.parent / "data"
+DATA_DIR = Path(__file__).parent.parent.parent / "data" / "pandapower"
 
 
 @pytest.fixture
@@ -108,7 +108,7 @@ def pp_example_simple() -> Tuple[PandasData, Dict[str, float]]:
 
 @pytest.fixture
 def pgm_example_simple() -> SingleDataset:
-    return import_input_data(DATA_DIR / "pandapower.json")
+    return import_input_data(DATA_DIR / "input_data.json")
 
 
 def test_create_pgm_input_nodes(
