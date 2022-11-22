@@ -516,6 +516,20 @@ class TabularConverter(BaseConverter[TabularData]):
         name: Union[str, List[str]],
         key_col_def: Union[str, List[str], Dict[str, str]],
     ) -> pd.DataFrame:
+        """
+        Create (or retrieve) a unique numerical id for each object (row) in `data[table]`, based on the `name`
+        attribute, which is constant for each object, and the value(s) of `key_col_def`, which describes most likely a
+        single column, or a list of columns.
+
+        Args:
+            data: The entire input data
+            table: The current table name
+            name: A custom textual identifier, to be used for the auto_id
+            key_col_def: A column definition which should be unique for each object within the current table
+
+        Returns: A single column containing numerical ids
+
+        """
 
         if isinstance(key_col_def, dict):
             key_names = list(key_col_def.keys())
