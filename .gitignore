@@ -10,6 +10,7 @@ wheelhouse/
 
 # temporary_files
 __pycache__/
+.ipynb_checkpoints/
 .mypy_cache/
 .pytest_cache/
 .coverage
@@ -25,3 +26,10 @@ data/
 # IDE
 .idea/
 .vscode/
+
+# docs
+docs/_build/
+docs/_static/
+docs/_templates/
+docs/make.bat
+docs/Makefile

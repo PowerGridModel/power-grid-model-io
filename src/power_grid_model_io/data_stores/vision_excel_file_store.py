@@ -18,5 +18,9 @@ class VisionExcelFileStore(ExcelFileStore):
     """
 
     def __init__(self, file_path: Path):
+        """
+        Args:
+            file_path: The main Vision Excel export file
+        """
         super().__init__(file_path)
         self._header_rows.append(1)  # Units are stored in the row below the column names

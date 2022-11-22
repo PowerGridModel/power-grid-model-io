@@ -9,7 +9,7 @@ from typing import Tuple
 
 from power_grid_model import WindingType
 
-from power_grid_model_io.filters.phase_to_phase import _get_winding
+from power_grid_model_io.filters import get_winding
 
 CONNECTION_PATTERN_PP = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)\d*")
 CONNECTION_PATTERN_PP_3WDG = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(y|yn|d|z|zn)\d*")
@@ -30,7 +30,7 @@ def get_transformer_winding_from(vector_group: str) -> WindingType:
     Extract winding_from of a transformer
     """
     the_tuple = _split_string(vector_group)
-    return _get_winding(the_tuple[0], neutral_grounding=True)
+    return get_winding(the_tuple[0], neutral_grounding=True)
 
 
 def get_transformer_winding_to(vector_group: str) -> WindingType:
@@ -38,7 +38,7 @@ def get_transformer_winding_to(vector_group: str) -> WindingType:
     Extract winding_to of a transformer
     """
     the_tuple = _split_string(vector_group)
-    return _get_winding(the_tuple[1], neutral_grounding=True)
+    return get_winding(the_tuple[1], neutral_grounding=True)
 
 
 def _split_string_3wdg(value: str) -> Tuple[str, str, str]:
@@ -56,7 +56,7 @@ def get_3wdgtransformer_winding_1(vector_group: str) -> WindingType:
     Extract winding_1 of a three winding transformer
     """
     the_tuple = _split_string_3wdg(vector_group)
-    return _get_winding(the_tuple[0], neutral_grounding=True)
+    return get_winding(the_tuple[0], neutral_grounding=True)
 
 
 def get_3wdgtransformer_winding_2(vector_group: str) -> WindingType:
@@ -64,7 +64,7 @@ def get_3wdgtransformer_winding_2(vector_group: str) -> WindingType:
     Extract winding_2 of a three winding transformer
     """
     the_tuple = _split_string_3wdg(vector_group)
-    return _get_winding(the_tuple[1], neutral_grounding=True)
+    return get_winding(the_tuple[1], neutral_grounding=True)
 
 
 def get_3wdgtransformer_winding_3(vector_group: str) -> WindingType:
@@ -72,4 +72,4 @@ def get_3wdgtransformer_winding_3(vector_group: str) -> WindingType:
     Extract winding_3 of a three winding transformer
     """
     the_tuple = _split_string_3wdg(vector_group)
-    return _get_winding(the_tuple[2], neutral_grounding=True)
+    return get_winding(the_tuple[2], neutral_grounding=True)

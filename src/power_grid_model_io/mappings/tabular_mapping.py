@@ -38,9 +38,14 @@ class TabularMapping:
         Return instance definitions (as a generator)
 
         Yields:
-            compnent_name, instance_attribute_mapping
+            component_name, instance_attribute_mapping
         """
-        for component, instances in self._mapping.get(table, {}).items():
+        table_mapping = self._mapping.get(table, {})
+        if not isinstance(table_mapping, dict):
+            raise TypeError(
+                f"Invalid table mapping for {table}; expected a dictionary got {type(table_mapping).__name__}"
+            )
+        for component, instances in table_mapping.items():
             if not isinstance(instances, list):
                 yield component, instances
             else:
