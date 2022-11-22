@@ -107,6 +107,15 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         self._create_pgm_input_links()
 
     def _create_output_data(self):
+
+        # Many pp components store the voltage magnitude per unit and the voltage angle in degrees,
+        # so lets create a global lookup table (indexed on the pgm ids)
+        self.pgm_nodes_lookup = pd.DataFrame(
+            [self.pgm_output_data["node"]["u_pu"], self.pgm_output_data["node"]["u_angle"] * 180.0 / math.pi],
+            columns=["vm_pu", "u_degree"],
+            index=self.pgm_output_data["node"]["id"],
+        )
+
         # What about switches? loads?
         self._pp_buses_output()
         self._pp_lines_output()
@@ -342,23 +351,70 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         pgm_nodes = self.pgm_output_data["node"]  # we probably need result data and not input data
 
-        self.pgm_nodes_lookup = pd.DataFrame(
-            [pgm_nodes["u_pu"], self._get_degrees(pgm_nodes["u_angle"])],
-            columns=["u_pu", "u_angle_deg"],
-            index=pgm_nodes["id"],
-        )
-
         pp_output_buses = pd.DataFrame(
             columns=["vm_pu", "va_degree", "p_mw", "q_mvar"],
-            index=self._get_ids("line", pgm_nodes["id"]),
+            index=self._get_pp_ids("bus", pgm_nodes["id"]),
         )
 
         pp_output_buses["vm_pu"] = self.pgm_nodes_lookup["u_pu"]  # u_pu
         pp_output_buses["va_degree"] = self.pgm_nodes_lookup["u_angle_deg"]  # u_angle * 180 / pi
-        # pp_output_buses["p_mw"] = # p_to and p_from connected to the bus have to be summed up
-        # pp_output_buses["q_mvar"] = # q_to and q_from connected to the bus have to be summed up
+
+        # p_to, p_from, q_to and q_from connected to the bus have to be summed up
+        self._pp_buses_output__accumulate_power(pp_output_buses)
 
         self.pp_output_data["bus"] = pp_output_buses
+
+    def _pp_buses_output__accumulate_power(self, pp_output_buses: pd.DataFrame):
+        """
+        For each node, we need to accumulate the power for all connected branches and branch3s
+        """
+
+        # Let's define all the components and sides where nodes can be connected
+        component_sides = {
+            "line": [("from_node", "p_from", "q_from"), ("to_node", "p_to", "q_to")],
+            "link": [("from_node", "p_from", "q_from"), ("to_node", "p_to", "q_to")],
+            "transformer": [("from_node", "p_from", "q_from"), ("to_node", "p_to", "q_to")],
+            "three_winding_transformer": [("node_1", "p_1", "q_1"), ("node_2", "p_2", "q_2"), ("node_3", "p_3", "q_3")],
+        }
+
+        # Set the initial powers to zero
+        pp_output_buses["p_mw"] = 0.0
+        pp_output_buses["q_mvar"] = 0.0
+
+        # Now loop over all components, skipping the components that dont exist or don't contain data
+        for component, sides in component_sides.items():
+            if component not in self.pgm_output_data or self.pgm_output_data[component].size == 0:
+                continue
+
+            if component not in self.pgm_data:
+                raise KeyError(f"PGM input_data is needed to accumulate output for {component}s.")
+
+            for node_col, p_col, q_col in sides:
+                # Select the columns that we are going to use
+                component_data = pd.DataFrame(
+                    zip(
+                        self.pgm_data[component][node_col],
+                        self.pgm_output_data[component][p_col],
+                        self.pgm_output_data[component][q_col],
+                    ),
+                    columns=[node_col, p_col, q_col],
+                )
+
+                # Accumulate the powers and index by panda power bus index
+                accumulated_data = component_data.groupby(node_col).sum()
+                accumulated_data.index = self._get_pp_ids("bus", pd.Series(accumulated_data.index))
+
+                # We might not have power data for each pp bus, so select only the indexes for which data is available
+                idx = pp_output_buses.index.intersection(accumulated_data.index)
+
+                # Now add the active and reactive powers to the pp busses
+                # Note that the units are incorrect; for efficiency, unit conversions will be applied at the end.
+                pp_output_buses.loc[idx, "p_mw"] += accumulated_data[p_col]
+                pp_output_buses.loc[idx, "q_mvar"] += accumulated_data[q_col]
+
+        # Finally apply the unit conversion (W -> MW and VAR -> MVAR)
+        pp_output_buses["p_mw"] /= 1e6
+        pp_output_buses["q_mvar"] /= 1e6
 
     def _pp_lines_output(self):
         assert "line" not in self.pp_output_data
@@ -382,7 +438,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
                 "va_to_degree",
                 "loading_percent",
             ],
-            index=self._get_ids("line", pgm_output_lines["id"]),
+            index=self._get_pp_ids("line", pgm_output_lines["id"]),
         )
 
         from_nodes = self.pgm_nodes_lookup[pgm_output_lines["from_node"]]
@@ -671,7 +727,3 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pp_3_switches = self.get_individual_switch_states(component, pp_switches, bus3)
 
         return pd.DataFrame((pp_1_switches["closed"], pp_2_switches["closed"], pp_3_switches["closed"]))
-
-    @staticmethod
-    def _get_degrees(radians: float) -> int:
-        return int(radians * 180 / math.pi)

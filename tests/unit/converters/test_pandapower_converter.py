@@ -9,6 +9,7 @@ import numpy as np
 import pandapower as pp
 import pandas as pd
 import pytest
+from power_grid_model import initialize_array
 from power_grid_model.data_types import SingleDataset
 from power_grid_model.utils import import_input_data
 
@@ -316,3 +317,83 @@ def test_get_3wtransformer_tap_size():
 
     # Assert
     np.testing.assert_array_equal(actual_tap_size, expected_tap_size)
+
+
+def test_pp_buses_output__accumulate_power__zero():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.idx = {"bus": pd.Series([0, 1, 2, 3], index=[101, 102, 103, 104], dtype=np.int32)}
+    pp_buses = pd.DataFrame(np.empty((4, 2), np.float64), columns=["p_mw", "q_mvar"], index=[101, 102, 103, 104])
+
+    # Act
+    converter._pp_buses_output__accumulate_power(pp_buses)
+
+    # Assert
+    assert pp_buses["p_mw"][101] == 0.0
+    assert pp_buses["p_mw"][102] == 0.0
+    assert pp_buses["p_mw"][103] == 0.0
+    assert pp_buses["p_mw"][104] == 0.0
+    assert pp_buses["q_mvar"][101] == 0.0
+    assert pp_buses["q_mvar"][102] == 0.0
+    assert pp_buses["q_mvar"][103] == 0.0
+    assert pp_buses["q_mvar"][104] == 0.0
+
+
+def test_pp_buses_output__accumulate_power():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.idx_lookup = {"bus": pd.Series([101, 102, 103, 104], index=[0, 1, 2, 3], dtype=np.int32)}
+    pp_buses = pd.DataFrame(np.empty((4, 2), np.float64), columns=["p_mw", "q_mvar"], index=[101, 102, 103, 104])
+
+    converter.pgm_data = {
+        "line": initialize_array("input", "line", 3),
+        "link": initialize_array("input", "link", 2),
+        "transformer": initialize_array("input", "transformer", 2),
+        "three_winding_transformer": initialize_array("input", "three_winding_transformer", 2),
+    }
+    converter.pgm_output_data = {
+        "line": initialize_array("sym_output", "line", 3),
+        "link": initialize_array("sym_output", "link", 2),
+        "transformer": initialize_array("sym_output", "transformer", 2),
+        "three_winding_transformer": initialize_array("sym_output", "three_winding_transformer", 2),
+    }
+    converter.pgm_data["line"]["from_node"] = [0, 1, 1]
+    converter.pgm_data["line"]["to_node"] = [1, 2, 3]
+    converter.pgm_data["link"]["from_node"] = [0, 1]
+    converter.pgm_data["link"]["to_node"] = [1, 2]
+    converter.pgm_data["transformer"]["from_node"] = [0, 1]
+    converter.pgm_data["transformer"]["to_node"] = [1, 2]
+    converter.pgm_data["three_winding_transformer"]["node_1"] = [0, 1]
+    converter.pgm_data["three_winding_transformer"]["node_2"] = [1, 2]
+    converter.pgm_data["three_winding_transformer"]["node_3"] = [2, 3]
+    converter.pgm_output_data["line"]["p_from"] = [1.0, 2.0, 4.0]
+    converter.pgm_output_data["line"]["q_from"] = [0.1, 0.2, 0.4]
+    converter.pgm_output_data["line"]["p_to"] = [-1.0, -2.0, -4.0]
+    converter.pgm_output_data["line"]["q_to"] = [-0.1, -0.2, -0.4]
+    converter.pgm_output_data["link"]["p_from"] = [10.0, 20.0]
+    converter.pgm_output_data["link"]["q_from"] = [0.01, 0.02]
+    converter.pgm_output_data["link"]["p_to"] = [-10.0, -20.0]
+    converter.pgm_output_data["link"]["q_to"] = [-0.01, -0.02]
+    converter.pgm_output_data["transformer"]["p_from"] = [100.0, 200.0]
+    converter.pgm_output_data["transformer"]["q_from"] = [0.001, 0.002]
+    converter.pgm_output_data["transformer"]["p_to"] = [-100.0, -200.0]
+    converter.pgm_output_data["transformer"]["q_to"] = [-0.001, -0.002]
+    converter.pgm_output_data["three_winding_transformer"]["p_1"] = [1000.0, 10000.0]
+    converter.pgm_output_data["three_winding_transformer"]["q_1"] = [0.0001, 0.00001]
+    converter.pgm_output_data["three_winding_transformer"]["p_2"] = [2000.0, 20000.0]
+    converter.pgm_output_data["three_winding_transformer"]["q_2"] = [0.0002, 0.00002]
+    converter.pgm_output_data["three_winding_transformer"]["p_3"] = [4000.0, 40000.0]
+    converter.pgm_output_data["three_winding_transformer"]["q_3"] = [0.0004, 0.00004]
+
+    # Act
+    converter._pp_buses_output__accumulate_power(pp_buses)
+
+    # Assert
+    assert pp_buses["p_mw"][101] * 1e6 == 1.0 + 10.0 + 100.0 + 1000.0
+    assert pp_buses["p_mw"][102] * 1e6 == 2.0 + 4.0 - 1.0 + 20.0 - 10.0 + 200.0 - 100.0 + 10000.0 + 2000.0
+    assert pp_buses["p_mw"][103] * 1e6 == -2.0 - 20.0 - 200.0 + 20000.0 + 4000.0
+    assert pp_buses["p_mw"][104] * 1e6 == -4.0 + 40000.0
+    assert pp_buses["q_mvar"][101] * 1e6 == 0.1 + 0.01 + 0.001 + 0.0001
+    assert pp_buses["q_mvar"][102] * 1e6 == 0.2 + 0.4 - 0.1 + 0.02 - 0.01 + 0.002 - 0.001 + 0.00001 + 0.0002
+    assert pp_buses["q_mvar"][103] * 1e6 == -0.2 - 0.02 - 0.002 + 0.00002 + 0.0004
+    assert pp_buses["q_mvar"][104] * 1e6 == -0.4 + 0.00004
