@@ -8,13 +8,13 @@ Gaia Excel Converter: Load data from a Gaia Excel export file and use a mapping 
 from pathlib import Path
 from typing import Optional, Union
 
-from power_grid_model_io.converters.vision_excel_converter import VisionExcelConverter
+from power_grid_model_io.converters.tabular_converter import TabularConverter
 from power_grid_model_io.data_stores.gaia_excel_file_store import GaiaExcelFileStore
 
 DEFAULT_MAPPING_FILE = Path(__file__).parent.parent / "config" / "excel" / "gaia_{language:s}.yaml"
 
 
-class GaiaExcelConverter(VisionExcelConverter):
+class GaiaExcelConverter(TabularConverter):
     """
     Gaia Excel Converter: Load data from a Gaia Excel export file and use a mapping file to convert the data to PGM
     """
@@ -32,4 +32,4 @@ class GaiaExcelConverter(VisionExcelConverter):
         if source_file:
             types_file = Path(types_file) if types_file else None
             source = GaiaExcelFileStore(file_path=Path(source_file), types_file=types_file)
-        super(VisionExcelConverter, self).__init__(mapping_file=mapping_file, source=source)
+        super().__init__(mapping_file=mapping_file, source=source)

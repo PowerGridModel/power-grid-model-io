@@ -504,6 +504,20 @@ class TabularConverter(BaseConverter[TabularData]):
         key_col_def: Union[str, List[str], Dict[str, str]],
         extra_info: Optional[ExtraInfoLookup],
     ) -> pd.DataFrame:
+        """
+        Create (or retrieve) a unique numerical id for each object (row) in `data[table]`, based on the `name`
+        attribute, which is constant for each object, and the value(s) of `key_col_def`, which describes most likely a
+        single column, or a list of columns.
+
+        Args:
+            data: The entire input data
+            table: The current table name
+            name: A custom textual identifier, to be used for the auto_id
+            key_col_def: A column definition which should be unique for each object within the current table
+
+        Returns: A single column containing numerical ids
+
+        """
 
         if isinstance(key_col_def, dict):
             key_names = list(key_col_def.keys())
@@ -519,7 +533,7 @@ class TabularConverter(BaseConverter[TabularData]):
 
         def auto_id(row: np.ndarray):
             key = dict(zip(key_names, row))
-            pgm_id = self.get_id(name=name, key=key)
+            pgm_id = self._get_id(name=name, key=key)
             if extra_info is not None and pgm_id not in extra_info:
                 extra_info[pgm_id] = {"auto_id": {"name": name, "key": key}}
             return pgm_id
