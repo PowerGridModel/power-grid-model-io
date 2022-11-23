@@ -12,22 +12,22 @@ from power_grid_model_io.converters.vision_excel_converter import VisionExcelCon
 def converter() -> VisionExcelConverter:
     # Arrange
     converter = VisionExcelConverter()
-    converter._get_id("Nodes", {"Number": 1})  # node: 0
-    converter._get_id("Cables", {"Number": 1})  # branch: 1
-    converter._get_id("Links", {"Number": 1})  # branch: 2
-    converter._get_id("Reactance coils", {"Number": 1})  # branch: 3
-    converter._get_id("Special transformers", {"Number": 1})  # branch: 4
-    converter._get_id(["Transformer loads", "transformer"], {"Node.Number": 1, "Subnumber": 2})  # virtual: 5
-    converter._get_id(["Transformer loads", "internal_node"], {"Node.Number": 1, "Subnumber": 2})  # virtual:  6
-    converter._get_id(["Transformer loads", "load"], {"Node.Number": 1, "Subnumber": 2})  # virtual:  7
-    converter._get_id(["Transformer loads", "generation"], {"Node.Number": 1, "Subnumber": 2})  # virtual:  8
-    converter._get_id(["Transformer loads", "pv_generation"], {"Node.Number": 1, "Subnumber": 2})  # virtual:  9
-    converter._get_id("Sources", {"Node.Number": 1, "Subnumber": 2})  # appliance: 10
-    converter._get_id("Synchronous generators", {"Node.Number": 1, "Subnumber": 2})  # appliance: 11
-    converter._get_id("Wind turbines", {"Node.Number": 1, "Subnumber": 2})  # appliance: 12
-    converter._get_id("Loads", {"Node.Number": 1, "Subnumber": 2})  # appliance: 13
-    converter._get_id("Zigzag transformers", {"Node.Number": 1, "Subnumber": 2})  # appliance: 14
-    converter._get_id("Pvs", {"Node.Number": 1, "Subnumber": 2})  # appliance: 15
+    converter._get_id("Nodes", {"Number": 1}, None)  # node: 0
+    converter._get_id("Cables", {"Number": 1}, None)  # branch: 1
+    converter._get_id("Links", {"Number": 1}, None)  # branch: 2
+    converter._get_id("Reactance coils", {"Number": 1}, None)  # branch: 3
+    converter._get_id("Special transformers", {"Number": 1}, None)  # branch: 4
+    converter._get_id("Transformer loads", {"Node.Number": 1, "Subnumber": 2}, "transformer")  # virtual: 5
+    converter._get_id("Transformer loads", {"Node.Number": 1, "Subnumber": 2}, "internal_node")  # virtual:  6
+    converter._get_id("Transformer loads", {"Node.Number": 1, "Subnumber": 2}, "load")  # virtual:  7
+    converter._get_id("Transformer loads", {"Node.Number": 1, "Subnumber": 2}, "generation")  # virtual:  8
+    converter._get_id("Transformer loads", {"Node.Number": 1, "Subnumber": 2}, "pv_generation")  # virtual:  9
+    converter._get_id("Sources", {"Node.Number": 1, "Subnumber": 2}, None)  # appliance: 10
+    converter._get_id("Synchronous generators", {"Node.Number": 1, "Subnumber": 2}, None)  # appliance: 11
+    converter._get_id("Wind turbines", {"Node.Number": 1, "Subnumber": 2}, None)  # appliance: 12
+    converter._get_id("Loads", {"Node.Number": 1, "Subnumber": 2}, None)  # appliance: 13
+    converter._get_id("Zigzag transformers", {"Node.Number": 1, "Subnumber": 2}, None)  # appliance: 14
+    converter._get_id("Pvs", {"Node.Number": 1, "Subnumber": 2}, None)  # appliance: 15
     return converter
 
 

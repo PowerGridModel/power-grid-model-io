@@ -6,6 +6,7 @@ Tabular Data Converter: Load data from multiple tables and use a mapping file to
 """
 
 import re
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Union, cast
 
@@ -376,7 +377,8 @@ class TabularConverter(BaseConverter[TabularData]):
             return self._parse_col_def_composite(data=data, table=table, col_def=col_def)
         raise TypeError(f"Invalid column definition: {col_def}")
 
-    def _parse_col_def_const(self, data: TabularData, table: str, col_def: Union[int, float]) -> pd.DataFrame:
+    @staticmethod
+    def _parse_col_def_const(data: TabularData, table: str, col_def: Union[int, float]) -> pd.DataFrame:
         """Create a single column pandas DataFrame containing the const value.
 
         Args:
@@ -478,10 +480,16 @@ class TabularConverter(BaseConverter[TabularData]):
         data_frames = []
         for name, sub_def in col_def.items():
             if name == "auto_id":
-                if sorted(sub_def.keys()) != ["key", "name"]:
+                # Check that "key" is in the definition and no other keys than "table" and "name"
+                if "key" not in sub_def or len(set(sub_def.keys()) & {"table", "name"}) > 2:
                     raise ValueError(f"Invalid auto_id definition: {sub_def}")
                 col_data = self._parse_auto_id(
-                    data=data, table=table, name=sub_def["name"], key_col_def=sub_def["key"], extra_info=extra_info
+                    data=data,
+                    table=table,
+                    ref_table=sub_def.get("table"),
+                    ref_name=sub_def.get("name"),
+                    ref_key_col_def=sub_def["key"],
+                    extra_info=extra_info,
                 )
             elif name == "multiply":
                 raise NotImplementedError(f"Column filter '{name}' not implemented")
@@ -500,8 +508,9 @@ class TabularConverter(BaseConverter[TabularData]):
         self,
         data: TabularData,
         table: str,
-        name: Union[str, List[str]],
-        key_col_def: Union[str, List[str], Dict[str, str]],
+        ref_table: Optional[str],
+        ref_name: Optional[str],
+        ref_key_col_def: Union[str, List[str], Dict[str, str]],
         extra_info: Optional[ExtraInfoLookup],
     ) -> pd.DataFrame:
         """
@@ -512,30 +521,55 @@ class TabularConverter(BaseConverter[TabularData]):
         Args:
             data: The entire input data
             table: The current table name
-            name: A custom textual identifier, to be used for the auto_id
-            key_col_def: A column definition which should be unique for each object within the current table
+            ref_name: The table name to which the id refers. If None, use the current table name.
+            ref_name: A custom textual identifier, to be used for the auto_id. If None, ignore it.
+            ref_key_col_def: A column definition which should be unique for each object within the current table
 
         Returns: A single column containing numerical ids
 
         """
 
-        if isinstance(key_col_def, dict):
-            key_names = list(key_col_def.keys())
-            key_col_def = list(key_col_def.values())
-        elif isinstance(key_col_def, list):
-            key_names = key_col_def
-        elif isinstance(key_col_def, str):
-            key_names = [key_col_def]
+        # Handle reference table
+        if ref_table is None:
+            ref_table = table
+        elif not isinstance(ref_table, str):
+            raise TypeError(f"Invalid reference table type '{type(ref_table).__name__}': {ref_table}")
+
+        # Handle reference name type
+        if ref_name is not None and not isinstance(ref_name, str):
+            raise TypeError(f"Invalid reference name type '{type(ref_name).__name__}': {ref_name}")
+
+        # Handle reference column definition
+        if isinstance(ref_key_col_def, dict):
+            key_names = list(ref_key_col_def.keys())
+            ref_key_col_def = list(ref_key_col_def.values())
+        elif isinstance(ref_key_col_def, list):
+            key_names = ref_key_col_def
+        elif isinstance(ref_key_col_def, str):
+            key_names = [ref_key_col_def]
         else:
-            raise TypeError(f"Invalid key definition type: {type(key_col_def).__name__}")
+            raise TypeError(f"Invalid key definition type '{type(ref_key_col_def).__name__}': {ref_key_col_def}")
 
-        col_data = self._parse_col_def(data=data, table=table, col_def=key_col_def, extra_info=None)
+        col_data = self._parse_col_def(data=data, table=table, col_def=ref_key_col_def, extra_info=None)
 
-        def auto_id(row: np.ndarray):
+        extra: Dict[str, Union[str, Dict[str, Any]]] = {"id_reference": {"table": ref_table}}
+        if ref_name is not None:
+            extra["id_reference"]["name"] = ref_name
+
+        def auto_id(row: pd.Series):
             key = dict(zip(key_names, row))
-            pgm_id = self._get_id(name=name, key=key)
-            if extra_info is not None and pgm_id not in extra_info:
-                extra_info[pgm_id] = {"auto_id": {"name": name, "key": key}}
+            pgm_id = self._get_id(table=ref_table, key=key, name=ref_name)
+
+            # Extra info should only be added for the "id" field. Unfortunately we cannot check the field name at
+            # this point, so we'll use a heuristic:
+            # 1. An extra info dictionary should be supplied (i.e. extra info is requested by the caller).
+            # 2. The auto_id should refer to the current table.
+            #    (a counter example is an auto id referring to the nodes table, while the current table is lines)
+            # 3. There shouldn't be any extra info for the current pgm_id, because the id attribute is supposed to be
+            #    the first argument to be parsed.
+            if extra_info is not None and ref_table == table and pgm_id not in extra_info:
+                extra_info[pgm_id] = deepcopy(extra)
+                extra_info[pgm_id]["id_reference"]["key"] = key
             return pgm_id
 
         return col_data.apply(auto_id, axis=1, raw=True)

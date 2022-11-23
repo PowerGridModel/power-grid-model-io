@@ -1,0 +1,51 @@
+{
+  "node":
+    [
+      {"id": 0, "id_reference": {"table": "Nodes", "key": {"Number": 1}}, "Name": "node1"},
+      {"id": 1, "id_reference": {"table": "Nodes", "key": {"Number": 2}}, "Name": "node2"},
+      {"id": 2, "id_reference": {"table": "Nodes", "key": {"Number": 3}}, "Name": "node3"},
+      {"id": 3, "id_reference": {"table": "Nodes", "key": {"Number": 4}}, "Name": "node4"},
+      {"id": 4, "id_reference": {"table": "Nodes", "key": {"Number": 5}}},
+      {"id": 12, "id_reference": {"table": "Transformer loads", "name": "internal_node", "key": {"Node.Number": 3, "Subnumber": 4}}, "Name": "transformer_load_1"}
+    ],
+  "line":
+    [
+      {"id": 5, "from_node": 0, "to_node": 1, "id_reference": {"table": "Cables", "key": {"Number":  1}}, "Name": "cable1"},
+      {"id": 6, "from_node": 0, "to_node": 1, "id_reference": {"table": "Lines", "key": {"Number":  1}}, "Name": "line1"},
+      {"id": 8, "from_node": 0, "to_node": 1, "id_reference": {"table": "Reactance coils", "key": {"Number":  1}}, "Name": "rcoil1"}
+    ],
+  "link":
+    [
+      {"id": 7, "from_node": 0, "to_node": 1, "id_reference": {"table": "Links", "key": {"Number":  1}}, "Name": "link1"}
+    ],
+  "transformer":
+    [
+      {"id": 9, "from_node": 1, "to_node": 2, "id_reference": {"table": "Transformers", "key": {"Number":  1}}, "Name": "transformer1"},
+      {"id": 10, "from_node": 1, "to_node": 3, "id_reference": {"table": "Special transformers", "key": {"Number":  1}}, "Name": "special_trans1"},
+      {"id": 11, "from_node": 2, "to_node": 12, "id_reference": {"table": "Transformer loads", "name": "transformer", "key": {"Node.Number": 3, "Subnumber": 4}}, "Name": "transformer_load_1"}
+    ],
+  "sym_load":
+    [
+      {"id": 13, "node": 12, "id_reference": {"table": "Transformer loads", "name": "load", "key": {"Node.Number": 3, "Subnumber": 4}}, "Name": "transformer_load_1"},
+      {"id": 19, "node": 2, "id_reference": {"table": "Loads", "key": {"Node.Number": 3, "Subnumber": 6}}, "Name": "load1"}
+    ],
+  "sym_gen":
+    [
+      {"id": 14, "node": 12, "id_reference": {"table": "Transformer loads", "name": "generation", "key": {"Node.Number": 3, "Subnumber": 4}}, "Name": "transformer_load_1"},
+      {"id": 14, "node": 12, "id_reference": {"table": "Transformer loads", "name": "generation", "key": {"Node.Number": 3, "Subnumber": 4}}, "Name": "transformer_load_1"},
+      {"id": 15, "node": 12, "id_reference": {"table": "Transformer loads", "name": "pv_generation", "key": {"Node.Number": 3, "Subnumber": 4}}, "Name": "transformer_load_1"},
+      {"id": 17, "node": 3, "id_reference": {"table": "Synchronous generators", "key": {"Node.Number": 4, "Subnumber": 2}}, "Name": "syngen1"},
+      {"id": 18, "node": 2, "id_reference": {"table": "Wind turbines", "key": {"Node.Number": 3, "Subnumber": 3}}, "Name": "wind1"},
+      {"id": 23, "node": 2, "id_reference": {"table": "Pvs", "key": {"Node.Number": 3, "Subnumber": 1}}, "Name": "pv1"}
+    ],
+  "source":
+    [
+      {"id": 16, "node": 0, "id_reference": {"table": "Sources", "key": {"Node.Number": 1, "Subnumber": 1}}, "Name": "source1"}
+    ],
+  "shunt":
+    [
+      {"id": 20, "node": 2, "id_reference": {"table": "Zigzag transformers", "key": {"Node.Number": 3, "Subnumber": 5}}, "Name": "zztrans1"},
+      {"id": 21, "node": 3, "id_reference": {"table": "Capacitors", "key": {"Node.Number": 4, "Subnumber": 9}}, "Name": "shunt1"},
+      {"id": 22, "node": 3, "id_reference": {"table": "Reactors", "key": {"Node.Number": 4, "Subnumber": 1}}}
+    ]
+}

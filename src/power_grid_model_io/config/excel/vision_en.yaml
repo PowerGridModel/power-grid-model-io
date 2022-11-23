@@ -7,7 +7,6 @@ grid:
     node:
       id:
         auto_id:
-          name: Nodes
           key: Number
       u_rated: Unom
       extra:
@@ -17,17 +16,16 @@ grid:
     line:
       id:
         auto_id:
-          name: Cables
           key: Number
       from_node:
         auto_id:
-          name: Nodes
+          table: Nodes
           key:
             Number: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
-          name: Nodes
+          table: Nodes
           key:
             Number: To.Number
       to_status: To.Switch state
@@ -47,17 +45,16 @@ grid:
     line:
       id:
         auto_id:
-          name: Lines
           key: Number
       from_node:
         auto_id:
-          name: Nodes
+          table: Nodes
           key:
             Number: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
-          name: Nodes
+          table: Nodes
           key:
             Number: To.Number
       to_status: To.Switch state
@@ -77,17 +74,16 @@ grid:
     link:
       id:
         auto_id:
-          name: Links
           key: Number
       from_node:
         auto_id:
-          name: Nodes
+          table: Nodes
           key:
             Number: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
-          name: Nodes
+          table: Nodes
           key:
             Number: To.Number
       to_status: To.Switch state
@@ -98,17 +94,16 @@ grid:
     line:
       id:
         auto_id:
-          name: Reactance coils
           key: Number
       from_node:
         auto_id:
-          name: Nodes
+          table: Nodes
           key:
             Number: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
-          name: Nodes
+          table: Nodes
           key:
             Number: To.Number
       to_status: To.Switch state
@@ -128,17 +123,16 @@ grid:
     transformer:
       id:
         auto_id:
-          name: Transformers
           key: Number
       from_node:
         auto_id:
-          name: Nodes
+          table: Nodes
           key:
             Number: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
-          name: Nodes
+          table: Nodes
           key:
             Number: To.Number
       to_status: To.Switch state
@@ -186,17 +180,16 @@ grid:
     transformer:
       id:
         auto_id:
-          name: Special transformers
           key: Number
       from_node:
         auto_id:
-          name: Nodes
+          table: Nodes
           key:
             Number: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
-          name: Nodes
+          table: Nodes
           key:
             Number: To.Number
       to_status: To.Switch state
@@ -236,22 +229,18 @@ grid:
     transformer:
       id:
         auto_id:
-          name:
-            - Transformer loads
-            - transformer
+          name: transformer
           key:
             - Node.Number
             - Subnumber
       from_node:
         auto_id:
-          name: Nodes
+          table: Nodes
           key:
             Number: Node.Number
       to_node:
         auto_id:
-          name:
-            - Transformer loads
-            - internal_node
+          name: internal_node
           key:
             - Node.Number
             - Subnumber
@@ -295,9 +284,7 @@ grid:
     node:
       id:
         auto_id:
-          name:
-            - Transformer loads
-            - internal_node
+          name: internal_node
           key:
             - Node.Number
             - Subnumber
@@ -308,17 +295,13 @@ grid:
     sym_load:
       id:
         auto_id:
-          name:
-            - Transformer loads
-            - load
+          name: load
           key:
             - Node.Number
             - Subnumber
       node:
         auto_id:
-          name:
-            - Transformer loads
-            - internal_node
+          name: internal_node
           key:
             - Node.Number
             - Subnumber
@@ -338,17 +321,13 @@ grid:
     sym_gen:
       - id:
           auto_id:
-            name:
-              - Transformer loads
-              - generation
+            name: generation
             key:
               - Node.Number
               - Subnumber
         node:
           auto_id:
-            name:
-              - Transformer loads
-              - internal_node
+            name: internal_node
             key:
               - Node.Number
               - Subnumber
@@ -361,17 +340,13 @@ grid:
           - Name
       - id:
           auto_id:
-            name:
-              - Transformer loads
-              - pv_generation
+            name: pv_generation
             key:
               - Node.Number
               - Subnumber
         node:
           auto_id:
-            name:
-              - Transformer loads
-              - internal_node
+            name: internal_node
             key:
               - Node.Number
               - Subnumber
@@ -389,13 +364,12 @@ grid:
     source:
       id:
         auto_id:
-          name: Sources
           key:
             - Node.Number
             - Subnumber
       node:
         auto_id:
-          name: Nodes
+          table: Nodes
           key:
             Number: Node.Number
       status: Switch state
@@ -410,13 +384,12 @@ grid:
     sym_gen:
       id:
         auto_id:
-          name: Synchronous generators
           key:
             - Node.Number
             - Subnumber
       node:
         auto_id:
-          name: Nodes
+          table: Nodes
           key:
             Number: Node.Number
       status: Switch state
@@ -435,13 +408,12 @@ grid:
     sym_gen:
       id:
         auto_id:
-          name: Wind turbines
           key:
             - Node.Number
             - Subnumber
       node:
         auto_id:
-          name: Nodes
+          table: Nodes
           key:
             Number: Node.Number
       status: Switch state
@@ -467,13 +439,12 @@ grid:
     sym_load:
       id:
         auto_id:
-          name: Loads
           key:
             - Node.Number
             - Subnumber
       node:
         auto_id:
-          name: Nodes
+          table: Nodes
           key:
             Number: Node.Number
       status: Switch state
@@ -493,13 +464,12 @@ grid:
     shunt:
       id:
         auto_id:
-          name: Zigzag transformers
           key:
             - Node.Number
             - Subnumber
       node:
         auto_id:
-          name: Nodes
+          table: Nodes
           key:
             Number: Node.Number
       status: Switch state
@@ -520,13 +490,12 @@ grid:
     shunt:
       id:
         auto_id:
-          name: Capacitors
           key:
             - Node.Number
             - Subnumber
       node:
         auto_id:
-          name: Nodes
+          table: Nodes
           key:
             Number: Node.Number
       status: Switch state
@@ -544,13 +513,12 @@ grid:
     shunt:
       id:
         auto_id:
-          name: Reactors
           key:
             - Node.Number
             - Subnumber
       node:
         auto_id:
-          name: Nodes
+          table: Nodes
           key:
             Number: Node.Number
       status: Switch state
@@ -570,13 +538,12 @@ grid:
     sym_gen:
       id:
         auto_id:
-          name: Pvs
           key:
             - Node.Number
             - Subnumber
       node:
         auto_id:
-          name: Nodes
+          table: Nodes
           key:
             Number: Node.Number
       status: Switch state

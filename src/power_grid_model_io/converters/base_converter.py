@@ -5,11 +5,10 @@
 Abstract converter class
 """
 from abc import ABC, abstractmethod
-from typing import Dict, Generic, List, Mapping, Optional, Tuple, TypeVar, Union
+from typing import Dict, Generic, Mapping, Optional, Tuple, TypeVar
 
 import structlog
 from power_grid_model.data_types import Dataset, SingleDataset
-
 from power_grid_model_io.data_stores.base_data_store import BaseDataStore
 from power_grid_model_io.data_types import ExtraInfoLookup
 from power_grid_model_io.utils.auto_id import AutoID
@@ -104,10 +103,10 @@ class BaseConverter(Generic[T], ABC):
         return self._serialize_data(data=data, extra_info=extra_info)
 
     def save(
-        self,
-        data: Dataset,
-        extra_info: Optional[ExtraInfoLookup] = None,
-        destination: Optional[BaseDataStore[T]] = None,
+            self,
+            data: Dataset,
+            extra_info: Optional[ExtraInfoLookup] = None,
+            destination: Optional[BaseDataStore[T]] = None,
     ) -> None:
         """Save input/update/(a)sym_output data and optionally extra info.
 
@@ -136,35 +135,37 @@ class BaseConverter(Generic[T], ABC):
             return self._source.load()
         raise ValueError("No data supplied!")
 
-    def _get_id(self, name: Union[str, List[str], Tuple[str, ...]], key: Mapping[str, int]) -> int:
+    def _get_id(self, table: str, key: Mapping[str, int], name: Optional[str]) -> int:
         """
         Get a unique numerical ID for the supplied name / key combination
 
         Args:
-            name: Component name (e.g. "Node" or ["Transformer", "Internal node"])
+            table: Table name (e.g. "Nodes")
             key: Component identifier (e.g. {"name": "node1"} or {"number": 1, "sub_number": 2})
+            name: Optional component name (e.g. "internal_node")
 
         Returns: A unique id
         """
-        auto_id_key = (tuple(name), tuple(sorted(key.items())))
-        return self._auto_id(item=(name, key), key=auto_id_key)
+        auto_id_key = (table, tuple(sorted(key.items())), name)
+        return self._auto_id(item=(table, key, name), key=auto_id_key)
 
-    def get_id(self, name: Union[str, List[str], Tuple[str, ...]], key: Mapping[str, int]) -> int:
+    def get_id(self, table: str, key: Mapping[str, int], name: Optional[str] = None) -> int:
         """
         Get a the numerical ID previously associated with the supplied name / key combination
 
         Args:
-            name: Component name (e.g. "Node" or ["Transformer", "Internal node"])
+            table: Table name (e.g. "Nodes")
             key: Component identifier (e.g. {"name": "node1"} or {"number": 1, "sub_number": 2})
+            name: Optional component name (e.g. "internal_node")
 
         Returns: The associated id
         """
-        auto_id_key = (tuple(name), tuple(sorted(key.items())))
+        auto_id_key = (table, tuple(sorted(key.items())), name)
         if auto_id_key not in self._auto_id:
-            raise KeyError((name, key))
-        return self._auto_id(item=(name, key), key=auto_id_key)
+            raise KeyError((table, key, name))
+        return self._auto_id(item=(table, key, name), key=auto_id_key)
 
-    def lookup_id(self, pgm_id: int) -> Tuple[Union[str, List[str]], Dict[str, int]]:
+    def lookup_id(self, pgm_id: int) -> Tuple[str, Optional[str], Dict[str, int]]:
         """
         Retrieve the original name / key combination of a pgm object
 
