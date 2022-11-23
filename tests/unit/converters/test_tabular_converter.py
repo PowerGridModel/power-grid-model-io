@@ -517,7 +517,7 @@ def test_parse_auto_id(
         table="nodes",
         ref_table=None,
         ref_name=None,
-        ref_key_col_def="id_number",
+        key_col_def="id_number",
         extra_info=None,
     )
     mock_get_id.assert_has_calls(
@@ -537,7 +537,7 @@ def test_parse_auto_id__extra_info(
         table="nodes",
         ref_table=None,
         ref_name=None,
-        ref_key_col_def="id_number",
+        key_col_def="id_number",
         extra_info=extra_info,
     )
     mock_get_id.assert_has_calls(
@@ -559,7 +559,7 @@ def test_parse_auto_id__reference_column(
         table="lines",
         ref_table="nodes",
         ref_name=None,
-        ref_key_col_def={"id_number": "from_node_side"},
+        key_col_def={"id_number": "from_node_side"},
         extra_info=extra_info,
     )
     mock_get_id.assert_has_calls(
@@ -580,7 +580,7 @@ def test_parse_auto_id__composite_key(
         table="nodes",
         ref_table=None,
         ref_name=None,
-        ref_key_col_def=["id_number", "u_nom"],
+        key_col_def=["id_number", "u_nom"],
         extra_info=extra_info,
     )
     mock_get_id.assert_has_calls(
@@ -605,7 +605,7 @@ def test_parse_auto_id__named_objects(
         table="nodes",
         ref_table=None,
         ref_name="internal_node",
-        ref_key_col_def="id_number",
+        key_col_def="id_number",
         extra_info=extra_info,
     )
     mock_get_id.assert_has_calls(
@@ -630,7 +630,7 @@ def test_parse_auto_id__named_keys(
         table="lines",
         ref_table=None,
         ref_name=None,
-        ref_key_col_def={"id": "id_number", "node": "from_node_side"},
+        key_col_def={"id": "id_number", "node": "from_node_side"},
         extra_info=extra_info,
     )
     mock_get_id.assert_has_calls(
@@ -652,7 +652,7 @@ def test_parse_auto_id__invalid_reference_table_type(
             table="",
             ref_table=123,  # type: ignore
             ref_name=None,
-            ref_key_col_def="",
+            key_col_def="",
             extra_info=None,
         )
 
@@ -666,7 +666,7 @@ def test_parse_auto_id__invalid_reference_name(
             table="",
             ref_table=None,
             ref_name=123,  # type: ignore
-            ref_key_col_def="",
+            key_col_def="",
             extra_info=None,
         )
 
@@ -680,7 +680,7 @@ def test_parse_auto_id__invalid_key_definition(
             table="",
             ref_table=None,
             ref_name=None,
-            ref_key_col_def=123,  # type: ignore
+            key_col_def=123,  # type: ignore
             extra_info=None,
         )
 

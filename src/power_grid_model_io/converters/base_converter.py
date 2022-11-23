@@ -9,6 +9,7 @@ from typing import Dict, Generic, Mapping, Optional, Tuple, TypeVar
 
 import structlog
 from power_grid_model.data_types import Dataset, SingleDataset
+
 from power_grid_model_io.data_stores.base_data_store import BaseDataStore
 from power_grid_model_io.data_types import ExtraInfoLookup
 from power_grid_model_io.utils.auto_id import AutoID
@@ -103,10 +104,10 @@ class BaseConverter(Generic[T], ABC):
         return self._serialize_data(data=data, extra_info=extra_info)
 
     def save(
-            self,
-            data: Dataset,
-            extra_info: Optional[ExtraInfoLookup] = None,
-            destination: Optional[BaseDataStore[T]] = None,
+        self,
+        data: Dataset,
+        extra_info: Optional[ExtraInfoLookup] = None,
+        destination: Optional[BaseDataStore[T]] = None,
     ) -> None:
         """Save input/update/(a)sym_output data and optionally extra info.
 

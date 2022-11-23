@@ -488,7 +488,7 @@ class TabularConverter(BaseConverter[TabularData]):
                     table=table,
                     ref_table=sub_def.get("table"),
                     ref_name=sub_def.get("name"),
-                    ref_key_col_def=sub_def["key"],
+                    key_col_def=sub_def["key"],
                     extra_info=extra_info,
                 )
             elif name == "multiply":
@@ -510,7 +510,7 @@ class TabularConverter(BaseConverter[TabularData]):
         table: str,
         ref_table: Optional[str],
         ref_name: Optional[str],
-        ref_key_col_def: Union[str, List[str], Dict[str, str]],
+        key_col_def: Union[str, List[str], Dict[str, str]],
         extra_info: Optional[ExtraInfoLookup],
     ) -> pd.DataFrame:
         """
@@ -523,7 +523,7 @@ class TabularConverter(BaseConverter[TabularData]):
             table: The current table name
             ref_name: The table name to which the id refers. If None, use the current table name.
             ref_name: A custom textual identifier, to be used for the auto_id. If None, ignore it.
-            ref_key_col_def: A column definition which should be unique for each object within the current table
+            key_col_def: A column definition which should be unique for each object within the current table
 
         Returns: A single column containing numerical ids
 
@@ -540,17 +540,17 @@ class TabularConverter(BaseConverter[TabularData]):
             raise TypeError(f"Invalid reference name type '{type(ref_name).__name__}': {ref_name}")
 
         # Handle reference column definition
-        if isinstance(ref_key_col_def, dict):
-            key_names = list(ref_key_col_def.keys())
-            ref_key_col_def = list(ref_key_col_def.values())
-        elif isinstance(ref_key_col_def, list):
-            key_names = ref_key_col_def
-        elif isinstance(ref_key_col_def, str):
-            key_names = [ref_key_col_def]
+        if isinstance(key_col_def, dict):
+            key_names = list(key_col_def.keys())
+            key_col_def = list(key_col_def.values())
+        elif isinstance(key_col_def, list):
+            key_names = key_col_def
+        elif isinstance(key_col_def, str):
+            key_names = [key_col_def]
         else:
-            raise TypeError(f"Invalid key definition type '{type(ref_key_col_def).__name__}': {ref_key_col_def}")
+            raise TypeError(f"Invalid key definition type '{type(key_col_def).__name__}': {key_col_def}")
 
-        col_data = self._parse_col_def(data=data, table=table, col_def=ref_key_col_def, extra_info=None)
+        col_data = self._parse_col_def(data=data, table=table, col_def=key_col_def, extra_info=None)
 
         extra: Dict[str, Union[str, Dict[str, Any]]] = {"id_reference": {"table": ref_table}}
         if ref_name is not None:
