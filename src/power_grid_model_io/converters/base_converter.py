@@ -166,7 +166,7 @@ class BaseConverter(Generic[T], ABC):
             raise KeyError((table, key, name))
         return self._auto_id(item=(table, key, name), key=auto_id_key)
 
-    def lookup_id(self, pgm_id: int) -> Tuple[str, Optional[str], Dict[str, int]]:
+    def lookup_id(self, pgm_id: int) -> Tuple[str, Dict[str, int], Optional[str]]:
         """
         Retrieve the original name / key combination of a pgm object
 
