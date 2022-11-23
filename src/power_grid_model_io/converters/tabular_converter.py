@@ -6,7 +6,6 @@ Tabular Data Converter: Load data from multiple tables and use a mapping file to
 """
 
 import re
-from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Union, cast
 
@@ -534,6 +533,7 @@ class TabularConverter(BaseConverter[TabularData]):
             ref_table = table
         elif not isinstance(ref_table, str):
             raise TypeError(f"Invalid reference table type '{type(ref_table).__name__}': {ref_table}")
+        # mypy complains about ref_table being optional, therefore ref_table_str is defined as a string
 
         # Handle reference name type
         if ref_name is not None and not isinstance(ref_name, str):
@@ -552,13 +552,9 @@ class TabularConverter(BaseConverter[TabularData]):
 
         col_data = self._parse_col_def(data=data, table=table, col_def=key_col_def, extra_info=None)
 
-        extra: Dict[str, Union[str, Dict[str, Any]]] = {"id_reference": {"table": ref_table}}
-        if ref_name is not None:
-            extra["id_reference"]["name"] = ref_name
-
         def auto_id(row: pd.Series):
             key = dict(zip(key_names, row))
-            pgm_id = self._get_id(table=ref_table, key=key, name=ref_name)
+            pgm_id = self._get_id(table=str(ref_table), key=key, name=ref_name)
 
             # Extra info should only be added for the "id" field. Unfortunately we cannot check the field name at
             # this point, so we'll use a heuristic:
@@ -568,8 +564,11 @@ class TabularConverter(BaseConverter[TabularData]):
             # 3. There shouldn't be any extra info for the current pgm_id, because the id attribute is supposed to be
             #    the first argument to be parsed.
             if extra_info is not None and ref_table == table and pgm_id not in extra_info:
-                extra_info[pgm_id] = deepcopy(extra)
-                extra_info[pgm_id]["id_reference"]["key"] = key
+                if ref_name is not None:
+                    extra_info[pgm_id] = {"id_reference": {"table": ref_table, "name": ref_name, "key": key}}
+                else:
+                    extra_info[pgm_id] = {"id_reference": {"table": ref_table, "key": key}}
+
             return pgm_id
 
         return col_data.apply(auto_id, axis=1, raw=True)

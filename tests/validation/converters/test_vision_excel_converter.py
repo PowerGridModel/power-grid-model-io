@@ -16,8 +16,8 @@ from power_grid_model_io.data_types import ExtraInfoLookup
 from ..utils import component_attributes, component_objects, load_json_single_dataset, select_values
 
 DATA_PATH = Path(__file__).parents[2] / "data" / "vision"
-SOURCE_FILE = DATA_PATH / "input_data.xlsx"
-VALIDATION_FILE = DATA_PATH / "input_data.json"
+SOURCE_FILE = DATA_PATH / "vision_validation.xlsx"
+VALIDATION_FILE = DATA_PATH / "vision_validation.json"
 
 
 @pytest.fixture

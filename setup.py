@@ -63,7 +63,7 @@ def get_pypi_latest():
     if r.status_code == 404:
         return 0, 0, 0
     data = r.json()
-    version: str = data["info"]["version"]
+    version = str(data["info"]["version"])
     return (int(x) for x in version.split("."))
 
 
