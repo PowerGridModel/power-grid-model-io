@@ -530,16 +530,7 @@ class TabularConverter(BaseConverter[TabularData]):
 
         # Handle reference table
         # mypy complains about ref_table being optional, therefore ref_table_str is defined as a string
-        if ref_table is None:
-            ref_table_str = table
-        elif isinstance(ref_table, str):
-            ref_table_str = ref_table
-        else:
-            raise TypeError(f"Invalid reference table type '{type(ref_table).__name__}': {ref_table}")
-
-        # Handle reference name type
-        if ref_name is not None and not isinstance(ref_name, str):
-            raise TypeError(f"Invalid reference name type '{type(ref_name).__name__}': {ref_name}")
+        ref_table_str = ref_table or table
 
         # Handle reference column definition
         if isinstance(key_col_def, dict):

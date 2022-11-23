@@ -643,34 +643,6 @@ def test_parse_auto_id__named_keys(
     assert extra_info[102] == {"id_reference": {"table": "lines", "key": {"id": 2, "node": 200}}}
 
 
-def test_parse_auto_id__invalid_reference_table_type(
-    converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
-):
-    with pytest.raises(TypeError, match="Invalid reference table type 'int': 123"):
-        converter._parse_auto_id(
-            data=TabularData(),
-            table="",
-            ref_table=123,  # type: ignore
-            ref_name=None,
-            key_col_def="",
-            extra_info=None,
-        )
-
-
-def test_parse_auto_id__invalid_reference_name(
-    converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
-):
-    with pytest.raises(TypeError, match="Invalid reference name type 'int': 123"):
-        converter._parse_auto_id(
-            data=TabularData(),
-            table="",
-            ref_table=None,
-            ref_name=123,  # type: ignore
-            key_col_def="",
-            extra_info=None,
-        )
-
-
 def test_parse_auto_id__invalid_key_definition(
     converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
 ):
