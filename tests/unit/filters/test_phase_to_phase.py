@@ -11,8 +11,8 @@ from power_grid_model_io.filters.phase_to_phase import (
     get_winding_to,
     power_wind_speed,
     reactive_power,
-    relative_no_load_current,
     reactive_power_to_susceptance,
+    relative_no_load_current,
 )
 
 

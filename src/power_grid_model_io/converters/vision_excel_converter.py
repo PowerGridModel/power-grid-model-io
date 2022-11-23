@@ -30,22 +30,22 @@ class VisionExcelConverter(TabularConverter):
         """
         Get the automatically assigned id of a node
         """
-        return self.get_id(name="Nodes", key={"Number": number})
+        return self.get_id(table="Nodes", key={"Number": number})
 
     def get_branch_id(self, table: str, number: int) -> int:
         """
         Get the automatically assigned id of a branch (line, transformer, etc.)
         """
-        return self.get_id(name=table, key={"Number": number})
+        return self.get_id(table=table, key={"Number": number})
 
     def get_appliance_id(self, table: str, node_number: int, sub_number: int) -> int:
         """
         Get the automatically assigned id of an appliance (source, load, etc.)
         """
-        return self.get_id(name=table, key={"Node.Number": node_number, "Subnumber": sub_number})
+        return self.get_id(table=table, key={"Node.Number": node_number, "Subnumber": sub_number})
 
     def get_virtual_id(self, table: str, obj_name: str, node_number: int, sub_number: int) -> int:
         """
         Get the automatically assigned id of a vitual object (e.g. the internal node of a 'TansformerLoad')
         """
-        return self.get_id(name=(table, obj_name), key={"Node.Number": node_number, "Subnumber": sub_number})
+        return self.get_id(table=table, name=obj_name, key={"Node.Number": node_number, "Subnumber": sub_number})

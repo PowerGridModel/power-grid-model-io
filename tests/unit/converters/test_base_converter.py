@@ -146,36 +146,37 @@ def test_load_data(converter: DummyConverter):
 
 def test_get_id__private(converter: DummyConverter):
     # Arrange / Act / Assert
-    assert converter._get_id(name="node", key={"a": 1, "b": 2}) == 0
-    assert converter._get_id(name="node", key={"a": 1, "b": 3}) == 1  # change in values
-    assert converter._get_id(name="node", key={"a": 1, "c": 2}) == 2  # change in index
-    assert converter._get_id(name=("foo", "bar"), key={"a": 1, "b": 2}) == 3  # change in name
-    assert converter._get_id(name=["foo", "bar"], key={"a": 1, "b": 2}) == 3  # tuple and list are indistinguishable
-    assert converter._get_id(name="node", key={"a": 1, "b": 2}) == 0  # duplicate name / indices / values
+    assert converter._get_id(table="node", key={"a": 1, "b": 2}, name=None) == 0
+    assert converter._get_id(table="node", key={"a": 1, "b": 3}, name=None) == 1  # change in values
+    assert converter._get_id(table="node", key={"a": 1, "c": 2}, name=None) == 2  # change in index
+    assert converter._get_id(table="foo", key={"a": 1, "b": 2}, name=None) == 3  # change in table
+    assert converter._get_id(table="node", key={"a": 1, "b": 2}, name="bar") == 4  # change in name
+    assert converter._get_id(table="node", key={"a": 1, "b": 2}, name=None) == 0  # duplicate name / indices / values
 
 
 def test_get_id__public(converter: DummyConverter):
     # Arrange
-    converter._get_id(name="node", key={"a": 1, "b": 2})
+    converter._get_id(table="node", key={"a": 1, "b": 2}, name=None)
 
     # Act / Assert
-    assert converter.get_id(name="node", key={"a": 1, "b": 2}) == 0
+    assert converter.get_id(table="node", key={"a": 1, "b": 2}) == 0
 
     with pytest.raises(KeyError):
-        converter.get_id(name="node", key={"a": 1, "b": 3})
+        converter.get_id(table="node", key={"a": 1, "b": 3})
 
 
 def test_lookup_id(converter: DummyConverter):
     # Arrange
-    converter._get_id(name="node", key={"a": 1, "b": 2})
-    converter._get_id(name="node", key={"a": 1, "b": 3})  # change in values
-    converter._get_id(name="node", key={"a": 1, "c": 2})  # change in index
-    converter._get_id(name=("foo", "bar"), key={"a": 1, "b": 2})  # change in name
-    converter._get_id(name=["foo", "bar"], key={"a": 1, "b": 2})  # tuple and list are indistinguishable
-    converter._get_id(name="node", key={"a": 1, "b": 2})  # duplicate name / indices / values
+    converter._get_id(table="node", key={"a": 1, "b": 2}, name=None)
+    converter._get_id(table="node", key={"a": 1, "b": 3}, name=None)  # change in values
+    converter._get_id(table="node", key={"a": 1, "c": 2}, name=None)  # change in index
+    converter._get_id(table="foo", key={"a": 1, "b": 2}, name=None)  # change in table
+    converter._get_id(table="node", key={"a": 1, "b": 2}, name="bar")  # change in name
+    converter._get_id(table="node", key={"a": 1, "b": 2}, name=None)  # duplicate name / indices / values
 
     # Act / Assert
-    assert converter.lookup_id(pgm_id=0) == ("node", {"a": 1, "b": 2})
-    assert converter.lookup_id(pgm_id=1) == ("node", {"a": 1, "b": 3})
-    assert converter.lookup_id(pgm_id=2) == ("node", {"a": 1, "c": 2})
-    assert converter.lookup_id(pgm_id=3) == (["foo", "bar"], {"a": 1, "b": 2})
+    assert converter.lookup_id(pgm_id=0) == ("node", {"a": 1, "b": 2}, None)
+    assert converter.lookup_id(pgm_id=1) == ("node", {"a": 1, "b": 3}, None)
+    assert converter.lookup_id(pgm_id=2) == ("node", {"a": 1, "c": 2}, None)
+    assert converter.lookup_id(pgm_id=3) == ("foo", {"a": 1, "b": 2}, None)
+    assert converter.lookup_id(pgm_id=4) == ("node", {"a": 1, "b": 2}, "bar")
