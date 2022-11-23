@@ -520,7 +520,7 @@ class TabularConverter(BaseConverter[TabularData]):
         Args:
             data: The entire input data
             table: The current table name
-            ref_name: The table name to which the id refers. If None, use the current table name.
+            ref_table: The table name to which the id refers. If None, use the current table name.
             ref_name: A custom textual identifier, to be used for the auto_id. If None, ignore it.
             key_col_def: A column definition which should be unique for each object within the current table
 
