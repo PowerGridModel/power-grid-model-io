@@ -529,11 +529,13 @@ class TabularConverter(BaseConverter[TabularData]):
         """
 
         # Handle reference table
-        if ref_table is None:
-            ref_table = table
-        elif not isinstance(ref_table, str):
-            raise TypeError(f"Invalid reference table type '{type(ref_table).__name__}': {ref_table}")
         # mypy complains about ref_table being optional, therefore ref_table_str is defined as a string
+        if ref_table is None:
+            ref_table_str = table
+        elif isinstance(ref_table, str):
+            ref_table_str = ref_table
+        else:
+            raise TypeError(f"Invalid reference table type '{type(ref_table).__name__}': {ref_table}")
 
         # Handle reference name type
         if ref_name is not None and not isinstance(ref_name, str):
@@ -552,9 +554,9 @@ class TabularConverter(BaseConverter[TabularData]):
 
         col_data = self._parse_col_def(data=data, table=table, col_def=key_col_def, extra_info=None)
 
-        def auto_id(row: pd.Series):
+        def auto_id(row: np.ndarray):
             key = dict(zip(key_names, row))
-            pgm_id = self._get_id(table=str(ref_table), key=key, name=ref_name)
+            pgm_id = self._get_id(table=ref_table_str, key=key, name=ref_name)
 
             # Extra info should only be added for the "id" field. Unfortunately we cannot check the field name at
             # this point, so we'll use a heuristic:
@@ -563,11 +565,11 @@ class TabularConverter(BaseConverter[TabularData]):
             #    (a counter example is an auto id referring to the nodes table, while the current table is lines)
             # 3. There shouldn't be any extra info for the current pgm_id, because the id attribute is supposed to be
             #    the first argument to be parsed.
-            if extra_info is not None and ref_table == table and pgm_id not in extra_info:
+            if extra_info is not None and ref_table_str == table and pgm_id not in extra_info:
                 if ref_name is not None:
-                    extra_info[pgm_id] = {"id_reference": {"table": ref_table, "name": ref_name, "key": key}}
+                    extra_info[pgm_id] = {"id_reference": {"table": ref_table_str, "name": ref_name, "key": key}}
                 else:
-                    extra_info[pgm_id] = {"id_reference": {"table": ref_table, "key": key}}
+                    extra_info[pgm_id] = {"id_reference": {"table": ref_table_str, "key": key}}
 
             return pgm_id
 
