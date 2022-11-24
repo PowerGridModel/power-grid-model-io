@@ -644,25 +644,6 @@ def test_parse_auto_id__named_keys(
     assert extra_info[102] == {"id_reference": {"table": "lines", "key": {"id": 2, "node": 200}}}
 
 
-@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._get_id")
-def test_parse_auto_id__serializable_int64(
-    mock_get_id: MagicMock, converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
-):
-    # Arrange
-    data = tabular_data_no_units_no_substitutions
-    data["nodes"]["id_number"] = data["nodes"]["id_number"].astype(np.int64)
-    mock_get_id.side_effect = [101, 102]
-    extra_info: ExtraInfoLookup = {}
-
-    # Act
-    converter._parse_auto_id(
-        data=data, table="nodes", ref_table=None, ref_name=None, key_col_def="id_number", extra_info=extra_info
-    )
-
-    # Assert
-    assert json.dumps(extra_info, cls=JsonEncoder)
-
-
 def test_parse_auto_id__invalid_key_definition(
     converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
 ):
