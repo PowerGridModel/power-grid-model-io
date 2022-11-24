@@ -5,7 +5,7 @@
 Abstract converter class
 """
 from abc import ABC, abstractmethod
-from typing import Dict, Generic, Mapping, Optional, Tuple, TypeVar
+from typing import Dict, Generic, Mapping, Optional, Tuple, TypeVar, Union
 
 import structlog
 from power_grid_model.data_types import Dataset, SingleDataset
@@ -166,7 +166,7 @@ class BaseConverter(Generic[T], ABC):
             raise KeyError((table, key, name))
         return self._auto_id(item=(table, key, name), key=auto_id_key)
 
-    def lookup_id(self, pgm_id: int) -> Tuple[str, Dict[str, int], Optional[str]]:
+    def lookup_id(self, pgm_id: int) -> Dict[str, Union[str, Dict[str, int]]]:
         """
         Retrieve the original name / key combination of a pgm object
 
@@ -175,7 +175,12 @@ class BaseConverter(Generic[T], ABC):
 
         Returns: The original name / key combination
         """
-        return self._auto_id[pgm_id]
+        table, key, name = self._auto_id[pgm_id]
+        reference = {"table": table}
+        if name is not None:
+            reference["name"] = name
+        reference["key"] = key
+        return reference
 
     @abstractmethod  # pragma: nocover
     def _parse_data(self, data: T, data_type: str, extra_info: Optional[ExtraInfoLookup]) -> Dataset:
