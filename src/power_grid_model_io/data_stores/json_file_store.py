@@ -9,10 +9,9 @@ import json
 from pathlib import Path
 from typing import Optional
 
-from power_grid_model.utils import compact_json_dump
-
 from power_grid_model_io.data_stores.base_data_store import BaseDataStore
 from power_grid_model_io.data_types import StructuredData
+from power_grid_model_io.utils.json import JsonEncoder, compact_json_dump
 
 
 class JsonFileStore(BaseDataStore[StructuredData]):
@@ -94,7 +93,7 @@ class JsonFileStore(BaseDataStore[StructuredData]):
                     max_level += 1
                 compact_json_dump(data, file_pointer, indent=self._indent, max_level=max_level)
             else:
-                json.dump(data, file_pointer, indent=self._indent)
+                json.dump(data, file_pointer, indent=self._indent, cls=JsonEncoder)
 
     def _validate(self, data: StructuredData) -> None:
 

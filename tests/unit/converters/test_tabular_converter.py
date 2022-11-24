@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
-
 from pathlib import Path
 from typing import Optional, Tuple
 from unittest.mock import MagicMock, call, patch
