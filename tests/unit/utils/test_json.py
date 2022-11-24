@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import io
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
@@ -178,3 +179,16 @@ def test_json_encoder__np_array():
     # Assert
     assert type(value) == list
     assert value == [1, 2, 3]
+
+
+@patch("power_grid_model_io.utils.json.json.JSONEncoder.default")
+def test_json_encoder__super(mock_super: MagicMock):
+    # Arrange
+    encoder = JsonEncoder()
+    value = "string value"
+
+    # Act
+    encoder.default(value)
+
+    # Assert
+    mock_super.assert_called_once_with(value)
