@@ -148,6 +148,6 @@ def test_serialize_dataset(converter: PgmJsonConverter, pgm_input_data: SingleDa
     structured_data = converter._serialize_dataset(data=pgm_input_data, extra_info=None)
     assert structured_data == {"node": [{"id": 1}, {"id": 2}]}
 
-    extra_info = {1: {"dummy": "data"}}
+    extra_info: ExtraInfoLookup = {1: {"dummy": "data"}}
     structured_data_with_extra_info = converter._serialize_dataset(data=pgm_input_data, extra_info=extra_info)
     assert structured_data_with_extra_info == {"node": [{"id": 1, "dummy": "data"}, {"id": 2}]}

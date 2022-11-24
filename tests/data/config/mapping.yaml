@@ -7,44 +7,41 @@ grid:
     node:
       id:
         auto_id:
-          name: node
           key: id_number
       u_rated: u_nom
   lines:
     line:
       id:
         auto_id:
-          name: line
           key: id_number
       from_node:
         auto_id:
-          name: node
-          key: from_node_side
+          table: nodes
+          key:
+            id_number: from_node_side
   loads:
     sym_load: # for testing purpose, the same loads will be added twice, with different types
       - id:
           auto_id:
-            name:
-              - sym_load
-              - const_impedence
+            name: const_impedence
             key: id_number
         type: 1 # const_impedence
         node:
           auto_id:
-            name: node
-            key: node_id
+            table: nodes
+            key:
+              id_number: node_id
         status: switching_status
       - id:
           auto_id:
-            name:
-              - sym_load
-              - const_current
+            name: const_current
             key: id_number
         type: 2 # const_current
         node:
           auto_id:
-            name: node
-            key: node_id
+            table: nodes
+            key:
+              id_number: node_id
         status: switching_status
 
 units:

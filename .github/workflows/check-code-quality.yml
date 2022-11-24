@@ -43,7 +43,7 @@ jobs:
       - name: Install and run mypy
         run: |
           pip install mypy
-          mypy .
+          mypy src
 
       - name: Install and run pylint
         run: |

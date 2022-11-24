@@ -7,28 +7,27 @@ grid:
     node:
       id:
         auto_id:
-          name: Nodes
           key: Number
       u_rated: Unom
       extra:
-        - Number
         - ID
         - Name
   Cables:
     line:
       id:
         auto_id:
-          name: Cables
           key: Number
       from_node:
         auto_id:
-          name: Nodes
-          key: From.Number
+          table: Nodes
+          key:
+            Number: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
-          name: Nodes
-          key: To.Number
+          table: Nodes
+          key:
+            Number: To.Number
       to_status: To.Switch state
       r1: R
       x1: X
@@ -40,44 +39,73 @@ grid:
       tan0: 0
       i_n: Inom'
       extra:
-        - Number
+        - ID
+        - Name
+  Lines:
+    line:
+      id:
+        auto_id:
+          key: Number
+      from_node:
+        auto_id:
+          table: Nodes
+          key:
+            Number: From.Number
+      from_status: From.Switch state
+      to_node:
+        auto_id:
+          table: Nodes
+          key:
+            Number: To.Number
+      to_status: To.Switch state
+      r1: R
+      x1: X
+      c1: C
+      tan1: 0
+      r0: R0
+      x0: X0
+      c0: C0
+      tan0: 0
+      i_n: Inom'
+      extra:
         - ID
         - Name
   Links:
     link:
       id:
         auto_id:
-          name: Links
           key: Number
       from_node:
         auto_id:
-          name: Nodes
-          key: From.Number
+          table: Nodes
+          key:
+            Number: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
-          name: Nodes
-          key: To.Number
+          table: Nodes
+          key:
+            Number: To.Number
       to_status: To.Switch state
       extra:
-        - Number
         - ID
         - Name
   Reactance coils:
     line:
       id:
         auto_id:
-          name: Reactance coils
           key: Number
       from_node:
         auto_id:
-          name: Nodes
-          key: From.Number
+          table: Nodes
+          key:
+            Number: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
-          name: Nodes
-          key: To.Number
+          table: Nodes
+          key:
+            Number: To.Number
       to_status: To.Switch state
       r1: R
       x1: X
@@ -89,24 +117,24 @@ grid:
       tan0: 0
       i_n: Inom
       extra:
-        - Number
         - ID
         - Name
   Transformers:
     transformer:
       id:
         auto_id:
-          name: Transformers
           key: Number
       from_node:
         auto_id:
-          name: Nodes
-          key: From.Number
+          table: Nodes
+          key:
+            Number: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
-          name: Nodes
-          key: To.Number
+          table: Nodes
+          key:
+            Number: To.Number
       to_status: To.Switch state
       u1: Unom1
       u2: Unom2
@@ -146,24 +174,24 @@ grid:
       r_grounding_to: Re2
       x_grounding_to: Xe2
       extra:
-        - Number
         - ID
         - Name
   Special transformers:
     transformer:
       id:
         auto_id:
-          name: Special transformers
           key: Number
       from_node:
         auto_id:
-          name: Nodes
-          key: From.Number
+          table: Nodes
+          key:
+            Number: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
-          name: Nodes
-          key: To.Number
+          table: Nodes
+          key:
+            Number: To.Number
       to_status: To.Switch state
       u1: Unom1
       u2: Unom2
@@ -195,28 +223,24 @@ grid:
       r_grounding_to: 0
       x_grounding_to: 0
       extra:
-        - Number
         - ID
         - Name
   Transformer loads:
     transformer:
       id:
         auto_id:
-          name:
-            - Transformer loads
-            - transformer
+          name: transformer
           key:
             - Node.Number
             - Subnumber
       from_node:
         auto_id:
-          name: Nodes
-          key: Node.Number
+          table: Nodes
+          key:
+            Number: Node.Number
       to_node:
         auto_id:
-          name:
-            - Transformer loads
-            - internal_node
+          name: internal_node
           key:
             - Node.Number
             - Subnumber
@@ -255,39 +279,29 @@ grid:
       r_grounding_to: 0
       x_grounding_to: 0
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
     node:
       id:
         auto_id:
-          name:
-            - Transformer loads
-            - internal_node
+          name: internal_node
           key:
             - Node.Number
             - Subnumber
       u_rated: Unom2
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
     sym_load:
       id:
         auto_id:
-          name:
-            - Transformer loads
-            - load
+          name: load
           key:
             - Node.Number
             - Subnumber
       node:
         auto_id:
-          name:
-            - Transformer loads
-            - internal_node
+          name: internal_node
           key:
             - Node.Number
             - Subnumber
@@ -302,24 +316,18 @@ grid:
           - Load.Q
           - Nodes!Simultaneity[Number=Node.Number]
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
     sym_gen:
       - id:
           auto_id:
-            name:
-              - Transformer loads
-              - generation
+            name: generation
             key:
               - Node.Number
               - Subnumber
         node:
           auto_id:
-            name:
-              - Transformer loads
-              - internal_node
+            name: internal_node
             key:
               - Node.Number
               - Subnumber
@@ -328,23 +336,17 @@ grid:
         p_specified: Generation.P
         q_specified: Generation.Q
         extra:
-          - Node.Number
-          - Subnumber
           - ID
           - Name
       - id:
           auto_id:
-            name:
-              - Transformer loads
-              - pv_generation
+            name: pv_generation
             key:
               - Node.Number
               - Subnumber
         node:
           auto_id:
-            name:
-              - Transformer loads
-              - internal_node
+            name: internal_node
             key:
               - Node.Number
               - Subnumber
@@ -356,44 +358,40 @@ grid:
             - PV.Pnom
             - 1
         extra:
-          - Node.Number
-          - Subnumber
           - ID
           - Name
   Sources:
     source:
       id:
         auto_id:
-          name: Sources
           key:
             - Node.Number
             - Subnumber
       node:
         auto_id:
-          name: Nodes
-          key: Node.Number
+          table: Nodes
+          key:
+            Number: Node.Number
       status: Switch state
       u_ref: Uref
       sk: Sk"nom
       rx_ratio: R/X
       z01_ratio: Z0/Z1
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
   Synchronous generators:
     sym_gen:
       id:
         auto_id:
-          name: Synchronous generators
           key:
             - Node.Number
             - Subnumber
       node:
         auto_id:
-          name: Nodes
-          key: Node.Number
+          table: Nodes
+          key:
+            Number: Node.Number
       status: Switch state
       type: 0
       p_specified: Pref
@@ -404,22 +402,20 @@ grid:
             - cos phi
           - Q
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
   Wind turbines:
     sym_gen:
       id:
         auto_id:
-          name: Wind turbines
           key:
             - Node.Number
             - Subnumber
       node:
         auto_id:
-          name: Nodes
-          key: Node.Number
+          table: Nodes
+          key:
+            Number: Node.Number
       status: Switch state
       type: 1
       p_specified:
@@ -437,22 +433,20 @@ grid:
               - Wind speed
           - cos phi
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
   Loads:
     sym_load:
       id:
         auto_id:
-          name: Loads
           key:
             - Node.Number
             - Subnumber
       node:
         auto_id:
-          name: Nodes
-          key: Node.Number
+          table: Nodes
+          key:
+            Number: Node.Number
       status: Switch state
       type: Behaviour
       p_specified:
@@ -464,22 +458,20 @@ grid:
           - Q
           - Nodes!Simultaneity[Number=Node.Number]
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
   Zigzag transformers:
     shunt:
       id:
         auto_id:
-          name: Zigzag transformers
           key:
             - Node.Number
             - Subnumber
       node:
         auto_id:
-          name: Nodes
-          key: Node.Number
+          table: Nodes
+          key:
+            Number: Node.Number
       status: Switch state
       g1: 0
       b1: 0
@@ -492,37 +484,85 @@ grid:
           - R0
           - X0
       extra:
-        - Node.Number
-        - Subnumber
+        - ID
+        - Name
+  Capacitors:
+    shunt:
+      id:
+        auto_id:
+          key:
+            - Node.Number
+            - Subnumber
+      node:
+        auto_id:
+          table: Nodes
+          key:
+            Number: Node.Number
+      status: Switch state
+      g1: 0
+      b1:
+        power_grid_model_io.filters.phase_to_phase.reactive_power_to_susceptance:
+          - Q
+          - Unom
+      g0: 0
+      b0: 0
+      extra:
+        - ID
+        - Name
+  Reactors:
+    shunt:
+      id:
+        auto_id:
+          key:
+            - Node.Number
+            - Subnumber
+      node:
+        auto_id:
+          table: Nodes
+          key:
+            Number: Node.Number
+      status: Switch state
+      g1: 0
+      b1:
+        power_grid_model_io.filters.multiply:
+          - power_grid_model_io.filters.phase_to_phase.reactive_power_to_susceptance:
+             - Q
+             - Unom
+          - -1
+      g0: 0
+      b0: 0
+      extra:
         - ID
         - Name
   Pvs:
     sym_gen:
       id:
         auto_id:
-          name: Pvs
           key:
             - Node.Number
             - Subnumber
       node:
         auto_id:
-          name: Nodes
-          key: Node.Number
+          table: Nodes
+          key:
+            Number: Node.Number
       status: Switch state
       type: 0
       p_specified:
-        min:
-          - Pnom
-          - Inverter.Pnom | Inverter.Snom
-      q_specified:
-        power_grid_model_io.filters.phase_to_phase.reactive_power:
+        power_grid_model_io.filters.multiply:
           - min:
-              - Pnom
-              - Inverter.Pnom | Inverter.Snom
-          - Inverter.cos phi
+             - Pnom
+             - Inverter.Pnom | Inverter.Snom
+          - Scaling
+      q_specified:
+        power_grid_model_io.filters.multiply:
+          - power_grid_model_io.filters.phase_to_phase.reactive_power:
+             - min:
+                 - Pnom
+                 - Inverter.Pnom | Inverter.Snom
+             - Inverter.cos phi
+          - Scaling
       extra:
-        - Node.Number
-        - Subnumber
         - ID
         - Name
 units:
@@ -548,6 +588,7 @@ units:
   one:
     pu: 1.0
     "%": 0.01
+    "‰": 0.001
 
 substitutions:
   ".*Switch state":
