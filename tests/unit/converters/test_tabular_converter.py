@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
-import json
 from pathlib import Path
 from typing import Optional, Tuple
 from unittest.mock import MagicMock, call, patch
@@ -16,7 +15,6 @@ from power_grid_model.data_types import SingleDataset
 from power_grid_model_io.converters.tabular_converter import COL_REF_RE, TabularConverter
 from power_grid_model_io.data_types import ExtraInfoLookup, TabularData
 from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes
-from power_grid_model_io.utils.json import JsonEncoder
 
 MAPPING_FILE = Path(__file__).parents[2] / "data" / "config" / "mapping.yaml"
 
