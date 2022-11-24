@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import json
 from functools import lru_cache
 from pathlib import Path
 from typing import List, Tuple
@@ -109,3 +110,12 @@ def test_extra_info(actual, expected, component: str, obj_ids: List[int]):
     # Raise a value error, containing all the errors at once
     if errors:
         raise ValueError("\n" + "\n".join(errors))
+
+
+@pytest.mark.skip("int64 is not serializable")
+def test_extra_info__serializable(actual):
+    # Arrange
+    _, extra_info = actual
+
+    # Assert
+    json.dumps(extra_info)  # expect no exception
