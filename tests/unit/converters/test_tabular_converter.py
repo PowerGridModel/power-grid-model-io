@@ -16,6 +16,7 @@ from power_grid_model.data_types import SingleDataset
 from power_grid_model_io.converters.tabular_converter import COL_REF_RE, TabularConverter
 from power_grid_model_io.data_types import ExtraInfoLookup, TabularData
 from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes
+from power_grid_model_io.utils.json import JsonEncoder
 
 MAPPING_FILE = Path(__file__).parents[2] / "data" / "config" / "mapping.yaml"
 
@@ -643,7 +644,6 @@ def test_parse_auto_id__named_keys(
     assert extra_info[102] == {"id_reference": {"table": "lines", "key": {"id": 2, "node": 200}}}
 
 
-@pytest.mark.skip("int64 is not serializable")
 @patch("power_grid_model_io.converters.tabular_converter.TabularConverter._get_id")
 def test_parse_auto_id__serializable_int64(
     mock_get_id: MagicMock, converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
@@ -660,7 +660,7 @@ def test_parse_auto_id__serializable_int64(
     )
 
     # Assert
-    assert json.dumps(extra_info)
+    assert json.dumps(extra_info, cls=JsonEncoder)
 
 
 def test_parse_auto_id__invalid_key_definition(

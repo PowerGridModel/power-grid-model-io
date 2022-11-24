@@ -13,6 +13,7 @@ from power_grid_model.data_types import SingleDataset
 
 from power_grid_model_io.converters.vision_excel_converter import VisionExcelConverter
 from power_grid_model_io.data_types import ExtraInfoLookup
+from power_grid_model_io.utils.json import JsonEncoder
 
 from ..utils import component_attributes, component_objects, load_json_single_dataset, select_values
 
@@ -112,10 +113,9 @@ def test_extra_info(actual, expected, component: str, obj_ids: List[int]):
         raise ValueError("\n" + "\n".join(errors))
 
 
-@pytest.mark.skip("int64 is not serializable")
 def test_extra_info__serializable(actual):
     # Arrange
     _, extra_info = actual
 
     # Assert
-    json.dumps(extra_info)  # expect no exception
+    json.dumps(extra_info, cls=JsonEncoder)  # expect no exception
