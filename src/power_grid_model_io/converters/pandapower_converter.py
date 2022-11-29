@@ -6,7 +6,7 @@ Panda Power Converter
 """
 import re
 from functools import lru_cache
-from typing import Dict, Optional,  Union
+from typing import Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -15,17 +15,13 @@ from power_grid_model.data_types import Dataset
 
 from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_types import ExtraInfoLookup
-from power_grid_model_io.filters.pandapower import (
-    get_3wdgtransformer_winding_1,
-    get_3wdgtransformer_winding_2,
-    get_3wdgtransformer_winding_3,
-    get_winding,
-)
+from power_grid_model_io.filters import get_winding
 
 StdTypes = Dict[str, Dict[str, Dict[str, Union[float, int, str]]]]
 PandasData = Dict[str, pd.DataFrame]
 
 CONNECTION_PATTERN_PP = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)\d*")
+CONNECTION_PATTERN_PP_3WDG = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(y|yn|d|z|zn)\d*")
 
 
 class PandaPowerConverter(BaseConverter[PandasData]):
@@ -238,7 +234,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pp_trafo3w = self.pp_data["trafo3w"]
 
         switch_states = self.get_trafo3w_switch_states(pp_trafo3w)
-        vector_group = self.get_attribute("trafo3w", "vector_group")
+        winding_type = self.get_trafo3w_winding_types()
 
         pgm_3wtransformers = initialize_array(
             data_type="input", component_type="three_winding_transformer", shape=len(pp_trafo3w)
@@ -274,9 +270,9 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         pgm_3wtransformers["i0"] = pp_trafo3w["i0_percent"] * 1e-2
         pgm_3wtransformers["p0"] = pp_trafo3w["pfe_kw"] * 1e3
-        pgm_3wtransformers["winding_1"] = vector_group.apply(get_3wdgtransformer_winding_1)
-        pgm_3wtransformers["winding_2"] = vector_group.apply(get_3wdgtransformer_winding_2)
-        pgm_3wtransformers["winding_3"] = vector_group.apply(get_3wdgtransformer_winding_3)
+        pgm_3wtransformers["winding_1"] = winding_type["winding_1"]
+        pgm_3wtransformers["winding_2"] = winding_type["winding_2"]
+        pgm_3wtransformers["winding_3"] = winding_type["winding_3"]
         pgm_3wtransformers["clock_12"] = round(pp_trafo3w["shift_mv_degree"] / 30.0) % 12
         pgm_3wtransformers["clock_13"] = round(pp_trafo3w["shift_lv_degree"] / 30.0) % 12
         pgm_3wtransformers["tap_pos"] = pp_trafo3w["tap_pos"]
@@ -420,6 +416,28 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         return component["std_type"].apply(lambda std_type: self.std_types[pp_table][std_type][attr])
 
+    def get_trafo3w_switch_states(self, component: pd.DataFrame) -> pd.DataFrame:
+        """
+        Return switch states of three winding transformer
+        """
+        element_type = "t3"
+        bus1 = "hv_bus"
+        bus2 = "mv_bus"
+        bus3 = "lv_bus"
+        component["index"] = component.index
+
+        # Select the appropriate switches and columns
+        pp_switches = self.pp_data["switch"]
+        pp_switches = pp_switches[self.pp_data["switch"]["et"] == element_type]
+        pp_switches = pp_switches[["element", "bus", "closed"]]
+
+        # Join the switches with the three winding trafo three times, for the hv_bus, mv_bus and once for the lv_bus
+        pp_1_switches = self.get_individual_switch_states(component, pp_switches, bus1)
+        pp_2_switches = self.get_individual_switch_states(component, pp_switches, bus2)
+        pp_3_switches = self.get_individual_switch_states(component, pp_switches, bus3)
+
+        return pd.DataFrame((pp_1_switches["closed"], pp_2_switches["closed"], pp_3_switches["closed"]))
+
     def get_trafo_winding_types(self) -> pd.DataFrame:
         """
         Return the from and to winding type
@@ -446,27 +464,32 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         trafo.columns = ["winding_from", "winding_to"]
         return trafo
 
-    def get_trafo3w_switch_states(self, component: pd.DataFrame) -> pd.DataFrame:
+    def get_trafo3w_winding_types(self) -> pd.DataFrame:
         """
-        Return switch states of three winding transformer
+        Return the three winding types
         """
-        element_type = "t3"
-        bus1 = "hv_bus"
-        bus2 = "mv_bus"
-        bus3 = "lv_bus"
-        component["index"] = component.index
 
-        # Select the appropriate switches and columns
-        pp_switches = self.pp_data["switch"]
-        pp_switches = pp_switches[self.pp_data["switch"]["et"] == element_type]
-        pp_switches = pp_switches[["element", "bus", "closed"]]
+        @lru_cache
+        def vector_group_to_winding_types(vector_group: str) -> pd.Series:
+            match = CONNECTION_PATTERN_PP_3WDG.fullmatch(vector_group)
+            if not match:
+                raise ValueError(f"Invalid transformer connection string: '{vector_group}'")
+            winding_1 = get_winding(match.group(1)).value
+            winding_2 = get_winding(match.group(2)).value
+            winding_3 = get_winding(match.group(3)).value
+            return pd.Series([winding_1, winding_2, winding_3])
 
-        # Join the switches with the three winding trafo three times, for the hv_bus, mv_bus and once for the lv_bus
-        pp_1_switches = self.get_individual_switch_states(component, pp_switches, bus1)
-        pp_2_switches = self.get_individual_switch_states(component, pp_switches, bus2)
-        pp_3_switches = self.get_individual_switch_states(component, pp_switches, bus3)
+        @lru_cache
+        def std_type_to_winding_types(std_type: str) -> pd.Series:
+            return vector_group_to_winding_types(self.std_types["trafo"][std_type]["vector_group"])
 
-        return pd.DataFrame((pp_1_switches["closed"], pp_2_switches["closed"], pp_3_switches["closed"]))
+        trafo3w = self.pp_data["trafo3w"]
+        if "vector_group" in trafo3w:
+            trafo3w = trafo3w["vector_group"].apply(vector_group_to_winding_types)
+        else:
+            trafo3w = trafo3w["std_type"].apply(std_type_to_winding_types)
+        trafo3w.columns = ["winding_1", "winding_2", "winding_3"]
+        return trafo3w
 
     def get_id(self, pp_table: str, pp_idx: int) -> int:
         """
