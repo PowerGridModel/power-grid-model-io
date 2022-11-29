@@ -4,7 +4,9 @@
 """
 Panda Power Converter
 """
-from typing import Dict, Optional, Union
+import re
+from functools import lru_cache
+from typing import Dict, Optional,  Union
 
 import numpy as np
 import pandas as pd
@@ -17,12 +19,13 @@ from power_grid_model_io.filters.pandapower import (
     get_3wdgtransformer_winding_1,
     get_3wdgtransformer_winding_2,
     get_3wdgtransformer_winding_3,
-    get_transformer_winding_from,
-    get_transformer_winding_to,
+    get_winding,
 )
 
 StdTypes = Dict[str, Dict[str, Dict[str, Union[float, int, str]]]]
 PandasData = Dict[str, pd.DataFrame]
+
+CONNECTION_PATTERN_PP = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)\d*")
 
 
 class PandaPowerConverter(BaseConverter[PandasData]):
@@ -202,7 +205,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pp_trafo = self.pp_data["trafo"]
 
         switch_states = self.get_switch_states("trafo")
-        vector_group = self.get_attribute("trafo", "vector_group")
+        winding_types = self.get_trafo_winding_types()
 
         pgm_transformers = initialize_array(data_type="input", component_type="transformer", shape=len(pp_trafo))
         pgm_transformers["id"] = self._generate_ids("trafo", pp_trafo.index)
@@ -217,8 +220,8 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_transformers["pk"] = pp_trafo["vkr_percent"] * pp_trafo["sn_mva"] * pp_trafo["parallel"] * (1e6 * 1e-2)
         pgm_transformers["i0"] = pp_trafo["i0_percent"] * 1e-2
         pgm_transformers["p0"] = pp_trafo["pfe_kw"] * pp_trafo["parallel"] * 1e3
-        pgm_transformers["winding_from"] = vector_group.apply(get_transformer_winding_from)
-        pgm_transformers["winding_to"] = vector_group.apply(get_transformer_winding_to)
+        pgm_transformers["winding_from"] = winding_types["winding_from"]
+        pgm_transformers["winding_to"] = winding_types["winding_to"]
         pgm_transformers["clock"] = round(pp_trafo["shift_degree"] / 30) % 12
         pgm_transformers["tap_pos"] = pp_trafo["tap_pos"]
         pgm_transformers["tap_side"] = self._get_transformer_tap_side(pp_trafo["tap_side"])
@@ -416,6 +419,31 @@ class PandaPowerConverter(BaseConverter[PandasData]):
             return component[attr]
 
         return component["std_type"].apply(lambda std_type: self.std_types[pp_table][std_type][attr])
+
+    def get_trafo_winding_types(self) -> pd.DataFrame:
+        """
+        Return the from and to winding type
+        """
+
+        @lru_cache
+        def vector_group_to_winding_types(vector_group: str) -> pd.Series:
+            match = CONNECTION_PATTERN_PP.fullmatch(vector_group)
+            if not match:
+                raise ValueError(f"Invalid transformer connection string: '{vector_group}'")
+            return pd.Series([get_winding(match.group(1)).value, get_winding(match.group(2)).value])
+
+        @lru_cache
+        def std_type_to_winding_types(std_type: str) -> pd.Series:
+            return vector_group_to_winding_types(self.std_types["trafo"][std_type]["vector_group"])
+
+        trafo = self.pp_data["trafo"]
+        if "vector_group" in trafo:
+            trafo = trafo["vector_group"].apply(vector_group_to_winding_types)
+        else:
+            trafo = trafo["std_type"].apply(std_type_to_winding_types)
+        trafo.columns = ["winding_from", "winding_to"]
+        print(trafo)
+        return trafo
 
     def get_trafo3w_switch_states(self, component: pd.DataFrame) -> pd.DataFrame:
         """
