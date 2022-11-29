@@ -430,7 +430,9 @@ class PandaPowerConverter(BaseConverter[PandasData]):
             match = CONNECTION_PATTERN_PP.fullmatch(vector_group)
             if not match:
                 raise ValueError(f"Invalid transformer connection string: '{vector_group}'")
-            return pd.Series([get_winding(match.group(1)).value, get_winding(match.group(2)).value])
+            winding_from = get_winding(match.group(1)).value
+            winding_to = get_winding(match.group(2)).value
+            return pd.Series([winding_from, winding_to])
 
         @lru_cache
         def std_type_to_winding_types(std_type: str) -> pd.Series:
@@ -442,7 +444,6 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         else:
             trafo = trafo["std_type"].apply(std_type_to_winding_types)
         trafo.columns = ["winding_from", "winding_to"]
-        print(trafo)
         return trafo
 
     def get_trafo3w_switch_states(self, component: pd.DataFrame) -> pd.DataFrame:
