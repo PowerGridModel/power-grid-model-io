@@ -786,8 +786,8 @@ def test_lookup_id(converter: TabularConverter):
     converter._get_id(table="node", key={"a": 1, "b": 2}, name=None)  # duplicate name / indices / values
 
     # Act / Assert
-    assert converter.lookup_id(pgm_id=0) == ("node", {"a": 1, "b": 2}, None)
-    assert converter.lookup_id(pgm_id=1) == ("node", {"a": 1, "b": 3}, None)
-    assert converter.lookup_id(pgm_id=2) == ("node", {"a": 1, "c": 2}, None)
-    assert converter.lookup_id(pgm_id=3) == ("foo", {"a": 1, "b": 2}, None)
-    assert converter.lookup_id(pgm_id=4) == ("node", {"a": 1, "b": 2}, "bar")
+    assert converter.lookup_id(pgm_id=0) == {"table": "node", "key": {"a": 1, "b": 2}}
+    assert converter.lookup_id(pgm_id=1) == {"table": "node", "key": {"a": 1, "b": 3}}
+    assert converter.lookup_id(pgm_id=2) == {"table": "node", "key": {"a": 1, "c": 2}}
+    assert converter.lookup_id(pgm_id=3) == {"table": "foo", "key": {"a": 1, "b": 2}}
+    assert converter.lookup_id(pgm_id=4) == {"table": "node", "name": "bar", "key": {"a": 1, "b": 2}}

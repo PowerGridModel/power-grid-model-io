@@ -1,9 +1,9 @@
 {
   "node":
     [
-      {"id": 1, "u_rated": 10500.0, "extra": {"name": "First Node"}},
-      {"id": 2, "u_rated": 10500.0, "extra": {"name": "Second Node"}},
-      {"id": 3, "u_rated": 10500.0, "extra": {"name": "Third Node"}}
+      {"id": 1, "u_rated": 10500.0, "name": "First Node"},
+      {"id": 2, "u_rated": 10500.0, "name": "Second Node"},
+      {"id": 3, "u_rated": 10500.0, "name": "Third Node"}
     ],
   "line":
     [
