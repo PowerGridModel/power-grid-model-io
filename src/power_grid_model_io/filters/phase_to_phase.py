@@ -95,6 +95,13 @@ def get_clock(conn_str: str) -> int:
     return clock
 
 
+def reactive_power_to_susceptance(q_var: float, u_nom: float) -> float:
+    """
+    Calculate susceptance, b1 from reactive power Q with nominal voltage
+    """
+    return q_var / u_nom / u_nom
+
+
 def _split_connection_string(conn_str: str) -> Tuple[str, str, int]:
     """
     Helper function to split the conn_str into three parts:

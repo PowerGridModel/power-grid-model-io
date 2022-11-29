@@ -55,17 +55,10 @@ doc = [
     "sphinx-hoverxref",
     "numpydoc",
 ]
-cli = [
-    "typer[all]",
-]
 
 [project.urls]
 Home-page = "https://github.com/alliander-opensource/power-grid-model-io"
 Documentation = "https://power-grid-model-io.readthedocs.io/en/stable/"
-
-[project.scripts]
-pgm_convert = "power_grid_model_io.cli.convert:app"
-pgm_validate = "power_grid_model_io.cli.validate:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -79,7 +72,7 @@ power_grid_model_io = ["config/**/*.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
-addopts = ["--cov=power_grid_model_io", "--cov-report=term", "--cov-report=html:cov_html", "--cov-fail-under=90.90"]
+addopts = ["--cov=power_grid_model_io", "--cov-report=term", "--cov-report=html:cov_html", "--cov-fail-under=100"]
 
 [tool.black]
 line-length = 120

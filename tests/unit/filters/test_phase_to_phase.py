@@ -11,6 +11,7 @@ from power_grid_model_io.filters.phase_to_phase import (
     get_winding_to,
     power_wind_speed,
     reactive_power,
+    reactive_power_to_susceptance,
     relative_no_load_current,
 )
 
@@ -178,3 +179,15 @@ def test_get_clock(code: str, clock: int):
 def test_get_clock__exception(code):
     with raises(ValueError):
         get_clock(code)
+
+
+@mark.parametrize(
+    ("q_var", "u_nom", "expected"),
+    [
+        (float("nan"), float("nan"), float("nan")),
+        (5000.0, 400, 0.03125),
+    ],
+)
+def test_reactive_power_to_susceptance(q_var: float, u_nom: float, expected: float):
+    actual = reactive_power_to_susceptance(q_var, u_nom)
+    assert actual == approx(expected) or (np.isnan(actual) and np.isnan(expected))

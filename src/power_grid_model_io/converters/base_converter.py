@@ -5,7 +5,7 @@
 Abstract converter class
 """
 from abc import ABC, abstractmethod
-from typing import Generic, Optional, Tuple, TypeVar, Union
+from typing import Dict, Generic, Mapping, Optional, Tuple, TypeVar, Union
 
 import structlog
 from power_grid_model.data_types import Dataset, SingleDataset
@@ -27,7 +27,7 @@ class BaseConverter(Generic[T], ABC):
         self._log = structlog.get_logger(type(self).__name__)
         self._source = source
         self._destination = destination
-        self._lookup = AutoID()
+        self._auto_id = AutoID()
 
     def load_input_data(self, data: Optional[T] = None) -> Tuple[SingleDataset, ExtraInfoLookup]:
         """Load input data and extra info
@@ -136,8 +136,51 @@ class BaseConverter(Generic[T], ABC):
             return self._source.load()
         raise ValueError("No data supplied!")
 
-    def _id_lookup(self, name: Union[str, Tuple[str, ...]], key: Union[int, Tuple[int, ...]]) -> int:
-        return self._lookup(item=(name, key))
+    def _get_id(self, table: str, key: Mapping[str, int], name: Optional[str]) -> int:
+        """
+        Get a unique numerical ID for the supplied name / key combination
+
+        Args:
+            table: Table name (e.g. "Nodes")
+            key: Component identifier (e.g. {"name": "node1"} or {"number": 1, "sub_number": 2})
+            name: Optional component name (e.g. "internal_node")
+
+        Returns: A unique id
+        """
+        auto_id_key = (table, tuple(sorted(key.items())), name)
+        return self._auto_id(item=(table, key, name), key=auto_id_key)
+
+    def get_id(self, table: str, key: Mapping[str, int], name: Optional[str] = None) -> int:
+        """
+        Get a the numerical ID previously associated with the supplied name / key combination
+
+        Args:
+            table: Table name (e.g. "Nodes")
+            key: Component identifier (e.g. {"name": "node1"} or {"number": 1, "sub_number": 2})
+            name: Optional component name (e.g. "internal_node")
+
+        Returns: The associated id
+        """
+        auto_id_key = (table, tuple(sorted(key.items())), name)
+        if auto_id_key not in self._auto_id:
+            raise KeyError((table, key, name))
+        return self._auto_id(item=(table, key, name), key=auto_id_key)
+
+    def lookup_id(self, pgm_id: int) -> Dict[str, Union[str, Dict[str, int]]]:
+        """
+        Retrieve the original name / key combination of a pgm object
+
+        Args:
+            pgm_id: a unique numerical ID
+
+        Returns: The original name / key combination
+        """
+        table, key, name = self._auto_id[pgm_id]
+        reference = {"table": table}
+        if name is not None:
+            reference["name"] = name
+        reference["key"] = key
+        return reference
 
     @abstractmethod  # pragma: nocover
     def _parse_data(self, data: T, data_type: str, extra_info: Optional[ExtraInfoLookup]) -> Dataset:

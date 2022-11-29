@@ -8,6 +8,7 @@ from unittest.mock import ANY, MagicMock, mock_open, patch
 import pytest
 
 from power_grid_model_io.data_stores.json_file_store import JsonFileStore, StructuredData
+from power_grid_model_io.utils.json import JsonEncoder
 
 
 @pytest.fixture()
@@ -124,7 +125,7 @@ def test_json_file_store__save__no_indent(
 
     # Assert
     mock_validate.assert_called_once_with(data=single_data)
-    mock_json_dump.assert_called_once_with(single_data, ANY, indent=None)
+    mock_json_dump.assert_called_once_with(single_data, ANY, indent=None, cls=JsonEncoder)
     mock_compact_json_dump.assert_not_called()
 
 
@@ -144,7 +145,7 @@ def test_json_file_store__save__zero_indent(
 
     # Assert
     mock_validate.assert_called_once_with(data=single_data)
-    mock_json_dump.assert_called_once_with(single_data, ANY, indent=0)
+    mock_json_dump.assert_called_once_with(single_data, ANY, indent=0, cls=JsonEncoder)
     mock_compact_json_dump.assert_not_called()
 
 
@@ -164,7 +165,7 @@ def test_json_file_store__save__not_compact(
 
     # Assert
     mock_validate.assert_called_once_with(data=single_data)
-    mock_json_dump.assert_called_once_with(single_data, ANY, indent=2)
+    mock_json_dump.assert_called_once_with(single_data, ANY, indent=2, cls=JsonEncoder)
     mock_compact_json_dump.assert_not_called()
 
 
@@ -185,7 +186,7 @@ def test_json_file_store__save__not_compact_custom_indent(
 
     # Assert
     mock_validate.assert_called_once_with(data=single_data)
-    mock_json_dump.assert_called_once_with(single_data, ANY, indent=4)
+    mock_json_dump.assert_called_once_with(single_data, ANY, indent=4, cls=JsonEncoder)
     mock_compact_json_dump.assert_not_called()
 
 

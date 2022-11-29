@@ -1,9 +1,8 @@
 # SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
-
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Optional, Tuple
 from unittest.mock import MagicMock, call, patch
 
 import numpy as np
@@ -96,7 +95,7 @@ def tabular_data():
 @pytest.fixture
 def tabular_data_no_units_no_substitutions():
     nodes = pd.DataFrame(data=[[1, 10.5e3], [2, 400.0]], columns=["id_number", "u_nom"])
-    lines = pd.DataFrame(data=[[1, 1], [2, 2]], columns=["id_number", "from_node_side"])
+    lines = pd.DataFrame(data=[[1, 100], [2, 200]], columns=["id_number", "from_node_side"])
     tabular_data_no_units_no_substitutions = TabularData(nodes=nodes, lines=lines)
     return tabular_data_no_units_no_substitutions
 
@@ -236,26 +235,19 @@ def test_convert_col_def_to_attribute(
     assert len(pgm_node_empty) == 1
     assert (pgm_node_empty["node"]["u_rated"] == [10500.0, 400.0]).all()
 
-
-def test_handle_column(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
-    attr_data = converter._handle_column(
-        data=tabular_data_no_units_no_substitutions, table="nodes", component="node", attr="u_rated", col_def="u_nom"
-    )
-    assert isinstance(attr_data, pd.Series)
-    assert len(attr_data) == 2
-    assert (attr_data == pd.Series([10500.0, 400.0])).all()
-
     with pytest.raises(
         ValueError,
         match=r"DataFrame for node.u_rated should contain a single column "
         r"\(Index\(\['id_number', 'u_nom'\], dtype='object'\)\)",
     ):
-        converter._handle_column(
+        converter._convert_col_def_to_attribute(
             data=tabular_data_no_units_no_substitutions,
+            pgm_data=pgm_node_empty["node"],
             table="nodes",
             component="node",
             attr="u_rated",
             col_def=["id_number", "u_nom"],
+            extra_info=None,
         )
 
 
@@ -303,26 +295,19 @@ def test_serialize_data(converter: TabularConverter, pgm_node_empty: SingleDatas
     assert (tabular_data._data["node"]["u_rated"] == np.array([3.0, 4.0])).all()
 
 
-def test_id_lookup(converter: TabularConverter):
-    a01 = converter._id_lookup(name="a", key=(0, 1))
-    b0 = converter._id_lookup(name="b", key=0)
-    b0_ = converter._id_lookup(name="b", key=0)
-    a0 = converter._id_lookup(name="a", key=0)
-    assert a01 == 0
-    assert b0 == 1
-    assert b0_ == 1
-    assert a0 == 2
-
-
 def test_parse_col_def(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
     with pytest.raises(TypeError, match=r"Invalid column definition: \(\)"):
-        converter._parse_col_def(data=tabular_data_no_units_no_substitutions, table="table_name", col_def=())
+        converter._parse_col_def(
+            data=tabular_data_no_units_no_substitutions, table="table_name", col_def=(), extra_info=None
+        )
 
     # type(col_def) == int
     with patch(
         "power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def_const"
     ) as mock_parse_col_def_const:
-        converter._parse_col_def(data=tabular_data_no_units_no_substitutions, table="nodes", col_def=50)
+        converter._parse_col_def(
+            data=tabular_data_no_units_no_substitutions, table="nodes", col_def=50, extra_info=None
+        )
         mock_parse_col_def_const.assert_called_once_with(
             data=tabular_data_no_units_no_substitutions, table="nodes", col_def=50
         )
@@ -331,7 +316,9 @@ def test_parse_col_def(converter: TabularConverter, tabular_data_no_units_no_sub
     with patch(
         "power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def_const"
     ) as mock_parse_col_def_const:
-        converter._parse_col_def(data=tabular_data_no_units_no_substitutions, table="nodes", col_def=4.0)
+        converter._parse_col_def(
+            data=tabular_data_no_units_no_substitutions, table="nodes", col_def=4.0, extra_info=None
+        )
         mock_parse_col_def_const.assert_called_once_with(
             data=tabular_data_no_units_no_substitutions, table="nodes", col_def=4.0
         )
@@ -344,6 +331,7 @@ def test_parse_col_def(converter: TabularConverter, tabular_data_no_units_no_sub
             data=tabular_data_no_units_no_substitutions,
             table="nodes",
             col_def="OtherTable!ValueColumn[IdColumn=RefColumn]",
+            extra_info=None,
         )
         mock_parse_col_column_reference.assert_called_once_with(
             data=tabular_data_no_units_no_substitutions,
@@ -355,7 +343,9 @@ def test_parse_col_def(converter: TabularConverter, tabular_data_no_units_no_sub
     with patch(
         "power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def_column_name"
     ) as mock_parse_col_def_column_name:
-        converter._parse_col_def(data=tabular_data_no_units_no_substitutions, table="nodes", col_def="col_name")
+        converter._parse_col_def(
+            data=tabular_data_no_units_no_substitutions, table="nodes", col_def="col_name", extra_info=None
+        )
         mock_parse_col_def_column_name.assert_called_once_with(
             data=tabular_data_no_units_no_substitutions, table="nodes", col_def="col_name"
         )
@@ -364,16 +354,20 @@ def test_parse_col_def(converter: TabularConverter, tabular_data_no_units_no_sub
     with patch(
         "power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def_filter"
     ) as mock_parse_col_def_filter:
-        converter._parse_col_def(data=tabular_data_no_units_no_substitutions, table="nodes", col_def={})
+        converter._parse_col_def(
+            data=tabular_data_no_units_no_substitutions, table="nodes", col_def={}, extra_info=None
+        )
         mock_parse_col_def_filter.assert_called_once_with(
-            data=tabular_data_no_units_no_substitutions, table="nodes", col_def={}
+            data=tabular_data_no_units_no_substitutions, table="nodes", col_def={}, extra_info=None
         )
 
     # type(col_def) == list
     with patch(
         "power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def_composite"
     ) as mock_parse_col_def_composite:
-        converter._parse_col_def(data=tabular_data_no_units_no_substitutions, table="nodes", col_def=[])
+        converter._parse_col_def(
+            data=tabular_data_no_units_no_substitutions, table="nodes", col_def=[], extra_info=None
+        )
         mock_parse_col_def_composite.assert_called_once_with(
             data=tabular_data_no_units_no_substitutions, table="nodes", col_def=[]
         )
@@ -449,7 +443,7 @@ def test_parse_col_def_column_reference(
         table="nodes",
         col_def="lines!from_node_side[lines!id_number=nodes!id_number]",
     )
-    assert_frame_equal(df_lines_from_node_long, pd.DataFrame([1, 2], columns=["from_node_side"]))
+    assert_frame_equal(df_lines_from_node_long, pd.DataFrame([100, 200], columns=["from_node_side"]))
 
     df_lines_from_node_short = converter._parse_col_def_column_reference(
         data=tabular_data_no_units_no_substitutions, table="nodes", col_def="lines!from_node_side[id_number=id_number]"
@@ -461,17 +455,21 @@ def test_parse_col_def_filter(converter: TabularConverter, tabular_data_no_units
     # wrong col_def instance
     with pytest.raises(AssertionError):
         converter._parse_col_def_filter(
-            data=tabular_data_no_units_no_substitutions, table="", col_def=[]  # type: ignore
+            data=tabular_data_no_units_no_substitutions, table="", col_def=[], extra_info=None  # type: ignore
         )
 
     # not implemented filters
     with pytest.raises(NotImplementedError, match="Column filter 'multiply' not implemented"):
-        converter._parse_col_def_filter(data=tabular_data_no_units_no_substitutions, table="", col_def={"multiply": ""})
+        converter._parse_col_def_filter(
+            data=tabular_data_no_units_no_substitutions, table="", col_def={"multiply": ""}, extra_info=None
+        )
     with pytest.raises(NotImplementedError, match="Column filter 'function' not implemented"):
-        converter._parse_col_def_filter(data=tabular_data_no_units_no_substitutions, table="", col_def={"function": ""})
+        converter._parse_col_def_filter(
+            data=tabular_data_no_units_no_substitutions, table="", col_def={"function": ""}, extra_info=None
+        )
     with pytest.raises(NotImplementedError, match="Column filter 'reference' not implemented"):
         converter._parse_col_def_filter(
-            data=tabular_data_no_units_no_substitutions, table="", col_def={"reference": ""}
+            data=tabular_data_no_units_no_substitutions, table="", col_def={"reference": ""}, extra_info=None
         )
 
     with patch(
@@ -479,7 +477,7 @@ def test_parse_col_def_filter(converter: TabularConverter, tabular_data_no_units
     ) as mock_parse_col_def_function:
         mock_parse_col_def_function.return_value = pd.DataFrame([1, 2])
         df = converter._parse_col_def_filter(
-            data=tabular_data_no_units_no_substitutions, table="", col_def={"a": "str"}
+            data=tabular_data_no_units_no_substitutions, table="", col_def={"a": "str"}, extra_info=None
         )
         mock_parse_col_def_function.assert_called_once_with(
             data=tabular_data_no_units_no_substitutions, table="", col_def={"a": "str"}
@@ -489,7 +487,10 @@ def test_parse_col_def_filter(converter: TabularConverter, tabular_data_no_units
     # auto id
     with pytest.raises(ValueError, match="Invalid auto_id definition: {'a': 1, 'b': 2}"):
         converter._parse_col_def_filter(
-            data=tabular_data_no_units_no_substitutions, table="", col_def={"auto_id": {"a": 1, "b": 2}}
+            data=tabular_data_no_units_no_substitutions,
+            table="",
+            col_def={"auto_id": {"a": 1, "b": 2}},
+            extra_info=None,
         )
     with patch(
         "power_grid_model_io.converters.tabular_converter.TabularConverter._parse_auto_id"
@@ -498,45 +499,161 @@ def test_parse_col_def_filter(converter: TabularConverter, tabular_data_no_units
         df = converter._parse_col_def_filter(
             data=tabular_data_no_units_no_substitutions,
             table="nodes",
-            col_def={"auto_id": {"name": "id", "key": "id_number"}},
+            col_def={"auto_id": {"table": "id", "key": "id_number"}},
+            extra_info=None,
         )
         assert_frame_equal(df, pd.DataFrame([3, 4]))
 
 
-@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._id_lookup")
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._get_id")
 def test_parse_auto_id(
-    mock_id_lookup: MagicMock, converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
+    mock_get_id: MagicMock, converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
 ):
-    # name: str, key_col_def: str
-    mock_id_lookup.return_value = 10
+    # ref_table: None, ref_name: None, key_col_def: str, extra_info: None
+    mock_get_id.side_effect = [101, 102]
     converter._parse_auto_id(
-        data=tabular_data_no_units_no_substitutions, table="nodes", name="a", key_col_def="id_number"
+        data=tabular_data_no_units_no_substitutions,
+        table="nodes",
+        ref_table=None,
+        ref_name=None,
+        key_col_def="id_number",
+        extra_info=None,
     )
-    mock_id_lookup.assert_has_calls([call(name="a", key=1), call(name="a", key=2)])
+    mock_get_id.assert_has_calls(
+        [call(table="nodes", key={"id_number": 1}, name=None), call(table="nodes", key={"id_number": 2}, name=None)]
+    )
 
-    # name: List[str], key_col_def: str
-    mock_id_lookup.reset_mock()
-    mock_id_lookup.return_value = 10
-    converter._parse_auto_id(
-        data=tabular_data_no_units_no_substitutions, table="nodes", name=["a", "b"], key_col_def="id_number"
-    )
-    mock_id_lookup.assert_has_calls([call(name=("a", "b"), key=1), call(name=("a", "b"), key=2)])
 
-    # name: str, key_col_def: List[str]
-    mock_id_lookup.reset_mock()
-    mock_id_lookup.return_value = 10
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._get_id")
+def test_parse_auto_id__extra_info(
+    mock_get_id: MagicMock, converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
+):
+    # ref_table: None, ref_name: None, key_col_def: str, extra_info: dict
+    mock_get_id.side_effect = [101, 102]
+    extra_info: ExtraInfoLookup = {}
     converter._parse_auto_id(
-        data=tabular_data_no_units_no_substitutions, table="nodes", name="a", key_col_def=["id_number", "u_nom"]
+        data=tabular_data_no_units_no_substitutions,
+        table="nodes",
+        ref_table=None,
+        ref_name=None,
+        key_col_def="id_number",
+        extra_info=extra_info,
     )
-    mock_id_lookup.assert_has_calls([call(name="a", key=(1, 10.5e3)), call(name="a", key=(2, 400.0))])
+    mock_get_id.assert_has_calls(
+        [call(table="nodes", key={"id_number": 1}, name=None), call(table="nodes", key={"id_number": 2}, name=None)]
+    )
+    assert extra_info[101] == {"id_reference": {"table": "nodes", "key": {"id_number": 1}}}
+    assert extra_info[102] == {"id_reference": {"table": "nodes", "key": {"id_number": 2}}}
 
-    # name: List[str], key_col_def: List[str]
-    mock_id_lookup.reset_mock()
-    mock_id_lookup.return_value = 10
+
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._get_id")
+def test_parse_auto_id__reference_column(
+    mock_get_id: MagicMock, converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
+):
+    # ref_table: str, ref_name: None, key_col_def: dict, extra_info: dict
+    mock_get_id.side_effect = [101, 102]
+    extra_info: ExtraInfoLookup = {}
     converter._parse_auto_id(
-        data=tabular_data_no_units_no_substitutions, table="nodes", name=["a", "b"], key_col_def=["id_number", "u_nom"]
+        data=tabular_data_no_units_no_substitutions,
+        table="lines",
+        ref_table="nodes",
+        ref_name=None,
+        key_col_def={"id_number": "from_node_side"},
+        extra_info=extra_info,
     )
-    mock_id_lookup.assert_has_calls([call(name=("a", "b"), key=(1, 10.5e3)), call(name=("a", "b"), key=(2, 400.0))])
+    mock_get_id.assert_has_calls(
+        [call(table="nodes", key={"id_number": 100}, name=None), call(table="nodes", key={"id_number": 200}, name=None)]
+    )
+    assert len(extra_info) == 0
+
+
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._get_id")
+def test_parse_auto_id__composite_key(
+    mock_get_id: MagicMock, converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
+):
+    # ref_table: None, ref_name: None, key_col_def: list, extra_info: dict
+    mock_get_id.side_effect = [101, 102]
+    extra_info: ExtraInfoLookup = {}
+    converter._parse_auto_id(
+        data=tabular_data_no_units_no_substitutions,
+        table="nodes",
+        ref_table=None,
+        ref_name=None,
+        key_col_def=["id_number", "u_nom"],
+        extra_info=extra_info,
+    )
+    mock_get_id.assert_has_calls(
+        [
+            call(table="nodes", key={"id_number": 1, "u_nom": 10.5e3}, name=None),
+            call(table="nodes", key={"id_number": 2, "u_nom": 400.0}, name=None),
+        ]
+    )
+    assert extra_info[101] == {"id_reference": {"table": "nodes", "key": {"id_number": 1, "u_nom": 10.5e3}}}
+    assert extra_info[102] == {"id_reference": {"table": "nodes", "key": {"id_number": 2, "u_nom": 400.0}}}
+
+
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._get_id")
+def test_parse_auto_id__named_objects(
+    mock_get_id: MagicMock, converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
+):
+    # ref_table: None, ref_name: str, key_col_def: str, extra_info: dict
+    mock_get_id.side_effect = [101, 102]
+    extra_info: ExtraInfoLookup = {}
+    converter._parse_auto_id(
+        data=tabular_data_no_units_no_substitutions,
+        table="nodes",
+        ref_table=None,
+        ref_name="internal_node",
+        key_col_def="id_number",
+        extra_info=extra_info,
+    )
+    mock_get_id.assert_has_calls(
+        [
+            call(table="nodes", key={"id_number": 1}, name="internal_node"),
+            call(table="nodes", key={"id_number": 2}, name="internal_node"),
+        ]
+    )
+    assert extra_info[101] == {"id_reference": {"table": "nodes", "name": "internal_node", "key": {"id_number": 1}}}
+    assert extra_info[102] == {"id_reference": {"table": "nodes", "name": "internal_node", "key": {"id_number": 2}}}
+
+
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._get_id")
+def test_parse_auto_id__named_keys(
+    mock_get_id: MagicMock, converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
+):
+    # name: str, key_col_def: Dict[str, str], extra_info: dict
+    mock_get_id.side_effect = [101, 102]
+    extra_info: ExtraInfoLookup = {}
+    converter._parse_auto_id(
+        data=tabular_data_no_units_no_substitutions,
+        table="lines",
+        ref_table=None,
+        ref_name=None,
+        key_col_def={"id": "id_number", "node": "from_node_side"},
+        extra_info=extra_info,
+    )
+    mock_get_id.assert_has_calls(
+        [
+            call(table="lines", key={"id": 1, "node": 100}, name=None),
+            call(table="lines", key={"id": 2, "node": 200}, name=None),
+        ]
+    )
+    assert extra_info[101] == {"id_reference": {"table": "lines", "key": {"id": 1, "node": 100}}}
+    assert extra_info[102] == {"id_reference": {"table": "lines", "key": {"id": 2, "node": 200}}}
+
+
+def test_parse_auto_id__invalid_key_definition(
+    converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
+):
+    with pytest.raises(TypeError, match="Invalid key definition type 'int': 123"):
+        converter._parse_auto_id(
+            data=TabularData(),
+            table="",
+            ref_table=None,
+            ref_name=None,
+            key_col_def=123,  # type: ignore
+            extra_info=None,
+        )
 
 
 @patch("power_grid_model_io.converters.tabular_converter.get_function")
