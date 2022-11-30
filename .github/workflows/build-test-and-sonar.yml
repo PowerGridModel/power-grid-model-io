@@ -22,6 +22,7 @@ jobs:
       TWINE_USERNAME: ${{ secrets.PYPI_USER }}
       TWINE_PASSWORD: ${{ secrets.PYPI_PASS }}
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v3
         with:
