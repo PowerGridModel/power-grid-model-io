@@ -40,21 +40,20 @@ jobs:
           echo "::set-output name=version::$(cat PYPI_VERSION)"
 
       - name: Test and Coverage for built wheel file
-        continue-on-error: true
         run: |
           pip install power-grid-model-io[dev]==${{ steps.version.outputs.version }} --find-links=wheelhouse
           pytest
 
       - name: Validation tests
-        continue-on-error: true
+        if: success() || failure()
         run: pytest tests/validation --no-cov --verbose
 
       - name: Test and Coverage for sonar cloud in develop mode
-        continue-on-error: true
+        if: success() || failure()
         run: |
           pip uninstall -y power-grid-model-io
           pip install -e .[dev]
-          pytest --cov-report=xml:coverage.xml
+          pytest --cov-report=xml:coverage.xml --cov-fail-under=0
 
           # Fix relative paths in coverage file
           # Known bug: https://community.sonarsource.com/t/sonar-on-github-actions-with-python-coverage-source-issue/36057
