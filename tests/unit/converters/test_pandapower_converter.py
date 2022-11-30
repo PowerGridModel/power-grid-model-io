@@ -299,3 +299,41 @@ def test_get_3wtransformer_tap_size():
 
     # Assert
     np.testing.assert_array_equal(actual_tap_size, expected_tap_size)
+
+
+def test_get_attribute(pp_example_simple: Tuple[PandasData, float], pgm_example_simple: SingleDataset):
+    # Arrange
+    converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
+    converter.pp_data = pp_example_simple[0]
+
+    expected_value = np.array([0.208, 1.23], dtype=np.float64)
+
+    assert "r_ohm_per_km" in converter.pp_data["line"].columns
+    assert "length_km" in converter.pp_data["line"].columns
+    # assert "r_ohm_per_km" in converter.pp_data["std_type"]
+
+    # Act
+    actual_value0 = PandaPowerConverter.get_attribute(converter, "line", "r_ohm_per_km")
+    actual_value1 = PandaPowerConverter.get_attribute(converter, "line", "length_km")
+
+    # Assert
+    np.testing.assert_array_equal(actual_value0, expected_value[0])
+    np.testing.assert_array_equal(actual_value1, expected_value[1])
+
+
+# def test_get_individual_switch_states():
+#     # Arrange
+#     pp_trafo = pd.DataFrame(
+#         [[101, 101, 102, 38.0, 11.6, 0.322, 40, 22.0, 110.0, 17.8, "Dyn", 30, "hv", 2, 1, 3, 30, 2, 3]],
+#         columns=["index", "hv_bus", "lv_bus", "i0_precent", "pfe_kw", "vkr_percent", "sn_mva", "vn_lv_kv", "vn_hv_kv",
+#                  "vk_percent", "vector_group", "shift_degree", "tap_side", "tap_pos", "tap_min", "tap_max",
+#                  "tap_step_percent", "tap_neutral", "parallel"],
+#     )
+#
+#     expected_tap_size = np.array([6510.0, 19902.0, 248000.0], dtype=np.float64)
+#
+#     # Act
+#     actual_tap_size = PandaPowerConverter._get_3wtransformer_tap_size(pp_trafo)
+#
+#     # Assert
+#     np.testing.assert_array_equal(actual_tap_size, expected_tap_size)
