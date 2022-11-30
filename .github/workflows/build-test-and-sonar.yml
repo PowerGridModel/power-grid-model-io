@@ -50,6 +50,7 @@ jobs:
         run: pytest tests/validation --no-cov --verbose
 
       - name: Test and Coverage for sonar cloud in develop mode
+        continue-on-error: true
         run: |
           pip uninstall -y power-grid-model-io
           pip install -e .[dev]
