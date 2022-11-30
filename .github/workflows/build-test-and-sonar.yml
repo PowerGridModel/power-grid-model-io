@@ -22,7 +22,6 @@ jobs:
       TWINE_USERNAME: ${{ secrets.PYPI_USER }}
       TWINE_PASSWORD: ${{ secrets.PYPI_PASS }}
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v3
         with:
@@ -41,11 +40,13 @@ jobs:
           echo "::set-output name=version::$(cat PYPI_VERSION)"
 
       - name: Test and Coverage for built wheel file
+        continue-on-error: true
         run: |
           pip install power-grid-model-io[dev]==${{ steps.version.outputs.version }} --find-links=wheelhouse
           pytest
 
       - name: Validation tests
+        continue-on-error: true
         run: pytest tests/validation --no-cov --verbose
 
       - name: Test and Coverage for sonar cloud in develop mode
