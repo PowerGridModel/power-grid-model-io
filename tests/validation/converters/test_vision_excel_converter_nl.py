@@ -18,24 +18,24 @@ from power_grid_model_io.utils.json import JsonEncoder
 from ..utils import component_attributes, component_objects, load_json_single_dataset, select_values
 
 DATA_PATH = Path(__file__).parents[2] / "data" / "vision"
-SOURCE_FILE = DATA_PATH / "vision_validation.xlsx"
-VALIDATION_FILE = DATA_PATH / "vision_validation.json"
+SOURCE_FILE = DATA_PATH / "vision_nl.xlsx"
+VALIDATION_FILE = DATA_PATH / "pgm_input_data.json"
 
 
 @pytest.fixture
 @lru_cache
 def actual() -> Tuple[SingleDataset, ExtraInfoLookup]:
     """
-    Read the excel file and do the conversion (extra info won't be used, for now)
+    Read the excel file and do the conversion
     """
-    actual_data, actual_extra_info = VisionExcelConverter(SOURCE_FILE).load_input_data()
+    actual_data, actual_extra_info = VisionExcelConverter(SOURCE_FILE, language="nl").load_input_data()
     return actual_data, actual_extra_info
 
 
 @pytest.fixture
 def expected() -> Tuple[SingleDataset, ExtraInfoLookup]:
     """
-    Read the json file (extra info is currently not tested and therefore not allowed)
+    Read the json file
     """
     expected_data, expected_extra_info = load_json_single_dataset(VALIDATION_FILE)
     return expected_data, expected_extra_info
