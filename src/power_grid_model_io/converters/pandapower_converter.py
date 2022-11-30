@@ -6,7 +6,7 @@ Panda Power Converter
 """
 import re
 from functools import lru_cache
-from typing import Dict, Optional, Union
+from typing import Dict, Mapping, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -17,8 +17,8 @@ from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_types import ExtraInfoLookup
 from power_grid_model_io.filters import get_winding
 
-StdTypes = Dict[str, Dict[str, Dict[str, Union[float, int, str]]]]
-PandasData = Dict[str, pd.DataFrame]
+StdTypes = Mapping[str, Mapping[str, Mapping[str, Union[float, int, str]]]]
+PandasData = Mapping[str, pd.DataFrame]
 
 CONNECTION_PATTERN_PP = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)\d*")
 CONNECTION_PATTERN_PP_3WDG = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(y|yn|d|z|zn)\d*")
@@ -60,11 +60,11 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         if extra_info is not None:
             for pp_table, indices in self.idx_lookup.items():
                 for pgm_idx, pp_idx in zip(indices.index, indices):
-                    extra_info[pgm_idx] = {"table": pp_table, "index": pp_idx}
+                    extra_info[pgm_idx] = {"id_reference": {"table": pp_table, "index": pp_idx}}
 
         return self.pgm_data
 
-    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup] = None) -> PandasData:
+    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup]) -> PandasData:
         raise NotImplementedError()
 
     def _create_input_data(self):

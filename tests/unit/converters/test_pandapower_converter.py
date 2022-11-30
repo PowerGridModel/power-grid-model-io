@@ -15,6 +15,7 @@ from power_grid_model.data_types import SingleDataset
 from power_grid_model.utils import import_input_data
 
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter, PandasData
+from power_grid_model_io.data_types import ExtraInfoLookup
 
 from ...utils import assert_struct_array_equal
 
@@ -110,6 +111,85 @@ def pp_example_simple() -> Tuple[PandasData, float]:
 @pytest.fixture
 def pgm_example_simple() -> SingleDataset:
     return import_input_data(DATA_DIR / "pandapower.json")
+
+
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._create_input_data")
+def test_parse_data(create_input_data_mock: MagicMock):
+    # Arrange
+    converter = PandaPowerConverter()
+
+    def create_input_data():
+        converter.pgm_data = {"node": np.array([])}
+
+    create_input_data_mock.side_effect = create_input_data
+
+    # Act
+    result = converter._parse_data(data={"bus": pd.DataFrame()}, data_type="input", extra_info=None)
+
+    # Assert
+    create_input_data_mock.assert_called_once_with()
+    assert len(converter.pp_data) == 1 and "bus" in converter.pp_data
+    assert len(converter.pgm_data) == 1 and "node" in converter.pgm_data
+    assert len(result) == 1 and "node" in result
+
+
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._create_input_data")
+def test_parse_data__extra_info(create_input_data_mock: MagicMock):
+    # Arrange
+    converter = PandaPowerConverter()
+
+    def create_input_data():
+        converter.idx_lookup["bus"] = pd.Series([101, 102, 103], index=[0, 1, 2])
+
+    create_input_data_mock.side_effect = create_input_data
+
+    # Act
+    extra_info: ExtraInfoLookup = {}
+    converter._parse_data(data={}, data_type="input", extra_info=extra_info)
+
+    # Assert
+    assert len(extra_info) == 3
+    assert extra_info[0] == {"id_reference": {"table": "bus", "index": 101}}
+    assert extra_info[1] == {"id_reference": {"table": "bus", "index": 102}}
+    assert extra_info[2] == {"id_reference": {"table": "bus", "index": 103}}
+
+
+def test_parse_data__update_data():
+    # Arrange
+    converter = PandaPowerConverter()
+
+    # Act/Assert
+    with pytest.raises(NotImplementedError):
+        converter._parse_data(data={}, data_type="update", extra_info=None)
+
+
+def test_serialize_data():
+    # Arrange
+    converter = PandaPowerConverter()
+
+    # Act/Assert
+    with pytest.raises(NotImplementedError):
+        converter._serialize_data(data={}, extra_info=None)
+
+
+def test_create_input_data():
+    # Arrange
+    converter = MagicMock()
+
+    # Act
+    PandaPowerConverter._create_input_data(self=converter)  # type: ignore
+
+    # Assert
+    assert len(converter.method_calls) == 9
+    converter._create_pgm_input_nodes.assert_called_once_with()
+    converter._create_pgm_input_lines.assert_called_once_with()
+    converter._create_pgm_input_sources.assert_called_once_with()
+    converter._create_pgm_input_sym_loads.assert_called_once_with()
+    converter._create_pgm_input_shunts.assert_called_once_with()
+    converter._create_pgm_input_transformers.assert_called_once_with()
+    converter._create_pgm_input_sym_gens.assert_called_once_with()
+    converter._create_pgm_input_three_winding_transformers.assert_called_once_with()
+    converter._create_pgm_input_links.assert_called_once_with()
 
 
 def test_create_pgm_input_nodes(pp_example_simple: Tuple[PandasData, float], pgm_example_simple: SingleDataset):
