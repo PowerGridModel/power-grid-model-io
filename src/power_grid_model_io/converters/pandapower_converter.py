@@ -104,9 +104,9 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_lines["r1"] = pp_lines["r_ohm_per_km"] * pp_lines["length_km"] / pp_lines["parallel"]
         pgm_lines["x1"] = pp_lines["x_ohm_per_km"] * pp_lines["length_km"] / pp_lines["parallel"]
         pgm_lines["c1"] = pp_lines["c_nf_per_km"] * pp_lines["length_km"] * pp_lines["parallel"] * 1e-9
-        pgm_lines["tan1"] = pp_lines["g_us_per_km"] / (
-            2 * np.pi * self.system_frequency * pp_lines["c_nf_per_km"] * 1e-3
-        )
+        # The formula for tan1 = R_1 / Xc_1 = (g * 1e-6) / (2 * pi * f * c * 1e-9) = g / (2 * pi * f * c * 1e-3)
+        pgm_lines["tan1"] = \
+            pp_lines["g_us_per_km"] / pp_lines["c_nf_per_km"] / (2 * np.pi * self.system_frequency * 1e-3)
         pgm_lines["i_n"] = (pp_lines["max_i_ka"] * 1e3) * pp_lines["df"] * pp_lines["parallel"]
 
         self.pgm_data["line"] = pgm_lines
