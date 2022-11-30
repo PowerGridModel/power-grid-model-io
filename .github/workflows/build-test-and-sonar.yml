@@ -45,13 +45,15 @@ jobs:
           pytest
 
       - name: Validation tests
+        if: success() || failure()
         run: pytest tests/validation --no-cov --verbose
 
       - name: Test and Coverage for sonar cloud in develop mode
+        if: success() || failure()
         run: |
           pip uninstall -y power-grid-model-io
           pip install -e .[dev]
-          pytest --cov-report=xml:coverage.xml
+          pytest --cov-report=xml:coverage.xml --cov-fail-under=0
 
           # Fix relative paths in coverage file
           # Known bug: https://community.sonarsource.com/t/sonar-on-github-actions-with-python-coverage-source-issue/36057
