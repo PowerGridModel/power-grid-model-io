@@ -3,12 +3,14 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Tuple
+from unittest.mock import MagicMock, call, patch
 
 import numpy as np
 import pandapower as pp
 import pandas as pd
 import pytest
+from power_grid_model import WindingType
 from power_grid_model.data_types import SingleDataset
 from power_grid_model.utils import import_input_data
 
@@ -301,24 +303,47 @@ def test_get_3wtransformer_tap_size():
     np.testing.assert_array_equal(actual_tap_size, expected_tap_size)
 
 
-def test_get_attribute(pp_example_simple: Tuple[PandasData, float], pgm_example_simple: SingleDataset):
+@patch("power_grid_model_io.converters.pandapower_converter.get_winding")
+def test_get_trafo_winding_types__vector_group(mock_get_winding: MagicMock):
     # Arrange
-    converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
-    converter.pp_data = pp_example_simple[0]
-
-    expected_value = np.array([0.208, 1.23], dtype=np.float64)
-
-    assert "r_ohm_per_km" in converter.pp_data["line"].columns
-    assert "length_km" in converter.pp_data["line"].columns
-    # assert "r_ohm_per_km" in converter.pp_data["std_type"]
+    converter = PandaPowerConverter()
+    converter.pp_data = {"trafo": pd.DataFrame([(1, "Dyn"), (2, "YNd"), (3, "Dyn")], columns=["id", "vector_group"])}
+    mock_get_winding.side_effect = [WindingType.delta, WindingType.wye_n, WindingType.wye_n, WindingType.delta]
+    expected = pd.DataFrame([(2, 1), (1, 2), (2, 1)], columns=["winding_from", "winding_to"])
 
     # Act
-    actual_value0 = PandaPowerConverter.get_attribute(converter, "line", "r_ohm_per_km")
-    actual_value1 = PandaPowerConverter.get_attribute(converter, "line", "length_km")
+    actual = converter.get_trafo_winding_types()
 
     # Assert
-    np.testing.assert_array_equal(actual_value0, expected_value[0])
-    np.testing.assert_array_equal(actual_value1, expected_value[1])
+    pd.testing.assert_frame_equal(actual, expected)
+    assert len(mock_get_winding.call_args_list) == 4
+    assert mock_get_winding.call_args_list[0] == call("D")
+    assert mock_get_winding.call_args_list[1] == call("yn")
+    assert mock_get_winding.call_args_list[2] == call("YN")
+    assert mock_get_winding.call_args_list[3] == call("d")
+
+
+@patch("power_grid_model_io.converters.pandapower_converter.get_winding")
+def test_get_trafo_winding_types__std_types(mock_get_winding: MagicMock):
+    # Arrange
+    std_types = {"trafo": {"std_trafo_1": {"vector_group": "YNd"}, "std_trafo_2": {"vector_group": "Dyn"}}}
+    converter = PandaPowerConverter(std_types=std_types)
+    converter.pp_data = {
+        "trafo": pd.DataFrame([(1, "std_trafo_2"), (2, "std_trafo_1"), (3, "std_trafo_2")], columns=["id", "std_type"])
+    }
+    mock_get_winding.side_effect = [WindingType.delta, WindingType.wye_n, WindingType.wye_n, WindingType.delta]
+    expected = pd.DataFrame([(2, 1), (1, 2), (2, 1)], columns=["winding_from", "winding_to"])
+
+    # Act
+    actual = converter.get_trafo_winding_types()
+
+    # Assert
+    pd.testing.assert_frame_equal(actual, expected)
+    assert len(mock_get_winding.call_args_list) == 4
+    assert mock_get_winding.call_args_list[0] == call("D")
+    assert mock_get_winding.call_args_list[1] == call("yn")
+    assert mock_get_winding.call_args_list[2] == call("YN")
+    assert mock_get_winding.call_args_list[3] == call("d")
 
 
 # def test_get_individual_switch_states():

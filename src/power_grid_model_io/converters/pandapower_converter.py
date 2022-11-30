@@ -105,8 +105,9 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_lines["x1"] = pp_lines["x_ohm_per_km"] * pp_lines["length_km"] / pp_lines["parallel"]
         pgm_lines["c1"] = pp_lines["c_nf_per_km"] * pp_lines["length_km"] * pp_lines["parallel"] * 1e-9
         # The formula for tan1 = R_1 / Xc_1 = (g * 1e-6) / (2 * pi * f * c * 1e-9) = g / (2 * pi * f * c * 1e-3)
-        pgm_lines["tan1"] = \
+        pgm_lines["tan1"] = (
             pp_lines["g_us_per_km"] / pp_lines["c_nf_per_km"] / (2 * np.pi * self.system_frequency * 1e-3)
+        )
         pgm_lines["i_n"] = (pp_lines["max_i_ka"] * 1e3) * pp_lines["df"] * pp_lines["parallel"]
 
         self.pgm_data["line"] = pgm_lines
@@ -401,17 +402,6 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pp_to_switches = self.get_individual_switch_states(component, pp_switches, bus2)
 
         return pd.DataFrame(data=(pp_from_switches["closed"], pp_to_switches["closed"]))
-
-    def get_attribute(self, pp_table: str, attr: str) -> pd.Series:
-        """
-        Return the attribute value, or map std_types and return the std_type attribute value
-        """
-
-        component = self.pp_data[pp_table]
-        if attr in component:
-            return component[attr]
-
-        return component["std_type"].apply(lambda std_type: self.std_types[pp_table][std_type][attr])
 
     def get_trafo3w_switch_states(self, component: pd.DataFrame) -> pd.DataFrame:
         """
