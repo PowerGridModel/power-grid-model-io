@@ -18,18 +18,27 @@ from power_grid_model_io.utils.json import JsonEncoder
 from ..utils import component_attributes, component_objects, load_json_single_dataset, select_values
 
 DATA_PATH = Path(__file__).parents[2] / "data" / "vision"
-SOURCE_FILE = DATA_PATH / "vision_nl.xlsx"
+SOURCE_FILE = DATA_PATH / "vision_{language:s}.xlsx"
 VALIDATION_FILE = DATA_PATH / "pgm_input_data.json"
+LANGUAGES = ["en", "nl"]
 
 
-@pytest.fixture
 @lru_cache
-def actual() -> Tuple[SingleDataset, ExtraInfoLookup]:
+def load_and_convert_input_data(language: str) -> Tuple[SingleDataset, ExtraInfoLookup]:
     """
     Read the excel file and do the conversion
     """
-    actual_data, actual_extra_info = VisionExcelConverter(SOURCE_FILE, language="nl").load_input_data()
+    source_file = Path(str(SOURCE_FILE).format(language=language))
+    actual_data, actual_extra_info = VisionExcelConverter(source_file, language=language).load_input_data()
     return actual_data, actual_extra_info
+
+
+@pytest.fixture
+def actual(request) -> Tuple[SingleDataset, ExtraInfoLookup]:
+    """
+    Read the excel file and do the conversion
+    """
+    return load_and_convert_input_data(language=request.param)
 
 
 @pytest.fixture
@@ -41,6 +50,7 @@ def expected() -> Tuple[SingleDataset, ExtraInfoLookup]:
     return expected_data, expected_extra_info
 
 
+@pytest.mark.parametrize("actual", LANGUAGES, indirect=True)
 def test_input_data(actual, expected):
     """
     Unit test to preload the expected and actual data
@@ -50,6 +60,7 @@ def test_input_data(actual, expected):
 
 
 @pytest.mark.parametrize(("component", "attribute"), component_attributes(VALIDATION_FILE))
+@pytest.mark.parametrize("actual", LANGUAGES, indirect=True)
 def test_attributes(actual, expected, component: str, attribute: str):
     """
     For each attribute, check if the actual values are consistent with the expected values
@@ -69,6 +80,7 @@ def test_attributes(actual, expected, component: str, attribute: str):
     ("component", "obj_ids"),
     (pytest.param(component, objects, id=component) for component, objects in component_objects(VALIDATION_FILE)),
 )
+@pytest.mark.parametrize("actual", LANGUAGES, indirect=True)
 def test_extra_info(actual, expected, component: str, obj_ids: List[int]):
     """
     For each object, check if the actual extra info is consistent with the expected extra info
@@ -113,6 +125,7 @@ def test_extra_info(actual, expected, component: str, obj_ids: List[int]):
         raise ValueError("\n" + "\n".join(errors))
 
 
+@pytest.mark.parametrize("actual", LANGUAGES, indirect=True)
 def test_extra_info__serializable(actual):
     # Arrange
     _, extra_info = actual
