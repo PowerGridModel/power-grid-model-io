@@ -545,12 +545,12 @@ def test_get_individual_switch_states():
 
 def test_get_id():
     converter = PandaPowerConverter()
-    converter.idx = {"line": pd.Series([21, 345, 0, 3, 15], index=[31, 21, 3, 47, 100])}
+    converter.idx = {"line": pd.Series([21, 345, 0, 3, 15], index=[0, 1, 2, 3, 4])}
 
     expected_id = 345
 
     # Act
-    actual_id = converter.get_id("line", 21)
+    actual_id = converter.get_id("line", 1)
 
     # Assert
     np.testing.assert_array_equal(actual_id, expected_id)
@@ -630,3 +630,16 @@ def test_get_trafo3w_switch_states(mock_get_individual_switch_states: MagicMock)
     # Assert
     pd.testing.assert_frame_equal(actual, expected)
     assert len(mock_get_individual_switch_states.call_args_list) == 3
+
+
+def test_lookup_id():
+    converter = PandaPowerConverter()
+    converter.idx_lookup = {"line": pd.Series([0, 1, 2, 3, 4], index=[21, 345, 0, 3, 15])}
+
+    expected_id = {"table": "line", "index": 4}
+
+    # Act
+    actual_id = converter.lookup_id(15)
+
+    # Assert
+    np.testing.assert_array_equal(actual_id, expected_id)
