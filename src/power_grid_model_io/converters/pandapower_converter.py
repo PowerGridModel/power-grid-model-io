@@ -122,6 +122,8 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_sources["node"] = self._get_ids("bus", pp_ext_grid["bus"])
         pgm_sources["status"] = pp_ext_grid["in_service"]
         pgm_sources["u_ref"] = pp_ext_grid["vm_pu"]
+        pgm_sources["rx_ratio"] = pp_ext_grid["rx_max"]
+        pgm_sources["u_ref_angle"] = pp_ext_grid["va_degree"] * (np.pi / 180)
 
         if "s_sc_max_mva" in pp_ext_grid:
             pgm_sources["sk"] = pp_ext_grid["s_sc_max_mva"] * 1e6
@@ -376,7 +378,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
             .set_index(component.index)
         )
 
-        return switch_state
+        return switch_state["closed"]
 
     def get_switch_states(self, pp_table: str) -> pd.DataFrame:
         """
@@ -401,7 +403,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pp_from_switches = self.get_individual_switch_states(component, pp_switches, bus1)
         pp_to_switches = self.get_individual_switch_states(component, pp_switches, bus2)
 
-        return pd.DataFrame(data=(pp_from_switches["closed"], pp_to_switches["closed"]))
+        return pd.DataFrame(data=(pp_from_switches, pp_to_switches))
 
     def get_trafo3w_switch_states(self, component: pd.DataFrame) -> pd.DataFrame:
         """
@@ -423,7 +425,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pp_2_switches = self.get_individual_switch_states(component, pp_switches, bus2)
         pp_3_switches = self.get_individual_switch_states(component, pp_switches, bus3)
 
-        return pd.DataFrame((pp_1_switches["closed"], pp_2_switches["closed"], pp_3_switches["closed"]))
+        return pd.DataFrame((pp_1_switches, pp_2_switches, pp_3_switches))
 
     def get_trafo_winding_types(self) -> pd.DataFrame:
         """
@@ -468,7 +470,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         @lru_cache
         def std_type_to_winding_types(std_type: str) -> pd.Series:
-            return vector_group_to_winding_types(self.std_types["trafo"][std_type]["vector_group"])
+            return vector_group_to_winding_types(self.std_types["trafo3w"][std_type]["vector_group"])
 
         trafo3w = self.pp_data["trafo3w"]
         if "vector_group" in trafo3w:

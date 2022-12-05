@@ -38,7 +38,9 @@ def pp_example_simple() -> Tuple[PandasData, float]:
     pp.create_bus(net, index=104, vn_kv=30.1)
     pp.create_bus(net, index=105, vn_kv=60)
     pp.create_bus(net, index=106, vn_kv=34)
-    pp.create_ext_grid(net, index=1, in_service=True, bus=101, vm_pu=31.02, s_sc_max_mva=3.0)
+    pp.create_ext_grid(
+        net, index=1, in_service=True, bus=101, vm_pu=31.02, s_sc_max_mva=3.0, rx_max=0.6, va_degree=61.2
+    )
     pp.create_transformer_from_parameters(
         net,
         index=101,
@@ -426,19 +428,185 @@ def test_get_trafo_winding_types__std_types(mock_get_winding: MagicMock):
     assert mock_get_winding.call_args_list[3] == call("d")
 
 
-# def test_get_individual_switch_states():
-#     # Arrange
-#     pp_trafo = pd.DataFrame(
-#         [[101, 101, 102, 38.0, 11.6, 0.322, 40, 22.0, 110.0, 17.8, "Dyn", 30, "hv", 2, 1, 3, 30, 2, 3]],
-#         columns=["index", "hv_bus", "lv_bus", "i0_precent", "pfe_kw", "vkr_percent", "sn_mva", "vn_lv_kv", "vn_hv_kv",
-#                  "vk_percent", "vector_group", "shift_degree", "tap_side", "tap_pos", "tap_min", "tap_max",
-#                  "tap_step_percent", "tap_neutral", "parallel"],
-#     )
-#
-#     expected_tap_size = np.array([6510.0, 19902.0, 248000.0], dtype=np.float64)
-#
-#     # Act
-#     actual_tap_size = PandaPowerConverter._get_3wtransformer_tap_size(pp_trafo)
-#
-#     # Assert
-#     np.testing.assert_array_equal(actual_tap_size, expected_tap_size)
+@patch("power_grid_model_io.converters.pandapower_converter.get_winding")
+def test_get_trafo3w_winding_types__vector_group(mock_get_winding: MagicMock):
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.pp_data = {
+        "trafo3w": pd.DataFrame([(1, "Dynz"), (2, "YNdy"), (3, "Dyny")], columns=["id", "vector_group"])
+    }
+    mock_get_winding.side_effect = [
+        WindingType.delta,
+        WindingType.wye_n,
+        WindingType.zigzag,
+        WindingType.wye_n,
+        WindingType.delta,
+        WindingType.wye,
+        WindingType.delta,
+        WindingType.wye_n,
+        WindingType.wye,
+    ]
+
+    expected = pd.DataFrame([[2, 1, 3], [1, 2, 0], [2, 1, 0]], columns=["winding_1", "winding_2", "winding_3"])
+
+    # Act
+    actual = converter.get_trafo3w_winding_types()
+
+    # Assert
+    pd.testing.assert_frame_equal(actual, expected)
+    assert len(mock_get_winding.call_args_list) == 9
+    assert mock_get_winding.call_args_list[0] == call("D")
+    assert mock_get_winding.call_args_list[1] == call("yn")
+    assert mock_get_winding.call_args_list[2] == call("z")
+    assert mock_get_winding.call_args_list[3] == call("YN")
+    assert mock_get_winding.call_args_list[4] == call("d")
+    assert mock_get_winding.call_args_list[5] == call("y")
+    assert mock_get_winding.call_args_list[6] == call("D")
+    assert mock_get_winding.call_args_list[7] == call("yn")
+    assert mock_get_winding.call_args_list[8] == call("y")
+
+
+@patch("power_grid_model_io.converters.pandapower_converter.get_winding")
+def test_get_trafo3w_winding_types__std_types(mock_get_winding: MagicMock):
+    # Arrange
+    std_types = {"trafo3w": {"std_trafo3w_1": {"vector_group": "Dynz"}, "std_trafo3w_2": {"vector_group": "YNdy"}}}
+    converter = PandaPowerConverter(std_types=std_types)
+    converter.pp_data = {
+        "trafo3w": pd.DataFrame(
+            [(1, "std_trafo3w_2"), (2, "std_trafo3w_1"), (3, "std_trafo3w_2")], columns=["id", "std_type"]
+        )
+    }
+    mock_get_winding.side_effect = [
+        WindingType.wye_n,
+        WindingType.delta,
+        WindingType.wye,
+        WindingType.delta,
+        WindingType.wye_n,
+        WindingType.zigzag,
+        WindingType.wye_n,
+        WindingType.delta,
+        WindingType.wye,
+    ]
+    expected = pd.DataFrame([[1, 2, 0], [2, 1, 3], [1, 2, 0]], columns=["winding_1", "winding_2", "winding_3"])
+
+    # Act
+    actual = converter.get_trafo3w_winding_types()
+
+    # Assert
+    pd.testing.assert_frame_equal(actual, expected)
+    assert len(mock_get_winding.call_args_list) == 6
+    assert mock_get_winding.call_args_list[0] == call("YN")
+    assert mock_get_winding.call_args_list[1] == call("d")
+    assert mock_get_winding.call_args_list[2] == call("y")
+    assert mock_get_winding.call_args_list[3] == call("D")
+    assert mock_get_winding.call_args_list[4] == call("yn")
+    assert mock_get_winding.call_args_list[5] == call("z")
+
+
+def test_get_individual_switch_states():
+    # Arrange
+    pp_trafo = pd.DataFrame(
+        [[101, 101], [201, 103]],
+        columns=["index", "hv_bus"],
+    )
+    pp_switches = pd.DataFrame(
+        [[101, 101, 101, False], [102, 103, 201, True]],
+        columns=["index", "bus", "element", "closed"],
+    )
+
+    expected_state = np.array([False, True], dtype=np.float64)
+
+    # Act
+    actual_state = PandaPowerConverter.get_individual_switch_states(pp_trafo, pp_switches, "hv_bus")
+
+    # Assert
+    np.testing.assert_array_equal(actual_state, expected_state)
+
+
+def test_get_id():
+    converter = PandaPowerConverter()
+    converter.idx = {"line": pd.Series([21], index=[31])}
+
+    expected_id = 21
+
+    # Act
+    actual_id = converter.get_id("line", 31)
+
+    # Assert
+    np.testing.assert_array_equal(actual_id, expected_id)
+
+
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter.get_individual_switch_states")
+def test_get_switch_states_lines(mock_get_individual_switch_states: MagicMock):
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.pp_data = {
+        "line": pd.DataFrame([[21, 101, 31]], columns=["index", "from_bus", "to_bus"]),
+        "switch": pd.DataFrame(
+            [[101, 101, "l", 21, False]],
+            columns=["index", "bus", "et", "element", "closed"],
+        ),
+    }
+    mock_get_individual_switch_states.side_effect = [False, True]
+
+    expected = pd.DataFrame(data=([False], [True]))
+
+    # Act
+    actual = converter.get_switch_states("line")
+
+    # Assert
+    pd.testing.assert_frame_equal(actual, expected)
+    assert len(mock_get_individual_switch_states.call_args_list) == 2
+    #  TODO: find a proper way to assert the right calls
+    # assert mock_get_individual_switch_states.call_args_list[0] == call(converter.pp_data["line"].sort_index(inplace=True),
+    #                                                                    converter.pp_data["switch"].sort_index(inplace=True),
+    #                                                                    "from_bus")
+    # assert mock_get_individual_switch_states.call_args_list[1] == call(converter.pp_data["line"].sort_index(inplace=True),
+    #                                                                    converter.pp_data["switch"].sort_index(inplace=True),
+    #                                                                     "to_bus")
+
+
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter.get_individual_switch_states")
+def test_get_switch_states_trafos(mock_get_individual_switch_states: MagicMock):
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.pp_data = {
+        "trafo": pd.DataFrame([[2, 32, 31]], columns=["index", "hv_bus", "lv_bus"]),
+        "switch": pd.DataFrame(
+            [[101, 32, "t", 2, True], [321, 31, "t", 2, False]],
+            columns=["index", "bus", "et", "element", "closed"],
+        ),
+    }
+    mock_get_individual_switch_states.side_effect = [True, False]
+
+    expected = pd.DataFrame(data=([True], [False]))
+
+    # Act
+    actual = converter.get_switch_states("trafo")
+
+    # Assert
+    pd.testing.assert_frame_equal(actual, expected)
+    assert len(mock_get_individual_switch_states.call_args_list) == 2
+
+
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter.get_individual_switch_states")
+def test_get_trafo3w_switch_states(mock_get_individual_switch_states: MagicMock):
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.pp_data = {
+        "trafo3w": pd.DataFrame([[2, 32, 31, 315]], columns=["index", "hv_bus", "mv_bus", "lv_bus"]),
+        "switch": pd.DataFrame(
+            [[101, 315, "t3", 2, False], [321, 32, "t3", 2, False]],
+            columns=["index", "bus", "et", "element", "closed"],
+        ),
+    }
+    mock_get_individual_switch_states.side_effect = [False, True, False]
+
+    expected = pd.DataFrame(data=([False], [True], [False]))
+
+    # Act
+    actual = converter.get_trafo3w_switch_states(converter.pp_data["trafo3w"])
+
+    # Assert
+    pd.testing.assert_frame_equal(actual, expected)
+    assert len(mock_get_individual_switch_states.call_args_list) == 3

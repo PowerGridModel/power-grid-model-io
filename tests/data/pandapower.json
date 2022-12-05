@@ -14,7 +14,7 @@
     ],
   "source":
     [
-      {"id": 6, "node": 0, "status": 1, "u_ref": 31.02, "sk": 3000000}
+      {"id": 6, "node": 0, "status": 1, "u_ref": 31.02, "sk": 3000000, "rx_ratio": 0.6, "u_ref_angle": 1.06814150222}
     ],
   "sym_load":
     [
