@@ -503,6 +503,26 @@ def test_get_trafo3w_winding_types__std_types(mock_get_winding: MagicMock):
     assert mock_get_winding.call_args_list[5] == call("z")
 
 
+def test_get_winding_types__value_error():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.pp_data = {"trafo": pd.DataFrame([(1, "ADyn")], columns=["id", "vector_group"])}
+
+    # Act / Assert
+    with pytest.raises(ValueError):
+        converter.get_trafo_winding_types()
+
+
+def test_get_trafo3w_winding_types__value_error():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.pp_data = {"trafo3w": pd.DataFrame([(1, "ADyndrr")], columns=["id", "vector_group"])}
+
+    # Act / Assert
+    with pytest.raises(ValueError):
+        converter.get_trafo3w_winding_types()
+
+
 def test_get_individual_switch_states():
     # Arrange
     pp_trafo = pd.DataFrame(
@@ -525,12 +545,12 @@ def test_get_individual_switch_states():
 
 def test_get_id():
     converter = PandaPowerConverter()
-    converter.idx = {"line": pd.Series([21], index=[31])}
+    converter.idx = {"line": pd.Series([21, 345, 0, 3, 15], index=[31, 21, 3, 47, 100])}
 
-    expected_id = 21
+    expected_id = 345
 
     # Act
-    actual_id = converter.get_id("line", 31)
+    actual_id = converter.get_id("line", 21)
 
     # Assert
     np.testing.assert_array_equal(actual_id, expected_id)
