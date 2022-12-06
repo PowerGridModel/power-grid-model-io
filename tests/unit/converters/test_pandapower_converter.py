@@ -9,7 +9,7 @@ import numpy as np
 import pandapower as pp
 import pandas as pd
 import pytest
-from power_grid_model import initialize_array
+from power_grid_model import PowerGridModel, initialize_array
 from power_grid_model.data_types import SingleDataset
 from power_grid_model.utils import import_input_data
 
@@ -110,6 +110,18 @@ def pp_example_simple() -> Tuple[PandasData, Dict[str, float]]:
 @pytest.fixture
 def pgm_example_simple() -> SingleDataset:
     return import_input_data(DATA_DIR / "input_data.json")
+
+
+# def power_flow_pgm(pp_example_simple: Tuple[PandasData, Dict[str, float]]) -> dict[str, ndarray]:
+#
+#     pp_example_simple[0]
+#
+#     model = PowerGridModel()
+#
+#
+# def power_flow_pp(pp_example_simple: Tuple[PandasData, Dict[str, float]]) -> dict[str, ndarray]:
+#
+#     pp.runpp(, numba=False)
 
 
 def test_create_pgm_input_nodes(
