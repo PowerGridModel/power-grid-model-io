@@ -7,7 +7,7 @@ Panda Power Converter
 import math
 import re
 from functools import lru_cache
-from typing import Dict, Mapping, Optional, Union
+from typing import Dict, List, Mapping, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -72,6 +72,10 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
     def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup]) -> PandasData:
 
+        # If extra_info is supplied idx_lookup should be created accordingly
+        if extra_info is not None:
+            self._extra_info_to_idx_lookup(extra_info)
+
         # Clear pp data
         self.pgm_nodes_lookup = pd.DataFrame()
         self.pp_output_data = {}
@@ -93,6 +97,24 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         self._create_pgm_input_sym_gens()
         self._create_pgm_input_three_winding_transformers()
         self._create_pgm_input_links()
+
+    def _extra_info_to_idx_lookup(self, extra_info: ExtraInfoLookup):
+        self.idx = {}
+        self.idx_lookup = {}
+        pgm_to_pp_id: Dict[str, List[Tuple[int, int]]] = {}
+        for pgm_idx, extra in extra_info.items():
+            if "id_reference" not in extra:
+                continue
+            assert isinstance(extra["id_reference"], dict)
+            pp_table = extra["id_reference"]["table"]
+            pp_index = extra["id_reference"]["index"]
+            if pp_table not in pgm_to_pp_id:
+                pgm_to_pp_id[pp_table] = []
+            pgm_to_pp_id[pp_table].append((pgm_idx, pp_index))
+        for pp_table, table_pgm_to_pp_id in pgm_to_pp_id.items():
+            pgm_ids, pp_indices = zip(*table_pgm_to_pp_id)
+            self.idx[pp_table] = pd.Series(pgm_ids, index=pp_indices)
+            self.idx_lookup[pp_table] = pd.Series(pp_indices, index=pgm_ids)
 
     def _create_output_data(self):
 
