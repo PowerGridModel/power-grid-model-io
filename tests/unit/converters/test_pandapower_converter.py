@@ -4,7 +4,7 @@
 
 from pathlib import Path
 from typing import Tuple
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import ANY, MagicMock, call, patch
 
 import numpy as np
 import pandapower as pp
@@ -562,10 +562,11 @@ def test_get_switch_states_lines(mock_get_individual_switch_states: MagicMock):
     # Arrange
     converter = PandaPowerConverter()
     converter.pp_data = {
-        "line": pd.DataFrame([[21, 101, 31]], columns=["index", "from_bus", "to_bus"]),
+        "line": pd.DataFrame([[101, 31]], index=[21], columns=["from_bus", "to_bus"]),
         "switch": pd.DataFrame(
-            [[101, 101, "l", 21, False]],
-            columns=["index", "bus", "et", "element", "closed"],
+            [[101, "l", 21, False], [102, "x", 22, True]],
+            index=[1001, 1002],
+            columns=["bus", "et", "element", "closed"],
         ),
     }
     mock_get_individual_switch_states.side_effect = [False, True]
@@ -577,14 +578,36 @@ def test_get_switch_states_lines(mock_get_individual_switch_states: MagicMock):
 
     # Assert
     pd.testing.assert_frame_equal(actual, expected)
+
     assert len(mock_get_individual_switch_states.call_args_list) == 2
-    #  TODO: find a proper way to assert the right calls
-    # assert mock_get_individual_switch_states.call_args_list[0] == call(converter.pp_data["line"].sort_index(inplace=True),
-    #                                                                    converter.pp_data["switch"].sort_index(inplace=True),
-    #                                                                    "from_bus")
-    # assert mock_get_individual_switch_states.call_args_list[1] == call(converter.pp_data["line"].sort_index(inplace=True),
-    #                                                                    converter.pp_data["switch"].sort_index(inplace=True),
-    #                                                                     "to_bus")
+
+    assert mock_get_individual_switch_states.call_args_list[0] == call(ANY, ANY, "from_bus")
+    pd.testing.assert_frame_equal(
+        mock_get_individual_switch_states.call_args_list[0].args[0],
+        pd.DataFrame([[101, 31, 21]], index=[21], columns=["from_bus", "to_bus", "index"]),
+    )
+    pd.testing.assert_frame_equal(
+        mock_get_individual_switch_states.call_args_list[0].args[1],
+        pd.DataFrame(
+            [[21, 101, False]],
+            index=[1001],
+            columns=["element", "bus", "closed"],
+        ),
+    )
+
+    assert mock_get_individual_switch_states.call_args_list[1] == call(ANY, ANY, "to_bus")
+    pd.testing.assert_frame_equal(
+        mock_get_individual_switch_states.call_args_list[1].args[0],
+        pd.DataFrame([[101, 31, 21]], index=[21], columns=["from_bus", "to_bus", "index"]),
+    )
+    pd.testing.assert_frame_equal(
+        mock_get_individual_switch_states.call_args_list[1].args[1],
+        pd.DataFrame(
+            [[21, 101, False]],
+            index=[1001],
+            columns=["element", "bus", "closed"],
+        ),
+    )
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter.get_individual_switch_states")
