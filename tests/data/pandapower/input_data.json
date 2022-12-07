@@ -14,7 +14,7 @@
     ],
   "source":
     [
-      {"id": 6, "node": 0, "status": 1, "u_ref": 31.02, "sk": 3000000}
+      {"id": 6, "node": 0, "status": 1, "u_ref": 31.02, "sk": 3000000, "rx_ratio": 0.6, "u_ref_angle": 1.06814150222}
     ],
   "sym_load":
     [
@@ -36,7 +36,7 @@
     ],
   "sym_gen":
     [
-      {"id": 12, "node": 4, "status": 1, "p_specified": 6210000, "q_specified": 20100000}
+      {"id": 12, "node": 4, "status": 1, "type": 0,"p_specified": 6210000, "q_specified": 20100000}
     ],
   "three_winding_transformer":
     [

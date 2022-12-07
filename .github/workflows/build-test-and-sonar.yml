@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 
-name: Build, Test and Sonar
+name: Build, Test, Sonar and Publish
 
 on:
   push:
@@ -15,7 +15,127 @@ on:
   workflow_dispatch:
 
 jobs:
+
   build-python:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Setup Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Build
+        run: pip wheel -v --no-deps -w wheelhouse .
+
+      - name: Save version
+        id: version
+        run: echo "version=$(cat PYPI_VERSION)" >> $GITHUB_OUTPUT
+
+      - name: Store built wheel file
+        uses: actions/upload-artifact@v3
+        with:
+          name: power-grid-model-io
+          path: wheelhouse/
+
+  sonar-cloud:
+    # only run sonar server in push event or pull request event from own repo
+    if: ${{ (github.event_name == 'push') || (github.event.pull_request.head.repo.owner.login == 'alliander-opensource') }}
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout source code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+
+      - name: Setup Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install in develop mode
+        run: |
+          pip install -e .[dev]
+
+      - name: Test and Coverage
+        run: |
+          pytest --cov-report=xml:coverage.xml --cov-fail-under=0
+
+          # Fix relative paths in coverage file
+          # Known bug: https://community.sonarsource.com/t/sonar-on-github-actions-with-python-coverage-source-issue/36057
+          sed -i 's@/home/runner/work/power-grid-model-io/power-grid-model-io@/github/workspace@g' coverage.xml
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  unit-tests:
+    needs: build-python
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Setup Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Load built wheel file
+        uses: actions/download-artifact@v3
+        with:
+          name: power-grid-model-io
+          path: wheelhouse/
+
+      - name: Install built wheel file
+        run: pip install power-grid-model-io[dev]==${{ needs.build-python.outputs.version }} --find-links=wheelhouse
+
+      - name: Unit test and coverage
+        run: pytest --verbose
+
+  validation-tests:
+    needs: build-python
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Setup Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Load built wheel file
+        uses: actions/download-artifact@v3
+        with:
+          name: power-grid-model-io
+          path: wheelhouse/
+
+      - name: Install built wheel file
+        run: pip install power-grid-model-io[dev]==${{ needs.build-python.outputs.version }} --find-links=wheelhouse
+
+      - name: Validation tests
+        run: pytest tests/validation --no-cov --verbose
+
+  publish:
+    needs:
+      - build-python
+      - unit-tests
+      - validation-tests
+      - sonar-cloud
+    if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
     permissions:
       contents: write
     env:
@@ -23,50 +143,18 @@ jobs:
       TWINE_PASSWORD: ${{ secrets.PYPI_PASS }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-
-      - uses: actions/setup-python@v4
+      - name: Setup Python 3.10
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
-      - name: Build (Python 3.10)
-        run: pip wheel -v --no-deps -w wheelhouse .
-
-      - name: Save version
-        id: version
-        run: |
-          echo "::set-output name=version::$(cat PYPI_VERSION)"
-
-      - name: Test and Coverage for built wheel file
-        run: |
-          pip install power-grid-model-io[dev]==${{ steps.version.outputs.version }} --find-links=wheelhouse
-          pytest
-
-      - name: Validation tests
-        run: pytest tests/validation --no-cov --verbose
-
-      - name: Test and Coverage for sonar cloud in develop mode
-        run: |
-          pip uninstall -y power-grid-model-io
-          pip install -e .[dev]
-          pytest --cov-report=xml:coverage.xml
-
-          # Fix relative paths in coverage file
-          # Known bug: https://community.sonarsource.com/t/sonar-on-github-actions-with-python-coverage-source-issue/36057
-          sed -i 's@/home/runner/work/power-grid-model-io/power-grid-model-io@/github/workspace@g' coverage.xml
-
-      - name: SonarCloud Scan
-        # only run sonar server in push event or pull request event from own repo
-        if:  ${{ (github.event_name == 'push') || (github.event.pull_request.head.repo.owner.login == 'alliander-opensource') }}
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Load built wheel file
+        uses: actions/download-artifact@v3
+        with:
+          name: power-grid-model-io
+          path: wheelhouse/
 
       - name: Upload wheels
-        if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
         run: |
           pip install twine
           echo "Publish to PyPI..."
@@ -74,11 +162,10 @@ jobs:
 
       - name: Release
         uses: softprops/action-gh-release@v1
-        if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
         with:
           files: |
             ./wheelhouse/*.whl
-          tag_name: v${{ steps.version.outputs.version }}
-          prerelease: ${{ contains(steps.version.outputs.version, 'rc') || contains(steps.version.outputs.version, 'a') }}
+          tag_name: v${{ needs.build-python.outputs.version }}
+          prerelease: ${{ contains(needs.build-python.outputs.version, 'rc') || contains(needs.build-python.outputs.version, 'a') }}
           generate_release_notes: true
           target_commitish: ${{ github.sha }}

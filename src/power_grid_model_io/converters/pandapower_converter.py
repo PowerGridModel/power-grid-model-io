@@ -5,7 +5,9 @@
 Panda Power Converter
 """
 import math
-from typing import Dict, Optional, Union
+import re
+from functools import lru_cache
+from typing import Dict, Mapping, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -14,16 +16,13 @@ from power_grid_model.data_types import Dataset
 
 from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_types import ExtraInfoLookup
-from power_grid_model_io.filters.pandapower import (
-    get_3wdgtransformer_winding_1,
-    get_3wdgtransformer_winding_2,
-    get_3wdgtransformer_winding_3,
-    get_transformer_winding_from,
-    get_transformer_winding_to,
-)
+from power_grid_model_io.filters import get_winding
 
-StdTypes = Dict[str, Dict[str, Dict[str, Union[float, int, str]]]]
-PandasData = Dict[str, pd.DataFrame]
+StdTypes = Mapping[str, Mapping[str, Mapping[str, Union[float, int, str]]]]
+PandasData = Mapping[str, pd.DataFrame]
+
+CONNECTION_PATTERN_PP = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)\d*")
+CONNECTION_PATTERN_PP_3WDG = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(y|yn|d|z|zn)\d*")
 
 
 # pylint: disable=too-many-instance-attributes
@@ -32,12 +31,12 @@ class PandaPowerConverter(BaseConverter[PandasData]):
     Panda Power Converter
     """
 
-    __slots__ = ("std_types", "pp_data", "pgm_data", "idx", "idx_lookup", "next_idx", "grid_config")
+    __slots__ = ("std_types", "pp_data", "pgm_data", "idx", "idx_lookup", "next_idx", "system_frequency")
 
-    def __init__(self, std_types: Optional[StdTypes] = None, grid_config: Optional[Dict[str, float]] = None):
+    def __init__(self, std_types: Optional[StdTypes] = None, system_frequency: float = 50.0):
         super().__init__(source=None, destination=None)
         self.std_types: StdTypes = std_types if std_types is not None else {}
-        self.grid_config: Dict[str, float] = grid_config if grid_config is not None else {}
+        self.system_frequency: float = system_frequency
         self.pp_data: PandasData = {}
         self.pgm_data: Dataset = {}
         self.pp_output_data: PandasData = {}
@@ -65,24 +64,13 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         # Construct extra_info
         if extra_info is not None:
-            pass
-            # TODO: Construct extra info from self.idx_lookup
-            # {
-            #     0: {"table": "bus", "index": 1},
-            #     1: {"table": "bus", "index": 2}
-            #  }
+            for pp_table, indices in self.idx_lookup.items():
+                for pgm_id, pp_idx in zip(indices.index, indices):
+                    extra_info[pgm_id] = {"id_reference": {"table": pp_table, "index": pp_idx}}
 
         return self.pgm_data
 
-    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup] = None) -> PandasData:
-        # If extra_info is supplied idx_lookup should be created accordingly
-        if extra_info is not None:
-            pass
-            # TODO: Construct extra info from self.idx_lookup
-            # {
-            #     0: {"table": "bus", "index": 1},
-            #     1: {"table": "bus", "index": 2}
-            #  }
+    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup]) -> PandasData:
 
         # Clear pp data
         self.pgm_nodes_lookup = pd.DataFrame()
@@ -140,7 +128,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         pp_lines = self.pp_data["line"]
 
-        switch_states = self.get_switch_states(pp_lines, "line")
+        switch_states = self.get_switch_states("line")
 
         pgm_lines = initialize_array(data_type="input", component_type="line", shape=len(pp_lines))
         pgm_lines["id"] = self._generate_ids("line", pp_lines.index)
@@ -151,9 +139,9 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_lines["r1"] = pp_lines["r_ohm_per_km"] * pp_lines["length_km"] / pp_lines["parallel"]
         pgm_lines["x1"] = pp_lines["x_ohm_per_km"] * pp_lines["length_km"] / pp_lines["parallel"]
         pgm_lines["c1"] = pp_lines["c_nf_per_km"] * pp_lines["length_km"] * pp_lines["parallel"] * 1e-9
-        # tan1 = tan1 = R_1/Xc_1 = (g*1e-6) / (2*pi*f*c*1e-9) = g/(2*pi*f*c*1e-3)
-        pgm_lines["tan1"] = pp_lines["g_us_per_km"] / (
-            2 * np.pi * self.grid_config["f_hz"] * pp_lines["c_nf_per_km"] * 1e-3
+        # The formula for tan1 = R_1 / Xc_1 = (g * 1e-6) / (2 * pi * f * c * 1e-9) = g / (2 * pi * f * c * 1e-3)
+        pgm_lines["tan1"] = (
+            pp_lines["g_us_per_km"] / pp_lines["c_nf_per_km"] / (2 * np.pi * self.system_frequency * 1e-3)
         )
         pgm_lines["i_n"] = (pp_lines["max_i_ka"] * 1e3) * pp_lines["df"] * pp_lines["parallel"]
 
@@ -169,7 +157,11 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_sources["node"] = self._get_ids("bus", pp_ext_grid["bus"])
         pgm_sources["status"] = pp_ext_grid["in_service"]
         pgm_sources["u_ref"] = pp_ext_grid["vm_pu"]
-        pgm_sources["sk"] = pp_ext_grid["s_sc_max_mva"] * 1e6
+        pgm_sources["rx_ratio"] = pp_ext_grid["rx_max"]
+        pgm_sources["u_ref_angle"] = pp_ext_grid["va_degree"] * (np.pi / 180)
+
+        if "s_sc_max_mva" in pp_ext_grid:
+            pgm_sources["sk"] = pp_ext_grid["s_sc_max_mva"] * 1e6
 
         self.pgm_data["source"] = pgm_sources
 
@@ -200,6 +192,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_sym_gens["status"] = pp_sgens["in_service"]
         pgm_sym_gens["p_specified"] = pp_sgens["p_mw"] * 1e6 * pp_sgens["scaling"]
         pgm_sym_gens["q_specified"] = pp_sgens["q_mvar"] * 1e6 * pp_sgens["scaling"]
+        pgm_sym_gens["type"] = LoadGenType.const_power
 
         self.pgm_data["sym_gen"] = pgm_sym_gens
 
@@ -244,7 +237,8 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         pp_trafo = self.pp_data["trafo"]
 
-        switch_states = self.get_switch_states(pp_trafo, "trafo")
+        switch_states = self.get_switch_states("trafo")
+        winding_types = self.get_trafo_winding_types()
 
         pgm_transformers = initialize_array(data_type="input", component_type="transformer", shape=len(pp_trafo))
         pgm_transformers["id"] = self._generate_ids("trafo", pp_trafo.index)
@@ -259,8 +253,8 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pgm_transformers["pk"] = pp_trafo["vkr_percent"] * pp_trafo["sn_mva"] * pp_trafo["parallel"] * (1e6 * 1e-2)
         pgm_transformers["i0"] = pp_trafo["i0_percent"] * 1e-2
         pgm_transformers["p0"] = pp_trafo["pfe_kw"] * pp_trafo["parallel"] * 1e3
-        pgm_transformers["winding_from"] = pp_trafo["vector_group"].apply(get_transformer_winding_from)
-        pgm_transformers["winding_to"] = pp_trafo["vector_group"].apply(get_transformer_winding_to)
+        pgm_transformers["winding_from"] = winding_types["winding_from"]
+        pgm_transformers["winding_to"] = winding_types["winding_to"]
         pgm_transformers["clock"] = round(pp_trafo["shift_degree"] / 30) % 12
         pgm_transformers["tap_pos"] = pp_trafo["tap_pos"]
         pgm_transformers["tap_side"] = self._get_transformer_tap_side(pp_trafo["tap_side"])
@@ -277,6 +271,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pp_trafo3w = self.pp_data["trafo3w"]
 
         switch_states = self.get_trafo3w_switch_states(pp_trafo3w)
+        winding_type = self.get_trafo3w_winding_types()
 
         pgm_3wtransformers = initialize_array(
             data_type="input", component_type="three_winding_transformer", shape=len(pp_trafo3w)
@@ -312,9 +307,9 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         pgm_3wtransformers["i0"] = pp_trafo3w["i0_percent"] * 1e-2
         pgm_3wtransformers["p0"] = pp_trafo3w["pfe_kw"] * 1e3
-        pgm_3wtransformers["winding_1"] = pp_trafo3w["vector_group"].apply(get_3wdgtransformer_winding_1)
-        pgm_3wtransformers["winding_2"] = pp_trafo3w["vector_group"].apply(get_3wdgtransformer_winding_2)
-        pgm_3wtransformers["winding_3"] = pp_trafo3w["vector_group"].apply(get_3wdgtransformer_winding_3)
+        pgm_3wtransformers["winding_1"] = winding_type["winding_1"]
+        pgm_3wtransformers["winding_2"] = winding_type["winding_2"]
+        pgm_3wtransformers["winding_3"] = winding_type["winding_3"]
         pgm_3wtransformers["clock_12"] = round(pp_trafo3w["shift_mv_degree"] / 30.0) % 12
         pgm_3wtransformers["clock_13"] = round(pp_trafo3w["shift_lv_degree"] / 30.0) % 12
         pgm_3wtransformers["tap_pos"] = pp_trafo3w["tap_pos"]
@@ -328,8 +323,6 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
     def _create_pgm_input_links(self):
         assert "link" not in self.pgm_data
-
-        # pp_buses = self.pp_data["bus"]
 
         pp_switches = self.pp_data["switch"]
         pp_switches = pp_switches[
@@ -623,24 +616,24 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         # sym_load_p = sym_load[]
         # sym_load_z_id = self._get_pp_ids("sym_load_const_impedance", total_loads[])
 
-    def _generate_ids(self, key: str, pp_idx: pd.Index) -> np.arange:
-        assert key not in self.idx_lookup
+    def _generate_ids(self, pp_table: str, pp_idx: pd.Index) -> np.arange:
+        assert pp_table not in self.idx_lookup
         n_objects = len(pp_idx)
         pgm_idx = np.arange(start=self.next_idx, stop=self.next_idx + n_objects, dtype=np.int32)
-        self.idx[key] = pd.Series(pgm_idx, index=pp_idx)
-        self.idx_lookup[key] = pd.Series(pp_idx, index=pgm_idx)
+        self.idx[pp_table] = pd.Series(pgm_idx, index=pp_idx)
+        self.idx_lookup[pp_table] = pd.Series(pp_idx, index=pgm_idx)
         self.next_idx += n_objects
         return pgm_idx
 
-    def _get_ids(self, key: str, pp_idx: pd.Series) -> pd.Series:
-        if key not in self.idx:
-            raise KeyError(f"No indexes have been created for '{key}'!")
-        return self.idx[key][pp_idx]
+    def _get_ids(self, pp_table: str, pp_idx: pd.Series) -> pd.Series:
+        if pp_table not in self.idx:
+            raise KeyError(f"No indexes have been created for '{pp_table}'!")
+        return self.idx[pp_table][pp_idx]
 
-    def _get_pp_ids(self, key: str, pgm_idx: pd.Series) -> pd.Series:
-        if key not in self.idx_lookup:
-            raise KeyError(f"No indexes have been created for '{key}'!")
-        return self.idx_lookup[key][pgm_idx]
+    def _get_pp_ids(self, pp_table: str, pgm_idx: pd.Series) -> pd.Series:
+        if pp_table not in self.idx_lookup:
+            raise KeyError(f"No indexes have been created for '{pp_table}'!")
+        return self.idx_lookup[pp_table][pgm_idx]
 
     @staticmethod
     def _get_tap_size(pp_trafo: pd.DataFrame) -> np.ndarray:
@@ -703,13 +696,13 @@ class PandaPowerConverter(BaseConverter[PandasData]):
             .set_index(component.index)
         )
 
-        return switch_state
+        return switch_state["closed"]
 
-    def get_switch_states(self, component: pd.DataFrame, name: str) -> pd.DataFrame:
+    def get_switch_states(self, pp_table: str) -> pd.DataFrame:
         """
         Return switch states of either lines or transformers
         """
-        if name == "line":
+        if pp_table == "line":
             element_type = "l"
             bus1 = "from_bus"
             bus2 = "to_bus"
@@ -718,6 +711,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
             bus1 = "hv_bus"
             bus2 = "lv_bus"
 
+        component = self.pp_data[pp_table]
         component["index"] = component.index
         # Select the appropriate switches and columns
         pp_switches = self.pp_data["switch"]
@@ -727,7 +721,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pp_from_switches = self.get_individual_switch_states(component, pp_switches, bus1)
         pp_to_switches = self.get_individual_switch_states(component, pp_switches, bus2)
 
-        return pd.DataFrame(data=(pp_from_switches["closed"], pp_to_switches["closed"]))
+        return pd.DataFrame(data=(pp_from_switches, pp_to_switches))
 
     def get_trafo3w_switch_states(self, component: pd.DataFrame) -> pd.DataFrame:
         """
@@ -749,4 +743,83 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         pp_2_switches = self.get_individual_switch_states(component, pp_switches, bus2)
         pp_3_switches = self.get_individual_switch_states(component, pp_switches, bus3)
 
-        return pd.DataFrame((pp_1_switches["closed"], pp_2_switches["closed"], pp_3_switches["closed"]))
+        return pd.DataFrame((pp_1_switches, pp_2_switches, pp_3_switches))
+
+    def get_trafo_winding_types(self) -> pd.DataFrame:
+        """
+        Return the from and to winding type
+        """
+
+        @lru_cache
+        def vector_group_to_winding_types(vector_group: str) -> pd.Series:
+            match = CONNECTION_PATTERN_PP.fullmatch(vector_group)
+            if not match:
+                raise ValueError(f"Invalid transformer connection string: '{vector_group}'")
+            winding_from = get_winding(match.group(1)).value
+            winding_to = get_winding(match.group(2)).value
+            return pd.Series([winding_from, winding_to])
+
+        @lru_cache
+        def std_type_to_winding_types(std_type: str) -> pd.Series:
+            return vector_group_to_winding_types(self.std_types["trafo"][std_type]["vector_group"])
+
+        trafo = self.pp_data["trafo"]
+        if "vector_group" in trafo:
+            trafo = trafo["vector_group"].apply(vector_group_to_winding_types)
+        else:
+            trafo = trafo["std_type"].apply(std_type_to_winding_types)
+        trafo.columns = ["winding_from", "winding_to"]
+        return trafo
+
+    def get_trafo3w_winding_types(self) -> pd.DataFrame:
+        """
+        Return the three winding types
+        """
+
+        @lru_cache
+        def vector_group_to_winding_types(vector_group: str) -> pd.Series:
+            match = CONNECTION_PATTERN_PP_3WDG.fullmatch(vector_group)
+            if not match:
+                raise ValueError(f"Invalid transformer connection string: '{vector_group}'")
+            winding_1 = get_winding(match.group(1)).value
+            winding_2 = get_winding(match.group(2)).value
+            winding_3 = get_winding(match.group(3)).value
+            return pd.Series([winding_1, winding_2, winding_3])
+
+        @lru_cache
+        def std_type_to_winding_types(std_type: str) -> pd.Series:
+            return vector_group_to_winding_types(self.std_types["trafo3w"][std_type]["vector_group"])
+
+        trafo3w = self.pp_data["trafo3w"]
+        if "vector_group" in trafo3w:
+            trafo3w = trafo3w["vector_group"].apply(vector_group_to_winding_types)
+        else:
+            trafo3w = trafo3w["std_type"].apply(std_type_to_winding_types)
+        trafo3w.columns = ["winding_1", "winding_2", "winding_3"]
+        return trafo3w
+
+    def get_id(self, pp_table: str, pp_idx: int) -> int:
+        """
+        Get a the numerical ID previously associated with the supplied table / index combination
+
+        Args:
+            pp_table: Table name (e.g. "bus")
+            pp_idx: PandaPower component identifier
+
+        Returns: The associated id
+        """
+        return self.idx[pp_table][pp_idx]
+
+    def lookup_id(self, pgm_id: int) -> Dict[str, Union[str, int]]:
+        """
+        Retrieve the original name / key combination of a pgm object
+
+        Args:
+            pgm_id: a unique numerical ID
+
+        Returns: The original table / index combination
+        """
+        for key, indices in self.idx_lookup.items():
+            if pgm_id in indices:
+                return {"table": key, "index": indices[pgm_id]}
+        raise KeyError(pgm_id)
