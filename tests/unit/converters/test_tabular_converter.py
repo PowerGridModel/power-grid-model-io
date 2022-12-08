@@ -2,8 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from pathlib import Path
-from typing import Optional, Tuple
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import ANY, MagicMock, call, patch
 
 import numpy as np
 import pandas as pd
@@ -12,49 +11,11 @@ from pandas.testing import assert_frame_equal
 from power_grid_model import initialize_array, power_grid_meta_data
 from power_grid_model.data_types import SingleDataset
 
-from power_grid_model_io.converters.tabular_converter import COL_REF_RE, TabularConverter
+from power_grid_model_io.converters.tabular_converter import TabularConverter
 from power_grid_model_io.data_types import ExtraInfoLookup, TabularData
 from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes
 
 MAPPING_FILE = Path(__file__).parents[2] / "data" / "config" / "mapping.yaml"
-
-
-def ref_cases():
-    yield "OtherTable!ValueColumn[IdColumn=RefColumn]", (
-        "OtherTable",
-        "ValueColumn",
-        None,
-        None,
-        "IdColumn",
-        None,
-        None,
-        "RefColumn",
-    )
-
-    yield "OtherTable!ValueColumn[OtherTable!IdColumn=ThisTable!RefColumn]", (
-        "OtherTable",
-        "ValueColumn",
-        "OtherTable!",
-        "OtherTable",
-        "IdColumn",
-        "ThisTable!",
-        "ThisTable",
-        "RefColumn",
-    )
-
-    yield "OtherTable.ValueColumn[IdColumn=RefColumn]", None
-    yield "ValueColumn[IdColumn=RefColumn]", None
-    yield "OtherTable![IdColumn=RefColumn]", None
-
-
-@pytest.mark.parametrize("value,groups", ref_cases())
-def test_col_ref_pattern(value: str, groups: Optional[Tuple[Optional[str]]]):
-    match = COL_REF_RE.fullmatch(value)
-    if groups is None:
-        assert match is None
-    else:
-        assert match is not None
-        assert match.groups() == groups
 
 
 @pytest.fixture
@@ -95,7 +56,7 @@ def tabular_data():
 @pytest.fixture
 def tabular_data_no_units_no_substitutions():
     nodes = pd.DataFrame(data=[[1, 10.5e3], [2, 400.0]], columns=["id_number", "u_nom"])
-    lines = pd.DataFrame(data=[[1, 100], [2, 200]], columns=["id_number", "from_node_side"])
+    lines = pd.DataFrame(data=[[1, 2], [3, 1]], columns=["id_number", "from_node_side"])
     tabular_data_no_units_no_substitutions = TabularData(nodes=nodes, lines=lines)
     return tabular_data_no_units_no_substitutions
 
@@ -325,18 +286,28 @@ def test_parse_col_def(converter: TabularConverter, tabular_data_no_units_no_sub
 
     # type(col_def) == str (regular expression)
     with patch(
-        "power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def_column_reference"
-    ) as mock_parse_col_column_reference:
+        "power_grid_model_io.converters.tabular_converter.TabularConverter._parse_reference"
+    ) as mock_parse_reference:
         converter._parse_col_def(
             data=tabular_data_no_units_no_substitutions,
-            table="nodes",
-            col_def="OtherTable!ValueColumn[IdColumn=RefColumn]",
+            table="lines",
+            col_def={
+                "reference": {
+                    "query_column": "from_node_side",
+                    "other_table": "nodes",
+                    "key_column": "id_number",
+                    "value_column": "u_nom",
+                }
+            },
             extra_info=None,
         )
-        mock_parse_col_column_reference.assert_called_once_with(
+        mock_parse_reference.assert_called_once_with(
             data=tabular_data_no_units_no_substitutions,
-            table="nodes",
-            col_def="OtherTable!ValueColumn[IdColumn=RefColumn]",
+            table="lines",
+            other_table="nodes",
+            query_column="from_node_side",
+            key_column="id_number",
+            value_column="u_nom",
         )
 
     # type(col_def) == str
@@ -410,45 +381,17 @@ def test_parse_col_def_column_name(converter: TabularConverter, tabular_data_no_
         )
 
 
-def test_parse_col_def_column_reference(
-    converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
-):
-    with pytest.raises(AssertionError):
-        converter._parse_col_def_column_reference(
-            data=tabular_data_no_units_no_substitutions, table="nodes", col_def=1  # type: ignore
-        )
-    with pytest.raises(
-        ValueError,
-        match="Invalid column reference 'some_column' " r"\(should be 'OtherTable!ValueColumn\[IdColumn=RefColumn\]\)",
-    ):
-        converter._parse_col_def_column_reference(
-            data=tabular_data_no_units_no_substitutions, table="nodes", col_def="some_column"
-        )
-    with pytest.raises(
-        ValueError,
-        match=r"Invalid column reference 'lines!id_number\[abc!id_number=def!u_nom\]'.\n"
-        "It should be something like "
-        r"lines!id_number\[lines!{id_column}=nodes!{ref_column}\] "
-        r"or simply lines!id_number\[{id_column}={ref_column}\]",
-    ):
-        converter._parse_col_def_column_reference(
-            data=tabular_data_no_units_no_substitutions,
-            table="nodes",
-            col_def="lines!id_number[abc!id_number=def!u_nom]",
-        )
-
+def test_parse_reference(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
     # get lines.from_nodes where line id == node id
-    df_lines_from_node_long = converter._parse_col_def_column_reference(
+    df_lines_from_node_long = converter._parse_reference(
         data=tabular_data_no_units_no_substitutions,
-        table="nodes",
-        col_def="lines!from_node_side[lines!id_number=nodes!id_number]",
+        table="lines",
+        other_table="nodes",
+        query_column="from_node_side",
+        key_column="id_number",
+        value_column="u_nom",
     )
-    assert_frame_equal(df_lines_from_node_long, pd.DataFrame([100, 200], columns=["from_node_side"]))
-
-    df_lines_from_node_short = converter._parse_col_def_column_reference(
-        data=tabular_data_no_units_no_substitutions, table="nodes", col_def="lines!from_node_side[id_number=id_number]"
-    )
-    assert_frame_equal(df_lines_from_node_long, df_lines_from_node_short)
+    assert_frame_equal(df_lines_from_node_long, pd.DataFrame([400.0, 10.5e3], columns=["u_nom"]))
 
 
 def test_parse_col_def_filter(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
@@ -467,10 +410,6 @@ def test_parse_col_def_filter(converter: TabularConverter, tabular_data_no_units
         converter._parse_col_def_filter(
             data=tabular_data_no_units_no_substitutions, table="", col_def={"function": ""}, extra_info=None
         )
-    with pytest.raises(NotImplementedError, match="Column filter 'reference' not implemented"):
-        converter._parse_col_def_filter(
-            data=tabular_data_no_units_no_substitutions, table="", col_def={"reference": ""}, extra_info=None
-        )
 
     with patch(
         "power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def_function"
@@ -484,25 +423,75 @@ def test_parse_col_def_filter(converter: TabularConverter, tabular_data_no_units
         )
         assert_frame_equal(df, pd.DataFrame([1, 2]))
 
-    # auto id
+
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._parse_auto_id")
+def test_parse_col_def_filter__auto_id(mock_parse_auto_id: MagicMock, converter: TabularConverter):
+    # Arrange
+    data = MagicMock()
+    auto_id_result = pd.DataFrame([1, 2])
+    extra_info = MagicMock()
+    mock_parse_auto_id.return_value = auto_id_result
+
+    # Act
+    result = converter._parse_col_def_filter(
+        data=data,
+        table="lines",
+        col_def={"auto_id": {"table": "nodes", "name": "dummy", "key": "from_node_side"}},
+        extra_info=extra_info,
+    )
+
+    # Assert
+    mock_parse_auto_id.assert_called_once_with(
+        data=ANY,
+        table="lines",
+        ref_table="nodes",
+        ref_name="dummy",
+        key_col_def="from_node_side",
+        extra_info=extra_info,
+    )
+    pd.testing.assert_frame_equal(result, auto_id_result)
+
+    # Act/Assert:
     with pytest.raises(ValueError, match="Invalid auto_id definition: {'a': 1, 'b': 2}"):
-        converter._parse_col_def_filter(
-            data=tabular_data_no_units_no_substitutions,
-            table="",
-            col_def={"auto_id": {"a": 1, "b": 2}},
-            extra_info=None,
-        )
-    with patch(
-        "power_grid_model_io.converters.tabular_converter.TabularConverter._parse_auto_id"
-    ) as mock_parse_auto_id:
-        mock_parse_auto_id.return_value = pd.DataFrame([3, 4])
-        df = converter._parse_col_def_filter(
-            data=tabular_data_no_units_no_substitutions,
-            table="nodes",
-            col_def={"auto_id": {"table": "id", "key": "id_number"}},
-            extra_info=None,
-        )
-        assert_frame_equal(df, pd.DataFrame([3, 4]))
+        converter._parse_col_def_filter(data=data, table="", col_def={"auto_id": {"a": 1, "b": 2}}, extra_info=None)
+
+
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._parse_reference")
+def test_parse_col_def_filter__reference(mock_parse_reference: MagicMock, converter: TabularConverter):
+    # Arrange
+    data = MagicMock()
+    reference_result = MagicMock()
+    mock_parse_reference.return_value = reference_result
+
+    # Act
+    result = converter._parse_col_def_filter(
+        data=data,
+        table="lines",
+        col_def={
+            "reference": {
+                "query_column": "from_node_side",
+                "other_table": "nodes",
+                "key_column": "id_number",
+                "value_column": "u_nom",
+            }
+        },
+        extra_info=None,
+    )
+
+    # Assert
+    mock_parse_reference.assert_called_once_with(
+        data=data,
+        table="lines",
+        other_table="nodes",
+        query_column="from_node_side",
+        key_column="id_number",
+        value_column="u_nom",
+    )
+    assert result is reference_result
+
+    # Act/Assert:
+    with pytest.raises(ValueError, match="Invalid reference definition: {'a': 1, 'b': 2}"):
+        converter._parse_col_def_filter(data=data, table="", col_def={"reference": {"a": 1, "b": 2}}, extra_info=None)
 
 
 @patch("power_grid_model_io.converters.tabular_converter.TabularConverter._get_id")
@@ -562,7 +551,7 @@ def test_parse_auto_id__reference_column(
         extra_info=extra_info,
     )
     mock_get_id.assert_has_calls(
-        [call(table="nodes", key={"id_number": 100}, name=None), call(table="nodes", key={"id_number": 200}, name=None)]
+        [call(table="nodes", key={"id_number": 2}, name=None), call(table="nodes", key={"id_number": 1}, name=None)]
     )
     assert len(extra_info) == 0
 
@@ -634,12 +623,12 @@ def test_parse_auto_id__named_keys(
     )
     mock_get_id.assert_has_calls(
         [
-            call(table="lines", key={"id": 1, "node": 100}, name=None),
-            call(table="lines", key={"id": 2, "node": 200}, name=None),
+            call(table="lines", key={"id": 1, "node": 2}, name=None),
+            call(table="lines", key={"id": 3, "node": 1}, name=None),
         ]
     )
-    assert extra_info[101] == {"id_reference": {"table": "lines", "key": {"id": 1, "node": 100}}}
-    assert extra_info[102] == {"id_reference": {"table": "lines", "key": {"id": 2, "node": 200}}}
+    assert extra_info[101] == {"id_reference": {"table": "lines", "key": {"id": 1, "node": 2}}}
+    assert extra_info[102] == {"id_reference": {"table": "lines", "key": {"id": 3, "node": 1}}}
 
 
 def test_parse_auto_id__invalid_key_definition(
