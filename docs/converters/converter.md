@@ -12,14 +12,14 @@ Here, we shall discuss their basic structure and guidelines for building a custo
 Use the examples notebooks to understand how to convert data from the respective formats. 
 
 - **PGM JSON Converter:** Refer to the [PGM JSON Example](../examples/pgm_json_example.ipynb)
-- **VisonExcelConverter** Refer to the [Vision Example](../examples/vision_example.ipynb)
+- **VisonExcelConverter** and **GaiaExcelConverter:** Refer to the [Vision and Gaia Example](../examples/vision_gaia_example.ipynb)
 - **Pandapower Converter:** Converts [pandapower network](https://pandapower.readthedocs.io/en/stable/elements.html), which is a dictionary of dataframes, to power-grid-model data.
 
 Refer to [converters](../power_grid_model_io.md#converters) in API documentation for more details
 
 ## Structure
 
-The `VisonExcelConverter` extends the [tabular converters](tabular_converter.md) for Excel exports of Vision.
+The `VisonExcelConverter` and `GaiaExcelConverter` extend the [tabular converters](tabular_converter.md) for Excel exports of Vision and Gaia respectively.
 All converters are derived from the base {py:class}`power_grid_model_io.converters.base_converter`. 
 The usable functions for loading, saving and converting the data are located in the base class. 
 The private functions (`_load_data`, `_parse_data` and `_serialize_data`) are overloaded based on the specific type of converter (ie. excel, json or pandapower). 

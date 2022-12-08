@@ -17,7 +17,7 @@ The documentation is under heavy development
 ```
 
 Power Grid Model IO is a tool to convert grid data to and from the native data format of [power-grid-model](https://github.com/alliander-opensource/power-grid-model).
-Currently, conversions from Vision excel exports is possible. Pandapower conversions are under development.
+Currently, conversions from Vision and Gaia excel exports is possible. Pandapower conversions are under development.
 
 
 Detailed contents of the documentation are structured as follows.
@@ -39,6 +39,7 @@ converters/tabular_converter.md
 :caption: "Examples"
 :maxdepth: 2
 examples/pgm_json_example.ipynb
+examples/vision_gaia_example.ipynb
 ```
 
 

@@ -27,6 +27,7 @@ For detailed documentation, see [Read the Docs](https://power-grid-model-io.read
 
 # Examples
 * [PGM JSON Example](docs/examples/pgm_json_example.ipynb)
+* [Vision/Gaia Example](docs/examples/vision_gaia_example.ipynb)
 
 
 # License
