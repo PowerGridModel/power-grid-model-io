@@ -1,0 +1,51 @@
+{
+  "node":
+    [
+      {"id": 0, "id_reference": {"table": "Knooppunten", "key": {"Nummer": 1}}, "Naam": "node1"},
+      {"id": 1, "id_reference": {"table": "Knooppunten", "key": {"Nummer": 2}}, "Naam": "node2"},
+      {"id": 2, "id_reference": {"table": "Knooppunten", "key": {"Nummer": 3}}, "Naam": "node3"},
+      {"id": 3, "id_reference": {"table": "Knooppunten", "key": {"Nummer": 4}}, "Naam": "node4"},
+      {"id": 4, "id_reference": {"table": "Knooppunten", "key": {"Nummer": 5}}},
+      {"id": 12, "id_reference": {"table": "Transformatorbelastingen", "name": "internal_node", "key": {"Knooppunt.Nummer": 3, "Subnummer": 4}}, "Naam": "transformer_load_1"}
+    ],
+  "line":
+    [
+      {"id": 5, "from_node": 0, "to_node": 1, "id_reference": {"table": "Kabels", "key": {"Nummer":  1}}, "Naam": "cable1"},
+      {"id": 6, "from_node": 0, "to_node": 1, "id_reference": {"table": "Verbindingen", "key": {"Nummer":  1}}, "Naam": "line1"},
+      {"id": 8, "from_node": 0, "to_node": 1, "id_reference": {"table": "Smoorspoelen", "key": {"Nummer":  1}}, "Naam": "rcoil1"}
+    ],
+  "link":
+    [
+      {"id": 7, "from_node": 0, "to_node": 1, "id_reference": {"table": "Links", "key": {"Nummer":  1}}, "Naam": "link1"}
+    ],
+  "transformer":
+    [
+      {"id": 9, "from_node": 1, "to_node": 2, "id_reference": {"table": "Transformatoren", "key": {"Nummer":  1}}, "Naam": "transformer1"},
+      {"id": 10, "from_node": 1, "to_node": 3, "id_reference": {"table": "Speciale transformatoren", "key": {"Nummer":  1}}, "Naam": "special_trans1"},
+      {"id": 11, "from_node": 2, "to_node": 12, "id_reference": {"table": "Transformatorbelastingen", "name": "transformer", "key": {"Knooppunt.Nummer": 3, "Subnummer": 4}}, "Naam": "transformer_load_1"}
+    ],
+  "sym_load":
+    [
+      {"id": 13, "node": 12, "id_reference": {"table": "Transformatorbelastingen", "name": "load", "key": {"Knooppunt.Nummer": 3, "Subnummer": 4}}, "Naam": "transformer_load_1"},
+      {"id": 19, "node": 2, "id_reference": {"table": "Belastingen", "key": {"Knooppunt.Nummer": 3, "Subnummer": 6}}, "Naam": "load1"}
+    ],
+  "sym_gen":
+    [
+      {"id": 14, "node": 12, "id_reference": {"table": "Transformatorbelastingen", "name": "generation", "key": {"Knooppunt.Nummer": 3, "Subnummer": 4}}, "Naam": "transformer_load_1"},
+      {"id": 14, "node": 12, "id_reference": {"table": "Transformatorbelastingen", "name": "generation", "key": {"Knooppunt.Nummer": 3, "Subnummer": 4}}, "Naam": "transformer_load_1"},
+      {"id": 15, "node": 12, "id_reference": {"table": "Transformatorbelastingen", "name": "pv_generation", "key": {"Knooppunt.Nummer": 3, "Subnummer": 4}}, "Naam": "transformer_load_1"},
+      {"id": 17, "node": 3, "id_reference": {"table": "Synchrone generatoren", "key": {"Knooppunt.Nummer": 4, "Subnummer": 2}}, "Naam": "syngen1"},
+      {"id": 18, "node": 2, "id_reference": {"table": "Windturbines", "key": {"Knooppunt.Nummer": 3, "Subnummer": 3}}, "Naam": "wind1"},
+      {"id": 23, "node": 2, "id_reference": {"table": "Pv's", "key": {"Knooppunt.Nummer": 3, "Subnummer": 1}}, "Naam": "pv1"}
+    ],
+  "source":
+    [
+      {"id": 16, "node": 0, "id_reference": {"table": "Netvoedingen", "key": {"Knooppunt.Nummer": 1, "Subnummer": 1}}, "Naam": "source1"}
+    ],
+  "shunt":
+    [
+      {"id": 20, "node": 2, "id_reference": {"table": "Nulpuntstransformatoren", "key": {"Knooppunt.Nummer": 3, "Subnummer": 5}}, "Naam": "zztrans1"},
+      {"id": 21, "node": 3, "id_reference": {"table": "Condensatoren", "key": {"Knooppunt.Nummer": 4, "Subnummer": 9}}, "Naam": "shunt1"},
+      {"id": 22, "node": 3, "id_reference": {"table": "Spoelen", "key": {"Knooppunt.Nummer": 4, "Subnummer": 1}}}
+    ]
+}
