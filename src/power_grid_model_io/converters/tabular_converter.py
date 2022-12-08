@@ -443,8 +443,12 @@ class TabularConverter(BaseConverter[TabularData]):
         for name, sub_def in col_def.items():
             if name == "auto_id":
                 # Check that "key" is in the definition and no other keys than "table" and "name"
-                if "key" not in sub_def or len(set(sub_def.keys()) & {"table", "name"}) > 2:
-                    raise ValueError(f"Invalid auto_id definition: {sub_def}")
+                if (
+                    not isinstance(sub_def, dict)
+                    or "key" not in sub_def
+                    or len(set(sub_def.keys()) & {"table", "name"}) > 2
+                ):
+                    raise ValueError(f"Invalid {name} definition: {sub_def}")
                 col_data = self._parse_auto_id(
                     data=data,
                     table=table,
@@ -453,14 +457,15 @@ class TabularConverter(BaseConverter[TabularData]):
                     key_col_def=sub_def["key"],
                     extra_info=extra_info,
                 )
-            elif name == "multiply":
-                raise NotImplementedError(f"Column filter '{name}' not implemented")
-            elif name == "function":
-                raise NotImplementedError(f"Column filter '{name}' not implemented")
             elif name == "reference":
                 # Check that (only) the required keys are in the definition
-                if {"other_table", "query_column", "key_column", "value_column"} != set(sub_def.keys()):
-                    raise ValueError(f"Invalid reference definition: {sub_def}")
+                if not isinstance(sub_def, dict) or {
+                    "other_table",
+                    "query_column",
+                    "key_column",
+                    "value_column",
+                } != set(sub_def.keys()):
+                    raise ValueError(f"Invalid {name} definition: {sub_def}")
                 return self._parse_reference(
                     data=data,
                     table=table,
@@ -469,10 +474,12 @@ class TabularConverter(BaseConverter[TabularData]):
                     key_column=sub_def["key_column"],
                     value_column=sub_def["value_column"],
                 )
-            else:  # For now, fall back to legacy function definition
-                col_data = self._parse_col_def_function(data=data, table=table, col_def={name: sub_def})
-                # TODO: raise NotImplementedError(f"Column filter '{name}' not implemented") if "function" is
-                #  implemented
+            elif isinstance(sub_def, list):
+                col_data = self._parse_pandas_function(data=data, table=table, function=name, col_def=sub_def)
+            elif isinstance(sub_def, dict):
+                col_data = self._parse_function(data=data, table=table, function=name, col_def=sub_def)
+            else:
+                raise TypeError(f"Invalid {name} definition: {sub_def}")
             data_frames.append(col_data)
         return pd.concat(data_frames, axis=1)
 
@@ -539,29 +546,60 @@ class TabularConverter(BaseConverter[TabularData]):
 
         return col_data.apply(auto_id, axis=1, raw=True)
 
-    def _parse_col_def_function(self, data: TabularData, table: str, col_def: Dict[str, Any]) -> pd.DataFrame:
-        """Import the function by name and apply it to each row. The column definition may contain multiple functions,
-        a DataFrame with one column per function will be returned.
+    def _parse_pandas_function(self, data: TabularData, table: str, function: str, col_def: List[Any]) -> pd.DataFrame:
+        """Special vectorized functions.
 
         Args:
-          data: TabularData:
-          table: str:
-          col_def: Dict[str:
-          str]:
+          data: The data
+          table: The name of the current table
+          function: The name of the function.
+          col_def: The definition of the function arguments
+
+        Returns:
+
+        """
+        assert isinstance(col_def, list)
+
+        # "multiply" is an alias for "prod"
+        if function == "multiply":
+            function = "prod"
+
+        col_data = self._parse_col_def(data=data, table=table, col_def=col_def, extra_info=None)
+
+        try:
+            fn_ptr = getattr(col_data, function)
+        except AttributeError as ex:
+            raise ValueError(f"Pandas DataFrame has no function '{function}'") from ex
+
+        try:
+            return pd.DataFrame(fn_ptr(axis=1))
+        except TypeError as ex:
+            raise ValueError(f"Invalid pandas function DataFrame.{function}") from ex
+
+    def _parse_function(self, data: TabularData, table: str, function: str, col_def: Dict[str, Any]) -> pd.DataFrame:
+        """Import the function by name and apply it to each row.
+
+        Args:
+          data: The data
+          table: The name of the current table
+          function: The name (or path) of the function.
+          col_def: The definition of the function keyword arguments
 
         Returns:
 
         """
         assert isinstance(col_def, dict)
-        data_frame = []
-        for fn_name, sub_def in col_def.items():
-            fn_ptr = get_function(fn_name)
-            col_data = self._parse_col_def(data=data, table=table, col_def=sub_def, extra_info=None)
-            if col_data.empty:
-                raise ValueError(f"Cannot apply function {fn_name} to an empty DataFrame")
-            col_data = col_data.apply(lambda row, fn=fn_ptr: fn(*row), axis=1, raw=True)
-            data_frame.append(col_data)
-        return pd.concat(data_frame, axis=1)
+
+        fn_ptr = get_function(function)
+        key_words = list(col_def.keys())
+        sub_def = list(col_def.values())
+        col_data = self._parse_col_def(data=data, table=table, col_def=sub_def, extra_info=None)
+
+        if col_data.empty:
+            raise ValueError(f"Cannot apply function {function} to an empty DataFrame")
+
+        col_data = col_data.apply(lambda row, fn=fn_ptr: fn(**dict(zip(key_words, row))), axis=1, raw=True)
+        return pd.DataFrame(col_data)
 
     def _parse_col_def_composite(self, data: TabularData, table: str, col_def: list) -> pd.DataFrame:
         """Select multiple columns (each is created from a column definition) and return them as a new DataFrame.
