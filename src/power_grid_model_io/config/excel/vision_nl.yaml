@@ -41,6 +41,35 @@ grid:
       extra:
         - ID
         - Naam
+  Verbindingen:
+    line:
+      id:
+        auto_id:
+          key: Nummer
+      from_node:
+        auto_id:
+          table: Knooppunten
+          key:
+            Nummer: Van.Nummer
+      from_status: Van.Schakelstand
+      to_node:
+        auto_id:
+          table: Knooppunten
+          key:
+            Nummer: Naar.Nummer
+      to_status: Naar.Schakelstand
+      r1: R
+      x1: X
+      c1: C
+      tan1: 0
+      r0: R0
+      x0: X0
+      c0: C0
+      tan0: 0
+      i_n: Inom'
+      extra:
+        - ID
+        - Naam
   Links:
     link:
       id:
@@ -375,6 +404,38 @@ grid:
       extra:
         - ID
         - Naam
+  Windturbines:
+    sym_gen:
+      id:
+        auto_id:
+          key:
+            - Knooppunt.Nummer
+            - Subnummer
+      node:
+        auto_id:
+          table: Knooppunten
+          key:
+            Nummer: Knooppunt.Nummer
+      status: Schakelstand
+      type: 0
+      p_specified:
+        power_grid_model_io.filters.value_or_default:
+          - Pref
+          - power_grid_model_io.filters.phase_to_phase.power_wind_speed:
+            - Pnom
+            - Windsnelheid
+      q_specified:
+        power_grid_model_io.filters.phase_to_phase.reactive_power:
+          - power_grid_model_io.filters.value_or_default:
+            - Pref
+            - power_grid_model_io.filters.phase_to_phase.power_wind_speed:
+              - Pnom
+              - Windsnelheid
+          - cos phi
+      extra:
+        - ID
+        - Naam
+
   Belastingen:
     sym_load:
       id:
@@ -426,6 +487,54 @@ grid:
       extra:
         - ID
         - Naam
+  Condensatoren:
+    shunt:
+      id:
+        auto_id:
+          key:
+            - Knooppunt.Nummer
+            - Subnummer
+      node:
+        auto_id:
+          table: Knooppunten
+          key:
+            Nummer: Knooppunt.Nummer
+      status: Schakelstand
+      g1: 0
+      b1:
+        power_grid_model_io.filters.phase_to_phase.reactive_power_to_susceptance:
+          - Q
+          - Unom
+      g0: 0
+      b0: 0
+      extra:
+        - ID
+        - Naam
+  Spoelen:
+    shunt:
+      id:
+        auto_id:
+          key:
+            - Knooppunt.Nummer
+            - Subnummer
+      node:
+        auto_id:
+          table: Knooppunten
+          key:
+            Nummer: Knooppunt.Nummer
+      status: Schakelstand
+      g1: 0
+      b1:
+        power_grid_model_io.filters.multiply:
+          - power_grid_model_io.filters.phase_to_phase.reactive_power_to_susceptance:
+             - Q
+             - Unom
+          - -1
+      g0: 0
+      b0: 0
+      extra:
+        - ID
+        - Naam
   Pv's:
     sym_gen:
       id:
@@ -464,17 +573,18 @@ units:
   V:
     kV: 1_000.0
   VA:
+    kVA: 1_000.0
     MVA: 1_000_000.0
   VAR:
+    kvar: 1_000.0
     Mvar: 1_000_000.0
   W:
     kW: 1_000.0
     MW: 1_000_000.0
   Wp:
+    kWp: 1_000.0
     MWp: 1_000_000.0
   m/s:
-  m:
-    km: 0.001
   ohm:
     Ohm: 1.0
   ohm/m:
