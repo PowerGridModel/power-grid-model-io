@@ -109,7 +109,7 @@ You can use the following `column` definitions:
   * Nested definitions:
     ```yaml
     q_specified:
-      power_grid_model_io.filters.phase_to_phase.reactive_power:
+      power_grid_model_io.functions.phase_to_phase.reactive_power:
         p:
           min:
             - Pnom
@@ -118,7 +118,7 @@ You can use the following `column` definitions:
     ```
     Is similar to something like:
     ```python
-    from power_grid_model_io.filters.phase_to_phase import reactive_power
+    from power_grid_model_io.functions.phase_to_phase import reactive_power
     
     q_specified = reactive_power(
       p=min(
