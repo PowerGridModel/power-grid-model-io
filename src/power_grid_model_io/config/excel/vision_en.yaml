@@ -310,11 +310,19 @@ grid:
       p_specified:
         power_grid_model_io.filters.multiply:
           - Load.P
-          - Nodes!Simultaneity[Number=Node.Number]
+          - reference:
+              query_column: Node.Number
+              other_table: Nodes
+              key_column: Number
+              value_column: Simultaneity
       q_specified:
         power_grid_model_io.filters.multiply:
           - Load.Q
-          - Nodes!Simultaneity[Number=Node.Number]
+          - reference:
+              query_column: Node.Number
+              other_table: Nodes
+              key_column: Number
+              value_column: Simultaneity
       extra:
         - ID
         - Name
@@ -452,11 +460,19 @@ grid:
       p_specified:
         power_grid_model_io.filters.multiply:
           - P
-          - Nodes!Simultaneity[Number=Node.Number]
+          - reference:
+              query_column: Node.Number
+              other_table: Nodes
+              key_column: Number
+              value_column: Simultaneity
       q_specified:
         power_grid_model_io.filters.multiply:
           - Q
-          - Nodes!Simultaneity[Number=Node.Number]
+          - reference:
+              query_column: Node.Number
+              other_table: Nodes
+              key_column: Number
+              value_column: Simultaneity
       extra:
         - ID
         - Name

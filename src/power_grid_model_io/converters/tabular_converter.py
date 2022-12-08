@@ -5,7 +5,6 @@
 Tabular Data Converter: Load data from multiple tables and use a mapping file to convert the data to PGM
 """
 
-import re
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Union, cast
 
@@ -23,29 +22,6 @@ from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes, Tab
 from power_grid_model_io.mappings.unit_mapping import UnitMapping, Units
 from power_grid_model_io.mappings.value_mapping import ValueMapping, Values
 from power_grid_model_io.utils.modules import get_function
-
-COL_REF_RE = re.compile(r"^([^!]+)!([^\[]+)\[(([^!]+)!)?([^=]+)=(([^!]+)!)?([^]]+)]$")
-r"""
-Regular expressions to match patterns like:
-  OtherTable!ValueColumn[IdColumn=RefColumn]
-and:
-  OtherTable!ValueColumn[OtherTable!IdColumn=ThisTable!RefColumn]
-
-^           Start of the string
-([^!]+)     OtherTable
-!           separator
-([^\[]+)    ValueColumn
-[           separator
-([^\[]+)    ValueColumn
-(([^!]+)!)? OtherTable + separator! (optional)
-([^=]+)     IdColumn
-=           separator
-(([^!]+)!)? ThisTable + separator! (optional)
-=           separator
-([^]]+)
-]           separator
-$           End of the string
-"""
 
 MappingFile = Dict[Literal["multipliers", "grid", "units", "substitutions"], Union[Multipliers, Tables, Units, Values]]
 
@@ -367,8 +343,6 @@ class TabularConverter(BaseConverter[TabularData]):
         if isinstance(col_def, (int, float)):
             return self._parse_col_def_const(data=data, table=table, col_def=col_def)
         if isinstance(col_def, str):
-            if COL_REF_RE.fullmatch(col_def) is not None:
-                return self._parse_col_def_column_reference(data=data, table=table, col_def=col_def)
             return self._parse_col_def_column_name(data=data, table=table, col_def=col_def)
         if isinstance(col_def, dict):
             return self._parse_col_def_filter(data=data, table=table, col_def=col_def, extra_info=extra_info)
@@ -434,40 +408,29 @@ class TabularConverter(BaseConverter[TabularData]):
         except KeyError:
             return data
 
-    def _parse_col_def_column_reference(self, data: TabularData, table: str, col_def: str) -> pd.DataFrame:
-        """Find and extract a column from a different table.
+    def _parse_reference(
+        self, data: TabularData, table: str, other_table: str, query_column: str, key_column: str, value_column: str
+    ) -> pd.DataFrame:
+        """
+        Find and extract a column from a different table.
 
         Args:
-          data: TabularData:
-          table: str:
-          col_def: str:
+            data: The data
+            table: The current table named
+            other_table: The table in which we would like to find a value
+            key_column: The column in the current table that stores the keys
+            query_column: The column in the other table in which we should look for the keys
+            value_column: The column in the other table which stores the values that we would like to return
 
         Returns:
 
         """
-        # pylint: disable=too-many-locals
-        assert isinstance(col_def, str)
-        match = COL_REF_RE.fullmatch(col_def)
-        if match is None:
-            raise ValueError(
-                f"Invalid column reference '{col_def}' " "(should be 'OtherTable!ValueColumn[IdColumn=RefColumn])"
-            )
-        other_table, value_col_name, _, other_table_, id_col_name, _, this_table_, ref_col_name = match.groups()
-        if (other_table_ is not None and other_table_ != other_table) or (
-            this_table_ is not None and this_table_ != table
-        ):
-            raise ValueError(
-                f"Invalid column reference '{col_def}'.\n"
-                "It should be something like "
-                f"{other_table}!{value_col_name}[{other_table}!{{id_column}}={table}!{{ref_column}}] "
-                f"or simply {other_table}!{value_col_name}[{{id_column}}={{ref_column}}]"
-            )
-        ref_column = self._parse_col_def_column_name(data=data, table=table, col_def=ref_col_name)
-        id_column = self._parse_col_def_column_name(data=data, table=other_table, col_def=id_col_name)
-        val_column = self._parse_col_def_column_name(data=data, table=other_table, col_def=value_col_name)
-        other = pd.concat([id_column, val_column], axis=1)
-        result = ref_column.merge(other, how="left", left_on=ref_col_name, right_on=id_col_name)
-        return result[[value_col_name]]
+        queries = self._parse_col_def_column_name(data=data, table=table, col_def=query_column)
+        keys = self._parse_col_def_column_name(data=data, table=other_table, col_def=key_column)
+        values = self._parse_col_def_column_name(data=data, table=other_table, col_def=value_column)
+        other = pd.concat([keys, values], axis=1)
+        result = queries.merge(other, how="left", left_on=query_column, right_on=key_column)
+        return result[[value_column]]
 
     def _parse_col_def_filter(
         self, data: TabularData, table: str, col_def: Dict[str, Any], extra_info: Optional[ExtraInfoLookup]
@@ -495,7 +458,17 @@ class TabularConverter(BaseConverter[TabularData]):
             elif name == "function":
                 raise NotImplementedError(f"Column filter '{name}' not implemented")
             elif name == "reference":
-                raise NotImplementedError(f"Column filter '{name}' not implemented")
+                # Check that (only) the required keys are in the definition
+                if {"other_table", "query_column", "key_column", "value_column"} != set(sub_def.keys()):
+                    raise ValueError(f"Invalid reference definition: {sub_def}")
+                return self._parse_reference(
+                    data=data,
+                    table=table,
+                    other_table=sub_def["other_table"],
+                    query_column=sub_def["query_column"],
+                    key_column=sub_def["key_column"],
+                    value_column=sub_def["value_column"],
+                )
             else:  # For now, fall back to legacy function definition
                 col_data = self._parse_col_def_function(data=data, table=table, col_def={name: sub_def})
                 # TODO: raise NotImplementedError(f"Column filter '{name}' not implemented") if "function" is
