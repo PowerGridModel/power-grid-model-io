@@ -244,8 +244,8 @@ This basically reads as:
 
 
 ## Advanced AutoID Mapping
-In some cases, multiple components have to be created for each line in a source table.
-In such cases, the `name` attribute may be necessary to create multiple PGM IDs for a single line. Let's consider 
+In some cases, multiple components have to be created for each row in a source table.
+In such cases, the `name` attribute may be necessary to create multiple PGM IDs for a single row. Let's consider
 this example:
 ```yaml
   Transformer loads:
