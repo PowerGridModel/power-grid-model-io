@@ -17,16 +17,27 @@ grid:
 
   Nodes:
     node:
-      id: Number
+      auto_id:
+        key: Number
       u_rated: Unom
       extra: ID
 
   Cables:
     line:
-      id: Number
-      from_node: From.Number
+      id:
+        auto_id:
+          key: Number
+      from_node:
+        auto_id:
+          table: Nodes
+          key:
+            Number: From.Number      
       from_status: From.Switch state
-      to_node: To.Number
+      to_node:
+        auto_id:
+          table: Nodes
+          key:
+            Number: To.Number      
       to_status: To.Switch state
 
 units:
@@ -162,25 +173,3 @@ item = auto_id[1]      # item = "Bravo"
  ```
   
 See also {py:class}`power_grid_model_io.utils.AutoID`
-
-### Vision and Gaia
-For Vision and Gaia files, an extra trick is applied. Let's assume this mapping:
-
-```yaml
-grid:
-  Nodes:
-    node:
-      id: Number
-      ...
-  Cables:
-    line:
-      id: Number
-      from_node: From.Number
-      ...
-```
-
-The PGM `node["id"]` will be a number, based on the values in the `Nodes!Number` column.
-The PGM `line["from_node"]` (which ends with `node`) will be based on the values in the `Nodes!From.Number`.
-Originally this didn't work, due to the hashing function, as the column names differ: `"Number" != "From.Number"`.
-Therefore, the Vision and Gaia converters overload the `_id_lookup()` method.
-They split the column name on `.` so that the `Number` matches `From.Number`.
