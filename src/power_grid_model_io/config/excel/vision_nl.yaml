@@ -605,14 +605,12 @@ substitutions:
     geen: false
     eigen: true
   Gedrag:
-    # Constant admittance: 1
-    # Constant impedance: 1
+    Constante impedantie: 1
     ~Constante stroom: 2
-    # Constant power: 0
+    Constant stroom: 0
     Default: 0
     Industrie: 0
-    # Business: 0
-    # Residential: 0
+    Zakelijk: 0
     Wonen: 0
   Trapzijde:
     1: 0
