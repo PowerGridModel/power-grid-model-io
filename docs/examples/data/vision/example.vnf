@@ -1,0 +1,11 @@
+V9.4
+NETWORK
+
+[OPTIONS]
+Currency=€
+[]
+
+[SHEET]
+#1 1 'Blad 1' $00C0C0C0 $00000000 0 0 0 0 0 0 0 0 0 0 
+[]
+
