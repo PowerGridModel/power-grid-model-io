@@ -2,7 +2,8 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from pathlib import Path
-from unittest.mock import ANY, MagicMock, call, patch
+from typing import Tuple
+from unittest.mock import MagicMock, call, patch
 
 import numpy as np
 import pandas as pd
@@ -394,34 +395,59 @@ def test_parse_reference(converter: TabularConverter, tabular_data_no_units_no_s
     assert_frame_equal(df_lines_from_node_long, pd.DataFrame([400.0, 10.5e3], columns=["u_nom"]))
 
 
-def test_parse_col_def_filter(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
-    # wrong col_def instance
+def test_parse_col_def_filter(converter: TabularConverter):
+    # Act/Assert:
     with pytest.raises(AssertionError):
         converter._parse_col_def_filter(
             data=tabular_data_no_units_no_substitutions, table="", col_def=[], extra_info=None  # type: ignore
         )
 
-    # not implemented filters
-    with pytest.raises(NotImplementedError, match="Column filter 'multiply' not implemented"):
-        converter._parse_col_def_filter(
-            data=tabular_data_no_units_no_substitutions, table="", col_def={"multiply": ""}, extra_info=None
-        )
-    with pytest.raises(NotImplementedError, match="Column filter 'function' not implemented"):
-        converter._parse_col_def_filter(
-            data=tabular_data_no_units_no_substitutions, table="", col_def={"function": ""}, extra_info=None
-        )
+    with pytest.raises(TypeError, match="Invalid foo definition: 123"):
+        converter._parse_col_def_filter(data=MagicMock(), table="", col_def={"foo": 123}, extra_info=None)
 
-    with patch(
-        "power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def_function"
-    ) as mock_parse_col_def_function:
-        mock_parse_col_def_function.return_value = pd.DataFrame([1, 2])
-        df = converter._parse_col_def_filter(
-            data=tabular_data_no_units_no_substitutions, table="", col_def={"a": "str"}, extra_info=None
-        )
-        mock_parse_col_def_function.assert_called_once_with(
-            data=tabular_data_no_units_no_substitutions, table="", col_def={"a": "str"}
-        )
-        assert_frame_equal(df, pd.DataFrame([1, 2]))
+
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._parse_function")
+def test_parse_col_def_filter__function(mock_parse_function: MagicMock, converter: TabularConverter):
+    # Arrange
+    data = MagicMock()
+    function_result = pd.DataFrame([1, 2])
+    mock_parse_function.return_value = function_result
+
+    # Act
+    result = converter._parse_col_def_filter(
+        data=data,
+        table="nodes",
+        col_def={"path.to.function": {"foo": "id_number", "bar": "u_nom"}},
+        extra_info=None,
+    )
+
+    # Assert
+    mock_parse_function.assert_called_once_with(
+        data=data,
+        table="nodes",
+        function="path.to.function",
+        col_def={"foo": "id_number", "bar": "u_nom"},
+    )
+    pd.testing.assert_frame_equal(result, function_result)
+
+
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._parse_pandas_function")
+def test_parse_col_def_filter__pandas_function(mock_parse_function: MagicMock, converter: TabularConverter):
+    # Arrange
+    data = MagicMock()
+    function_result = pd.DataFrame([1, 2])
+    mock_parse_function.return_value = function_result
+
+    # Act
+    result = converter._parse_col_def_filter(
+        data=data, table="nodes", col_def={"multiply": ["id_number", "u_nom"]}, extra_info=None
+    )
+
+    # Assert
+    mock_parse_function.assert_called_once_with(
+        data=data, table="nodes", function="multiply", col_def=["id_number", "u_nom"]
+    )
+    pd.testing.assert_frame_equal(result, function_result)
 
 
 @patch("power_grid_model_io.converters.tabular_converter.TabularConverter._parse_auto_id")
@@ -442,7 +468,7 @@ def test_parse_col_def_filter__auto_id(mock_parse_auto_id: MagicMock, converter:
 
     # Assert
     mock_parse_auto_id.assert_called_once_with(
-        data=ANY,
+        data=data,
         table="lines",
         ref_table="nodes",
         ref_name="dummy",
@@ -645,9 +671,73 @@ def test_parse_auto_id__invalid_key_definition(
         )
 
 
+@pytest.mark.parametrize(
+    ("function", "expected"),
+    [
+        ("multiply", (1 * 1, 2 * 10, 3 * 100)),
+        ("prod", (1 * 1, 2 * 10, 3 * 100)),
+        ("sum", (1 + 1, 2 + 10, 3 + 100)),
+        ("min", (1, 2, 3)),
+        ("max", (1, 10, 100)),
+    ],
+)
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def")
+def test_parse_pandas_function(
+    mock_parse_col_def: MagicMock, converter: TabularConverter, function: str, expected: Tuple[int, int, int]
+):
+    # Arrange
+    data = MagicMock()
+    col_def = ["a", "b"]
+    parse_col_def_data = pd.DataFrame([[1, 1], [2, 10], [3, 100]], columns=["a", "b"])
+    mock_parse_col_def.return_value = parse_col_def_data
+
+    # Act
+    result = converter._parse_pandas_function(data=data, table="foo", function=function, col_def=col_def)
+
+    # Assert
+    mock_parse_col_def.assert_called_once_with(data=data, table="foo", col_def=col_def, extra_info=None)
+    pd.testing.assert_frame_equal(result, pd.DataFrame(expected))
+
+
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def")
+def test_parse_pandas_function__no_data(mock_parse_col_def: MagicMock, converter: TabularConverter):
+    # Arrange
+    data = MagicMock()
+    col_def = ["a", "b"]
+    parse_col_def_data = pd.DataFrame([], columns=["a", "b"])
+    mock_parse_col_def.return_value = parse_col_def_data
+
+    # Act
+    result = converter._parse_pandas_function(data=data, table="foo", function="multiply", col_def=col_def)
+
+    # Assert
+    mock_parse_col_def.assert_called_once_with(data=data, table="foo", col_def=col_def, extra_info=None)
+    assert result.empty
+
+
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def")
+def test_parse_pandas_function__invalid(mock_parse_col_def: MagicMock, converter: TabularConverter):
+    # Arrange
+    mock_parse_col_def.return_value = pd.DataFrame()
+
+    # Act / Assert
+    with pytest.raises(AssertionError):
+        converter._parse_pandas_function(
+            data=MagicMock(), table="foo", function="multiply", col_def=123  # type: ignore
+        )
+
+    # Act / Assert
+    with pytest.raises(ValueError, match="Pandas DataFrame has no function 'bar'"):
+        converter._parse_pandas_function(data=MagicMock(), table="foo", function="bar", col_def=[])
+
+    # Act / Assert
+    with pytest.raises(ValueError, match=f"Invalid pandas function DataFrame.apply"):
+        converter._parse_pandas_function(data=MagicMock(), table="foo", function="apply", col_def=[])
+
+
 @patch("power_grid_model_io.converters.tabular_converter.get_function")
 @patch("power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def")
-def test_parse_col_def_function(
+def test_parse_function(
     mock_parse_col_def: MagicMock,
     mock_get_function: MagicMock,
     converter: TabularConverter,
@@ -659,15 +749,18 @@ def test_parse_col_def_function(
     mock_get_function.return_value = multiply_by_two
     mock_parse_col_def.return_value = pd.DataFrame([2, 4, 5])
 
-    multiplied_data = converter._parse_col_def_function(
-        data=tabular_data_no_units_no_substitutions, table="nodes", col_def={"multiply_by_two": "u_nom"}
+    multiplied_data = converter._parse_function(
+        data=tabular_data_no_units_no_substitutions,
+        table="nodes",
+        function="multiply_by_two",
+        col_def={"value": "u_nom"},
     )
     assert_frame_equal(multiplied_data, pd.DataFrame([4, 8, 10]))
 
 
 @patch("power_grid_model_io.converters.tabular_converter.get_function")
 @patch("power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def")
-def test_parse_col_def_function__no_data(
+def test_parse_function__no_data(
     mock_parse_col_def: MagicMock,
     mock_get_function: MagicMock,
     converter: TabularConverter,
@@ -679,10 +772,11 @@ def test_parse_col_def_function__no_data(
     mock_parse_col_def.return_value = pd.DataFrame()
 
     with pytest.raises(ValueError, match="multiply_by_two.*empty DataFrame"):
-        converter._parse_col_def_function(
+        converter._parse_function(
             data=TabularData(nodes=pd.DataFrame([], columns=["u_nom"])),
             table="nodes",
-            col_def={"multiply_by_two": "u_nom"},
+            function="multiply_by_two",
+            col_def={"value": "u_nom"},
         )
 
 
