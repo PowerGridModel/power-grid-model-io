@@ -192,7 +192,7 @@ See also {py:class}`power_grid_model_io.utils.AutoID`
 
 ## AutoID Mapping
 Let's consider a very common example of the usage of `auto_id` in a mapping file.
-(Note that we're focussing on the ids and and references, so the other attributes have been have been disregarded.)
+(Note that we're focussing on the ids and references, so the other attributes have been disregarded.)
 ```yaml
   Nodes:
     node:
@@ -218,7 +218,7 @@ Let's consider a very common example of the usage of `auto_id` in a mapping file
 This basically reads as:
 * For each row in the Nodes table, a PGM node instance is created.
   * For each node instance, a numerical id is generated, which is unique for each value in the Number column. This 
-    assumes that the Number column is unique in the source table. Let's say tha values of the Number column in the 
+    assumes that the Number column is unique in the source table. Let's say tha values of the Number column in that 
     Nodes source table are `[101, 102, 103]`, then the generated IDs will be `[0, 1, 2]`. However, if the source 
     column is not unique, the pgm ids won't be unique as well: `[101, 102, 103, 101] -> [0, 1, 2, 0]`.
   * Under the hood, the table name `Nodes` and the column name `Number` are used to generate these IDs:
@@ -226,7 +226,7 @@ This basically reads as:
     * `{"table": "Nodes", "key" {"Number": 102} -> 1`
     * `{"table": "Nodes", "key" {"Number": 103} -> 2`
 * For each row in the Cables table, a PGM line instance is created.
-  * For line node instance, a numerical id is generated, just like for the nodes.
+  * For each line instance, a numerical id is generated, just like for the nodes.
     Let's say there are two Cables `[201, 202]` and the corresponding lines will have IDs `[3, 4]`.  
     * `{"table": "Cables", "key" {"Number": 201} -> 3`
     * `{"table": "Cables", "key" {"Number": 202} -> 4`
