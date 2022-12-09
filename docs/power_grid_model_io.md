@@ -37,10 +37,11 @@ SPDX-License-Identifier: MPL-2.0
 .. automodule:: power_grid_model_io.data_types.tabular_data
 ```
 
-## filters
+## functions
 
 ```{eval-rst}
-.. automodule:: power_grid_model_io.filters.phase_to_phase
+.. automodule:: power_grid_model_io.functions._functions
+.. automodule:: power_grid_model_io.functions.phase_to_phase
 ```
 ## mappings
 

@@ -10,6 +10,7 @@ wheelhouse/
 
 # temporary_files
 __pycache__/
+*.stackdump
 .coverage
 .ipynb_checkpoints/
 .mypy_cache/
