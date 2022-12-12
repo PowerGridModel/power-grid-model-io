@@ -19,14 +19,14 @@ from power_grid_model_io.data_types import ExtraInfoLookup
 from power_grid_model_io.filters import get_winding
 
 StdTypes = Mapping[str, Mapping[str, Mapping[str, Union[float, int, str]]]]
-PandasData = Mapping[str, pd.DataFrame]
+PandaPowerData = Mapping[str, pd.DataFrame]
 
 CONNECTION_PATTERN_PP = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)\d*")
 CONNECTION_PATTERN_PP_3WDG = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(y|yn|d|z|zn)\d*")
 
 
 # pylint: disable=too-many-instance-attributes
-class PandaPowerConverter(BaseConverter[PandasData]):
+class PandaPowerConverter(BaseConverter[PandaPowerData]):
     """
     Panda Power Converter
     """
@@ -37,16 +37,18 @@ class PandaPowerConverter(BaseConverter[PandasData]):
         super().__init__(source=None, destination=None)
         self.std_types: StdTypes = std_types if std_types is not None else {}
         self.system_frequency: float = system_frequency
-        self.pp_data: PandasData = {}
+        self.pp_data: PandaPowerData = {}
         self.pgm_data: Dataset = {}
-        self.pp_output_data: PandasData = {}
+        self.pp_output_data: PandaPowerData = {}
         self.pgm_output_data: Dataset = {}
         self.pgm_nodes_lookup: pd.DataFrame = pd.DataFrame()
         self.idx: Dict[str, pd.Series] = {}
         self.idx_lookup: Dict[str, pd.Series] = {}
         self.next_idx = 0
 
-    def _parse_data(self, data: PandasData, data_type: str, extra_info: Optional[ExtraInfoLookup] = None) -> Dataset:
+    def _parse_data(
+        self, data: PandaPowerData, data_type: str, extra_info: Optional[ExtraInfoLookup] = None
+    ) -> Dataset:
 
         # Clear pgm data
         self.pgm_data = {}
@@ -70,7 +72,7 @@ class PandaPowerConverter(BaseConverter[PandasData]):
 
         return self.pgm_data
 
-    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup]) -> PandasData:
+    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup]) -> PandaPowerData:
 
         # If extra_info is supplied idx_lookup should be created accordingly
         if extra_info is not None:
