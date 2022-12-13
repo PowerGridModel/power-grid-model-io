@@ -1,49 +1,46 @@
 {
   "node":
     [
-      {"id": 0, "u_rated": 110000.0, "table": "bus", "index": 0},
-      {"id": 1, "u_rated": 110000.0, "table": "bus", "index": 1},
-      {"id": 2, "u_rated": 110000.0, "table": "bus", "index": 2},
-      {"id": 3, "u_rated": 20000.0, "table": "bus", "index": 3},
-      {"id": 4, "u_rated": 20000.0, "table": "bus", "index": 4},
-      {"id": 5, "u_rated": 20000.0, "table": "bus", "index": 5},
-      {"id": 6, "u_rated": 20000.0, "table": "bus", "index": 6}
+      {"id": 0, "u_rated": 110000.0, "id_reference": {"table": "bus", "index": 0}},
+      {"id": 1, "u_rated": 110000.0, "id_reference": {"table": "bus", "index": 1}},
+      {"id": 2, "u_rated": 110000.0, "id_reference": {"table": "bus", "index": 2}},
+      {"id": 3, "u_rated": 20000.0, "id_reference": {"table": "bus", "index": 3}},
+      {"id": 4, "u_rated": 20000.0, "id_reference": {"table": "bus", "index": 4}},
+      {"id": 5, "u_rated": 20000.0, "id_reference": {"table": "bus", "index": 5}},
+      {"id": 6, "u_rated": 20000.0, "id_reference": {"table": "bus", "index": 6}}
     ],
   "line":
     [
-      {"id": 7, "from_node": 0, "to_node": 1, "from_status": 1, "to_status": 1, "r1": 0.6, "x1": 1.44, "c1": 1.4400000000000002e-06, "tan1": 0.0, "i_n": 588.0, "table": "line", "index": 0},
-      {"id": 8, "from_node": 4, "to_node": 5, "from_status": 1, "to_status": 1, "r1": 0.244, "x1": 0.224, "c1": 6.08e-07, "tan1": 0.0, "i_n": 421.0, "table": "line", "index": 1},
-      {"id": 9, "from_node": 5, "to_node": 6, "from_status": 1, "to_status": 0, "r1": 2.07865, "x1": 1.302, "c1": 3.325e-08, "tan1": 0.0, "i_n": 210.0, "table": "line", "index": 2},
-      {"id": 10, "from_node": 6, "to_node": 4, "from_status": 1, "to_status": 1, "r1": 0.305, "x1": 0.28, "c1": 7.6e-07, "tan1": 0.0, "i_n": 421.0, "table": "line", "index": 3}
+      {"id": 7, "from_node": 0, "to_node": 1, "from_status": 1, "to_status": 1, "r1": 0.6, "x1": 1.44, "c1": 1.4400000000000002e-06, "tan1": 0.0, "i_n": 588.0, "id_reference": {"table": "line", "index": 0}},
+      {"id": 8, "from_node": 4, "to_node": 5, "from_status": 1, "to_status": 1, "r1": 0.244, "x1": 0.224, "c1": 6.08e-07, "tan1": 0.0, "i_n": 421.0, "id_reference": {"table": "line", "index": 1}},
+      {"id": 9, "from_node": 5, "to_node": 6, "from_status": 1, "to_status": 0, "r1": 2.07865, "x1": 1.302, "c1": 3.325e-08, "tan1": 0.0, "i_n": 210.0, "id_reference": {"table": "line", "index": 2}},
+      {"id": 10, "from_node": 6, "to_node": 4, "from_status": 1, "to_status": 1, "r1": 0.305, "x1": 0.28, "c1": 7.6e-07, "tan1": 0.0, "i_n": 421.0, "id_reference": {"table": "line", "index": 3}}
     ],
   "source":
     [
-      {"id": 11, "node": 0, "status": 1, "u_ref": 1.02, "table": "ext_grid", "index": 0}
+      {"id": 11, "node": 0, "status": 1, "u_ref": 1.02, "u_ref_angle": 0.8726646259971648, "id_reference": {"table": "ext_grid", "index": 0}}
     ],
   "sym_load":
     [
-      {"id": 12, "node": 6, "status": 1, "type": 0, "p_specified": 1200000.0, "q_specified": 2400000.0, "table": "sym_load_const_power", "index": 0},
-      {"id": 13, "node": 6, "status": 1, "type": 1, "p_specified": 0.0, "q_specified": 0.0, "table": "sym_load_const_impedance", "index": 0},
-      {"id": 14, "node": 6, "status": 1, "type": 2, "p_specified": 0.0, "q_specified": 0.0, "table": "sym_load_const_current", "index": 0}
+      {"id": 12, "node": 6, "status": 1, "type": 0, "p_specified": 1200000.0, "q_specified": 2400000.0, "id_reference": {"table": "sym_load_const_power", "index": 0}},
+      {"id": 13, "node": 6, "status": 1, "type": 1, "p_specified": 0.0, "q_specified": 0.0, "id_reference": {"table": "sym_load_const_impedance", "index": 0}},
+      {"id": 14, "node": 6, "status": 1, "type": 2, "p_specified": 0.0, "q_specified": 0.0, "id_reference": {"table": "sym_load_const_current", "index": 0}}
     ],
   "shunt":
     [
-      {"id": 15, "node": 2, "status": 1, "g1": 0.0, "b1": 7.933884297520661e-05, "table": "shunt", "index": 0}
+      {"id": 15, "node": 2, "status": 1, "g1": 0.0, "b1": 7.933884297520661e-05, "id_reference": {"table": "shunt", "index": 0}}
     ],
   "transformer":
     [
-      {"id": 16, "from_node": 2, "to_node": 3, "from_status": 1, "to_status": 1, "u1": 110000.0, "u2": 20000.0, "sn": 25000000.0, "uk": 0.12, "pk": 102500.0, "i0": 0.0007000000000000001, "p0": 14000.0, "winding_from": 1, "winding_to": 2, "clock": 5, "tap_side": 0, "tap_pos": 0, "tap_min": -9, "tap_max": 9, "tap_nom": 0, "tap_size": 1650.0, "table": "trafo", "index": 0}
+      {"id": 16, "from_node": 2, "to_node": 3, "from_status": 1, "to_status": 1, "u1": 110000.0, "u2": 20000.0, "sn": 25000000.0, "uk": 0.12, "pk": 102500.0, "i0": 0.0007000000000000001, "p0": 14000.0, "winding_from": 1, "winding_to": 2, "clock": 5, "tap_side": 0, "tap_pos": 0, "tap_min": -9, "tap_max": 9, "tap_nom": 0, "tap_size": 1650.0, "id_reference": {"table": "trafo", "index": 0}}
     ],
   "sym_gen":
     [
-      {"id": 17, "node": 6, "status": 1, "type": 0, "p_specified": 2000000.0, "q_specified": -500000.0, "table": "sgen", "index": 0}
-    ],
-  "three_winding_transformer":
-    [
+      {"id": 17, "node": 6, "status": 1, "type": 0, "p_specified": 2000000.0, "q_specified": -500000.0, "id_reference": {"table": "sgen", "index": 0}}
     ],
   "link":
     [
-      {"id": 18, "from_node": 1, "to_node": 2, "from_status": 1, "to_status": 1, "table": "b2b-switch", "index": 0},
-      {"id": 19, "from_node": 3, "to_node": 4, "from_status": 1, "to_status": 1, "table": "b2b-switch", "index": 1}
+      {"id": 18, "from_node": 1, "to_node": 2, "from_status": 1, "to_status": 1, "id_reference": {"table": "b2b-switch", "index": 0}},
+      {"id": 19, "from_node": 3, "to_node": 4, "from_status": 1, "to_status": 1, "id_reference": {"table": "b2b-switch", "index": 1}}
     ]
 }
