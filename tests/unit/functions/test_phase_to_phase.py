@@ -5,7 +5,7 @@ import numpy as np
 from power_grid_model.enum import WindingType
 from pytest import approx, mark, raises
 
-from power_grid_model_io.filters.phase_to_phase import (
+from power_grid_model_io.functions.phase_to_phase import (
     get_clock,
     get_winding_from,
     get_winding_to,
