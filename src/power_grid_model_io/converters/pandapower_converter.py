@@ -124,7 +124,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sources["node"] = self._get_ids("bus", pp_ext_grid["bus"])
         pgm_sources["status"] = pp_ext_grid["in_service"]
         pgm_sources["u_ref"] = pp_ext_grid["vm_pu"]
-        pgm_sources["rx_ratio"] = pp_ext_grid["rx_max"]
+        pgm_sources["rx_ratio"] = pp_ext_grid.get("rx_max", np.nan)
         pgm_sources["u_ref_angle"] = pp_ext_grid["va_degree"] * (np.pi / 180)
 
         if "s_sc_max_mva" in pp_ext_grid:
