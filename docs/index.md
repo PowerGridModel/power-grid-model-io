@@ -39,6 +39,7 @@ converters/tabular_converter.md
 :caption: "Examples"
 :maxdepth: 2
 examples/pgm_json_example.ipynb
+examples/vision_example.ipynb
 ```
 
 
