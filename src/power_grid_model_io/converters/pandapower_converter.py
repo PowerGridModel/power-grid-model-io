@@ -237,6 +237,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         pp_trafo3w = self.pp_data["trafo3w"]
 
+        if pp_trafo3w.empty:
+            return
+
         switch_states = self.get_trafo3w_switch_states(pp_trafo3w)
         winding_type = self.get_trafo3w_winding_types()
 
