@@ -15,7 +15,7 @@ from power_grid_model.data_types import Dataset
 
 from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_types import ExtraInfoLookup
-from power_grid_model_io.filters import get_winding
+from power_grid_model_io.functions import get_winding
 
 StdTypes = Mapping[str, Mapping[str, Mapping[str, Union[float, int, str]]]]
 PandaPowerData = Mapping[str, pd.DataFrame]
