@@ -630,7 +630,7 @@ substitutions:
   Gedrag:
     Constante impedantie: 1
     ~Constante stroom: 2
-    Constant stroom: 0
+    Constant vermogen: 0
     Default: 0
     Industrie: 0
     Zakelijk: 0
