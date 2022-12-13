@@ -1,11 +1,12 @@
-# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dynamic.grid.calculation@alliander.com>
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
-from power_grid_model_io.converters.vision_excel_converter import VisionExcelConverter
+from power_grid_model_io.converters.vision_excel_converter import DEFAULT_MAPPING_FILE, VisionExcelConverter
 
 
 @pytest.fixture
@@ -29,6 +30,12 @@ def converter() -> VisionExcelConverter:
     converter._get_id("Zigzag transformers", {"Node.Number": 1, "Subnumber": 2}, None)  # appliance: 14
     converter._get_id("Pvs", {"Node.Number": 1, "Subnumber": 2}, None)  # appliance: 15
     return converter
+
+
+@pytest.mark.parametrize("language", ["en"])
+def test_mapping_files_exist(language: str):
+    vf = Path(str(DEFAULT_MAPPING_FILE).format(language=language))
+    assert vf.exists()
 
 
 def test_initialization():

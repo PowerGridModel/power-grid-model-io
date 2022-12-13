@@ -18,7 +18,6 @@ SPDX-License-Identifier: MPL-2.0
 ```{eval-rst}
 .. automodule:: power_grid_model_io.converters.base_converter
 .. automodule:: power_grid_model_io.converters.tabular_converter
-.. automodule:: power_grid_model_io.converters.gaia_excel_converter
 .. automodule:: power_grid_model_io.converters.vision_excel_converter
 .. automodule:: power_grid_model_io.converters.pgm_json_converter
 ```
@@ -28,7 +27,6 @@ SPDX-License-Identifier: MPL-2.0
 ```{eval-rst}
 .. automodule:: power_grid_model_io.data_stores.base_data_store
 .. automodule:: power_grid_model_io.data_stores.excel_file_store
-.. automodule:: power_grid_model_io.data_stores.gaia_excel_file_store
 .. automodule:: power_grid_model_io.data_stores.json_file_store
 .. automodule:: power_grid_model_io.data_stores.vision_excel_file_store
 ```
@@ -39,10 +37,11 @@ SPDX-License-Identifier: MPL-2.0
 .. automodule:: power_grid_model_io.data_types.tabular_data
 ```
 
-## filters
+## functions
 
 ```{eval-rst}
-.. automodule:: power_grid_model_io.filters.phase_to_phase
+.. automodule:: power_grid_model_io.functions._functions
+.. automodule:: power_grid_model_io.functions.phase_to_phase
 ```
 ## mappings
 

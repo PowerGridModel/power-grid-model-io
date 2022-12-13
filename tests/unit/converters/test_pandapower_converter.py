@@ -166,7 +166,7 @@ def test_parse_data__update_data():
     converter = PandaPowerConverter()
 
     # Act/Assert
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(ValueError):
         converter._parse_data(data={}, data_type="update", extra_info=None)
 
 

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dynamic.grid.calculation@alliander.com>
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
 
@@ -16,9 +16,9 @@ def test_get_function__native():
 
 
 def test_get_function__custom():
-    from power_grid_model_io.filters import multiply
+    from power_grid_model_io.functions import complex_inverse_real_part
 
-    assert get_function("power_grid_model_io.filters.multiply") == multiply
+    assert get_function("power_grid_model_io.functions.complex_inverse_real_part") == complex_inverse_real_part
 
 
 def test_get_function__module_doesnt_exist():
@@ -28,9 +28,9 @@ def test_get_function__module_doesnt_exist():
 
 def test_get_function__function_doesnt_exist():
     with raises(
-        AttributeError, match="Function 'unknown_function' does not exist in module 'power_grid_model_io.filters'!"
+        AttributeError, match="Function 'unknown_function' does not exist in module 'power_grid_model_io.functions'!"
     ):
-        assert get_function("power_grid_model_io.filters.unknown_function")
+        assert get_function("power_grid_model_io.functions.unknown_function")
 
 
 def test_get_function__builtin_doesnt_exist():

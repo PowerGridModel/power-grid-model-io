@@ -62,7 +62,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if data_type == "input":
             self._create_input_data()
         else:
-            raise NotImplementedError()
+            raise ValueError(f"Data type: '{data_type}' is not implemented")
 
         # Construct extra_info
         if extra_info is not None:
