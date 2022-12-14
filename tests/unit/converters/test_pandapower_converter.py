@@ -115,6 +115,15 @@ def pgm_example_simple() -> SingleDataset:
     return import_input_data(DATA_DIR / "pandapower.json")
 
 
+@pytest.fixture
+def converter() -> PandaPowerConverter:
+    converter = PandaPowerConverter()
+    converter._generate_ids = MagicMock()  # type: ignore
+    converter._get_ids = MagicMock()  # type: ignore
+    converter._get_pp_attr = MagicMock()  # type: ignore
+    return converter
+
+
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._create_input_data")
 def test_parse_data(create_input_data_mock: MagicMock):
     # Arrange
@@ -194,16 +203,41 @@ def test_create_input_data():
     converter._create_pgm_input_links.assert_called_once_with()
 
 
-def test_create_pgm_input_nodes(pp_example_simple: Tuple[PandaPowerData, float], pgm_example_simple: SingleDataset):
+@patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
+def test_create_pgm_input_nodes(mock_init_array: MagicMock, converter):
     # Arrange
-    converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
-    converter.pp_data = pp_example_simple[0]
+    mock_busses = MagicMock()
+    mock_busses.empty = False
+    mock_busses.__len__.return_value = 2
+    converter.pp_data["bus"] = mock_busses
 
     # Act
     converter._create_pgm_input_nodes()
 
     # Assert
-    np.testing.assert_array_equal(converter.pgm_data["node"], pgm_example_simple["node"])
+    mock_init_array.assert_called_once_with(data_type="input", component_type="node", shape=2)
+    mock_init_array.return_value.__setitem__.assert_any_call("id", ANY)
+    mock_init_array.return_value.__setitem__.assert_any_call("u_rated", ANY)
+    converter._generate_ids.assert_called_once_with("bus", mock_busses.index)
+
+    converter._get_pp_attr.assert_any_call("bus", "vn_kv")
+    assert len(converter._get_pp_attr.call_args_list) == 1
+
+    assert converter.pgm_data["node"] == mock_init_array.return_value
+
+
+@patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
+def test_create_pgm_input_nodes__empty(mock_init_array: MagicMock, converter):
+    # Arrange
+    mock_busses = MagicMock()
+    mock_busses.empty = True
+    converter.pp_data["bus"] = mock_busses
+
+    # Act
+    converter._create_pgm_input_nodes()
+
+    # Assert
+    mock_init_array.assert_not_called()
 
 
 def test_create_pgm_input_lines(pp_example_simple: Tuple[PandaPowerData, float], pgm_example_simple: SingleDataset):
