@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import json
 from pathlib import Path
 from typing import Tuple
 from unittest.mock import ANY, MagicMock, call, patch
@@ -12,7 +13,7 @@ import pandas as pd
 import pytest
 from power_grid_model import CalculationMethod, PowerGridModel, WindingType, initialize_array
 from power_grid_model.data_types import SingleDataset
-from power_grid_model.utils import import_input_data
+from power_grid_model.utils import import_input_data, import_json_data
 
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter, PandaPowerData
 from power_grid_model_io.data_types import ExtraInfoLookup
@@ -117,7 +118,14 @@ def pgm_example_simple() -> SingleDataset:
 
 @pytest.fixture
 def pgm_output() -> SingleDataset:
-    return import_input_data(DATA_DIR / "pgm_output_data.json")
+    f = open(DATA_DIR / "pgm_output_data.json")
+    return json.load(f)
+
+
+@pytest.fixture
+def pp_expected_output() -> SingleDataset:
+    f = open(DATA_DIR / "pp_output_data.json")
+    return json.load(f)
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._create_input_data")
@@ -318,6 +326,42 @@ def test_create_pgm_input_links(pp_example_simple: Tuple[PandaPowerData, float],
 
     # Assert
     assert_struct_array_equal(converter.pgm_data["link"], pgm_example_simple["link"])
+
+
+def test__pp_buses_output(pgm_output: SingleDataset, pp_expected_output: SingleDataset):
+    # Arrange
+    converter = PandaPowerConverter(system_frequency=50)
+    converter.pgm_output_data = pgm_output
+    converter.idx_lookup["bus"] = pd.Series([321, 5, 4, 3, 1, 6])
+
+    # Act
+    converter._pp_buses_output()
+
+    # Assert
+    np.testing.assert_array_equal(converter.pp_output_data["node"], pp_expected_output["bus"])
+
+
+def test__pp_shunts_output(pgm_output: SingleDataset, pp_expected_output: SingleDataset):
+    # Arrange
+    converter = PandaPowerConverter(system_frequency=50)
+    converter.pgm_output_data = pgm_output
+
+    source = initialize_array("input", "source", 1)
+    source["id"] = [10]
+    source["node"] = [1]
+    source["status"] = [1]
+    source["u_ref"] = [1.0]
+
+    converter.pgm_data["source"] = source
+    converter.idx_lookup["bus"] = pd.Series([321, 5, 4, 3, 1, 6])
+
+    converter.pgm_nodes_lookup = pd.DataFrame()
+
+    # Act
+    converter._pp_buses_output()
+
+    # Assert
+    np.testing.assert_array_equal(converter.pp_output_data["node"], pp_expected_output["bus"])
 
 
 def test_get_index__key_error():

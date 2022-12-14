@@ -373,7 +373,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         )
 
         pp_output_buses["vm_pu"] = self.pgm_nodes_lookup["u_pu"]  # u_pu
-        pp_output_buses["va_degree"] = self.pgm_nodes_lookup["u_angle_deg"]  # u_angle * 180 / pi
+        pp_output_buses["va_degree"] = self.pgm_nodes_lookup["u_degree"]  # u_angle * 180 / pi
 
         # p_to, p_from, q_to and q_from connected to the bus have to be summed up
         self._pp_buses_output__accumulate_power(pp_output_buses)
@@ -485,7 +485,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         pgm_output_sources = self.pgm_output_data["source"]
 
-        pp_output_ext_grids = pd.DataFrame(columns=["p_mw", "q_mvar"])
+        pp_output_ext_grids = pd.DataFrame(
+            columns=["p_mw", "q_mvar"], index=self._get_pp_ids("source", pgm_output_sources["id"])
+        )
         pp_output_ext_grids["p_mw"] = pgm_output_sources["p"] * 1e-6
         pp_output_ext_grids["q_mvar"] = pgm_output_sources["q"] * 1e-6
 
@@ -501,7 +503,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         at_nodes = self.pgm_nodes_lookup[pgm_input_shunts["node"]]
 
-        pp_output_shunts = pd.DataFrame(columns=["p_mw", "q_mvar", "vm_pu"])
+        pp_output_shunts = pd.DataFrame(
+            columns=["p_mw", "q_mvar", "vm_pu"], index=self._get_pp_ids("shunt", pgm_output_shunts["id"])
+        )
         pp_output_shunts["p_mw"] = pgm_output_shunts["p"] * 1e-6  # p
         pp_output_shunts["q_mvar"] = pgm_output_shunts["q"] * 1e-6  # q
         pp_output_shunts["vm_pu"] = at_nodes["u_pu"]  # u_pu at the bus at node
@@ -518,7 +522,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         at_nodes = self.pgm_nodes_lookup[pgm_input_sym_gens["node"]]
 
-        pp_output_sgens = pd.DataFrame(columns=["p_mw", "q_mvar", "vm_pu"])
+        pp_output_sgens = pd.DataFrame(
+            columns=["p_mw", "q_mvar", "vm_pu"], index=self._get_pp_ids("sym_gen", pgm_output_sym_gens["id"])
+        )
         pp_output_sgens["p_mw"] = pgm_output_sym_gens["p"] * 1e6  # p
         pp_output_sgens["q_mvar"] = pgm_output_sym_gens["q"] * 1e6  # q
         pp_output_sgens["vm_pu"] = at_nodes["u_pu"]  # u_pu at the bus at node
@@ -551,7 +557,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 "va_hv_degree",
                 "va_lv_degree",
                 "loading_percent",
-            ]
+            ],
+            index=self._get_pp_ids("transformer", pgm_output_transformers["id"]),
         )
         pp_output_trafos["p_hv_mw"] = pgm_output_transformers["p_from"] * 1e-6  # p_from
         pp_output_trafos["q_hv_mvar"] = pgm_output_transformers["q_from"] * 1e-6  # q_from
@@ -634,6 +641,16 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
     def _pp_loads_output(self):
         pass
+        # assert "load" not in self.pp_output_data
+        # assert "sym_load" in self.pgm_data
+        #
+        # pgm_input_loads = self.pgm_data["sym_load"]
+        # # load_len =
+        #
+        # pp_output_loads = pd.DataFrame(columns=["p_mw", "q_mvar"])
+
+        # pp_output_loads["p_mw"] =
+
         # total_loads = len()
         # pgm_data["sym_load"]
         # sym_load_p_id = self._get_pp_ids("sym_load_const_power", total_loads/3)
