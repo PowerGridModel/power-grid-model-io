@@ -560,20 +560,19 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             return pp_component_data[attribute]
 
         # Try to find the std_type value for this attribute
-        if table in self.std_types and "std_type" in pp_component_data:  # Adjustment here
+        if self.std_types is not None and table in self.std_types and "std_type" in pp_component_data:
             std_types = self.std_types[table]
 
             @lru_cache
             def get_std_value(std_type_name: str):
                 std_type = std_types[std_type_name]
                 if attribute in std_type:
-                    return std_types[attribute]
+                    return std_type[attribute]
                 if default is not None:
                     return default
                 raise KeyError(f"No '{attribute}' value for '{table}' with std_type '{std_type_name}'.")
 
-            if self.std_types is not None and table in self.std_types:
-                return pp_component_data.apply(get_std_value)
+            return pp_component_data.apply(get_std_value)
 
         # Return the default value (assume that broadcasting is handled by the caller / numpy)
         if default is None:

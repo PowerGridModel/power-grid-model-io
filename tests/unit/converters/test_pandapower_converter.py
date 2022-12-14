@@ -721,18 +721,18 @@ def test__get_pp_attr_use_default():
     np.testing.assert_array_equal(actual, expected)
 
 
-# def test__get_pp_attr_from_std():
-#     # Arrange
-#     converter = PandaPowerConverter()
-#     converter.std_types = {"trafo3w": {"std_trafo3w_1": {"hv_bus": 964}}}
-#     converter.pp_data = {
-#         "trafo3w": pd.DataFrame([[2, 31, 315, "std_trafo3w_1"]], columns=["index", "mv_bus", "lv_bus", "std_type"])
-#     }
-#
-#     expected = np.array(964)
-#
-#     # Act
-#     actual = converter._get_pp_attr("trafo3w", "hv_bus")
-#
-#     # Assert
-#     np.testing.assert_array_equal(actual, expected)
+def test__get_pp_attr_from_std():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.std_types = {"trafo3w": {"std_trafo3w_1": {"hv_bus": 964}}}
+    converter.pp_data = {
+        "trafo3w": pd.DataFrame([[2, 31, 315, "std_trafo3w_1"]], columns=["index", "mv_bus", "lv_bus", "std_type"])
+    }
+
+    expected = np.array(964)
+
+    # Act
+    actual = converter._get_pp_attr("trafo3w", "hv_bus")
+
+    # Assert
+    np.testing.assert_array_equal(actual, expected)
