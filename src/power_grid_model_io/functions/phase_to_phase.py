@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dynamic.grid.calculation@alliander.com>
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
 """
@@ -11,7 +11,7 @@ from typing import Tuple
 
 from power_grid_model import WindingType
 
-from power_grid_model_io.filters import get_winding
+from power_grid_model_io.functions import get_winding
 
 CONNECTION_PATTERN = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(\d|1[0-2])")
 
@@ -35,11 +35,11 @@ def reactive_power(p: float, cos_phi: float) -> float:
 
 def power_wind_speed(  # pylint: disable=too-many-arguments
     p_nom: float,
-    wind_speed_m_s: float,
-    cut_in_wind_speed_m_s: float = 3.0,
-    nominal_wind_speed_m_s: float = 14.0,
-    cutting_out_wind_speed_m_s: float = 25.0,
-    cut_out_wind_speed_m_s: float = 30.0,
+    wind_speed: float,
+    cut_in_wind_speed: float = 3.0,
+    nominal_wind_speed: float = 14.0,
+    cutting_out_wind_speed: float = 25.0,
+    cut_out_wind_speed: float = 30.0,
 ) -> float:
     """
     Estimate p_ref based on p_nom and wind_speed.
@@ -48,23 +48,23 @@ def power_wind_speed(  # pylint: disable=too-many-arguments
     """
 
     # At a wind speed below cut-in, the power is zero.
-    if wind_speed_m_s < cut_in_wind_speed_m_s:
+    if wind_speed < cut_in_wind_speed:
         return 0.0
 
     # At a wind speed between cut-in and nominal, the power is a third power function of the wind speed.
-    if wind_speed_m_s < nominal_wind_speed_m_s:
-        factor = wind_speed_m_s - cut_in_wind_speed_m_s
-        max_factor = nominal_wind_speed_m_s - cut_in_wind_speed_m_s
+    if wind_speed < nominal_wind_speed:
+        factor = wind_speed - cut_in_wind_speed
+        max_factor = nominal_wind_speed - cut_in_wind_speed
         return ((factor / max_factor) ** 3) * p_nom
 
     # At a wind speed between nominal and cutting-out, the power is the nominal power.
-    if wind_speed_m_s < cutting_out_wind_speed_m_s:
+    if wind_speed < cutting_out_wind_speed:
         return p_nom
 
     # At a wind speed between cutting-out and cut-out, the power decreases from nominal to zero.
-    if wind_speed_m_s < cut_out_wind_speed_m_s:
-        factor = wind_speed_m_s - cutting_out_wind_speed_m_s
-        max_factor = cut_out_wind_speed_m_s - cutting_out_wind_speed_m_s
+    if wind_speed < cut_out_wind_speed:
+        factor = wind_speed - cutting_out_wind_speed
+        max_factor = cut_out_wind_speed - cutting_out_wind_speed
         return (1.0 - factor / max_factor) * p_nom
 
     # Above cut-out speed, the power is zero.
@@ -95,11 +95,11 @@ def get_clock(conn_str: str) -> int:
     return clock
 
 
-def reactive_power_to_susceptance(q_var: float, u_nom: float) -> float:
+def reactive_power_to_susceptance(q: float, u_nom: float) -> float:
     """
     Calculate susceptance, b1 from reactive power Q with nominal voltage
     """
-    return q_var / u_nom / u_nom
+    return q / u_nom / u_nom
 
 
 def _split_connection_string(conn_str: str) -> Tuple[str, str, int]:

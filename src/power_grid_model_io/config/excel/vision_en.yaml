@@ -142,23 +142,23 @@ grid:
       uk: uk
       pk: Pk
       i0:
-        power_grid_model_io.filters.phase_to_phase.relative_no_load_current:
-          - Io
-          - Po
-          - Snom
-          - Unom2
+        power_grid_model_io.functions.phase_to_phase.relative_no_load_current:
+          i_0: Io
+          p_0: Po
+          s_nom: Snom
+          u_nom: Unom2
       p0: Po
       winding_from:
-        power_grid_model_io.filters.phase_to_phase.get_winding_from:
-          - Connection
-          - N1
+        power_grid_model_io.functions.phase_to_phase.get_winding_from:
+          conn_str: Connection
+          neutral_grounding: N1
       winding_to:
-        power_grid_model_io.filters.phase_to_phase.get_winding_to:
-          - Connection
-          - N2
+        power_grid_model_io.functions.phase_to_phase.get_winding_to:
+          conn_str: Connection
+          neutral_grounding: N2
       clock:
-        power_grid_model_io.filters.phase_to_phase.get_clock:
-          - Connection
+        power_grid_model_io.functions.phase_to_phase.get_clock:
+          conn_str: Connection
       tap_side: Tap side
       tap_pos: Tap
       tap_min: Tap min
@@ -199,11 +199,11 @@ grid:
       uk: uknom
       pk: Pknom
       i0:
-        power_grid_model_io.filters.phase_to_phase.relative_no_load_current:
-          - Io
-          - Po
-          - Snom
-          - Unom2
+        power_grid_model_io.functions.phase_to_phase.relative_no_load_current:
+          i_0: Io
+          p_0: Po
+          s_nom: Snom
+          u_nom: Unom2
       p0: Po
       winding_from: 0
       winding_to: 0
@@ -253,17 +253,20 @@ grid:
       pk: Pk
       p0: Po
       i0:
-        power_grid_model_io.filters.phase_to_phase.relative_no_load_current:
-          - 0
-          - Po
-          - Snom
-          - Unom2
+        power_grid_model_io.functions.phase_to_phase.relative_no_load_current:
+          i_0: 0
+          p_0: Po
+          s_nom: Snom
+          u_nom: Unom2
       winding_from:
-        power_grid_model_io.filters.phase_to_phase.get_winding_from: Connection
+        power_grid_model_io.functions.phase_to_phase.get_winding_from:
+          conn_str: Connection
       winding_to:
-        power_grid_model_io.filters.phase_to_phase.get_winding_to: Connection
+        power_grid_model_io.functions.phase_to_phase.get_winding_to:
+          conn_str: Connection
       clock:
-        power_grid_model_io.filters.phase_to_phase.get_clock: Connection
+        power_grid_model_io.functions.phase_to_phase.get_clock:
+          conn_str: Connection
       tap_side: Tap side
       tap_pos: Tap
       tap_min: Tap min
@@ -308,13 +311,21 @@ grid:
       status: Switch state
       type: Behaviour
       p_specified:
-        power_grid_model_io.filters.multiply:
+        multiply:
           - Load.P
-          - Nodes!Simultaneity[Number=Node.Number]
+          - reference:
+              query_column: Node.Number
+              other_table: Nodes
+              key_column: Number
+              value_column: Simultaneity
       q_specified:
-        power_grid_model_io.filters.multiply:
+        multiply:
           - Load.Q
-          - Nodes!Simultaneity[Number=Node.Number]
+          - reference:
+              query_column: Node.Number
+              other_table: Nodes
+              key_column: Number
+              value_column: Simultaneity
       extra:
         - ID
         - Name
@@ -354,9 +365,9 @@ grid:
         type: 0
         p_specified: PV.Pnom
         q_specified:
-          power_grid_model_io.filters.phase_to_phase.reactive_power:
-            - PV.Pnom
-            - 1
+          power_grid_model_io.functions.phase_to_phase.reactive_power:
+            p: PV.Pnom
+            cos_phi: 1
         extra:
           - ID
           - Name
@@ -396,10 +407,10 @@ grid:
       type: 0
       p_specified: Pref
       q_specified:
-        power_grid_model_io.filters.multiply:
-          - power_grid_model_io.filters.phase_to_phase.reactive_power:
-            - Pref
-            - cos phi
+        multiply:
+          - power_grid_model_io.functions.phase_to_phase.reactive_power:
+              p: Pref
+              cos_phi: cos phi
           - Q
       extra:
         - ID
@@ -419,19 +430,22 @@ grid:
       status: Switch state
       type: 1
       p_specified:
-        power_grid_model_io.filters.value_or_default:
-          - Pref
-          - power_grid_model_io.filters.phase_to_phase.power_wind_speed:
-            - Pnom
-            - Wind speed
+        power_grid_model_io.functions.value_or_default:
+          value: Pref
+          default:
+            power_grid_model_io.functions.phase_to_phase.power_wind_speed:
+              p_nom: Pnom
+              wind_speed: Wind speed
       q_specified:
-        power_grid_model_io.filters.phase_to_phase.reactive_power:
-          - power_grid_model_io.filters.value_or_default:
-            - Pref
-            - power_grid_model_io.filters.phase_to_phase.power_wind_speed:
-              - Pnom
-              - Wind speed
-          - cos phi
+        power_grid_model_io.functions.phase_to_phase.reactive_power:
+          p:
+            power_grid_model_io.functions.value_or_default:
+              value: Pref
+              default:
+                power_grid_model_io.functions.phase_to_phase.power_wind_speed:
+                  p_nom: Pnom
+                  wind_speed: Wind speed
+          cos_phi: cos phi
       extra:
         - ID
         - Name
@@ -450,13 +464,21 @@ grid:
       status: Switch state
       type: Behaviour
       p_specified:
-        power_grid_model_io.filters.multiply:
+        multiply:
           - P
-          - Nodes!Simultaneity[Number=Node.Number]
+          - reference:
+              query_column: Node.Number
+              other_table: Nodes
+              key_column: Number
+              value_column: Simultaneity
       q_specified:
-        power_grid_model_io.filters.multiply:
+        multiply:
           - Q
-          - Nodes!Simultaneity[Number=Node.Number]
+          - reference:
+              query_column: Node.Number
+              other_table: Nodes
+              key_column: Number
+              value_column: Simultaneity
       extra:
         - ID
         - Name
@@ -476,13 +498,13 @@ grid:
       g1: 0
       b1: 0
       g0:
-        power_grid_model_io.filters.complex_inverse_real_part:
-          - R0
-          - X0
+        power_grid_model_io.functions.complex_inverse_real_part:
+          real: R0
+          imag: X0
       b0:
-        power_grid_model_io.filters.complex_inverse_imaginary_part:
-          - R0
-          - X0
+        power_grid_model_io.functions.complex_inverse_imaginary_part:
+          real: R0
+          imag: X0
       extra:
         - ID
         - Name
@@ -501,9 +523,9 @@ grid:
       status: Switch state
       g1: 0
       b1:
-        power_grid_model_io.filters.phase_to_phase.reactive_power_to_susceptance:
-          - Q
-          - Unom
+        power_grid_model_io.functions.phase_to_phase.reactive_power_to_susceptance:
+          q: Q
+          u_nom: Unom
       g0: 0
       b0: 0
       extra:
@@ -524,10 +546,10 @@ grid:
       status: Switch state
       g1: 0
       b1:
-        power_grid_model_io.filters.multiply:
-          - power_grid_model_io.filters.phase_to_phase.reactive_power_to_susceptance:
-             - Q
-             - Unom
+        multiply:
+          - power_grid_model_io.functions.phase_to_phase.reactive_power_to_susceptance:
+              q: Q
+              u_nom: Unom
           - -1
       g0: 0
       b0: 0
@@ -549,38 +571,42 @@ grid:
       status: Switch state
       type: 0
       p_specified:
-        power_grid_model_io.filters.multiply:
+        multiply:
           - min:
-             - Pnom
-             - Inverter.Pnom | Inverter.Snom
+              - Pnom
+              - Inverter.Pnom | Inverter.Snom
           - Scaling
       q_specified:
-        power_grid_model_io.filters.multiply:
-          - power_grid_model_io.filters.phase_to_phase.reactive_power:
-             - min:
-                 - Pnom
-                 - Inverter.Pnom | Inverter.Snom
-             - Inverter.cos phi
+        multiply:
+          - power_grid_model_io.functions.phase_to_phase.reactive_power:
+              p:
+                min:
+                  - Pnom
+                  - Inverter.Pnom | Inverter.Snom
+              cos_phi: Inverter.cos phi
           - Scaling
       extra:
         - ID
         - Name
 units:
-  A:
+  A: null
   F:
     µF: 0.000_001
   V:
     kV: 1_000.0
   VA:
+    kVA: 1_000.0
     MVA: 1_000_000.0
   VAR:
+    kvar: 1_000.0
     Mvar: 1_000_000.0
   W:
     kW: 1_000.0
     MW: 1_000_000.0
   Wp:
+    kWp: 1_000.0
     MWp: 1_000_000.0
-  m/s:
+  m/s: null
   ohm:
     Ohm: 1.0
   ohm/m:
@@ -589,7 +615,6 @@ units:
     pu: 1.0
     "%": 0.01
     "‰": 0.001
-
 substitutions:
   ".*Switch state":
     "off": 0

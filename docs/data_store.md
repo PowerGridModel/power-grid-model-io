@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dynamic.grid.calculation@alliander.com>
+SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
 
 SPDX-License-Identifier: MPL-2.0
 -->
@@ -15,9 +15,8 @@ The inheritance structure of data stores is as follows:
   - Json file store
   - Excel file store
     - Vision-excel file store
-      - Gaia-excel file store
 
-Of these, JSON file store, Vision-excel and Gaia-excel file stores are used in their respective converters.
+Of these, JSON file store, Vision-excel file stores are used in their respective converters.
 A custom data store can be based on any of these existing stores. It has to convert the data to the specific data type. eg. tabular data.
 
 ## JSON file store
@@ -37,7 +36,3 @@ Also refer {py:class}`power_grid_model_io.data_stores.ExcelFileStore` for specif
 The vision excel export specific operations in conversion  are carried out.
 Eg. Vision exports has the units on the 2nd row.
 
-#### Gaia file store
-
-The gaia excel export specific operations are in this file store.
-Gaia also exports are in multiple excel files.

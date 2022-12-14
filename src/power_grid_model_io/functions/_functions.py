@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dynamic.grid.calculation@alliander.com>
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
 
@@ -6,7 +6,6 @@
 These functions can be used in the mapping files to apply functions to tabular data
 """
 
-import math
 from typing import Any, Optional, TypeVar, cast
 
 import numpy as np
@@ -21,13 +20,6 @@ WINDING_TYPES = {
     "Z": WindingType.zigzag,
     "ZN": WindingType.zigzag_n,
 }
-
-
-def multiply(*args: float):
-    """
-    Multiply all arguments.
-    """
-    return math.prod(args)
 
 
 def has_value(value: Any) -> bool:
@@ -87,29 +79,6 @@ def degrees_to_clock(degrees: float) -> int:
     Return the clock
     """
     return int(round(degrees / 30.0)) % 12
-
-
-def subtract(value: float, *args: float) -> float:
-    """
-    Return a value after subtracting all the arguments from the first argument
-    """
-    for arg in args:
-        value -= arg
-    return value
-
-
-def all_true(*args) -> bool:
-    """
-    Return true if all values are true
-    """
-    return all(args) and not any(np.isnan(x) for x in args)
-
-
-def any_true(*args) -> bool:
-    """
-    Return true if at least one of the values is true
-    """
-    return any(x and not np.isnan(x) for x in args)
 
 
 def is_greater_than(left_side, right_side) -> bool:

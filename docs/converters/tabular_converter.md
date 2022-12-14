@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dynamic.grid.calculation@alliander.com>
+SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
 
 SPDX-License-Identifier: MPL-2.0
 -->
@@ -17,16 +17,27 @@ grid:
 
   Nodes:
     node:
-      id: Number
+      auto_id:
+        key: Number
       u_rated: Unom
       extra: ID
 
   Cables:
     line:
-      id: Number
-      from_node: From.Number
+      id:
+        auto_id:
+          key: Number
+      from_node:
+        auto_id:
+          table: Nodes
+          key:
+            Number: From.Number      
       from_status: From.Switch state
-      to_node: To.Number
+      to_node:
+        auto_id:
+          table: Nodes
+          key:
+            Number: To.Number      
       to_status: To.Switch state
 
 units:
@@ -54,51 +65,67 @@ You can use the following `column` definitions:
     ```yaml
     from_node: From.Number
     ```
-  * First matching column name `str`
+  * First matching column name that exists in the data `str`
     ```yaml
     p_specified: Inverter.Pnom | Inverter.Snom
     ```
-  * Reference to a column on another sheet (using `!` notation as in Excel) `str`
+  * Automatic IDs `Dict[str, Dict[str, Any]]` with single key `reference`, required attribute `key` and optinal 
+    attributes `table` and `name`. More extensive examples are shown in the section [AutoID Mapping](##autois-mapping).
     ```yaml
-    r1: CableProperties!R[Shortname=Type short]
+    id:
+      auto_id:
+        key: Number
     ```
-    You may also specify the reference more explicitly:
+ 
+  * Reference to a column on another sheet `Dict[str, Dict[str, Any]]` with single key `reference` and the 
     ```yaml
-    r1: CableProperties!R[CableProperties!Shortname=Cables!Type short]
+    r1:
+      reference:
+        query_column: Shortname
+        other_table: Cable Properties
+        key_column: Type short
+        value_column: R
     ```
-  * Constant value `int | float`
+  * Constant value `int` or `float`
     ```yaml
     from_status: 1
     tan1: 0.0
     ```
-  * Functions `Dict[str, List[Any]`
+  * Pandas DataFrame functions `Dict[str, List[Any]]`
+    (`prod`, `sum`, `min`, `max`, etc and the alias `multiply` which translates to `prod`)
     ```yaml
     p_specified:
       min:
         - Pnom
         - Inverter.Pnom
     ```
+  * Custom functions `Dict[str, Dict[str, Any]]`
+    ```yaml
+      g0:
+        power_grid_model_io.functions.complex_inverse_real_part:
+          real: R0
+          imag: X0
+    ```
   * Nested definitions:
     ```yaml
     q_specified:
-      power_grid_model_io.filters.phase_to_phase.reactive_power:
-        - min:
+      power_grid_model_io.functions.phase_to_phase.reactive_power:
+        p:
+          min:
             - Pnom
             - Inverter.Pnom | Inverter.Snom
-        - Inverter.cos phi
-        - 1.0
+        cos_phi: Inverter.cos phi
     ```
-    Is similar to:
+    Is similar to something like:
     ```python
-    from power_grid_model_io.filters.phase_to_phase import reactive_power
+    from power_grid_model_io.functions.phase_to_phase import reactive_power
     
     q_specified = reactive_power(
-      min(
+      p=min(
         table["Pnom"],
         table["Inverter.Pnom"] if "Inverter.Pnom" in table else table["Inverter.Snom"]
       ),
-      table["Inverter.Snom"],
-      1.0
+      cos_phi=1.0
     )
     ```
 ## Units
@@ -163,24 +190,116 @@ item = auto_id[1]      # item = "Bravo"
   
 See also {py:class}`power_grid_model_io.utils.AutoID`
 
-### Vision and Gaia
-For Vision and Gaia files, an extra trick is applied. Let's assume this mapping:
-
+## AutoID Mapping
+Let's consider a very common example of the usage of `auto_id` in a mapping file.
+(Note that we're focussing on the ids and references, so the other attributes have been disregarded.)
 ```yaml
-grid:
   Nodes:
     node:
-      id: Number
-      ...
-  Cables:
-    line:
-      id: Number
-      from_node: From.Number
-      ...
+      id:
+        auto_id:
+          key: Number
+    Cables:
+      line:
+        id:
+          auto_id:
+            key: Number
+        from_node:
+          auto_id:
+            table: Nodes
+            key:
+              Number: From_Number
+        to_node:
+          auto_id:
+            table: Nodes
+            key:
+              Number: To_Number
+```
+This basically reads as:
+* For each row in the Nodes table, a PGM node instance is created.
+  * For each node instance, a numerical id is generated, which is unique for each value in the Number column. This 
+    assumes that the Number column is unique in the source table. Let's say tha values of the Number column in that 
+    Nodes source table are `[101, 102, 103]`, then the generated IDs will be `[0, 1, 2]`. However, if the source 
+    column is not unique, the pgm ids won't be unique as well: `[101, 102, 103, 101] -> [0, 1, 2, 0]`.
+  * Under the hood, the table name `Nodes` and the column name `Number` are used to generate these IDs:
+    * `{"table": "Nodes", "key" {"Number": 101} -> 0`
+    * `{"table": "Nodes", "key" {"Number": 102} -> 1`
+    * `{"table": "Nodes", "key" {"Number": 103} -> 2`
+* For each row in the Cables table, a PGM line instance is created.
+  * For each line instance, a numerical id is generated, just like for the nodes.
+    Let's say there are two Cables `[201, 202]` and the corresponding lines will have IDs `[3, 4]`.  
+    * `{"table": "Cables", "key" {"Number": 201} -> 3`
+    * `{"table": "Cables", "key" {"Number": 202} -> 4`
+  * A Cable connects to two Nodes.
+    In this example Cable `201` connects Node `101` and `102`, and Cable `201` connects Node `102` and `103`.
+    These Node Numbers are stored in the columns `From_Number` and `To_Number`.
+    In order to retrieve the right PGM IDs, we have to explicitly state that the table in which the Nodes are 
+    defined is called `Nodes` and the original column storing the Node Numbers is called `Number`.
+  * On the 'from' side of the cables:
+    * `{"table": "Nodes", "key" {"Number": 101} -> 0`
+    * `{"table": "Nodes", "key" {"Number": 102} -> 1`
+  * On the 'to' side of the cables:
+    * `{"table": "Nodes", "key" {"Number": 102} -> 1`
+    * `{"table": "Nodes", "key" {"Number": 103} -> 2`
+
+
+## Advanced AutoID Mapping
+In some cases, multiple components have to be created for each row in a source table.
+In such cases, the `name` attribute may be necessary to create multiple PGM IDs for a single row. Let's consider
+this example:
+```yaml
+  Transformer loads:
+    transformer:
+      id:
+        auto_id:
+          name: transformer
+          key:
+            - Node_Number
+            - Subnumber
+      from_node:
+        auto_id:
+          table: Nodes
+          key:
+            Number: Node_Number
+      to_node:
+        auto_id:
+          name: internal_node
+          key:
+            - Node_Number
+            - Subnumber
+    node:
+      id:
+        auto_id:
+          name: internal_node
+          key:
+            - Node_Number
+            - Subnumber
+    sym_load:
+      id:
+        auto_id:
+          name: load
+          key:
+            - Node_Number
+            - Subnumber
+      node:
+        auto_id:
+          name: internal_node
+          key:
+            - Node_Number
+            - Subnumber
 ```
 
-The PGM `node["id"]` will be a number, based on the values in the `Nodes!Number` column.
-The PGM `line["from_node"]` (which ends with `node`) will be based on the values in the `Nodes!From.Number`.
-Originally this didn't work, due to the hashing function, as the column names differ: `"Number" != "From.Number"`.
-Therefore, the Vision and Gaia converters overload the `_id_lookup()` method.
-They split the column name on `.` so that the `Number` matches `From.Number`.
+Let's say we have one Transformer Load connected to the Node Number 103 and it's Subnumber is 1.
+Then the following IDs will be generated / retrieved:
+* `transformer.id`:
+  `{"table": "Transformer loads", "name": "transformer", "key" {"Node_Number": 103, "Subnumber": 1} -> 5`
+* `transformer.from_node`:
+  `{"table": "Nodes", "key" {"Number": 103} -> 2`
+* `transformer.to_node`:
+  `{"table": "Transformer loads", "name": "internal_node", "key" {"Node_Number": 103, "Subnumber": 1} -> 6`
+* `node.id`:
+  `{"table": "Transformer loads", "name": "internal_node", "key" {"Node_Number": 103, "Subnumber": 1} -> 6`
+* `sym_load.id`:
+  `{"table": "Transformer loads", "name": "load", "key" {"Node_Number": 103, "Subnumber": 1} -> 7`
+* `sym_load.node`:
+  `{"table": "Transformer loads", "name": "internal_node", "key" {"Node_Number": 103, "Subnumber": 1} -> 6`
