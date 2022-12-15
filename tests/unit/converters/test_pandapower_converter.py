@@ -708,9 +708,6 @@ def test__get_pp_attr_attribute_doesnt_exist():
 def test__get_pp_attr_use_default():
     # Arrange
     converter = PandaPowerConverter()
-    # converter.std_types = {"trafo3w": {"std_trafo3w_1": {"hv_bus": 31}}}  # This is questionable, why do I need to
-    # provide the std_type if I want to use the default value
-    # With a little adjustment in the function this is no longer the case
     converter.pp_data = {"trafo3w": pd.DataFrame([[2, 31, 315]], columns=["index", "mv_bus", "lv_bus"])}
     expected = np.array(625)
 
@@ -736,3 +733,33 @@ def test__get_pp_attr_from_std():
 
     # Assert
     np.testing.assert_array_equal(actual, expected)
+
+
+def test__get_pp_attr_default_after_checking_std():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter._std_types = {"trafo3w": {"std_trafo3w_1": {"lv_bus": 23}}}
+    converter.pp_data = {
+        "trafo3w": pd.DataFrame([[2, 31, 315, "std_trafo3w_1"]], columns=["index", "mv_bus", "lv_bus", "std_type"])
+    }
+
+    expected = np.array(964)
+
+    # Act
+    actual = converter._get_pp_attr("trafo3w", "hv_bus", 964)
+
+    # Assert
+    np.testing.assert_array_equal(actual, expected)
+
+
+def test__get_pp_attr_error_after_checking_std():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter._std_types = {"trafo3w": {"std_trafo3w_1": {"lv_bus": 23}}}
+    converter.pp_data = {
+        "trafo3w": pd.DataFrame([[2, 31, 315, "std_trafo3w_1"]], columns=["index", "mv_bus", "lv_bus", "std_type"])
+    }
+
+    # Act/Assert
+    with pytest.raises(KeyError):
+        converter._get_pp_attr("trafo3w", "hv_bus")
