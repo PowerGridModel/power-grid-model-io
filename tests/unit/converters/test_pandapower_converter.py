@@ -95,7 +95,7 @@ def test_parse_data__extra_info(create_input_data_mock: MagicMock):
     converter = PandaPowerConverter()
 
     def create_input_data():
-        converter.idx_lookup["bus"] = pd.Series([101, 102, 103], index=[0, 1, 2])
+        converter.idx_lookup[("bus", None)] = pd.Series([101, 102, 103], index=[0, 1, 2])
 
     create_input_data_mock.side_effect = create_input_data
 
@@ -268,7 +268,7 @@ def test_create_pgm_input_sources(pp_example_simple: Tuple[PandaPowerData, float
     # Arrange
     converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
     converter.pp_data = pp_example_simple[0]
-    converter.idx = {"bus": pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
+    converter.idx = {("bus", None): pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
     converter.next_idx = 7
 
     # Act
@@ -282,7 +282,7 @@ def test_create_pgm_input_sym_loads(pp_example_simple: Tuple[PandaPowerData, flo
     # Arrange
     converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
     converter.pp_data = pp_example_simple[0]
-    converter.idx = {"bus": pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
+    converter.idx = {("bus", None): pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
     converter.next_idx = 8
 
     # Act
@@ -298,7 +298,7 @@ def test_create_pgm_input_transformers(
     # Arrange
     converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
     converter.pp_data = pp_example_simple[0]
-    converter.idx = {"bus": pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
+    converter.idx = {("bus", None): pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
     converter.next_idx = 12
 
     # Act
@@ -312,7 +312,7 @@ def test_create_pgm_input_shunts(pp_example_simple: Tuple[PandaPowerData, float]
     # Arrange
     converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
     converter.pp_data = pp_example_simple[0]
-    converter.idx = {"bus": pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
+    converter.idx = {("bus", None): pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
     converter.next_idx = 11
 
     # Act
@@ -326,7 +326,7 @@ def test_create_pgm_input_sym_gens(pp_example_simple: Tuple[PandaPowerData, floa
     # Arrange
     converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
     converter.pp_data = pp_example_simple[0]
-    converter.idx = {"bus": pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
+    converter.idx = {("bus", None): pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
     converter.next_idx = 13
 
     # Act
@@ -342,7 +342,7 @@ def test_create_pgm_input_three_winding_transformers(
     # Arrange
     converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
     converter.pp_data = pp_example_simple[0]
-    converter.idx = {"bus": pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
+    converter.idx = {("bus", None): pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
     converter.next_idx = 14
 
     # Act
@@ -358,7 +358,7 @@ def test_create_pgm_input_links(pp_example_simple: Tuple[PandaPowerData, float],
     # Arrange
     converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
     converter.pp_data = pp_example_simple[0]
-    converter.idx = {"bus": pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
+    converter.idx = {("bus", None): pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
     converter.next_idx = 15
 
     # Act
@@ -592,7 +592,7 @@ def test_get_individual_switch_states():
 def test_get_id():
     # Arrange
     converter = PandaPowerConverter()
-    converter.idx = {"line": pd.Series([21, 345, 0, 3, 15], index=[0, 1, 2, 3, 4])}
+    converter.idx = {("line", None): pd.Series([21, 345, 0, 3, 15], index=[0, 1, 2, 3, 4])}
 
     expected_id = 345
 
@@ -702,7 +702,7 @@ def test_get_trafo3w_switch_states(mock_get_individual_switch_states: MagicMock)
 def test_lookup_id():
     # Arrange
     converter = PandaPowerConverter()
-    converter.idx_lookup = {"line": pd.Series([0, 1, 2, 3, 4], index=[21, 345, 0, 3, 15])}
+    converter.idx_lookup = {("line", None): pd.Series([0, 1, 2, 3, 4], index=[21, 345, 0, 3, 15])}
 
     expected_id = {"table": "line", "index": 4}
 
@@ -716,7 +716,7 @@ def test_lookup_id():
 def test_lookup_id__value_error():
     # Arrange
     converter = PandaPowerConverter()
-    converter.idx_lookup = {"line": pd.Series([0, 1, 2, 3, 4], index=[21, 345, 0, 3, 15])}
+    converter.idx_lookup = {("line", None): pd.Series([0, 1, 2, 3, 4], index=[21, 345, 0, 3, 15])}
 
     # Act / Assert
     with pytest.raises(KeyError):
@@ -749,9 +749,6 @@ def test__get_pp_attr_attribute_doesnt_exist():
 def test__get_pp_attr_use_default():
     # Arrange
     converter = PandaPowerConverter()
-    # converter.std_types = {"trafo3w": {"std_trafo3w_1": {"hv_bus": 31}}}  # This is questionable, why do I need to
-    # provide the std_type if I want to use the default value
-    # With a little adjustment in the function this is no longer the case
     converter.pp_data = {"trafo3w": pd.DataFrame([[2, 31, 315]], columns=["index", "mv_bus", "lv_bus"])}
     expected = np.array(625)
 
@@ -777,3 +774,33 @@ def test__get_pp_attr_from_std():
 
     # Assert
     np.testing.assert_array_equal(actual, expected)
+
+
+def test__get_pp_attr_default_after_checking_std():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter._std_types = {"trafo3w": {"std_trafo3w_1": {"lv_bus": 23}}}
+    converter.pp_data = {
+        "trafo3w": pd.DataFrame([[2, 31, 315, "std_trafo3w_1"]], columns=["index", "mv_bus", "lv_bus", "std_type"])
+    }
+
+    expected = np.array(964)
+
+    # Act
+    actual = converter._get_pp_attr("trafo3w", "hv_bus", 964)
+
+    # Assert
+    np.testing.assert_array_equal(actual, expected)
+
+
+def test__get_pp_attr_error_after_checking_std():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter._std_types = {"trafo3w": {"std_trafo3w_1": {"lv_bus": 23}}}
+    converter.pp_data = {
+        "trafo3w": pd.DataFrame([[2, 31, 315, "std_trafo3w_1"]], columns=["index", "mv_bus", "lv_bus", "std_type"])
+    }
+
+    # Act/Assert
+    with pytest.raises(KeyError):
+        converter._get_pp_attr("trafo3w", "hv_bus")
