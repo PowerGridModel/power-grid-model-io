@@ -29,11 +29,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
     Panda Power Converter
     """
 
-    __slots__ = ("std_types", "pp_data", "pgm_data", "idx", "idx_lookup", "next_idx", "system_frequency")
+    __slots__ = ("_std_types", "pp_data", "pgm_data", "idx", "idx_lookup", "next_idx", "system_frequency")
 
     def __init__(self, std_types: Optional[StdTypes] = None, system_frequency: float = 50.0):
         super().__init__(source=None, destination=None)
-        self.std_types: StdTypes = std_types if std_types is not None else {}
+        self._std_types: StdTypes = std_types if std_types is not None else {}
         self.system_frequency: float = system_frequency
         self.pp_data: PandaPowerData = {}
         self.pgm_data: Dataset = {}
@@ -155,9 +155,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sources["u_ref"] = self._get_pp_attr("ext_grid", "vm_pu")
         pgm_sources["rx_ratio"] = self._get_pp_attr("ext_grid", "rx_max")
         pgm_sources["u_ref_angle"] = self._get_pp_attr("ext_grid", "va_degree") * (np.pi / 180)
-
-        if "s_sc_max_mva" in pp_ext_grid:
-            pgm_sources["sk"] = self._get_pp_attr("ext_grid", "s_sc_max_mva") * 1e6
+        pgm_sources["sk"] = self._get_pp_attr("ext_grid", "s_sc_max_mva", np.nan) * 1e6
 
         self.pgm_data["source"] = pgm_sources
 
@@ -515,7 +513,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         @lru_cache
         def std_type_to_winding_types(std_type: str) -> pd.Series:
-            return vector_group_to_winding_types(self.std_types["trafo"][std_type]["vector_group"])
+            return vector_group_to_winding_types(self._std_types["trafo"][std_type]["vector_group"])
 
         trafo = self.pp_data["trafo"]
         if "vector_group" in trafo:
@@ -542,7 +540,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         @lru_cache
         def std_type_to_winding_types(std_type: str) -> pd.Series:
-            return vector_group_to_winding_types(self.std_types["trafo3w"][std_type]["vector_group"])
+            return vector_group_to_winding_types(self._std_types["trafo3w"][std_type]["vector_group"])
 
         trafo3w = self.pp_data["trafo3w"]
         if "vector_group" in trafo3w:
@@ -560,8 +558,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             return pp_component_data[attribute]
 
         # Try to find the std_type value for this attribute
-        if self.std_types is not None and table in self.std_types and "std_type" in pp_component_data:
-            std_types = self.std_types[table]
+        if self._std_types is not None and table in self._std_types and "std_type" in pp_component_data:
+            std_types = self._std_types[table]
 
             @lru_cache
             def get_std_value(std_type_name: str):
@@ -572,7 +570,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                     return default
                 raise KeyError(f"No '{attribute}' value for '{table}' with std_type '{std_type_name}'.")
 
-            return pp_component_data.apply(get_std_value)
+            return pp_component_data["std_type"].apply(get_std_value)
 
         # Return the default value (assume that broadcasting is handled by the caller / numpy)
         if default is None:
