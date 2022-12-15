@@ -35,7 +35,7 @@ def load_and_convert_pp_data() -> Tuple[SingleDataset, ExtraInfoLookup]:
 @lru_cache
 def load_validation_data() -> Tuple[SingleDataset, ExtraInfoLookup]:
     """
-    Read the excel file and do the conversion
+    Load the validation data from the json file
     """
     data, extra_info = load_json_single_dataset(VALIDATION_FILE)
     return data, extra_info
@@ -44,7 +44,7 @@ def load_validation_data() -> Tuple[SingleDataset, ExtraInfoLookup]:
 @pytest.fixture
 def input_data() -> Tuple[SingleDataset, SingleDataset]:
     """
-    Read the excel file and do the conversion
+    Load the pandapower network and the json file, and return the input_data
     """
     actual, _ = load_and_convert_pp_data()
     expected, _ = load_validation_data()
@@ -54,7 +54,7 @@ def input_data() -> Tuple[SingleDataset, SingleDataset]:
 @pytest.fixture
 def extra_info() -> Tuple[ExtraInfoLookup, ExtraInfoLookup]:
     """
-    Read the excel file and do the conversion
+    Load the pandapower network and the json file, and return the extra_info
     """
     _, actual = load_and_convert_pp_data()
     _, expected = load_validation_data()

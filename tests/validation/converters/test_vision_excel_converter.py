@@ -37,7 +37,7 @@ def load_and_convert_excel_file(language: str) -> Tuple[SingleDataset, ExtraInfo
 @lru_cache
 def load_validation_data(language: str) -> Tuple[SingleDataset, ExtraInfoLookup]:
     """
-    Read the excel file and do the conversion
+    Load the validation data from the json file
     """
     validation_file = Path(str(VALIDATION_FILE).format(language=language))
     data, extra_info = load_json_single_dataset(validation_file)
@@ -47,7 +47,7 @@ def load_validation_data(language: str) -> Tuple[SingleDataset, ExtraInfoLookup]
 @pytest.fixture
 def input_data(request) -> Tuple[SingleDataset, SingleDataset]:
     """
-    Read the excel file and do the conversion
+    Read the excel file and the json file, and return the input_data
     """
     actual, _ = load_and_convert_excel_file(language=request.param)
     expected, _ = load_validation_data(language=request.param)
@@ -57,7 +57,7 @@ def input_data(request) -> Tuple[SingleDataset, SingleDataset]:
 @pytest.fixture
 def extra_info(request) -> Tuple[ExtraInfoLookup, ExtraInfoLookup]:
     """
-    Read the excel file and do the conversion
+    Read the excel file and the json file, and return the extra_info
     """
     _, actual = load_and_convert_excel_file(language=request.param)
     _, expected = load_validation_data(language=request.param)
