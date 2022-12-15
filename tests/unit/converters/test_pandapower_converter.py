@@ -11,7 +11,7 @@ import pandas as pd
 import pytest
 from power_grid_model import WindingType
 from power_grid_model.data_types import SingleDataset
-from power_grid_model.utils import import_input_data
+from power_grid_model.utils import import_json_data
 
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter, PandaPowerData
 from power_grid_model_io.data_types import ExtraInfoLookup
@@ -30,7 +30,7 @@ def pp_example_simple() -> Tuple[PandaPowerData, float]:
 
 @pytest.fixture
 def pgm_example_simple() -> SingleDataset:
-    return import_input_data(DATA_DIR / "pandapower" / "input_data.json")
+    return import_json_data(DATA_DIR / "pandapower" / "pgm_input_data.json", data_type="input", ignore_extra=True)
 
 
 def _generate_ids(*args):
@@ -269,7 +269,7 @@ def test_create_pgm_input_sources(pp_example_simple: Tuple[PandaPowerData, float
     converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
     converter.pp_data = pp_example_simple[0]
     converter.idx = {"bus": pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
-    converter.next_idx = 6
+    converter.next_idx = 7
 
     # Act
     converter._create_pgm_input_sources()
@@ -283,7 +283,7 @@ def test_create_pgm_input_sym_loads(pp_example_simple: Tuple[PandaPowerData, flo
     converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
     converter.pp_data = pp_example_simple[0]
     converter.idx = {"bus": pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
-    converter.next_idx = 7
+    converter.next_idx = 8
 
     # Act
     converter._create_pgm_input_sym_loads()
@@ -299,7 +299,7 @@ def test_create_pgm_input_transformers(
     converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
     converter.pp_data = pp_example_simple[0]
     converter.idx = {"bus": pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
-    converter.next_idx = 10
+    converter.next_idx = 12
 
     # Act
     converter._create_pgm_input_transformers()
@@ -327,7 +327,7 @@ def test_create_pgm_input_sym_gens(pp_example_simple: Tuple[PandaPowerData, floa
     converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
     converter.pp_data = pp_example_simple[0]
     converter.idx = {"bus": pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
-    converter.next_idx = 12
+    converter.next_idx = 13
 
     # Act
     converter._create_pgm_input_sym_gens()
@@ -343,7 +343,7 @@ def test_create_pgm_input_three_winding_transformers(
     converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
     converter.pp_data = pp_example_simple[0]
     converter.idx = {"bus": pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
-    converter.next_idx = 13
+    converter.next_idx = 14
 
     # Act
     converter._create_pgm_input_three_winding_transformers()
@@ -359,7 +359,7 @@ def test_create_pgm_input_links(pp_example_simple: Tuple[PandaPowerData, float],
     converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
     converter.pp_data = pp_example_simple[0]
     converter.idx = {"bus": pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
-    converter.next_idx = 14
+    converter.next_idx = 15
 
     # Act
     converter._create_pgm_input_links()
