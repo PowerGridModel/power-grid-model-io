@@ -60,11 +60,6 @@ def converter() -> PandaPowerConverter:
 
 
 @pytest.fixture
-def zero_pp_objs() -> MockDf:
-    return MockDf(0)
-
-
-@pytest.fixture
 def two_pp_objs() -> MockDf:
     return MockDf(2)
 
@@ -96,6 +91,7 @@ def test_parse_data__extra_info(create_input_data_mock: MagicMock):
 
     def create_input_data():
         converter.idx_lookup[("bus", None)] = pd.Series([101, 102, 103], index=[0, 1, 2])
+        converter.idx_lookup[("load", "const_current")] = pd.Series([201, 202, 203], index=[3, 4, 5])
 
     create_input_data_mock.side_effect = create_input_data
 
@@ -104,10 +100,13 @@ def test_parse_data__extra_info(create_input_data_mock: MagicMock):
     converter._parse_data(data={}, data_type="input", extra_info=extra_info)
 
     # Assert
-    assert len(extra_info) == 3
+    assert len(extra_info) == 6
     assert extra_info[0] == {"id_reference": {"table": "bus", "index": 101}}
     assert extra_info[1] == {"id_reference": {"table": "bus", "index": 102}}
     assert extra_info[2] == {"id_reference": {"table": "bus", "index": 103}}
+    assert extra_info[3] == {"id_reference": {"table": "load", "name": "const_current", "index": 201}}
+    assert extra_info[4] == {"id_reference": {"table": "load", "name": "const_current", "index": 202}}
+    assert extra_info[5] == {"id_reference": {"table": "load", "name": "const_current", "index": 203}}
 
 
 def test_parse_data__update_data():
@@ -150,18 +149,25 @@ def test_create_input_data():
 
 @pytest.mark.parametrize(
     ("create_fn", "table"),
-    [(PandaPowerConverter._create_pgm_input_nodes, "bus"), (PandaPowerConverter._create_pgm_input_lines, "line")],
+    [
+        (PandaPowerConverter._create_pgm_input_nodes, "bus"),
+        (PandaPowerConverter._create_pgm_input_lines, "line"),
+        (PandaPowerConverter._create_pgm_input_sources, "ext_grid"),
+        (PandaPowerConverter._create_pgm_input_shunts, "shunt"),
+        (PandaPowerConverter._create_pgm_input_sym_gens, "sgen"),
+        (PandaPowerConverter._create_pgm_input_sym_loads, "load"),
+        (PandaPowerConverter._create_pgm_input_transformers, "trafo"),
+        (PandaPowerConverter._create_pgm_input_three_winding_transformers, "trafo3w"),
+        (PandaPowerConverter._create_pgm_input_links, "switch"),
+    ],
 )
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_object__empty(
-    mock_init_array: MagicMock,
-    create_fn: Callable[[PandaPowerConverter], None],
-    table: str,
-    zero_pp_objs: MagicMock,
+    mock_init_array: MagicMock, create_fn: Callable[[PandaPowerConverter], None], table: str
 ):
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_data[table] = zero_pp_objs  # type: ignore
+    converter.pp_data[table] = pd.DataFrame()  # type: ignore
 
     # Act
     create_fn(converter)
@@ -702,15 +708,21 @@ def test_get_trafo3w_switch_states(mock_get_individual_switch_states: MagicMock)
 def test_lookup_id():
     # Arrange
     converter = PandaPowerConverter()
-    converter.idx_lookup = {("line", None): pd.Series([0, 1, 2, 3, 4], index=[21, 345, 0, 3, 15])}
+    converter.idx_lookup = {
+        ("line", None): pd.Series([0, 1, 2, 3, 4], index=[21, 345, 0, 3, 15]),
+        ("load", "const_current"): pd.Series([5, 6, 7, 8, 9], index=[543, 14, 34, 48, 4]),
+    }
 
-    expected_id = {"table": "line", "index": 4}
+    expected_line = {"table": "line", "index": 4}
+    expected_load = {"table": "load", "name": "const_current", "index": 8}
 
     # Act
-    actual_id = converter.lookup_id(15)
+    actual_line = converter.lookup_id(15)
+    actual_load = converter.lookup_id(48)
 
     # Assert
-    np.testing.assert_array_equal(actual_id, expected_id)
+    np.testing.assert_array_equal(actual_line, expected_line)
+    np.testing.assert_array_equal(actual_load, expected_load)
 
 
 def test_lookup_id__value_error():
