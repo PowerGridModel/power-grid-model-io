@@ -190,3 +190,5 @@ def compare_extra_info(actual: ExtraInfoLookup, expected: ExtraInfoLookup, compo
                 errors.append(
                     f"Expected extra info '{key}' for {component} #{obj_id} to be {value}, " f"but it is {act[key]}."
                 )
+
+    return errors

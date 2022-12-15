@@ -99,6 +99,8 @@ def test_extra_info(extra_info: Tuple[ExtraInfoLookup, ExtraInfoLookup], compone
     actual, expected = extra_info
 
     # Assert
+    print(actual)
+    print(expected)
     errors = compare_extra_info(actual=actual, expected=expected, component=component, obj_ids=obj_ids)
 
     # Raise a value error, containing all the errors at once

@@ -19,9 +19,9 @@
     ],
   "sym_load":
     [
-      {"id": 8, "node": 2, "status": 1, "type": 0, "p_specified": 575000.0, "q_specified": 55200.0, "id_reference": {"table": "sym_load_const_power", "index": 101}},
-      {"id": 9, "node": 2, "status": 1, "type": 1, "p_specified": 1275000.0, "q_specified": 122400.0, "id_reference": {"table": "sym_load_const_impedance", "index": 101}},
-      {"id": 10, "node": 2, "status": 1, "type": 2, "p_specified": 650000.0, "q_specified": 62400.0, "id_reference": {"table": "sym_load_const_current", "index": 101}}
+      {"id": 8, "node": 2, "status": 1, "type": 0, "p_specified": 575000.0, "q_specified": 55200.0, "id_reference": {"table": "load", "name": "const_power", "index": 101}},
+      {"id": 9, "node": 2, "status": 1, "type": 1, "p_specified": 1275000.0, "q_specified": 122400.0, "id_reference": {"table": "load", "name": "const_impedance", "index": 101}},
+      {"id": 10, "node": 2, "status": 1, "type": 2, "p_specified": 650000.0, "q_specified": 62400.0, "id_reference": {"table": "load", "name": "const_current", "index": 101}}
     ],
   "shunt":
     [
@@ -42,6 +42,6 @@
     ],
   "link":
     [
-      {"id": 15, "from_node": 0, "to_node": 5, "from_status": 1, "to_status": 1, "id_reference": {"table": "b2b-switch", "index": 3021}}
+      {"id": 15, "from_node": 0, "to_node": 5, "from_status": 1, "to_status": 1, "id_reference": {"table": "switch", "name": "bus_to_bus","index": 3021}}
     ]
 }
