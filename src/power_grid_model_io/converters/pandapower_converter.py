@@ -155,9 +155,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sources["u_ref"] = self._get_pp_attr("ext_grid", "vm_pu")
         pgm_sources["rx_ratio"] = self._get_pp_attr("ext_grid", "rx_max")
         pgm_sources["u_ref_angle"] = self._get_pp_attr("ext_grid", "va_degree") * (np.pi / 180)
-
-        if "s_sc_max_mva" in pp_ext_grid:
-            pgm_sources["sk"] = self._get_pp_attr("ext_grid", "s_sc_max_mva") * 1e6
+        pgm_sources["sk"] = self._get_pp_attr("ext_grid", "s_sc_max_mva", np.nan) * 1e6
 
         self.pgm_data["source"] = pgm_sources
 
