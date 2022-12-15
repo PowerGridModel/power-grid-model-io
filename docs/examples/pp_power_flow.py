@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model IO project <dynamic.grid.calculation@alliander.com>
+# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
 
@@ -19,7 +19,7 @@ structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(logging.
 pp_net = pandapower.networks.example_simple()
 
 # Convert
-pp_converter = PandaPowerConverter(std_types=pp_net._std_types)
+pp_converter = PandaPowerConverter(std_types=pp_net.std_types)
 input_data, extra_info = pp_converter.load_input_data(pp_net)
 
 # Validate and display validation results
