@@ -19,7 +19,7 @@ structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(logging.
 pp_net = pandapower.networks.example_simple()
 
 # Convert
-pp_converter = PandaPowerConverter(std_types=pp_net.std_types)
+pp_converter = PandaPowerConverter(std_types=pp_net._std_types)
 input_data, extra_info = pp_converter.load_input_data(pp_net)
 
 # Validate and display validation results
