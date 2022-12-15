@@ -570,7 +570,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                     return default
                 raise KeyError(f"No '{attribute}' value for '{table}' with std_type '{std_type_name}'.")
 
-            return pp_component_data.apply(get_std_value)
+            return pp_component_data["std_type"].apply(get_std_value)
 
         # Return the default value (assume that broadcasting is handled by the caller / numpy)
         if default is None:
