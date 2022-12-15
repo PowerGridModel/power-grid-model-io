@@ -417,7 +417,7 @@ grid:
           key:
             Number: Node.Number
       status: Switch state
-      type: 1
+      type: 0
       p_specified:
         power_grid_model_io.filters.value_or_default:
           - Pref

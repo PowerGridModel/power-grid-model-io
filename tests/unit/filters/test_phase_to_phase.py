@@ -20,8 +20,8 @@ from power_grid_model_io.filters.phase_to_phase import (
     ("i_0", "p_0", "s_nom", "u_nom", "expected"),
     [
         (float("nan"), float("nan"), float("nan"), float("nan"), float("nan")),
-        (5.0, 1000.0, 100000.0, 400.0, 0.011547005383792516),
-        (5.0, 2000.0, 100000.0, 400.0, 0.02),
+        (5.0, 1000.0, 100000.0, 400.0, 0.0346410161513775),
+        (5.0, 4000.0, 100000.0, 400.0, 0.04),
     ],
 )
 def test_relative_no_load_current(i_0: float, p_0: float, s_nom: float, u_nom: float, expected: float):
@@ -51,14 +51,14 @@ def test_reactive_power(p: float, cos_phi: float, expected: float):
     [
         (0.0, 0.0),
         (1.5, 0.0),
-        (3.0, 0.0),  # cut-in
-        (8.5, 125000.0),
-        (14.0, 1000000.0),  # nominal
-        (19.5, 1000000.0),
-        (25.0, 1000000.0),  # cutting-out
-        (27.5, 500000.0),
-        (30.0, 0.0),  # cut-out
-        (100.0, 0.0),
+        (2.56385179, 0.0),  # cut-in
+        (7.26424673, 125000.0),
+        (11.96464167, 1000000.0),  # nominal
+        (16.23772797, 1000000.0),
+        (21.36543155, 1000000.0),  # cutting-out
+        (23.5019747, 500000.0),
+        (25.63851786, 0.0),  # cut-out
+        (85.46172618, 0.0),
     ],
 )
 def test_power_wind_speed(wind_speed, expected):
