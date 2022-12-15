@@ -40,7 +40,7 @@ def power_wind_speed(  # pylint: disable=too-many-arguments
     nominal_wind_speed_m_s: float = 14.0,
     cutting_out_wind_speed_m_s: float = 25.0,
     cut_out_wind_speed_m_s: float = 30.0,
-    axis_height: float = 30.0
+    axis_height: float = 30.0,
 ) -> float:
     """
     Estimate p_ref based on p_nom and wind_speed.
@@ -49,7 +49,7 @@ def power_wind_speed(  # pylint: disable=too-many-arguments
     """
 
     # Calculate wind speed at the axis height
-    wind_speed_m_s = wind_speed_10_m_s * (axis_height/10) ** 0.143
+    wind_speed_m_s = wind_speed_10_m_s * (axis_height / 10) ** 0.143
 
     # At a wind speed below cut-in, the power is zero.
     if wind_speed_m_s < cut_in_wind_speed_m_s:
