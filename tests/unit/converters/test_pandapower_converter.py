@@ -682,6 +682,15 @@ def test_get_switch_states_trafos(mock_get_individual_switch_states: MagicMock):
     assert len(mock_get_individual_switch_states.call_args_list) == 2
 
 
+def test_get_switch_states__exception():
+    # Arrange
+    converter = PandaPowerConverter()
+
+    # Act / Assert
+    with pytest.raises(KeyError, match=r"link"):
+        converter.get_switch_states("link")
+
+
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter.get_individual_switch_states")
 def test_get_trafo3w_switch_states(mock_get_individual_switch_states: MagicMock):
     # Arrange
