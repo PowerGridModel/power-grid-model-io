@@ -6,7 +6,7 @@ Panda Power Converter
 """
 import re
 from functools import lru_cache
-from typing import Dict, Mapping, Optional, Union
+from typing import Dict, Mapping, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -37,8 +37,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self.system_frequency: float = system_frequency
         self.pp_data: PandaPowerData = {}
         self.pgm_data: Dataset = {}
-        self.idx: Dict[str, pd.Series] = {}
-        self.idx_lookup: Dict[str, pd.Series] = {}
+        self.idx: Dict[Tuple[str, Optional[str]], pd.Series] = {}
+        self.idx_lookup: Dict[Tuple[str, Optional[str]], pd.Series] = {}
         self.next_idx = 0
 
     def _parse_data(
@@ -60,9 +60,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         # Construct extra_info
         if extra_info is not None:
-            for pp_table, indices in self.idx_lookup.items():
+            for (pp_table, name), indices in self.idx_lookup.items():
                 for pgm_idx, pp_idx in zip(indices.index, indices):
-                    extra_info[pgm_idx] = {"id_reference": {"table": pp_table, "index": pp_idx}}
+                    if name:
+                        extra_info[pgm_idx] = {"id_reference": {"table": pp_table, "name": name, "index": pp_idx}}
+                    else:
+                        extra_info[pgm_idx] = {"id_reference": {"table": pp_table, "index": pp_idx}}
 
         return self.pgm_data
 
@@ -216,21 +219,21 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         )
         const_p_multiplier = (1e6 - const_i_multiplier - const_z_multiplier) * pp_loads["scaling"]
 
-        pgm_sym_loads["id"][:n_loads] = self._generate_ids("sym_load_const_power", pp_loads.index)
+        pgm_sym_loads["id"][:n_loads] = self._generate_ids("load", pp_loads.index, name="const_power")
         pgm_sym_loads["node"][:n_loads] = self._get_ids("bus", pp_loads["bus"])
         pgm_sym_loads["status"][:n_loads] = self._get_pp_attr("load", "in_service")
         pgm_sym_loads["type"][:n_loads] = LoadGenType.const_power
         pgm_sym_loads["p_specified"][:n_loads] = const_p_multiplier * self._get_pp_attr("load", "p_mw")
         pgm_sym_loads["q_specified"][:n_loads] = const_p_multiplier * self._get_pp_attr("load", "q_mvar")
 
-        pgm_sym_loads["id"][n_loads : 2 * n_loads] = self._generate_ids("sym_load_const_impedance", pp_loads.index)
+        pgm_sym_loads["id"][n_loads : 2 * n_loads] = self._generate_ids("load", pp_loads.index, name="const_impedance")
         pgm_sym_loads["node"][n_loads : 2 * n_loads] = self._get_ids("bus", pp_loads["bus"])
         pgm_sym_loads["status"][n_loads : 2 * n_loads] = self._get_pp_attr("load", "in_service")
         pgm_sym_loads["type"][n_loads : 2 * n_loads] = LoadGenType.const_impedance
         pgm_sym_loads["p_specified"][n_loads : 2 * n_loads] = const_z_multiplier * self._get_pp_attr("load", "p_mw")
         pgm_sym_loads["q_specified"][n_loads : 2 * n_loads] = const_z_multiplier * self._get_pp_attr("load", "q_mvar")
 
-        pgm_sym_loads["id"][-n_loads:] = self._generate_ids("sym_load_const_current", pp_loads.index)
+        pgm_sym_loads["id"][-n_loads:] = self._generate_ids("load", pp_loads.index, name="const_current")
         pgm_sym_loads["node"][-n_loads:] = self._get_ids("bus", pp_loads["bus"])
         pgm_sym_loads["status"][-n_loads:] = self._get_pp_attr("load", "in_service")
         pgm_sym_loads["type"][-n_loads:] = LoadGenType.const_current
@@ -365,7 +368,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # bus, that will result in an error
 
         pgm_links = initialize_array(data_type="input", component_type="link", shape=len(pp_switches))
-        pgm_links["id"] = self._generate_ids("b2b-switch", pp_switches.index)
+        pgm_links["id"] = self._generate_ids("switch", pp_switches.index, name="bus_to_bus")
         pgm_links["from_node"] = self._get_ids("bus", pp_switches["bus"])
         pgm_links["to_node"] = self._get_ids("bus", pp_switches["element"])
         pgm_links["from_status"] = self._get_pp_attr("switch_b2b", "closed")
@@ -373,19 +376,21 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pgm_data["link"] = pgm_links
 
-    def _generate_ids(self, pp_table: str, pp_idx: pd.Index) -> np.arange:
-        assert pp_table not in self.idx_lookup
+    def _generate_ids(self, pp_table: str, pp_idx: pd.Index, name: Optional[str] = None) -> np.arange:
+        key = (pp_table, name)
+        assert key not in self.idx_lookup
         n_objects = len(pp_idx)
         pgm_idx = np.arange(start=self.next_idx, stop=self.next_idx + n_objects, dtype=np.int32)
-        self.idx[pp_table] = pd.Series(pgm_idx, index=pp_idx)
-        self.idx_lookup[pp_table] = pd.Series(pp_idx, index=pgm_idx)
+        self.idx[key] = pd.Series(pgm_idx, index=pp_idx)
+        self.idx_lookup[key] = pd.Series(pp_idx, index=pgm_idx)
         self.next_idx += n_objects
         return pgm_idx
 
-    def _get_ids(self, pp_table: str, pp_idx: pd.Series) -> pd.Series:
-        if pp_table not in self.idx:
-            raise KeyError(f"No indexes have been created for '{pp_table}'!")
-        return self.idx[pp_table][pp_idx]
+    def _get_ids(self, pp_table: str, pp_idx: pd.Series, name: Optional[str] = None) -> pd.Series:
+        key = (pp_table, name)
+        if key not in self.idx:
+            raise KeyError(f"No indexes have been created for '{pp_table}' (name={name})!")
+        return self.idx[key][pp_idx]
 
     @staticmethod
     def _get_tap_size(pp_trafo: pd.DataFrame) -> np.ndarray:
@@ -577,7 +582,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             raise KeyError(f"No '{attribute}' value for '{table}'.")
         return default
 
-    def get_id(self, pp_table: str, pp_idx: int) -> int:
+    def get_id(self, pp_table: str, pp_idx: int, name: Optional[str] = None) -> int:
         """
         Get a the numerical ID previously associated with the supplied table / index combination
 
@@ -587,7 +592,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         Returns: The associated id
         """
-        return self.idx[pp_table][pp_idx]
+        return self.idx[(pp_table, name)][pp_idx]
 
     def lookup_id(self, pgm_id: int) -> Dict[str, Union[str, int]]:
         """
@@ -598,7 +603,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         Returns: The original table / index combination
         """
-        for key, indices in self.idx_lookup.items():
+        for (table, name), indices in self.idx_lookup.items():
             if pgm_id in indices:
-                return {"table": key, "index": indices[pgm_id]}
+                if name:
+                    return {"table": table, "name": name, "index": indices[pgm_id]}
+                return {"table": table, "index": indices[pgm_id]}
         raise KeyError(pgm_id)
