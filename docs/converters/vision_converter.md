@@ -20,5 +20,5 @@ When we make conversion to PGM, the input data attributes of PGM for loads like 
 
 ## Unsupported attributes
 
-power-grid-model currently does not support PV bus and related corresponding features. 
-- Currently, the efficiency type of PVs(Photovoltaics) element is also unsupported for all types except the `100%` type.
+- power-grid-model currently does not support PV bus and related corresponding features. Currently, the efficiency type of PVs(Photovoltaics) element is also unsupported for all types except the `100%` type.
+- The conversions for load behaviors of `industry`, `residential`, `business` are not yet modelled
