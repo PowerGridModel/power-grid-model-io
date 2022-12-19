@@ -17,7 +17,10 @@ So we may observe a variation in power inflow/outflow result (ie. P,Q and S) due
 When we make conversion to PGM, the input data attributes of PGM for loads like `p_specified` and `q_specified` are modified as per simultaneity. The resulting loading then takes simultaneity into account. 
 **Hence, the loading of such elements may not correspond to the load rate obtained in vision**
 
-## Unsupported attributes
+## Modelling differences or unsupported attributes
+
+Some components are yet to be modelled for conversions because they might not have a straightforward mapping in power-grid-model.
 
 - power-grid-model currently does not support PV bus and related corresponding features. Currently, the efficiency type of PVs(Photovoltaics) element is also unsupported for all types except the `100%` type.
 - The conversions for load behaviors of `industry`, `residential`, `business` are not yet modelled
+- The source bus in PGM is mapped with a source impedance. `Sk"nom`, `R/X` and `Z0/Z1` are the attributes used in modelling source impedance. In vision, these attributes are used only for short circuit calculations
