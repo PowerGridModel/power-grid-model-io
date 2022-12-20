@@ -288,6 +288,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_trafo3w.empty:
             return
 
+        sn_hv_mva = self._get_pp_attr("trafo3w", "sn_hv_mva")
+        sn_mv_mva = self._get_pp_attr("trafo3w", "sn_mv_mva")
+        sn_lv_mva = self._get_pp_attr("trafo3w", "sn_lv_mva")
+
         switch_states = self.get_trafo3w_switch_states(pp_trafo3w)
         winding_type = self.get_trafo3w_winding_types()
 
@@ -312,21 +316,15 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_3wtransformers["uk_23"] = self._get_pp_attr("trafo3w", "vk_mv_percent") * 1e-2
 
         pgm_3wtransformers["pk_12"] = (
-            self._get_pp_attr("trafo3w", "vkr_hv_percent")
-            * (pp_trafo3w[["sn_hv_mva", "sn_mv_mva"]].min(axis=1))
-            * (1e-2 * 1e6)
+            self._get_pp_attr("trafo3w", "vkr_hv_percent") * np.minimum(sn_hv_mva, sn_mv_mva) * (1e-2 * 1e6)
         )
 
         pgm_3wtransformers["pk_13"] = (
-            self._get_pp_attr("trafo3w", "vkr_lv_percent")
-            * (pp_trafo3w[["sn_hv_mva", "sn_lv_mva"]].min(axis=1))
-            * (1e-2 * 1e6)
+            self._get_pp_attr("trafo3w", "vkr_lv_percent") * np.minimum(sn_hv_mva, sn_lv_mva) * (1e-2 * 1e6)
         )
 
         pgm_3wtransformers["pk_23"] = (
-            self._get_pp_attr("trafo3w", "vkr_mv_percent")
-            * (pp_trafo3w[["sn_mv_mva", "sn_lv_mva"]].min(axis=1))
-            * (1e-2 * 1e6)
+            self._get_pp_attr("trafo3w", "vkr_mv_percent") * np.minimum(sn_mv_mva, sn_lv_mva) * (1e-2 * 1e6)
         )
 
         pgm_3wtransformers["i0"] = self._get_pp_attr("trafo3w", "i0_percent") * 1e-2
@@ -339,7 +337,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_3wtransformers["tap_pos"] = self._get_pp_attr("trafo3w", "tap_pos")
         pgm_3wtransformers["tap_side"] = self._get_3wtransformer_tap_side(
             pd.Series(self._get_pp_attr("trafo3w", "tap_side"))
-        )  # Check this one out
+        )
         pgm_3wtransformers["tap_min"] = self._get_pp_attr("trafo3w", "tap_min")
         pgm_3wtransformers["tap_max"] = self._get_pp_attr("trafo3w", "tap_max")
         pgm_3wtransformers["tap_nom"] = self._get_pp_attr("trafo3w", "tap_neutral")
