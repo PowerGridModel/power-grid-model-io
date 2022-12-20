@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 import numpy as np
 from power_grid_model.enum import WindingType
-from pytest import approx, mark, raises
+from pytest import approx, mark, param, raises
 
 from power_grid_model_io.functions.phase_to_phase import (
     get_clock,
@@ -47,22 +47,27 @@ def test_reactive_power(p: float, cos_phi: float, expected: float):
 
 
 @mark.parametrize(
-    ("wind_speed", "expected"),
+    ("kwargs", "expected"),
     [
-        (0.0, 0.0),
-        (1.5, 0.0),
-        (2.56385179, 0.0),  # cut-in
-        (7.26424673, 125000.0),
-        (11.96464167, 1000000.0),  # nominal
-        (16.23772797, 1000000.0),
-        (21.36543155, 1000000.0),  # cutting-out
-        (23.5019747, 500000.0),
-        (25.63851786, 0.0),  # cut-out
-        (85.46172618, 0.0),
+        param({"wind_speed": 0.0, "axis_height": 10.0}, 0.0, id="no-wind"),
+        param({"wind_speed": 1.5, "axis_height": 10.0}, 0.0, id="half-way-cut-in"),
+        param({"wind_speed": 3.0, "axis_height": 10.0}, 0.0, id="cut-in"),
+        param({"wind_speed": 8.5, "axis_height": 10.0}, 125000.0, id="cut-in-to-nominal"),
+        param({"wind_speed": 14.0, "axis_height": 10.0}, 1000000.0, id="nominal"),  # nominal
+        param({"wind_speed": 19.5, "axis_height": 10.0}, 1000000.0, id="nominal-to-cutting-out"),
+        param({"wind_speed": 25.0, "axis_height": 10.0}, 1000000.0, id="cutting-out"),
+        param({"wind_speed": 27.5, "axis_height": 10.0}, 500000.0, id="cutting-out-to-cut-out"),
+        param({"wind_speed": 30.0, "axis_height": 10.0}, 0.0, id="cut-out"),
+        param({"wind_speed": 50.0, "axis_height": 10.0}, 0.0, id="more-than-cut-out"),
+        # 30 meters high
+        param({"wind_speed": 3.0, "axis_height": 30.0}, 99.86406950142123, id="cut-in-at-30m"),
+        param({"wind_speed": 20.0, "axis_height": 30.0}, 1000000.0, id="nominal-at-30m"),
+        param({"wind_speed": 25.0, "axis_height": 30.0}, 149427.79246831674, id="cutting-out-at-30m"),
+        param({"wind_speed": 25.63851786, "axis_height": 30.0}, 0.0, id="cut-out-at-30m"),
     ],
 )
-def test_power_wind_speed(wind_speed, expected):
-    assert power_wind_speed(1e6, wind_speed) == approx(expected)
+def test_power_wind_speed(kwargs, expected):
+    assert power_wind_speed(p_nom=1e6, **kwargs) == approx(expected)
 
 
 @mark.parametrize(
