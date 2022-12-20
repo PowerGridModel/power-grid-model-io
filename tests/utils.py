@@ -1,12 +1,23 @@
 # SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
+
 import sys
 from typing import Any, Dict, List, Optional
+
+import numpy as np
+import pandas as pd
 
 
 def _array_in_array(needle: Dict[str, Any], data: Dict[str, Any]) -> bool:
     return all(item in data.items() for item in needle.items())
+
+
+def assert_struct_array_equal(actual: np.ndarray, expected: np.ndarray):
+    """
+    Compare two structured numpy arrays by converting them to pandas DataFrames first
+    """
+    pd.testing.assert_frame_equal(pd.DataFrame(actual), pd.DataFrame(expected))
 
 
 def assert_log_exists(
