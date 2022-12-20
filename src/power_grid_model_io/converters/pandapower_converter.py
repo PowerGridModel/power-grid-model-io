@@ -470,9 +470,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         component = self.pp_data[pp_table]
         component["index"] = component.index
+
         # Select the appropriate switches and columns
         pp_switches = self.pp_data["switch"]
-        pp_switches = pp_switches[self._get_pp_attr("switch", "et") == element_type]
+        pp_switches = pp_switches[pp_switches["et"] == element_type]
         pp_switches = pp_switches[["element", "bus", "closed"]]
 
         pp_from_switches = self.get_individual_switch_states(component, pp_switches, bus1)
@@ -492,7 +493,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         # Select the appropriate switches and columns
         pp_switches = self.pp_data["switch"]
-        pp_switches = pp_switches[self._get_pp_attr("switch", "et") == element_type]
+        pp_switches = pp_switches[pp_switches["et"] == element_type]
         pp_switches = pp_switches[["element", "bus", "closed"]]
 
         # Join the switches with the three winding trafo three times, for the hv_bus, mv_bus and once for the lv_bus
