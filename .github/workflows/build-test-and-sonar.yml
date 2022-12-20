@@ -9,6 +9,7 @@ on:
   push:
     branches:
       - main
+      - 'release/**'
   # run pipeline on pull request
   pull_request:
   # Allows you to run this workflow manually from the Actions tab
@@ -17,6 +18,7 @@ on:
 jobs:
 
   build-python:
+    if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch') || !startsWith(github.head_ref,  'release')
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -45,7 +47,7 @@ jobs:
 
   sonar-cloud:
     # only run sonar server in push event or pull request event from own repo
-    if: ${{ (github.event_name == 'push') || (github.event.pull_request.head.repo.owner.login == 'alliander-opensource') }}
+    if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release') && (github.event.pull_request.head.repo.owner.login == 'alliander-opensource'))
     permissions:
       contents: write
     runs-on: ubuntu-latest
