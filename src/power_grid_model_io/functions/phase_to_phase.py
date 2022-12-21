@@ -49,25 +49,25 @@ def power_wind_speed(  # pylint: disable=too-many-arguments
     """
 
     # Calculate wind speed at the axis height
-    wind_speed_height = wind_speed * (axis_height / 10) ** 0.143
+    wind_speed *= (axis_height / 10) ** 0.143
 
     # At a wind speed below cut-in, the power is zero.
-    if wind_speed_height < cut_in_wind_speed:
+    if wind_speed < cut_in_wind_speed:
         return 0.0
 
     # At a wind speed between cut-in and nominal, the power is a third power function of the wind speed.
-    if wind_speed_height < nominal_wind_speed:
-        factor = wind_speed_height - cut_in_wind_speed
+    if wind_speed < nominal_wind_speed:
+        factor = wind_speed - cut_in_wind_speed
         max_factor = nominal_wind_speed - cut_in_wind_speed
         return ((factor / max_factor) ** 3) * p_nom
 
     # At a wind speed between nominal and cutting-out, the power is the nominal power.
-    if wind_speed_height < cutting_out_wind_speed:
+    if wind_speed < cutting_out_wind_speed:
         return p_nom
 
     # At a wind speed between cutting-out and cut-out, the power decreases from nominal to zero.
-    if wind_speed_height < cut_out_wind_speed:
-        factor = wind_speed_height - cutting_out_wind_speed
+    if wind_speed < cut_out_wind_speed:
+        factor = wind_speed - cutting_out_wind_speed
         max_factor = cut_out_wind_speed - cutting_out_wind_speed
         return (1.0 - factor / max_factor) * p_nom
 
