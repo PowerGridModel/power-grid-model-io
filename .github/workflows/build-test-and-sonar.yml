@@ -83,16 +83,22 @@ jobs:
 
   unit-tests:
     needs: build-python
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.9", "3.10", "3.11"]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+
     steps:
 
       - name: Checkout source code
         uses: actions/checkout@v3
 
-      - name: Setup Python 3.10
+      - name: Setup Python ${{ matrix.python }}
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: ${{ matrix.python }}
 
       - name: Load built wheel file
         uses: actions/download-artifact@v3
@@ -108,16 +114,22 @@ jobs:
 
   validation-tests:
     needs: build-python
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.9", "3.10", "3.11"]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+
     steps:
 
       - name: Checkout source code
         uses: actions/checkout@v3
 
-      - name: Setup Python 3.10
+      - name: Setup Python ${{ matrix.python }}
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: ${{ matrix.python }}
 
       - name: Load built wheel file
         uses: actions/download-artifact@v3
