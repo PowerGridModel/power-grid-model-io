@@ -143,11 +143,15 @@ jobs:
       - name: Validation tests
         run: pytest tests/validation --no-cov --verbose
 
+  all-tests:
+    needs:
+      - unit-tests
+      - validation-tests
+
   publish:
     needs:
       - build-python
-      - unit-tests
-      - validation-tests
+      - all-tests
       - sonar-cloud
     if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
     permissions:
