@@ -27,6 +27,6 @@ Some components are yet to be modelled for conversions because they might not ha
 
 - power-grid-model currently does not support PV(Active Power-Voltage) bus and related corresponding features. 
 - Currently, the efficiency type of PVs(Photovoltaics) element is also unsupported for all types except the `100%` type.
-- The conversions for load behaviors of `industry`, `residential`, `business` are not yet modelled
+- The conversions for load behaviors of `industry`, `residential`, `business` are not yet modelled. The load behaviors usually do not create a significant difference in power-flow results for most grids when the voltage at bus is close to 1 p.u. Hence, the conversion of the mentioned load behaviors is approximated to be of `Constant Power` type for now. 
 - The source bus in PGM is mapped with a source impedance. `Sk"nom`, `R/X` and `Z0/Z1` are the attributes used in modelling source impedance. In vision, these attributes are used only for short circuit calculations
 - A minor difference in results is expected since Vision uses a power mismatch in p.u. as convergence criteria whereas power-grid-model uses voltage mismatch.
