@@ -243,7 +243,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pgm_data["sym_load"] = pgm_sym_loads
 
-    def _create_pgm_input_asym_loads(self):
+    def _create_pgm_input_asym_loads(self):  # pragma: no cover
+        # TODO: create unit tests for asym_load conversion
         assert "asym_load" not in self.pgm_data
 
         pp_asym_loads = self.pp_data["asymmetric_load"]
