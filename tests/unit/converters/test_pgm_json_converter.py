@@ -134,7 +134,7 @@ def test_is_batch(
     # Sparse batch dataset
     assert converter._is_batch(pgm_sparse_batch_data)
     # Wrong dataset with both single and batch data
-    combined_input_batch = pgm_input_data | pgm_batch_data
+    combined_input_batch = dict(**pgm_input_data, **pgm_batch_data)
     with pytest.raises(ValueError, match=r"Mixed non-batch data with batch data \(line\)."):
         converter._is_batch(combined_input_batch)
 
