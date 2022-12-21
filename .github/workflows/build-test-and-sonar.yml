@@ -149,7 +149,6 @@ jobs:
       - unit-tests
       - validation-tests
       - sonar-cloud
-    if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
     permissions:
       contents: write
     env:
@@ -169,12 +168,14 @@ jobs:
           path: wheelhouse/
 
       - name: Upload wheels
+        if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
         run: |
           pip install twine
           echo "Publish to PyPI..."
           twine upload --verbose wheelhouse/*
 
       - name: Release
+        if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch')
         uses: softprops/action-gh-release@v1
         with:
           files: |
