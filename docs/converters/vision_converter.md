@@ -19,7 +19,7 @@ When we make conversion to PGM, the input data attributes of PGM for loads like 
 
 ## Voltage angle of buses in symmetric power-flow
 
-Note that vision does not include clock angles of transformer for symmetrical calculations in the result of voltage angles. power-grid-model however does consider them so a direct comparison of results cannot be made in such case.
+Note that vision does not include clock angles of transformer for symmetrical calculations in the result of voltage angles. power-grid-model however does consider them so a direct comparison of angle results needs to be done with this knowledge.
 
 ## Modelling differences or unsupported attributes
 
