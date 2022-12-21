@@ -109,7 +109,7 @@ class TabularConverter(BaseConverter[TabularData]):
         # For each table in the mapping
         for table in self._mapping.tables():
             if table not in data or len(data[table]) == 0:
-                continue
+                continue  # pragma: no cover (bug in python 3.9)
             for component, attributes in self._mapping.instances(table=table):
                 component_data = self._convert_table_to_component(
                     data=data,
