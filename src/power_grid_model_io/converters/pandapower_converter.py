@@ -377,7 +377,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pgm_data["link"] = pgm_links
 
-    def _create_pgm_input_ward(self):
+    def _create_pgm_input_ward(self):  # pragma: no cover
+        # TODO: create unit tests for the function
         pp_wards = self.pp_data["ward"]
 
         if pp_wards.empty:
@@ -386,7 +387,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if len(pp_wards.index) > 0:
             raise NotImplementedError("Ward is not implemented yet!")
 
-    def _create_pgm_input_xward(self):
+    def _create_pgm_input_xward(self):  # pragma: no cover
+        # TODO: create unit tests for the function
         pp_xwards = self.pp_data["xward"]
 
         if pp_xwards.empty:
@@ -395,7 +397,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if len(pp_xwards.index) > 0:
             raise NotImplementedError("Extended Ward is not implemented yet!")
 
-    def _create_pgm_input_motor(self):
+    def _create_pgm_input_motor(self):  # pragma: no cover
+        # TODO: create unit tests for the function
         pp_motors = self.pp_data["motor"]
 
         if pp_motors.empty:
