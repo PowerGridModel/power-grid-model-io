@@ -258,15 +258,21 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_asym_loads["id"] = self._generate_ids("asymmetric_load", pp_asym_loads.index)
         pgm_asym_loads["node"] = self._get_ids("bus", pp_asym_loads["bus"])
         pgm_asym_loads["status"] = self._get_pp_attr("asymmetric_load", "in_service")
-        pgm_asym_loads["p_specified"] = np.array(
-            self._get_pp_attr("asymmetric_load", "p_a_mw") * multiplier,
-            self._get_pp_attr("asymmetric_load", "p_b_mw") * multiplier,
-            self._get_pp_attr("asymmetric_load", "p_c_mw") * multiplier,
+        pgm_asym_loads["p_specified"] = (
+            np.array(
+                self._get_pp_attr("asymmetric_load", "p_a_mw"),
+                self._get_pp_attr("asymmetric_load", "p_b_mw"),
+                self._get_pp_attr("asymmetric_load", "p_c_mw"),
+            )
+            * multiplier
         )
-        pgm_asym_loads["q_specified"] = np.array(
-            self._get_pp_attr("asymmetric_load", "q_a_mvar") * multiplier,
-            self._get_pp_attr("asymmetric_load", "q_b_mvar") * multiplier,
-            self._get_pp_attr("asymmetric_load", "q_c_mvar") * multiplier,
+        pgm_asym_loads["q_specified"] = (
+            np.array(
+                self._get_pp_attr("asymmetric_load", "q_a_mvar"),
+                self._get_pp_attr("asymmetric_load", "q_b_mvar"),
+                self._get_pp_attr("asymmetric_load", "q_c_mvar"),
+            )
+            * multiplier
         )
         pgm_asym_loads["type"] = LoadGenType.const_power
 
