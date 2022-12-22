@@ -98,6 +98,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._create_pgm_input_lines()
         self._create_pgm_input_sources()
         self._create_pgm_input_sym_loads()
+        self._create_pgm_input_asym_loads()
         self._create_pgm_input_shunts()
         self._create_pgm_input_transformers()
         self._create_pgm_input_sym_gens()
@@ -348,6 +349,42 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_loads["q_specified"][-n_loads:] = const_i_multiplier * self._get_pp_attr("load", "q_mvar")
 
         self.pgm_data["sym_load"] = pgm_sym_loads
+
+    def _create_pgm_input_asym_loads(self):  # pragma: no cover
+        # TODO: create unit tests for asym_load conversion
+        assert "asym_load" not in self.pgm_data
+
+        pp_asym_loads = self.pp_data["asymmetric_load"]
+
+        if pp_asym_loads.empty:
+            return
+
+        scaling = self._get_pp_attr("asymmetric_load", "scaling")
+        multiplier = 1e6 * scaling
+
+        pgm_asym_loads = initialize_array(data_type="input", component_type="asym_load", shape=len(pp_asym_loads))
+        pgm_asym_loads["id"] = self._generate_ids("asymmetric_load", pp_asym_loads.index)
+        pgm_asym_loads["node"] = self._get_ids("bus", pp_asym_loads["bus"])
+        pgm_asym_loads["status"] = self._get_pp_attr("asymmetric_load", "in_service")
+        pgm_asym_loads["p_specified"] = (
+            np.array(
+                self._get_pp_attr("asymmetric_load", "p_a_mw"),
+                self._get_pp_attr("asymmetric_load", "p_b_mw"),
+                self._get_pp_attr("asymmetric_load", "p_c_mw"),
+            )
+            * multiplier
+        )
+        pgm_asym_loads["q_specified"] = (
+            np.array(
+                self._get_pp_attr("asymmetric_load", "q_a_mvar"),
+                self._get_pp_attr("asymmetric_load", "q_b_mvar"),
+                self._get_pp_attr("asymmetric_load", "q_c_mvar"),
+            )
+            * multiplier
+        )
+        pgm_asym_loads["type"] = LoadGenType.const_power
+
+        self.pgm_data["asym_load"] = pgm_asym_loads
 
     def _create_pgm_input_transformers(self):
         """
