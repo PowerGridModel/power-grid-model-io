@@ -102,8 +102,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._create_pgm_input_shunts()
         self._create_pgm_input_transformers()
         self._create_pgm_input_sym_gens()
+        self._create_pgm_input_asym_gens()
         self._create_pgm_input_three_winding_transformers()
         self._create_pgm_input_links()
+        self._create_pgm_input_ward()
+        self._create_pgm_input_xward()
+        self._create_pgm_input_motor()
 
     def _create_pgm_input_nodes(self):
         """
@@ -251,6 +255,49 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_gens["type"] = LoadGenType.const_power
 
         self.pgm_data["sym_gen"] = pgm_sym_gens
+
+    def _create_pgm_input_asym_gens(self):  # pragma: no cover
+        """
+        This function converts an Asymmetric Static Generator Dataframe of PandaPower to a power-grid-model
+        Asymmetrical Generator input array.
+
+        Returns:
+            returns a power-grid-model structured array for the Asymmetrical Generator component
+        """
+        # TODO: create unit tests for asym_gen conversion
+        assert "asym_gen" not in self.pgm_data
+
+        pp_asym_gens = self.pp_data["asymmetric_sgen"]
+
+        if pp_asym_gens.empty:
+            return
+
+        scaling = self._get_pp_attr("asymmetric_sgen", "scaling")
+        multiplier = 1e6 * scaling
+
+        pgm_asym_gens = initialize_array(data_type="input", component_type="asym_gen", shape=len(pp_asym_gens))
+        pgm_asym_gens["id"] = self._generate_ids("asymmetric_sgen", pp_asym_gens.index)
+        pgm_asym_gens["node"] = self._get_ids("bus", pp_asym_gens["bus"])
+        pgm_asym_gens["status"] = self._get_pp_attr("asymmetric_sgen", "in_service")
+        pgm_asym_gens["p_specified"] = (
+            np.array(
+                self._get_pp_attr("asymmetric_sgen", "p_a_mw"),
+                self._get_pp_attr("asymmetric_sgen", "p_b_mw"),
+                self._get_pp_attr("asymmetric_sgen", "p_c_mw"),
+            )
+            * multiplier
+        )
+        pgm_asym_gens["q_specified"] = (
+            np.array(
+                self._get_pp_attr("asymmetric_sgen", "q_a_mvar"),
+                self._get_pp_attr("asymmetric_sgen", "q_b_mvar"),
+                self._get_pp_attr("asymmetric_sgen", "q_c_mvar"),
+            )
+            * multiplier
+        )
+        pgm_asym_gens["type"] = LoadGenType.const_power
+
+        self.pgm_data["asym_gen"] = pgm_asym_gens
 
     def _create_pgm_input_sym_loads(self):
         """
@@ -491,6 +538,33 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_links["to_status"] = self._get_pp_attr("switch_b2b", "closed")
 
         self.pgm_data["link"] = pgm_links
+
+    def _create_pgm_input_ward(self):  # pragma: no cover
+        # TODO: create unit tests for the function
+        pp_wards = self.pp_data["ward"]
+
+        if pp_wards.empty:
+            return
+
+        raise NotImplementedError("Ward is not implemented yet!")
+
+    def _create_pgm_input_xward(self):  # pragma: no cover
+        # TODO: create unit tests for the function
+        pp_xwards = self.pp_data["xward"]
+
+        if pp_xwards.empty:
+            return
+
+        raise NotImplementedError("Extended Ward is not implemented yet!")
+
+    def _create_pgm_input_motor(self):  # pragma: no cover
+        # TODO: create unit tests for the function
+        pp_motors = self.pp_data["motor"]
+
+        if pp_motors.empty:
+            return
+
+        raise NotImplementedError("Motor is not implemented yet!")
 
     def _generate_ids(self, pp_table: str, pp_idx: pd.Index, name: Optional[str] = None) -> np.arange:
         """
