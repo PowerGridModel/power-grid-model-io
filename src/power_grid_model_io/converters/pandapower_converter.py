@@ -258,9 +258,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Asymmetrical Generator input array.
 
         Returns:
-            returns a power-grid-model structured array for the Symmetrical Generator component
+            returns a power-grid-model structured array for the Asymmetrical Generator component
         """
-        # TODO: create unit tests for asym_load conversion
+        # TODO: create unit tests for asym_gen conversion
         assert "asym_gen" not in self.pgm_data
 
         pp_asym_gens = self.pp_data["asymmetric_sgen"]
