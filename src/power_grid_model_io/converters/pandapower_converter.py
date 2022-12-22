@@ -465,8 +465,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_wards.empty:
             return
 
-        if len(pp_wards.index) > 0:
-            raise NotImplementedError("Ward is not implemented yet!")
+        raise NotImplementedError("Ward is not implemented yet!")
 
     def _create_pgm_input_xward(self):  # pragma: no cover
         # TODO: create unit tests for the function
@@ -475,8 +474,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_xwards.empty:
             return
 
-        if len(pp_xwards.index) > 0:
-            raise NotImplementedError("Extended Ward is not implemented yet!")
+        raise NotImplementedError("Extended Ward is not implemented yet!")
 
     def _create_pgm_input_motor(self):  # pragma: no cover
         # TODO: create unit tests for the function
@@ -485,8 +483,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_motors.empty:
             return
 
-        if len(pp_motors.index) > 0:
-            raise NotImplementedError("Motor is not implemented yet!")
+        raise NotImplementedError("Motor is not implemented yet!")
 
     def _generate_ids(self, pp_table: str, pp_idx: pd.Index, name: Optional[str] = None) -> np.arange:
         """
