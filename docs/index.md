@@ -40,6 +40,7 @@ converters/tabular_converter.md
 :maxdepth: 2
 examples/pgm_json_example.ipynb
 examples/vision_example.ipynb
+examples/pandapower_example.ipynb
 ```
 
 
