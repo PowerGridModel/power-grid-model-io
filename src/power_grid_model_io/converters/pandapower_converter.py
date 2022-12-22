@@ -101,6 +101,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._create_pgm_input_shunts()
         self._create_pgm_input_transformers()
         self._create_pgm_input_sym_gens()
+        self._create_pgm_input_asym_gens()
         self._create_pgm_input_three_winding_transformers()
         self._create_pgm_input_links()
 
@@ -250,6 +251,49 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_gens["type"] = LoadGenType.const_power
 
         self.pgm_data["sym_gen"] = pgm_sym_gens
+
+    def _create_pgm_input_asym_gens(self):  # pragma: no cover
+        """
+        This function converts an Asymmetric Static Generator Dataframe of PandaPower to a power-grid-model
+        Asymmetrical Generator input array.
+
+        Returns:
+            returns a power-grid-model structured array for the Symmetrical Generator component
+        """
+        # TODO: create unit tests for asym_load conversion
+        assert "asym_gen" not in self.pgm_data
+
+        pp_asym_gens = self.pp_data["asymmetric_sgen"]
+
+        if pp_asym_gens.empty:
+            return
+
+        scaling = self._get_pp_attr("asymmetric_sgen", "scaling")
+        multiplier = 1e6 * scaling
+
+        pgm_asym_gens = initialize_array(data_type="input", component_type="asym_gen", shape=len(pp_asym_gens))
+        pgm_asym_gens["id"] = self._generate_ids("asymmetric_sgen", pp_asym_gens.index)
+        pgm_asym_gens["node"] = self._get_ids("bus", pp_asym_gens["bus"])
+        pgm_asym_gens["status"] = self._get_pp_attr("asymmetric_sgen", "in_service")
+        pgm_asym_gens["p_specified"] = (
+            np.array(
+                self._get_pp_attr("asymmetric_sgen", "p_a_mw"),
+                self._get_pp_attr("asymmetric_sgen", "p_b_mw"),
+                self._get_pp_attr("asymmetric_sgen", "p_c_mw"),
+            )
+            * multiplier
+        )
+        pgm_asym_gens["q_specified"] = (
+            np.array(
+                self._get_pp_attr("asymmetric_sgen", "q_a_mvar"),
+                self._get_pp_attr("asymmetric_sgen", "q_b_mvar"),
+                self._get_pp_attr("asymmetric_sgen", "q_c_mvar"),
+            )
+            * multiplier
+        )
+        pgm_asym_gens["type"] = LoadGenType.const_power
+
+        self.pgm_data["asym_gen"] = pgm_asym_gens
 
     def _create_pgm_input_sym_loads(self):
         """
