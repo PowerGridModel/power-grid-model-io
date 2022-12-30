@@ -709,22 +709,28 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self.pp_output_data["trafo3w"] = pp_output_trafos3w
 
     def _pp_loads_output(self):
-        pass
-        # assert "load" not in self.pp_output_data
-        # assert "sym_load" in self.pgm_data
-        #
-        # pgm_input_loads = self.pgm_data["sym_load"]
-        # # load_len =
-        #
-        # pp_output_loads = pd.DataFrame(columns=["p_mw", "q_mvar"])
+        assert "load" not in self.pp_output_data
+        assert "sym_load" in self.pgm_data
 
-        # pp_output_loads["p_mw"] =
+        pgm_output_loads = self.pgm_output_data["sym_load"]
+        load_len = len(pgm_output_loads) / 3
 
-        # total_loads = len()
-        # pgm_data["sym_load"]
-        # sym_load_p_id = self._get_pp_ids("sym_load_const_power", total_loads/3)
-        # sym_load_p = sym_load[]
-        # sym_load_z_id = self._get_pp_ids("sym_load_const_impedance", total_loads[])
+        pp_output_loads = pd.DataFrame(
+            columns=["p_mw", "q_mvar"], index=self._get_pp_ids("three_winding_transformer", pgm_output_loads["id"])
+        )
+
+        pp_output_loads["p_mw"] = (
+            pgm_output_loads["p_specified"][:load_len]
+            + pgm_output_loads["p_specified"][load_len : 2 * load_len]
+            + pgm_output_loads["p_specified"][-load_len:]
+        ) * 1e-6
+        pp_output_loads["q_mvar"] = (
+            pgm_output_loads["q_specified"][:load_len]
+            + pgm_output_loads["q_specified"][load_len : 2 * load_len]
+            + pgm_output_loads["q_specified"][-load_len:]
+        ) * 1e-6
+
+        self.pp_output_data["load"] = pp_output_loads
 
     def _generate_ids(self, pp_table: str, pp_idx: pd.Index, name: Optional[str] = None) -> np.arange:
         key = (pp_table, name)
@@ -742,10 +748,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             raise KeyError(f"No indexes have been created for '{pp_table}' (name={name})!")
         return self.idx[key][pp_idx]
 
-    def _get_pp_ids(self, pp_table: str, pgm_idx: pd.Series) -> pd.Series:
-        if pp_table not in self.idx_lookup:
+    def _get_pp_ids(self, pp_table: str, pgm_idx: pd.Series, name: Optional[str] = None) -> pd.Series:
+        key = (pp_table, name)
+        if key not in self.idx_lookup:
             raise KeyError(f"No indexes have been created for '{pp_table}'!")
-        return self.idx_lookup[pp_table][pgm_idx]
+        return self.idx_lookup[key][pgm_idx]
 
     @staticmethod
     def _get_tap_size(pp_trafo: pd.DataFrame) -> np.ndarray:
