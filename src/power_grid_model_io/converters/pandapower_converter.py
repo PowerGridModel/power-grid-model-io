@@ -712,11 +712,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         pgm_output_loads = self.pgm_output_data["sym_load"]
 
-        pp_loads = self.pp_data["load"]
-
-        const_power_pgm_ids = self._get_ids("load", pd.Series(pp_loads.index), name="const_power")
-        const_impedance_pgm_ids = self._get_ids("load", pd.Series(pp_loads.index), name="const_impedance")
-        const_current_pgm_ids = self._get_ids("load", pd.Series(pp_loads.index), name="const_current")
+        const_power_pgm_ids = self._get_ids("load", name="const_power")
+        const_impedance_pgm_ids = self._get_ids("load", name="const_impedance")
+        const_current_pgm_ids = self._get_ids("load", name="const_current")
 
         pp_output_loads_cp = pd.DataFrame(
             columns=["p_mw", "q_mvar"], index=self._get_pp_ids("load", pgm_output_loads["id"], name="constant_power")
@@ -729,17 +727,25 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             index=self._get_pp_ids("load", pgm_output_loads["id"], name="constant_impedance"),
         )
 
+        pgm_idx = pd.Series(
+            np.arange(start=self.next_idx, stop=len(pgm_output_loads), dtype=np.int32), index=pgm_output_loads["id"]
+        )
+
+        const_power_pgm_idx = pgm_idx[const_power_pgm_ids]
+        const_impedance_pgm_idx = pgm_idx[const_impedance_pgm_ids]
+        const_current_pgm_idx = pgm_idx[const_current_pgm_ids]
+
         p_multiplied = pgm_output_loads["p"]
         q_multiplied = pgm_output_loads["q"]
 
-        pp_output_loads_cp["p_mw"] = p_multiplied[const_power_pgm_ids]
-        pp_output_loads_cp["q_mvar"] = q_multiplied[const_power_pgm_ids]
+        pp_output_loads_cp["p_mw"] = p_multiplied[const_power_pgm_idx]
+        pp_output_loads_cp["q_mvar"] = q_multiplied[const_power_pgm_idx]
 
-        pp_output_loads_cc["p_mw"] = p_multiplied[const_impedance_pgm_ids]
-        pp_output_loads_cc["q_mvar"] = q_multiplied[const_impedance_pgm_ids]
+        pp_output_loads_cc["p_mw"] = p_multiplied[const_impedance_pgm_idx]
+        pp_output_loads_cc["q_mvar"] = q_multiplied[const_impedance_pgm_idx]
 
-        pp_output_loads_ci["p_mw"] = p_multiplied[const_current_pgm_ids]
-        pp_output_loads_ci["q_mvar"] = q_multiplied[const_current_pgm_ids]
+        pp_output_loads_ci["p_mw"] = p_multiplied[const_current_pgm_idx]
+        pp_output_loads_ci["q_mvar"] = q_multiplied[const_current_pgm_idx]
 
         self.pp_output_data["load"] = (pp_output_loads_cp + pp_output_loads_cc + pp_output_loads_ci) * 1e-6
 
@@ -799,18 +805,18 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self.next_idx += n_objects
         return pgm_idx
 
-    def _get_ids(self, pp_table: str, pp_idx: pd.Series, name: Optional[str] = None) -> pd.Series:
+    def _get_ids(self, pp_table: str, pp_idx: Optional[pd.Series] = None, name: Optional[str] = None) -> pd.Series:
         key = (pp_table, name)
         if key not in self.idx:
             raise KeyError(f"No indexes have been created for '{pp_table}' (name={name})!")
+        if pp_idx is None:
+            return self.idx[key]
         return self.idx[key][pp_idx]
 
     def _get_pp_ids(self, pp_table: str, pgm_idx: pd.Series, name: Optional[str] = None) -> pd.Series:
         key = (pp_table, name)
         if key not in self.idx_lookup:
             raise KeyError(f"No indexes have been created for '{pp_table}'!")
-        if self.idx_lookup[key].index.equals(pgm_idx):
-            return self.idx_lookup[key]
         return self.idx_lookup[key][pgm_idx]
 
     @staticmethod
