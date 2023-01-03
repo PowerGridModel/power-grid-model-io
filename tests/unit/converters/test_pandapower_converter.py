@@ -385,7 +385,7 @@ def test_get_index__key_error():
 
     # Act / Assert
     with pytest.raises(KeyError, match=r"index.*bus"):
-        converter._get_ids(pp_table="bus", pp_idx=pd.Series())
+        converter._get_ids(pp_table="bus", pp_idx=pd.Series(dtype=np.int32))
 
 
 def test_get_tap_size():
@@ -591,7 +591,7 @@ def test_get_individual_switch_states():
         data=[[1, 101, False], [2, 202, False], [3, 103, True]],
     )
 
-    expected_state = pd.Series([False, True, True], dtype=np.bool)
+    expected_state = pd.Series([False, True, True], dtype=bool)
 
     # Act
     actual_state = PandaPowerConverter.get_individual_switch_states(pp_trafo, pp_switches, "hv_bus")
@@ -627,8 +627,8 @@ def test_get_switch_states_lines(mock_get_individual_switch_states: MagicMock):
         ),
     }
     mock_get_individual_switch_states.side_effect = [
-        pd.Series([False], index=[1], dtype=np.bool, name="closed"),
-        pd.Series([True], index=[1], dtype=np.bool, name="closed"),
+        pd.Series([False], index=[1], dtype=bool, name="closed"),
+        pd.Series([True], index=[1], dtype=bool, name="closed"),
     ]
     expected = pd.DataFrame(columns=["from", "to"], index=[1], data=[[False, True]])
 
@@ -673,8 +673,8 @@ def test_get_switch_states_trafos(mock_get_individual_switch_states: MagicMock):
         ),
     }
     mock_get_individual_switch_states.side_effect = [
-        pd.Series([False], index=[2], dtype=np.bool, name="closed"),
-        pd.Series([True], index=[2], dtype=np.bool, name="closed"),
+        pd.Series([False], index=[2], dtype=bool, name="closed"),
+        pd.Series([True], index=[2], dtype=bool, name="closed"),
     ]
 
     expected = pd.DataFrame(columns=["from", "to"], index=[2], data=[[False, True]])

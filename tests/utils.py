@@ -159,4 +159,4 @@ class MockDf:
         return 0
 
     def __getitem__(self, item: str):
-        return MockVal(pd.Series(name=item))
+        return MockVal(pd.Series(name=item, dtype=np.float64))
