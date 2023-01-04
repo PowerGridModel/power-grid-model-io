@@ -159,7 +159,7 @@ def test_create_input_data():
 )
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_object__empty(
-        mock_init_array: MagicMock, create_fn: Callable[[PandaPowerConverter], None], table: str
+    mock_init_array: MagicMock, create_fn: Callable[[PandaPowerConverter], None], table: str
 ):
     # Arrange
     converter = PandaPowerConverter()
@@ -295,7 +295,7 @@ def test_create_pgm_input_sym_loads(pp_example_simple: Tuple[PandaPowerData, flo
 
 
 def test_create_pgm_input_transformers(
-        pp_example_simple: Tuple[PandaPowerData, float], pgm_example_simple: SingleDataset
+    pp_example_simple: Tuple[PandaPowerData, float], pgm_example_simple: SingleDataset
 ):
     # Arrange
     converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
@@ -339,7 +339,7 @@ def test_create_pgm_input_sym_gens(pp_example_simple: Tuple[PandaPowerData, floa
 
 
 def test_create_pgm_input_three_winding_transformers(
-        pp_example_simple: Tuple[PandaPowerData, float], pgm_example_simple: SingleDataset
+    pp_example_simple: Tuple[PandaPowerData, float], pgm_example_simple: SingleDataset
 ):
     # Arrange
     converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
