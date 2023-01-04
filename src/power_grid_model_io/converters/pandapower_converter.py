@@ -393,8 +393,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_transformers = initialize_array(data_type="input", component_type="transformer", shape=len(pp_trafo))
         pgm_transformers["id"] = self._generate_ids("trafo", pp_trafo.index)
         pgm_transformers["from_node"] = self._get_ids("bus", pp_trafo["hv_bus"])
-        print(self._get_pp_attr("trafo", "in_service"))
-        print(switch_states)
         pgm_transformers["from_status"] = self._get_pp_attr("trafo", "in_service") & switch_states["from"]
         pgm_transformers["to_node"] = self._get_ids("bus", pp_trafo["lv_bus"])
         pgm_transformers["to_status"] = self._get_pp_attr("trafo", "in_service") & switch_states["to"]
