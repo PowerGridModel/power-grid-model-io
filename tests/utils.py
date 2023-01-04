@@ -69,12 +69,43 @@ class MockFn:
 
     def __init__(self, fn: str, *args, **kwargs):
         self.fn = fn
-        self.args = args
+        self.args = list(args)
         self.kwargs = kwargs
         self.postfix = ""
 
+    @staticmethod
+    def _is_operator(obj):
+        return isinstance(obj, MockFn) and obj.is_operator()
+
+    @staticmethod
+    def _apply_operator(fn: str, left: Any, right: Any):
+        if MockFn._is_operator(left) and left.fn == fn:
+            obj = copy(left)
+        else:
+            obj = MockFn(fn, left)
+        if MockFn._is_operator(right):
+            if (
+                obj.fn == "+"
+                and right.fn == "+"
+                or obj.fn == "-"
+                and right.fn == "+"
+                or obj.fn == "*"
+                and right.fn == "*"
+                or obj.fn == "/"
+                and right.fn == "*"
+                or obj.fn == "&"
+                and right.fn == "&"
+            ):
+                obj.args += right.args
+                return obj
+        obj.args += [right]
+        return obj
+
     def is_operator(self) -> bool:
-        return self.fn in {"+", "&", "/", "*"}
+        return isinstance(self.fn, str) and self.fn in {"+", "-", "*", "/", "&"} and not (self.kwargs or self.postfix)
+
+    def is_commutative(self) -> bool:
+        return isinstance(self.fn, str) and self.fn in {"+", "*", "&", "|"} and not (self.kwargs or self.postfix)
 
     def __copy__(self):
         mock_fn = MockFn(self.fn, *self.args, **self.kwargs)
@@ -82,16 +113,22 @@ class MockFn:
         return mock_fn
 
     def __add__(self, other):
-        return MockFn("+", self, other)
+        return MockFn._apply_operator("+", self, other)
 
     def __and__(self, other):
-        return MockFn("&", self, other)
+        return MockFn._apply_operator("&", self, other)
+
+    def __or__(self, other):
+        return MockFn._apply_operator("|", self, other)
 
     def __truediv__(self, other):
-        return MockFn("/", self, other)
+        return MockFn._apply_operator("/", self, other)
+
+    def __sub__(self, other):
+        return MockFn._apply_operator("-", self, other)
 
     def __mul__(self, other):
-        return MockFn("*", self, other)
+        return MockFn._apply_operator("*", self, other)
 
     def __eq__(self, other):
         if not isinstance(other, MockFn):
@@ -108,17 +145,25 @@ class MockFn:
                 return (left == right).all()
             return left == right
 
+        if not eq(self.fn, other.fn):
+            return False
+
+        if self.is_commutative():
+            return set(self.args) == set(other.args)
+
         return (
-            eq(self.fn, other.fn)
-            and all(eq(a, b) for a, b in zip(self.args, other.args))
+            all(eq(a, b) for a, b in zip(self.args, other.args))
             and self.kwargs.keys() == other.kwargs.keys()
             and all(eq(self.kwargs[k], other.kwargs[k]) for k in self.kwargs)
             and self.postfix == other.postfix
         )
 
+    def __hash__(self):
+        return hash((self.fn, tuple(self.args), tuple(self.kwargs.items()), self.postfix))
+
     def __repr__(self):
         if self.is_operator():
-            return f"{self.args[0]} {self.fn} {self.args[1]}"
+            return "(" + f" {self.fn} ".join(repr(arg) for arg in self.args) + ")"
         args = [repr(arg) for arg in self.args] + [f"{key}={repr(val)}" for key, val in self.kwargs.items()]
         return f"{self.fn}({', '.join(args)}){self.postfix}"
 
@@ -143,7 +188,7 @@ class MockVal(MockFn):
         return mock_val
 
     def __repr__(self):
-        return repr(self.fn)
+        return str(self.fn)
 
 
 class MockDf:

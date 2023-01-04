@@ -17,7 +17,7 @@ MOCK_JSON_DATA = '{"node":[{"id":0,"u_rated":0.0},{"id":0,"u_rated":0.0,"bar":0}
 @patch("pathlib.Path.open", mock_open(read_data=MOCK_JSON_DATA))
 def test_component_attributes():
     # Act
-    generator = component_attributes(Path("test.json"))
+    generator = component_attributes(Path("test.json"), data_type="input")
 
     # Assert
     assert list(generator) == [("line", "i_n"), ("line", "id"), ("node", "id"), ("node", "u_rated")]

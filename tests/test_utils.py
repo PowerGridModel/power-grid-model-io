@@ -130,8 +130,16 @@ def test_idx_to_str():
     assert idx[1:2:3, 4:5:6] == "1:2:3, 4:5:6"
 
 
-def test_mock_fn():
-    assert callable(MockFn)  # TODO
+def test_mock_fn__operators():
+    # Arrange
+    x = MockVal("x")
+    y = MockVal("y")
+    z = MockVal("z")
+
+    # Act / Assert
+    assert x + y == y + x
+    assert (x + y) + z == x + (y + z)
+    assert x - (y + z) == x - y - z
 
 
 def test_mock_val():
