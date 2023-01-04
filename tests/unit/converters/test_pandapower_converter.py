@@ -244,8 +244,6 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
 
     # assignment
     pgm: MagicMock = mock_init_array.return_value.__setitem__
-    for c in pgm.call_args_list:
-        print(c)
     pgm.assert_any_call("id", _generate_ids("line", two_pp_objs.index))
     pgm.assert_any_call("from_node", _get_ids("bus", two_pp_objs["from_bus"]))
     pgm.assert_any_call("from_status", _get_pp_attr("line", "in_service") & get_switch_states("line")["from"])
