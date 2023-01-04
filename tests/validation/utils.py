@@ -111,9 +111,9 @@ def select_values(actual: SingleDataset, expected: SingleDataset, component: str
     # Use only the actual_values for which we have expected values
     missing_idx = set(expected_values.index) - set(actual_values.index)
     if len(missing_idx) == 1:
-        raise KeyError(f"Expected {component} #{missing_idx.pop()}, but it is missing.")
+        raise KeyError(f"Expected {component} #{missing_idx.pop()}, but it is missing {actual_values.index.tolist()}.")
     elif len(missing_idx) > 1:
-        raise KeyError(f"Expected {component}s {missing_idx}, but they are missing.")
+        raise KeyError(f"Expected {component}s {missing_idx}, but they are missing {actual_values.index.tolist()}.")
 
     actual_values = actual_values[expected_values.index][mask]
     expected_values = expected_values[mask]
@@ -158,3 +158,37 @@ def load_json_single_dataset(file_path: Path, data_type: str = "input") -> Tuple
     dataset = convert_python_single_dataset_to_single_dataset(data=raw_data, data_type=data_type, ignore_extra=True)
     extra_info = extract_extra_info(raw_data)
     return dataset, extra_info
+
+
+def compare_extra_info(actual: ExtraInfoLookup, expected: ExtraInfoLookup, component: str, obj_ids: List[int]):
+
+    # We'll collect all errors, instead of terminating at the first error
+    errors = []
+
+    # Check each object in this component
+    for obj_id in obj_ids:
+
+        # If there is no extra_info available in the validation data, just skip this object
+        if obj_id not in expected:
+            continue
+
+        # If the object doesn't exist in the actual data, that's an error
+        if obj_id not in actual:
+            errors.append(f"Expected {component} #{obj_id}, but it is missing.")
+            continue
+
+        # Now for each extra_info in the validation file, check if it matches the actual extra info
+        act = actual[obj_id]
+        for key, value in expected[obj_id].items():
+
+            # If the extra_info doesn't exist, that's an error
+            if key not in act:
+                errors.append(f"Expected extra info '{key}' for {component} #{obj_id}, but it is missing.")
+
+            # If the values don't match, that's an error
+            elif act[key] != value:
+                errors.append(
+                    f"Expected extra info '{key}' for {component} #{obj_id} to be {value}, " f"but it is {act[key]}."
+                )
+
+    return errors

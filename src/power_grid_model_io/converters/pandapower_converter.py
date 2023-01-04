@@ -144,40 +144,27 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             return
 
         switch_states = self.get_switch_states("line")
+        in_service = self._get_pp_attr("line", "in_service")
+        length_km = self._get_pp_attr("line", "length_km")
+        parallel = self._get_pp_attr("line", "parallel")
+        c_nf_per_km = self._get_pp_attr("line", "c_nf_per_km")
+        multiplier = length_km / parallel
+
+        # The formula for tan1 = R_1 / Xc_1 = (g * 1e-6) / (2 * pi * f * c * 1e-9) = g / (2 * pi * f * c * 1e-3)
 
         pgm_lines = initialize_array(data_type="input", component_type="line", shape=len(pp_lines))
         pgm_lines["id"] = self._generate_ids("line", pp_lines.index)
         pgm_lines["from_node"] = self._get_ids("bus", pp_lines["from_bus"])
-        pgm_lines["from_status"] = self._get_pp_attr("line", "in_service") & switch_states.iloc[0, :]
+        pgm_lines["from_status"] = in_service & switch_states["from"]
         pgm_lines["to_node"] = self._get_ids("bus", pp_lines["to_bus"])
-        pgm_lines["to_status"] = self._get_pp_attr("line", "in_service") & switch_states.iloc[1, :]
-        pgm_lines["r1"] = (
-            self._get_pp_attr("line", "r_ohm_per_km")
-            * self._get_pp_attr("line", "length_km")
-            / self._get_pp_attr("line", "parallel")
-        )
-        pgm_lines["x1"] = (
-            self._get_pp_attr("line", "x_ohm_per_km")
-            * self._get_pp_attr("line", "length_km")
-            / self._get_pp_attr("line", "parallel")
-        )
-        pgm_lines["c1"] = (
-            self._get_pp_attr("line", "c_nf_per_km")
-            * self._get_pp_attr("line", "length_km")
-            * self._get_pp_attr("line", "parallel")
-            * 1e-9
-        )
-        # The formula for tan1 = R_1 / Xc_1 = (g * 1e-6) / (2 * pi * f * c * 1e-9) = g / (2 * pi * f * c * 1e-3)
+        pgm_lines["to_status"] = in_service & switch_states["to"]
+        pgm_lines["r1"] = self._get_pp_attr("line", "r_ohm_per_km") * multiplier
+        pgm_lines["x1"] = self._get_pp_attr("line", "x_ohm_per_km") * multiplier
+        pgm_lines["c1"] = c_nf_per_km * length_km * parallel * 1e-9
         pgm_lines["tan1"] = (
-            self._get_pp_attr("line", "g_us_per_km")
-            / self._get_pp_attr("line", "c_nf_per_km")
-            / (2 * np.pi * self.system_frequency * 1e-3)
+            self._get_pp_attr("line", "g_us_per_km") / c_nf_per_km / (2 * np.pi * self.system_frequency * 1e-3)
         )
-        pgm_lines["i_n"] = (
-            (self._get_pp_attr("line", "max_i_ka") * 1e3)
-            * self._get_pp_attr("line", "df")
-            * self._get_pp_attr("line", "parallel")
-        )
+        pgm_lines["i_n"] = (self._get_pp_attr("line", "max_i_ka") * 1e3) * self._get_pp_attr("line", "df") * parallel
 
         self.pgm_data["line"] = pgm_lines
 
@@ -407,9 +394,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_transformers = initialize_array(data_type="input", component_type="transformer", shape=len(pp_trafo))
         pgm_transformers["id"] = self._generate_ids("trafo", pp_trafo.index)
         pgm_transformers["from_node"] = self._get_ids("bus", pp_trafo["hv_bus"])
-        pgm_transformers["from_status"] = self._get_pp_attr("trafo", "in_service") & switch_states.iloc[0, :]
+        pgm_transformers["from_status"] = self._get_pp_attr("trafo", "in_service") & switch_states["from"]
         pgm_transformers["to_node"] = self._get_ids("bus", pp_trafo["lv_bus"])
-        pgm_transformers["to_status"] = self._get_pp_attr("trafo", "in_service") & switch_states.iloc[1, :]
+        pgm_transformers["to_status"] = self._get_pp_attr("trafo", "in_service") & switch_states["to"]
         pgm_transformers["u1"] = self._get_pp_attr("trafo", "vn_hv_kv") * 1e3
         pgm_transformers["u2"] = self._get_pp_attr("trafo", "vn_lv_kv") * 1e3
         pgm_transformers["sn"] = self._get_pp_attr("trafo", "sn_mva") * self._get_pp_attr("trafo", "parallel") * 1e6
@@ -712,7 +699,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             .fillna(True)
             .set_index(component.index)
         )
-
         return switch_state["closed"]
 
     def get_switch_states(self, pp_table: str) -> pd.DataFrame:
@@ -729,10 +715,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             element_type = "l"
             bus1 = "from_bus"
             bus2 = "to_bus"
-        else:
+        elif pp_table == "trafo":
             element_type = "t"
             bus1 = "hv_bus"
             bus2 = "lv_bus"
+        else:
+            raise KeyError(f"Can't get switch states for {pp_table}")
 
         component = self.pp_data[pp_table]
         component["index"] = component.index
@@ -742,10 +730,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_switches = pp_switches[pp_switches["et"] == element_type]
         pp_switches = pp_switches[["element", "bus", "closed"]]
 
-        pp_from_switches = self.get_individual_switch_states(component, pp_switches, bus1)
-        pp_to_switches = self.get_individual_switch_states(component, pp_switches, bus2)
+        pp_from_switches = self.get_individual_switch_states(component[["index", bus1]], pp_switches, bus1)
+        pp_to_switches = self.get_individual_switch_states(component[["index", bus2]], pp_switches, bus2)
 
-        return pd.DataFrame(data=(pp_from_switches, pp_to_switches))
+        return pd.DataFrame({"from": pp_from_switches, "to": pp_to_switches})
 
     def get_trafo3w_switch_states(self, trafo3w: pd.DataFrame) -> pd.DataFrame:
         """
