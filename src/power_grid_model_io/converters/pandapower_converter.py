@@ -148,6 +148,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         length_km = self._get_pp_attr("line", "length_km")
         parallel = self._get_pp_attr("line", "parallel")
         c_nf_per_km = self._get_pp_attr("line", "c_nf_per_km")
+        multiplier = length_km / parallel
 
         # The formula for tan1 = R_1 / Xc_1 = (g * 1e-6) / (2 * pi * f * c * 1e-9) = g / (2 * pi * f * c * 1e-3)
 
@@ -157,8 +158,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_lines["from_status"] = in_service & switch_states["from"]
         pgm_lines["to_node"] = self._get_ids("bus", pp_lines["to_bus"])
         pgm_lines["to_status"] = in_service & switch_states["to"]
-        pgm_lines["r1"] = self._get_pp_attr("line", "r_ohm_per_km") * length_km / parallel
-        pgm_lines["x1"] = self._get_pp_attr("line", "x_ohm_per_km") * length_km / parallel
+        pgm_lines["r1"] = self._get_pp_attr("line", "r_ohm_per_km") * multiplier
+        pgm_lines["x1"] = self._get_pp_attr("line", "x_ohm_per_km") * multiplier
         pgm_lines["c1"] = c_nf_per_km * length_km * parallel * 1e-9
         pgm_lines["tan1"] = (
             self._get_pp_attr("line", "g_us_per_km") / c_nf_per_km / (2 * np.pi * self.system_frequency * 1e-3)
