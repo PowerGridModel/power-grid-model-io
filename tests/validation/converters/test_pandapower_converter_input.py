@@ -61,18 +61,7 @@ def extra_info() -> Tuple[ExtraInfoLookup, ExtraInfoLookup]:
     return actual, expected
 
 
-def test_input_data(input_data: Tuple[SingleDataset, SingleDataset]):
-    """
-    Unit test to preload the expected and actual data
-    """
-    # Arrange
-    actual, expected = input_data
-
-    # Assert
-    assert len(expected) <= len(actual)
-
-
-@pytest.mark.parametrize(("component", "attribute"), component_attributes(VALIDATION_FILE))
+@pytest.mark.parametrize(("component", "attribute"), component_attributes(VALIDATION_FILE, data_type="input"))
 def test_attributes(input_data: Tuple[SingleDataset, SingleDataset], component: str, attribute: str):
     """
     For each attribute, check if the actual values are consistent with the expected values

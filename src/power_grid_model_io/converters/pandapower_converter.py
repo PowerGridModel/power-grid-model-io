@@ -270,7 +270,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sources["node"] = self._get_ids("bus", pp_ext_grid["bus"])
         pgm_sources["status"] = self._get_pp_attr("ext_grid", "in_service")
         pgm_sources["u_ref"] = self._get_pp_attr("ext_grid", "vm_pu")
-        pgm_sources["rx_ratio"] = self._get_pp_attr("ext_grid", "rx_max")
+        pgm_sources["rx_ratio"] = self._get_pp_attr("ext_grid", "rx_max", np.nan)
         pgm_sources["u_ref_angle"] = self._get_pp_attr("ext_grid", "va_degree") * (np.pi / 180)
         pgm_sources["sk"] = self._get_pp_attr("ext_grid", "s_sc_max_mva", np.nan) * 1e6
 
