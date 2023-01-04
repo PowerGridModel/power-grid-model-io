@@ -37,7 +37,7 @@ def load_validation_data() -> Tuple[SingleDataset, ExtraInfoLookup]:
     """
     Load the validation data from the json file
     """
-    data, extra_info = load_json_single_dataset(VALIDATION_FILE)
+    data, extra_info = load_json_single_dataset(VALIDATION_FILE, data_type="input")
     return data, extra_info
 
 
@@ -59,6 +59,17 @@ def extra_info() -> Tuple[ExtraInfoLookup, ExtraInfoLookup]:
     _, actual = load_and_convert_pp_data()
     _, expected = load_validation_data()
     return actual, expected
+
+
+def test_input_data(input_data: Tuple[SingleDataset, SingleDataset]):
+    """
+    Unit test to preload the expected and actual data
+    """
+    # Arrange
+    actual, expected = input_data
+
+    # Assert
+    assert len(expected) <= len(actual)
 
 
 @pytest.mark.parametrize(("component", "attribute"), component_attributes(VALIDATION_FILE, data_type="input"))

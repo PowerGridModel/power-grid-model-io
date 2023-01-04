@@ -5,7 +5,6 @@
 """
 Panda Power Converter
 """
-import math
 import re
 from functools import lru_cache
 from typing import Dict, List, Mapping, Optional, Tuple, Union
@@ -154,20 +153,22 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
         self.idx = {}
         self.idx_lookup = {}
-        pgm_to_pp_id: Dict[str, List[Tuple[int, int]]] = {}
+        pgm_to_pp_id: Dict[Tuple[str, Optional[str]], List[Tuple[int, int]]] = {}
         for pgm_idx, extra in extra_info.items():
             if "id_reference" not in extra:
                 continue
             assert isinstance(extra["id_reference"], dict)
             pp_table = extra["id_reference"]["table"]
             pp_index = extra["id_reference"]["index"]
-            if pp_table not in pgm_to_pp_id:
-                pgm_to_pp_id[pp_table] = []
-            pgm_to_pp_id[pp_table].append((pgm_idx, pp_index))
-        for pp_table, table_pgm_to_pp_id in pgm_to_pp_id.items():
+            pp_name = extra["id_reference"].get("name")
+            key = (pp_table, pp_name)
+            if key not in pgm_to_pp_id:
+                pgm_to_pp_id[key] = []
+            pgm_to_pp_id[key].append((pgm_idx, pp_index))
+        for key, table_pgm_to_pp_id in pgm_to_pp_id.items():
             pgm_ids, pp_indices = zip(*table_pgm_to_pp_id)
-            self.idx[pp_table] = pd.Series(pgm_ids, index=pp_indices)
-            self.idx_lookup[pp_table] = pd.Series(pp_indices, index=pgm_ids)
+            self.idx[key] = pd.Series(pgm_ids, index=pp_indices)
+            self.idx_lookup[key] = pd.Series(pp_indices, index=pgm_ids)
 
     def _create_output_data(self):
         """
@@ -178,8 +179,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # Many pp components store the voltage magnitude per unit and the voltage angle in degrees,
         # so let's create a global lookup table (indexed on the pgm ids)
         self.pgm_nodes_lookup = pd.DataFrame(
-            [self.pgm_output_data["node"]["u_pu"], self.pgm_output_data["node"]["u_angle"] * 180.0 / math.pi],
-            columns=["vm_pu", "u_degree"],
+            {
+                "u_pu": self.pgm_output_data["node"]["u_pu"],
+                "u_degree": self.pgm_output_data["node"]["u_angle"] * (180.0 / np.pi),
+            },
             index=self.pgm_output_data["node"]["id"],
         )
 
@@ -774,8 +777,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_lines["i_ka"] = pgm_output_lines[["i_from", "i_to"]].max(axis=1) * 1e-3  # np.maximum?
         pp_output_lines["vm_from_pu"] = from_nodes["u_pu"]
         pp_output_lines["vm_to_pu"] = to_nodes["u_pu"]
-        pp_output_lines["va_from_degree"] = from_nodes["u_angle_deg"]
-        pp_output_lines["va_to_degree"] = to_nodes["u_angle_deg"]
+        pp_output_lines["va_from_degree"] = from_nodes["u_degree"]
+        pp_output_lines["va_to_degree"] = to_nodes["u_degree"]
         pp_output_lines["loading_percent"] = pgm_output_lines["loading"] * 1e2
 
         self.pp_output_data["line"] = pp_output_lines
@@ -901,8 +904,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_trafos["i_lv_ka"] = pgm_output_transformers["i_to"] * 1e-3
         pp_output_trafos["vm_hv_pu"] = from_nodes["u_pu"]
         pp_output_trafos["vm_lv_pu"] = to_nodes["u_pu"]
-        pp_output_trafos["va_hv_degree"] = from_nodes["u_angle"]
-        pp_output_trafos["va_lv_degree"] = to_nodes["u_angle"]
+        pp_output_trafos["va_hv_degree"] = from_nodes["u_degree"]
+        pp_output_trafos["va_lv_degree"] = to_nodes["u_degree"]
         pp_output_trafos["loading_percent"] = pgm_output_transformers["loading"] * 1e2
 
         self.pp_output_data["trafo"] = pp_output_trafos
@@ -969,9 +972,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_trafos3w["vm_hv_pu"] = nodes_1["u_pu"]
         pp_output_trafos3w["vm_mv_pu"] = nodes_2["u_pu"]
         pp_output_trafos3w["vm_lv_pu"] = nodes_3["u_pu"]
-        pp_output_trafos3w["va_hv_degree"] = nodes_1["u_angle"]
-        pp_output_trafos3w["va_mv_degree"] = nodes_2["u_angle"]
-        pp_output_trafos3w["va_lv_degree"] = nodes_3["u_angle"]
+        pp_output_trafos3w["va_hv_degree"] = nodes_1["u_degree"]
+        pp_output_trafos3w["va_mv_degree"] = nodes_2["u_degree"]
+        pp_output_trafos3w["va_lv_degree"] = nodes_3["u_degree"]
         pp_output_trafos3w["loading_percent"] = pgm_output_transformers3w["loading"] * 1e2
 
         self.pp_output_data["trafo3w"] = pp_output_trafos3w
@@ -1139,7 +1142,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
         key = (pp_table, name)
         if key not in self.idx_lookup:
-            raise KeyError(f"No indexes have been created for '{pp_table}'!")
+            raise KeyError(f"No indexes have been created for '{pp_table}' (name={name})!")
         return self.idx_lookup[key][pgm_idx]
 
     @staticmethod

@@ -142,7 +142,7 @@ def extract_extra_info(data: SinglePythonDataset, data_type: str = "input") -> E
     return extra_info
 
 
-def load_json_single_dataset(file_path: Path, data_type: str = "input") -> Tuple[SingleDataset, ExtraInfoLookup]:
+def load_json_single_dataset(file_path: Path, data_type: str) -> Tuple[SingleDataset, ExtraInfoLookup]:
     """
     Loads and parses a json file in the most basic way, without using power_grid_model_io functions.
 

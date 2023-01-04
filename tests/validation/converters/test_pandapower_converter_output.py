@@ -24,7 +24,7 @@ def load_and_convert_pgm_data() -> PandaPowerData:
     """
     Load and convert the power_grid_model results
     """
-    data, extra_info = load_json_single_dataset(PGM_OUTPUT_FILE)
+    data, extra_info = load_json_single_dataset(PGM_OUTPUT_FILE, data_type="sym_output")
     converter = PandaPowerConverter()
     return converter.convert(data=data, extra_info=extra_info)
 
@@ -59,6 +59,17 @@ def test_generate_output():  # TODO: REMOVE THIS FUNCTION
     output_data = pgm.calculate_power_flow()
     json_converter = PgmJsonConverter(destination_file=PGM_OUTPUT_FILE)
     json_converter.save(data=output_data, extra_info=extra_info)
+
+
+def test_output_data(output_data: Tuple[PandaPowerData, PandaPowerData]):
+    """
+    Unit test to preload the expected and actual data
+    """
+    # Arrange
+    actual, expected = output_data
+
+    # Assert
+    assert len(expected) <= len(actual)
 
 
 @pytest.mark.parametrize(("component", "attribute"), component_attributes(PGM_OUTPUT_FILE, data_type="sym_output"))
