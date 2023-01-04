@@ -4,30 +4,42 @@
 
 from unittest.mock import MagicMock, call, patch
 
+import pytest
+import structlog
+from structlog.testing import capture_logs
+
 from .utils import (
     MockDf,
     MockFn,
     MockVal,
-    _dict_in_dict,
     assert_log_exists,
     assert_log_match,
     assert_struct_array_equal,
+    dict_in_dict,
     idx_to_str,
 )
 
 
+@pytest.fixture
+def captured_logs():
+    with capture_logs() as captured:
+        structlog.get_logger().info("Test info message", foo=123)
+        structlog.get_logger().debug("Test debug message", bar=456)
+    return captured
+
+
 def test_dict_in_dict():
     # Act / Assert
-    assert _dict_in_dict({}, {})
-    assert _dict_in_dict({"a": 1}, {"a": 1})
-    assert _dict_in_dict({"a": 1}, {"a": 1, "b": 2})
-    assert _dict_in_dict({"a": 1, "b": 2}, {"a": 1, "b": 2})
-    assert _dict_in_dict({"a": 1, "b": 2}, {"a": 1, "b": 2, "c": 3})
-    assert not _dict_in_dict({"a": 1}, {})
-    assert not _dict_in_dict({"a": 1}, {"a": 2})
-    assert not _dict_in_dict({"a": 1}, {"b": 1})
-    assert not _dict_in_dict({"a": 1}, {"b": 2})
-    assert not _dict_in_dict({"a": 1, "b": 2}, {"c": 3})
+    assert dict_in_dict({}, {})
+    assert dict_in_dict({"a": 1}, {"a": 1})
+    assert dict_in_dict({"a": 1}, {"a": 1, "b": 2})
+    assert dict_in_dict({"a": 1, "b": 2}, {"a": 1, "b": 2})
+    assert dict_in_dict({"a": 1, "b": 2}, {"a": 1, "b": 2, "c": 3})
+    assert not dict_in_dict({"a": 1}, {})
+    assert not dict_in_dict({"a": 1}, {"a": 2})
+    assert not dict_in_dict({"a": 1}, {"b": 1})
+    assert not dict_in_dict({"a": 1}, {"b": 2})
+    assert not dict_in_dict({"a": 1, "b": 2}, {"c": 3})
 
 
 @patch("pandas.DataFrame")
@@ -49,16 +61,73 @@ def test_assert_struct_array_equal(mock_assert_frame_equal: MagicMock, mock_data
     mock_assert_frame_equal.assert_called_once_with(actual_pd, expected_pd)
 
 
-def test_assert_log_exists():
-    assert callable(assert_log_exists)  # TODO
+def test_assert_log_exists(captured_logs):
+    # Act / Assert
+    assert_log_exists(captured_logs)
+    assert_log_exists(captured_logs, "info")
+    assert_log_exists(captured_logs, None, "Test debug message")
+    assert_log_exists(captured_logs, bar=456)
+
+    with pytest.raises(KeyError):
+        assert_log_exists([])
+    with pytest.raises(KeyError, match=r"{'log_level': 'error'}"):
+        assert_log_exists(captured_logs, "error")
+    with pytest.raises(KeyError, match=r"{'event': 'Test error message'}"):
+        assert_log_exists(captured_logs, None, "Test error message")
+    with pytest.raises(KeyError, match=r"{'foo': 456}"):
+        assert_log_exists(captured_logs, foo=456)
 
 
-def test_assert_log_match():
-    assert callable(assert_log_match)  # TODO
+def test_assert_log_exists__print(capsys, captured_logs):
+    # Act
+    with pytest.raises(KeyError):
+        assert_log_exists(captured_logs, "error")
+    stderr = capsys.readouterr().err
+
+    # Assert
+    assert "[info] Test info message {'foo': 123}" in stderr
+    assert "[debug] Test debug message {'bar': 456}" in stderr
+
+
+def test_assert_log_match(captured_logs):
+    # Act / Assert
+    assert_log_match(captured_logs[0])
+    assert_log_match(captured_logs[0], "info")
+    assert_log_match(captured_logs[1], None, "Test debug message")
+    assert_log_match(captured_logs[1], bar=456)
+
+    with pytest.raises(KeyError, match=r"{'log_level': 'error'}"):
+        assert_log_match(captured_logs[0], "error")
+    with pytest.raises(KeyError, match=r"{'event': 'Test error message'}"):
+        assert_log_match(captured_logs[0], None, "Test error message")
+    with pytest.raises(KeyError, match=r"{'foo': 456}"):
+        assert_log_match(captured_logs[0], foo=456)
 
 
 def test_idx_to_str():
-    assert callable(idx_to_str)  # TODO
+    # Arrange
+    class IndexAsString:
+        def __getitem__(self, item):
+            return idx_to_str(item)
+
+    idx = IndexAsString()
+
+    # Act / Assert
+    assert idx[123] == "123"
+    assert idx[123, 456] == "123, 456"
+    assert idx["abc"] == "'abc'"
+    assert idx[:] == ":"
+    assert idx[1:] == "1:"
+    assert idx[:2] == ":2"
+    assert idx[1:2] == "1:2"
+    assert idx[::3] == "::3"
+    assert idx[1::3] == "1::3"
+    assert idx[:2:3] == ":2:3"
+    assert idx[1:2:3] == "1:2:3"
+    assert idx[::-1] == "::-1"
+    assert idx[:-1] == ":-1"
+    assert idx[-2:-1] == "-2:-1"
+    assert idx[1:2:3, 4:5:6] == "1:2:3, 4:5:6"
 
 
 def test_mock_fn():

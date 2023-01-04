@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import sys
-from copy import copy
+from copy import copy, deepcopy
 from typing import Any, Dict, List, Optional, Tuple, Union
 from unittest.mock import MagicMock
 
@@ -12,7 +12,7 @@ import pandas as pd
 from pandas.core.generic import NDFrame
 
 
-def _dict_in_dict(needle: Dict[str, Any], data: Dict[str, Any]) -> bool:
+def dict_in_dict(needle: Dict[str, Any], data: Dict[str, Any]) -> bool:
     return all(item in data.items() for item in needle.items())
 
 
@@ -30,7 +30,8 @@ def assert_log_exists(
         kwargs["log_level"] = log_level
     if event is not None:
         kwargs["event"] = event
-    if not any(_dict_in_dict(kwargs, log_line) for log_line in capture):
+    if not any(dict_in_dict(kwargs, log_line) for log_line in capture):
+        capture = deepcopy(capture)
         print(
             "Logs:\n"
             + "\n".join(f"{i}: [{log.pop('log_level')}] {log.pop('event')} {log}" for i, log in enumerate(capture)),
@@ -44,7 +45,8 @@ def assert_log_match(capture: Dict[str, Any], level: Optional[str] = None, event
         kwargs["log_level"] = level
     if event is not None:
         kwargs["event"] = event
-    if not _dict_in_dict(kwargs, capture):
+    if not dict_in_dict(kwargs, capture):
+        capture = deepcopy(capture)
         print(f"Log:\n[{capture.pop('log_level')}] {capture.pop('event')} {capture}", file=sys.stderr)
         raise KeyError(f"Expected log {kwargs} does not match actual log {capture}")
 
@@ -53,11 +55,12 @@ def idx_to_str(idx: Union[str, int, slice, Tuple[Union[int, slice], ...]]) -> st
     if isinstance(idx, tuple):
         return ", ".join(idx_to_str(i) for i in idx)
     if isinstance(idx, slice):
-        if idx.start == idx.stop == idx.step is None:
-            return ":"
+        start = idx.start or ""
+        stop = idx.stop or ""
+        step = idx.step or ""
         if idx.step is None:
-            return f"{idx.start}:{idx.stop}"
-        return f"{idx.start}:{idx.stop}:{idx.step}"
+            return f"{start}:{stop}"
+        return f"{start}:{stop}:{step}"
     return repr(idx)
 
 
