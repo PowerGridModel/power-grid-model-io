@@ -6,14 +6,12 @@ These functions can be used in the mapping files to apply functions to vision da
 """
 
 import math
-import re
 from typing import Tuple
 
 from power_grid_model import WindingType
 
 from power_grid_model_io.functions import get_winding
-
-CONNECTION_PATTERN = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(\d|1[0-2])")
+from power_grid_model_io.utils.regex import TRAFO_CONNECTION_RE
 
 
 def relative_no_load_current(i_0: float, p_0: float, s_nom: float, u_nom: float) -> float:
@@ -113,7 +111,7 @@ def _split_connection_string(conn_str: str) -> Tuple[str, str, int]:
      * winding_to
      * clock
     """
-    match = CONNECTION_PATTERN.fullmatch(conn_str)
+    match = TRAFO_CONNECTION_RE.fullmatch(conn_str)
     if not match:
         raise ValueError(f"Invalid transformer connection string: '{conn_str}'")
     return match.group(1), match.group(2), int(match.group(3))
