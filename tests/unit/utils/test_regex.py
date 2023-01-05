@@ -25,14 +25,23 @@ def test_trafo_connection__neg():
     assert not TRAFO_CONNECTION_RE.fullmatch("Dy-1")
 
 
-@pytest.mark.skip("Test not implemented")
 def test_trafo3_connection__pos():
-    assert TRAFO3_CONNECTION_RE.fullmatch(...).groups() == (..., ..., ..., ...)
+    assert TRAFO3_CONNECTION_RE.fullmatch("Dynyn").groups() == ("D", "yn", "yn", None)
+    assert TRAFO3_CONNECTION_RE.fullmatch("Yynd").groups() == ("Y", "yn", "d", None)
+    assert TRAFO3_CONNECTION_RE.fullmatch("Yzny").groups() == ("Y", "zn", "y", None)
+    assert TRAFO3_CONNECTION_RE.fullmatch("YNdz").groups() == ("YN", "d", "z", None)
+    assert TRAFO3_CONNECTION_RE.fullmatch("Dyy5").groups() == ("D", "y", "y", "5")
+    assert TRAFO3_CONNECTION_RE.fullmatch("Dyd11").groups() == ("D", "y", "d" "11")
 
 
-@pytest.mark.skip("Test not implemented")
 def test_trafo3_connection__neg():
-    assert not TRAFO3_CONNECTION_RE.fullmatch(...)
+    assert not TRAFO3_CONNECTION_RE.fullmatch("Xynd")
+    assert not TRAFO3_CONNECTION_RE.fullmatch("ydyn")
+    assert not TRAFO3_CONNECTION_RE.fullmatch("DYZN")
+    assert not TRAFO3_CONNECTION_RE.fullmatch("YNxd")
+    assert not TRAFO3_CONNECTION_RE.fullmatch("Dyd13")
+    assert not TRAFO3_CONNECTION_RE.fullmatch("DyD13")
+    assert not TRAFO3_CONNECTION_RE.fullmatch("Dynd-1")
 
 
 def test_node_ref__pos():
