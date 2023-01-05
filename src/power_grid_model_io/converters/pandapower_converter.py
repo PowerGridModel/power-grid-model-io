@@ -455,6 +455,24 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pgm_data["link"] = pgm_links
 
+    def _create_pgm_input_storage(self):  # pragma: no cover
+        # TODO: create unit tests for the function
+        pp_storage = self.pp_data["storage"]
+
+        if pp_storage.empty:
+            return
+
+        raise NotImplementedError("Storage is not implemented yet!")
+
+    def _create_pgm_input_impedance(self):  # pragma: no cover
+        # TODO: create unit tests for the function
+        pp_impedance = self.pp_data["impedance"]
+
+        if pp_impedance.empty:
+            return
+
+        raise NotImplementedError("Impedance is not implemented yet!")
+
     def _generate_ids(self, pp_table: str, pp_idx: pd.Index, name: Optional[str] = None) -> np.arange:
         """
         Generate numerical power-grid-model IDs for a PandaPower component
