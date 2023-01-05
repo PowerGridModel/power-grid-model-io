@@ -9,7 +9,7 @@ from unittest.mock import ANY, MagicMock, call, patch
 import numpy as np
 import pandas as pd
 import pytest
-from power_grid_model import WindingType
+from power_grid_model import WindingType, initialize_array
 from power_grid_model.data_types import SingleDataset
 from power_grid_model.utils import import_json_data
 
@@ -19,7 +19,7 @@ from power_grid_model_io.data_types import ExtraInfoLookup
 from ...data.pandapower.pp_validation import pp_net
 from ...utils import MockDf, MockFn, assert_struct_array_equal
 
-DATA_DIR = Path(__file__).parent.parent.parent / "data"
+DATA_DIR = Path(__file__).parent.parent.parent / "data" / "pandapower"
 
 
 @pytest.fixture
@@ -30,7 +30,7 @@ def pp_example_simple() -> Tuple[PandaPowerData, float]:
 
 @pytest.fixture
 def pgm_example_simple() -> SingleDataset:
-    return import_json_data(DATA_DIR / "pandapower" / "pgm_input_data.json", data_type="input", ignore_extra=True)
+    return import_json_data(DATA_DIR / "pgm_input_data.json", data_type="input", ignore_extra=True)
 
 
 def _generate_ids(*args):
@@ -64,8 +64,9 @@ def two_pp_objs() -> MockDf:
     return MockDf(2)
 
 
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._fill_extra_info")
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._create_input_data")
-def test_parse_data(create_input_data_mock: MagicMock):
+def test_parse_data(create_input_data_mock: MagicMock, fill_extra_info_mock: MagicMock):
     # Arrange
     converter = PandaPowerConverter()
 
@@ -79,34 +80,26 @@ def test_parse_data(create_input_data_mock: MagicMock):
 
     # Assert
     create_input_data_mock.assert_called_once_with()
+    fill_extra_info_mock.assert_not_called()
     assert len(converter.pp_input_data) == 1 and "bus" in converter.pp_input_data
     assert len(converter.pgm_input_data) == 1 and "node" in converter.pgm_input_data
     assert len(result) == 1 and "node" in result
 
 
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._fill_extra_info")
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._create_input_data")
-def test_parse_data__extra_info(create_input_data_mock: MagicMock):
+def test_parse_data__extra_info(create_input_data_mock: MagicMock, fill_extra_info_mock: MagicMock):
     # Arrange
     converter = PandaPowerConverter()
 
-    def create_input_data():
-        converter.idx_lookup[("bus", None)] = pd.Series([101, 102, 103], index=[0, 1, 2])
-        converter.idx_lookup[("load", "const_current")] = pd.Series([201, 202, 203], index=[3, 4, 5])
-
-    create_input_data_mock.side_effect = create_input_data
+    extra_info = MagicMock("extra_info")
 
     # Act
-    extra_info: ExtraInfoLookup = {}
     converter._parse_data(data={}, data_type="input", extra_info=extra_info)
 
     # Assert
-    assert len(extra_info) == 6
-    assert extra_info[0] == {"id_reference": {"table": "bus", "index": 101}}
-    assert extra_info[1] == {"id_reference": {"table": "bus", "index": 102}}
-    assert extra_info[2] == {"id_reference": {"table": "bus", "index": 103}}
-    assert extra_info[3] == {"id_reference": {"table": "load", "name": "const_current", "index": 201}}
-    assert extra_info[4] == {"id_reference": {"table": "load", "name": "const_current", "index": 202}}
-    assert extra_info[5] == {"id_reference": {"table": "load", "name": "const_current", "index": 203}}
+    create_input_data_mock.assert_called_once_with()
+    fill_extra_info_mock.assert_called_once_with(extra_info=extra_info)
 
 
 def test_parse_data__update_data():
@@ -116,6 +109,26 @@ def test_parse_data__update_data():
     # Act/Assert
     with pytest.raises(ValueError):
         converter._parse_data(data={}, data_type="update", extra_info=None)
+
+
+def test_fill_extra_info():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.idx_lookup[("bus", None)] = pd.Series([101, 102, 103], index=[0, 1, 2])
+    converter.idx_lookup[("load", "const_current")] = pd.Series([201, 202, 203], index=[3, 4, 5])
+
+    # Act
+    extra_info = {}
+    converter._fill_extra_info(extra_info=extra_info)
+
+    # Assert
+    assert len(extra_info) == 6
+    assert extra_info[0] == {"id_reference": {"table": "bus", "index": 101}}
+    assert extra_info[1] == {"id_reference": {"table": "bus", "index": 102}}
+    assert extra_info[2] == {"id_reference": {"table": "bus", "index": 103}}
+    assert extra_info[3] == {"id_reference": {"table": "load", "name": "const_current", "index": 201}}
+    assert extra_info[4] == {"id_reference": {"table": "load", "name": "const_current", "index": 202}}
+    assert extra_info[5] == {"id_reference": {"table": "load", "name": "const_current", "index": 203}}
 
 
 def test_serialize_data():
@@ -381,13 +394,32 @@ def test_create_pgm_input_links(pp_example_simple: Tuple[PandaPowerData, float],
     assert_struct_array_equal(converter.pgm_input_data["link"], pgm_example_simple["link"])
 
 
-def test_get_index__key_error():
+def test_get_pgm_ids():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.idx = {
+        ("bus", None): pd.Series([10, 11, 12], index=[0, 1, 2]),
+        ("load", "const_current"): pd.Series([13, 14], index=[3, 4]),
+    }
+
+    # Act
+    bus_ids = converter._get_pgm_ids(pp_table="bus", pp_idx=pd.Series([2, 1]))
+    load_ids = converter._get_pgm_ids(pp_table="load", name="const_current", pp_idx=pd.Series([3]))
+    all_bus_ids = converter._get_pgm_ids(pp_table="bus")
+
+    # Assert
+    pd.testing.assert_series_equal(bus_ids, pd.Series([12, 11], index=[2, 1]))
+    pd.testing.assert_series_equal(load_ids, pd.Series([13], index=[3]))
+    pd.testing.assert_series_equal(all_bus_ids, pd.Series([10, 11, 12], index=[0, 1, 2]))
+
+
+def test_get_pgm_ids__key_error():
     # Arrange
     converter = PandaPowerConverter()
 
     # Act / Assert
     with pytest.raises(KeyError, match=r"index.*bus"):
-        converter._get_pgm_ids(pp_table="bus", pp_idx=pd.Series(dtype=np.int32))
+        converter._get_pgm_ids(pp_table="bus")
 
 
 def test_get_tap_size():
@@ -609,13 +641,11 @@ def test_get_id():
     converter = PandaPowerConverter()
     converter.idx = {("line", None): pd.Series([21, 345, 0, 3, 15], index=[0, 1, 2, 3, 4])}
 
-    expected_id = 345
-
     # Act
     actual_id = converter.get_id("line", 1)
 
     # Assert
-    np.testing.assert_array_equal(actual_id, expected_id)
+    np.testing.assert_array_equal(actual_id, 345)
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter.get_individual_switch_states")
@@ -753,7 +783,7 @@ def test_lookup_id__value_error():
         converter.lookup_id(5)
 
 
-def test__get_pp_attr_attribute_exists():
+def test_get_pp_attr_attribute_exists():
     # Arrange
     converter = PandaPowerConverter()
     converter.pp_input_data = {
@@ -768,7 +798,7 @@ def test__get_pp_attr_attribute_exists():
     np.testing.assert_array_equal(actual, expected)
 
 
-def test__get_pp_attr_attribute_doesnt_exist():
+def test_get_pp_attr_attribute_doesnt_exist():
     # Arrange
     converter = PandaPowerConverter()
     converter.pp_input_data = {"trafo3w": pd.DataFrame([[2, 31, 315]], columns=["index", "mv_bus", "lv_bus"])}
@@ -778,7 +808,7 @@ def test__get_pp_attr_attribute_doesnt_exist():
         converter._get_pp_attr("trafo3w", "hv_bus")
 
 
-def test__get_pp_attr_use_default():
+def test_get_pp_attr_use_default():
     # Arrange
     converter = PandaPowerConverter()
     converter.pp_input_data = {"trafo3w": pd.DataFrame([[2, 31, 315]], columns=["index", "mv_bus", "lv_bus"])}
@@ -791,7 +821,7 @@ def test__get_pp_attr_use_default():
     np.testing.assert_array_equal(actual, expected)
 
 
-def test__get_pp_attr_from_std():
+def test_get_pp_attr_from_std():
     # Arrange
     converter = PandaPowerConverter()
     converter._std_types = {"trafo3w": {"std_trafo3w_1": {"hv_bus": 964}}}
@@ -808,7 +838,7 @@ def test__get_pp_attr_from_std():
     np.testing.assert_array_equal(actual, expected)
 
 
-def test__get_pp_attr_default_after_checking_std():
+def test_get_pp_attr_default_after_checking_std():
     # Arrange
     converter = PandaPowerConverter()
     converter._std_types = {"trafo3w": {"std_trafo3w_1": {"lv_bus": 23}}}
@@ -825,7 +855,7 @@ def test__get_pp_attr_default_after_checking_std():
     np.testing.assert_array_equal(actual, expected)
 
 
-def test__get_pp_attr_error_after_checking_std():
+def test_get_pp_attr_error_after_checking_std():
     # Arrange
     converter = PandaPowerConverter()
     converter._std_types = {"trafo3w": {"std_trafo3w_1": {"lv_bus": 23}}}

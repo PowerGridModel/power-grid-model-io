@@ -5,7 +5,7 @@
 import json
 from functools import lru_cache
 from pathlib import Path
-from typing import Generator, List, Tuple
+from typing import Generator, List, Mapping, Tuple
 
 import numpy as np
 import pandas as pd
@@ -50,7 +50,7 @@ def component_objects(json_path: Path) -> Generator[Tuple[str, List[int]], None,
             yield component, obj_ids
 
 
-def component_attributes(json_path: Path, data_type: str = "input") -> Generator[Tuple[str, str], None, None]:
+def component_attributes(json_path: Path, data_type: str) -> Generator[Tuple[str, str], None, None]:
     """
     Read the json file (only the structure is used, i.e. the component names and attribute name)
 
@@ -122,7 +122,7 @@ def select_values(actual: SingleDataset, expected: SingleDataset, component: str
     return actual_values, expected_values
 
 
-def extract_extra_info(data: SinglePythonDataset, data_type: str = "input") -> ExtraInfoLookup:
+def extract_extra_info(data: SinglePythonDataset, data_type: str) -> ExtraInfoLookup:
     """
     Reads the dataset and collect all arguments that aren't pgm attributes
 
@@ -142,7 +142,7 @@ def extract_extra_info(data: SinglePythonDataset, data_type: str = "input") -> E
     return extra_info
 
 
-def load_json_single_dataset(file_path: Path, data_type: str = "input") -> Tuple[SingleDataset, ExtraInfoLookup]:
+def load_json_single_dataset(file_path: Path, data_type: str) -> Tuple[SingleDataset, ExtraInfoLookup]:
     """
     Loads and parses a json file in the most basic way, without using power_grid_model_io functions.
 
@@ -156,7 +156,7 @@ def load_json_single_dataset(file_path: Path, data_type: str = "input") -> Tuple
     raw_data = load_json_file(file_path)
     assert isinstance(raw_data, dict)
     dataset = convert_python_single_dataset_to_single_dataset(data=raw_data, data_type=data_type, ignore_extra=True)
-    extra_info = extract_extra_info(raw_data)
+    extra_info = extract_extra_info(raw_data, data_type=data_type)
     return dataset, extra_info
 
 
