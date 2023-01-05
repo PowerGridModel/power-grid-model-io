@@ -143,9 +143,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_lines = initialize_array(data_type="input", component_type="line", shape=len(pp_lines))
         pgm_lines["id"] = self._generate_ids("line", pp_lines.index)
         pgm_lines["from_node"] = self._get_ids("bus", pp_lines["from_bus"])
-        pgm_lines["from_status"] = self._get_pp_attr("line", "in_service") & switch_states.iloc[0, :]
+        pgm_lines["from_status"] = self._get_pp_attr("line", "in_service", True) & switch_states.iloc[0, :]
         pgm_lines["to_node"] = self._get_ids("bus", pp_lines["to_bus"])
-        pgm_lines["to_status"] = self._get_pp_attr("line", "in_service") & switch_states.iloc[1, :]
+        pgm_lines["to_status"] = self._get_pp_attr("line", "in_service", True) & switch_states.iloc[1, :]
         pgm_lines["r1"] = (
             self._get_pp_attr("line", "r_ohm_per_km")
             * self._get_pp_attr("line", "length_km")
