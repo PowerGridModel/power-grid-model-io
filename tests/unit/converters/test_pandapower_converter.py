@@ -64,8 +64,9 @@ def two_pp_objs() -> MockDf:
     return MockDf(2)
 
 
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._fill_extra_info")
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._create_input_data")
-def test_parse_data(create_input_data_mock: MagicMock):
+def test_parse_data(create_input_data_mock: MagicMock, fill_extra_info_mock: MagicMock):
     # Arrange
     converter = PandaPowerConverter()
 
@@ -79,34 +80,26 @@ def test_parse_data(create_input_data_mock: MagicMock):
 
     # Assert
     create_input_data_mock.assert_called_once_with()
+    fill_extra_info_mock.assert_not_called()
     assert len(converter.pp_data) == 1 and "bus" in converter.pp_data
     assert len(converter.pgm_data) == 1 and "node" in converter.pgm_data
     assert len(result) == 1 and "node" in result
 
 
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._fill_extra_info")
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._create_input_data")
-def test_parse_data__extra_info(create_input_data_mock: MagicMock):
+def test_parse_data__extra_info(create_input_data_mock: MagicMock, fill_extra_info_mock: MagicMock):
     # Arrange
     converter = PandaPowerConverter()
 
-    def create_input_data():
-        converter.idx_lookup[("bus", None)] = pd.Series([101, 102, 103], index=[0, 1, 2])
-        converter.idx_lookup[("load", "const_current")] = pd.Series([201, 202, 203], index=[3, 4, 5])
-
-    create_input_data_mock.side_effect = create_input_data
+    extra_info = MagicMock("extra_info")
 
     # Act
-    extra_info: ExtraInfoLookup = {}
     converter._parse_data(data={}, data_type="input", extra_info=extra_info)
 
     # Assert
-    assert len(extra_info) == 6
-    assert extra_info[0] == {"id_reference": {"table": "bus", "index": 101}}
-    assert extra_info[1] == {"id_reference": {"table": "bus", "index": 102}}
-    assert extra_info[2] == {"id_reference": {"table": "bus", "index": 103}}
-    assert extra_info[3] == {"id_reference": {"table": "load", "name": "const_current", "index": 201}}
-    assert extra_info[4] == {"id_reference": {"table": "load", "name": "const_current", "index": 202}}
-    assert extra_info[5] == {"id_reference": {"table": "load", "name": "const_current", "index": 203}}
+    create_input_data_mock.assert_called_once_with()
+    fill_extra_info_mock.assert_called_once_with(extra_info=extra_info)
 
 
 def test_parse_data__update_data():
@@ -143,6 +136,35 @@ def test_create_input_data():
     converter._create_pgm_input_ward.assert_called_once_with()
     converter._create_pgm_input_xward.assert_called_once_with()
     converter._create_pgm_input_motor.assert_called_once_with()
+
+
+def test_fill_extra_info():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.idx_lookup[("bus", None)] = pd.Series([101, 102, 103], index=[0, 1, 2])
+    converter.idx_lookup[("load", "const_current")] = pd.Series([201, 202, 203], index=[3, 4, 5])
+    converter.pgm_data["sym_load"] = initialize_array("input", "sym_load", 3)
+    converter.pgm_data["sym_load"]["id"] = [3, 4, 5]
+    converter.pgm_data["sym_load"]["node"] = [0, 1, 2]
+    converter.pgm_data["line"] = initialize_array("input", "line", 2)
+    converter.pgm_data["line"]["id"] = [6, 7]
+    converter.pgm_data["line"]["from_node"] = [0, 1]
+    converter.pgm_data["line"]["to_node"] = [1, 2]
+
+    # Act
+    extra_info: ExtraInfoLookup = {}
+    converter._fill_extra_info(extra_info=extra_info)
+
+    # Assert
+    assert len(extra_info) == 8
+    assert extra_info[0] == {"id_reference": {"table": "bus", "index": 101}}
+    assert extra_info[1] == {"id_reference": {"table": "bus", "index": 102}}
+    assert extra_info[2] == {"id_reference": {"table": "bus", "index": 103}}
+    assert extra_info[3] == {"id_reference": {"table": "load", "name": "const_current", "index": 201}, "node": 0}
+    assert extra_info[4] == {"id_reference": {"table": "load", "name": "const_current", "index": 202}, "node": 1}
+    assert extra_info[5] == {"id_reference": {"table": "load", "name": "const_current", "index": 203}, "node": 2}
+    assert extra_info[6] == {"from_node": 0, "to_node": 1}
+    assert extra_info[7] == {"from_node": 1, "to_node": 2}
 
 
 @pytest.mark.parametrize(

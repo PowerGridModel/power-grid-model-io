@@ -17,7 +17,8 @@ def merge_dicts(*dictionaries: Dict) -> Dict:
     Returns: A (hard copied) combination of all dictionaries
 
     """
-    assert len(dictionaries) > 1
+    if len(dictionaries) == 0:
+        return {}
 
     result = deepcopy(dictionaries[0])
     for dictionary in dictionaries[1:]:

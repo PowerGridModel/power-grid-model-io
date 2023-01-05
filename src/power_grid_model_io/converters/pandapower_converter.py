@@ -148,7 +148,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             for attr_name in component_data.dtype.names:
                 if NODE_REF_RE.fullmatch(attr_name):
                     for pgm_id, node_id in component_data[["id", attr_name]]:
-                        extra_info[pgm_id][attr_name] = node_id
+                        if pgm_id not in extra_info:
+                            extra_info[pgm_id] = {attr_name: node_id}
+                        else:
+                            extra_info[pgm_id][attr_name] = node_id
 
     def _extra_info_to_idx_lookup(self, extra_info: ExtraInfoLookup):
         """
