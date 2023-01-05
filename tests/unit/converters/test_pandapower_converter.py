@@ -470,7 +470,7 @@ def test_create_pgm_input_links(pp_example_simple: Tuple[PandaPowerData, float],
 #     source["status"] = [1]
 #     source["u_ref"] = [1.0]
 #
-#     converter.pgm_data["source"] = source
+#     converter.pgm_input_data["source"] = source
 #     converter.idx_lookup["bus"] = pd.Series([321, 5, 4, 3, 1, 6])
 #
 #     converter.pgm_nodes_lookup = pd.DataFrame()
