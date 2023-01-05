@@ -37,8 +37,8 @@ def _generate_ids(*args):
     return MockFn("_generate_ids", *args)
 
 
-def _get_ids(*args):
-    return MockFn("_get_ids", *args)
+def _get_pgm_ids(*args):
+    return MockFn("_get_pgm_ids", *args)
 
 
 def _get_pp_attr(*args):
@@ -53,7 +53,7 @@ def get_switch_states(*args):
 def converter() -> PandaPowerConverter:
     converter = PandaPowerConverter()
     converter._generate_ids = MagicMock(side_effect=_generate_ids)  # type: ignore
-    converter._get_ids = MagicMock(side_effect=_get_ids)  # type: ignore
+    converter._get_pgm_ids = MagicMock(side_effect=_get_pgm_ids)  # type: ignore
     converter._get_pp_attr = MagicMock(side_effect=_get_pp_attr)  # type: ignore
     converter.get_switch_states = MagicMock(side_effect=get_switch_states)  # type: ignore
     return converter
@@ -125,7 +125,7 @@ def test_fill_extra_info():
     converter.pgm_data["line"]["to_node"] = [1, 2]
 
     # Act
-    extra_info: ExtraInfoLookup = {}
+    extra_info = {}
     converter._fill_extra_info(extra_info=extra_info)
 
     # Assert
@@ -176,7 +176,7 @@ def test_extra_info_to_pgm_input_data():
     converter.pgm_output_data["line"] = initialize_array("sym_output", "line", 2)
     converter.pgm_output_data["node"]["id"] = [1, 2, 3]
     converter.pgm_output_data["line"]["id"] = [12, 23]
-    extra_info: ExtraInfoLookup = {
+    extra_info = {
         12: {"from_node": 1, "to_node": 2},
         23: {"from_node": 2, "to_node": 3},
     }
@@ -290,8 +290,8 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     # administration
     converter.get_switch_states.assert_called_once_with("line")
     converter._generate_ids.assert_called_once_with("line", two_pp_objs.index)
-    converter._get_ids.assert_any_call("bus", two_pp_objs["from_bus"])
-    converter._get_ids.assert_any_call("bus", two_pp_objs["to_bus"])
+    converter._get_pgm_ids.assert_any_call("bus", two_pp_objs["from_bus"])
+    converter._get_pgm_ids.assert_any_call("bus", two_pp_objs["to_bus"])
 
     # initialization
     mock_init_array.assert_called_once_with(data_type="input", component_type="line", shape=2)
@@ -311,9 +311,9 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     # assignment
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", _generate_ids("line", two_pp_objs.index))
-    pgm.assert_any_call("from_node", _get_ids("bus", two_pp_objs["from_bus"]))
+    pgm.assert_any_call("from_node", _get_pgm_ids("bus", two_pp_objs["from_bus"]))
     pgm.assert_any_call("from_status", _get_pp_attr("line", "in_service") & get_switch_states("line")["from"])
-    pgm.assert_any_call("to_node", _get_ids("bus", two_pp_objs["to_bus"]))
+    pgm.assert_any_call("to_node", _get_pgm_ids("bus", two_pp_objs["to_bus"]))
     pgm.assert_any_call("to_status", _get_pp_attr("line", "in_service") & get_switch_states("line")["to"])
     pgm.assert_any_call(
         "r1",
@@ -481,13 +481,51 @@ def test_create_pgm_input_links(pp_example_simple: Tuple[PandaPowerData, float],
 #     np.testing.assert_array_equal(converter.pp_output_data["node"], pp_expected_output["bus"])
 
 
-def test_get_index__key_error():
+def test_get_pgm_ids():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.idx = {
+        ("bus", None): pd.Series([10, 11, 12], index=[0, 1, 2]),
+        ("load", "const_current"): pd.Series([13, 14], index=[3, 4]),
+    }
+
+    # Act
+    bus_ids = converter._get_pgm_ids(pp_table="bus", pp_idx=pd.Series([2, 1]))
+    load_ids = converter._get_pgm_ids(pp_table="load", name="const_current", pp_idx=pd.Series([3]))
+    all_bus_ids = converter._get_pgm_ids(pp_table="bus")
+
+    # Assert
+    pd.testing.assert_series_equal(bus_ids, pd.Series([12, 11], index=[2, 1]))
+    pd.testing.assert_series_equal(load_ids, pd.Series([13], index=[3]))
+    pd.testing.assert_series_equal(all_bus_ids, pd.Series([10, 11, 12], index=[0, 1, 2]))
+
+
+def test_get_pp_ids():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.idx_lookup = {
+        ("bus", None): pd.Series([0, 1, 2], index=[10, 11, 12]),
+        ("load", "const_current"): pd.Series([3, 4], index=[13, 14]),
+    }
+
+    # Act
+    bus_ids = converter._get_pp_ids(pp_table="bus", pgm_idx=pd.Series([12, 11]))
+    load_ids = converter._get_pp_ids(pp_table="load", name="const_current", pgm_idx=pd.Series([13]))
+    all_bus_ids = converter._get_pp_ids(pp_table="bus")
+
+    # Assert
+    pd.testing.assert_series_equal(bus_ids, pd.Series([2, 1], index=[12, 11]))
+    pd.testing.assert_series_equal(load_ids, pd.Series([3], index=[13]))
+    pd.testing.assert_series_equal(all_bus_ids, pd.Series([0, 1, 2], index=[10, 11, 12]))
+
+
+def test_get_pgm_ids__key_error():
     # Arrange
     converter = PandaPowerConverter()
 
     # Act / Assert
     with pytest.raises(KeyError, match=r"index.*bus"):
-        converter._get_ids(pp_table="bus", pp_idx=pd.Series(dtype=np.int32))
+        converter._get_pgm_ids(pp_table="bus", pp_idx=pd.Series(dtype=np.int32))
 
 
 def test_get_tap_size():
@@ -707,13 +745,11 @@ def test_get_id():
     converter = PandaPowerConverter()
     converter.idx = {("line", None): pd.Series([21, 345, 0, 3, 15], index=[0, 1, 2, 3, 4])}
 
-    expected_id = 345
-
     # Act
     actual_id = converter.get_id("line", 1)
 
     # Assert
-    np.testing.assert_array_equal(actual_id, expected_id)
+    np.testing.assert_array_equal(actual_id, 345)
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter.get_individual_switch_states")
