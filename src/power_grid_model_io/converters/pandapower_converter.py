@@ -29,7 +29,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
     Panda Power Converter
     """
 
-    __slots__ = ("_std_types", "pp_data", "pgm_data", "idx", "idx_lookup", "next_idx", "system_frequency")
+    __slots__ = ("_std_types", "pp_input_data", "pgm_input_data", "idx", "idx_lookup", "next_idx", "system_frequency")
 
     def __init__(self, std_types: Optional[StdTypes] = None, system_frequency: float = 50.0):
         """
@@ -41,8 +41,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         super().__init__(source=None, destination=None)
         self._std_types: StdTypes = std_types if std_types is not None else {}
         self.system_frequency: float = system_frequency
-        self.pp_data: PandaPowerData = {}
-        self.pgm_data: Dataset = {}
+        self.pp_input_data: PandaPowerData = {}
+        self.pgm_input_data: Dataset = {}
         self.idx: Dict[Tuple[str, Optional[str]], pd.Series] = {}
         self.idx_lookup: Dict[Tuple[str, Optional[str]], pd.Series] = {}
         self.next_idx = 0
@@ -64,12 +64,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
 
         # Clear pgm data
-        self.pgm_data = {}
+        self.pgm_input_data = {}
         self.idx_lookup = {}
         self.next_idx = 0
 
         # Set pandas data
-        self.pp_data = data
+        self.pp_input_data = data
         # Convert
         if data_type == "input":
             self._create_input_data()
@@ -85,7 +85,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                     else:
                         extra_info[pgm_idx] = {"id_reference": {"table": pp_table, "index": pp_idx}}
 
-        return self.pgm_data
+        return self.pgm_input_data
 
     def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup]) -> PandaPowerData:
         raise NotImplementedError()
@@ -118,9 +118,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             returns a power-grid-model structured array for the Node component
         """
-        assert "node" not in self.pgm_data
+        assert "node" not in self.pgm_input_data
 
-        pp_busses = self.pp_data["bus"]
+        pp_busses = self.pp_input_data["bus"]
 
         if pp_busses.empty:
             return
@@ -129,7 +129,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_nodes["id"] = self._generate_ids("bus", pp_busses.index)
         pgm_nodes["u_rated"] = self._get_pp_attr("bus", "vn_kv") * 1e3
 
-        self.pgm_data["node"] = pgm_nodes
+        self.pgm_input_data["node"] = pgm_nodes
 
     def _create_pgm_input_lines(self):
         """
@@ -138,9 +138,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             returns a power-grid-model structured array for the Line component
         """
-        assert "line" not in self.pgm_data
+        assert "line" not in self.pgm_input_data
 
-        pp_lines = self.pp_data["line"]
+        pp_lines = self.pp_input_data["line"]
 
         if pp_lines.empty:
             return
@@ -168,7 +168,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         )
         pgm_lines["i_n"] = (self._get_pp_attr("line", "max_i_ka") * 1e3) * self._get_pp_attr("line", "df") * parallel
 
-        self.pgm_data["line"] = pgm_lines
+        self.pgm_input_data["line"] = pgm_lines
 
     def _create_pgm_input_sources(self):
         """
@@ -177,9 +177,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             returns a power-grid-model structured array for the Source component
         """
-        assert "source" not in self.pgm_data
+        assert "source" not in self.pgm_input_data
 
-        pp_ext_grid = self.pp_data["ext_grid"]
+        pp_ext_grid = self.pp_input_data["ext_grid"]
 
         if pp_ext_grid.empty:
             return
@@ -193,7 +193,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sources["u_ref_angle"] = self._get_pp_attr("ext_grid", "va_degree") * (np.pi / 180)
         pgm_sources["sk"] = self._get_pp_attr("ext_grid", "s_sc_max_mva", np.nan) * 1e6
 
-        self.pgm_data["source"] = pgm_sources
+        self.pgm_input_data["source"] = pgm_sources
 
     def _create_pgm_input_shunts(self):
         """
@@ -202,9 +202,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             returns a power-grid-model structured array for the Shunt component
         """
-        assert "shunt" not in self.pgm_data
+        assert "shunt" not in self.pgm_input_data
 
-        pp_shunts = self.pp_data["shunt"]
+        pp_shunts = self.pp_input_data["shunt"]
 
         if pp_shunts.empty:
             return
@@ -218,7 +218,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_shunts["g1"] = self._get_pp_attr("shunt", "p_mw") * self._get_pp_attr("shunt", "step") / vn_kv_2
         pgm_shunts["b1"] = -(self._get_pp_attr("shunt", "q_mvar") * self._get_pp_attr("shunt", "step")) / vn_kv_2
 
-        self.pgm_data["shunt"] = pgm_shunts
+        self.pgm_input_data["shunt"] = pgm_shunts
 
     def _create_pgm_input_sym_gens(self):
         """
@@ -228,9 +228,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             returns a power-grid-model structured array for the Symmetrical Generator component
         """
-        assert "sym_gen" not in self.pgm_data
+        assert "sym_gen" not in self.pgm_input_data
 
-        pp_sgens = self.pp_data["sgen"]
+        pp_sgens = self.pp_input_data["sgen"]
 
         if pp_sgens.empty:
             return
@@ -243,7 +243,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_gens["q_specified"] = self._get_pp_attr("sgen", "q_mvar") * 1e6 * self._get_pp_attr("sgen", "scaling")
         pgm_sym_gens["type"] = LoadGenType.const_power
 
-        self.pgm_data["sym_gen"] = pgm_sym_gens
+        self.pgm_input_data["sym_gen"] = pgm_sym_gens
 
     def _create_pgm_input_asym_gens(self):  # pragma: no cover
         """
@@ -254,9 +254,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             returns a power-grid-model structured array for the Asymmetrical Generator component
         """
         # TODO: create unit tests for asym_gen conversion
-        assert "asym_gen" not in self.pgm_data
+        assert "asym_gen" not in self.pgm_input_data
 
-        pp_asym_gens = self.pp_data["asymmetric_sgen"]
+        pp_asym_gens = self.pp_input_data["asymmetric_sgen"]
 
         if pp_asym_gens.empty:
             return
@@ -286,7 +286,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         )
         pgm_asym_gens["type"] = LoadGenType.const_power
 
-        self.pgm_data["asym_gen"] = pgm_asym_gens
+        self.pgm_input_data["asym_gen"] = pgm_asym_gens
 
     def _create_pgm_input_sym_loads(self):
         """
@@ -297,9 +297,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             returns a power-grid-model structured array for the Symmetrical Load component
         """
-        assert "sym_load" not in self.pgm_data
+        assert "sym_load" not in self.pgm_input_data
 
-        pp_loads = self.pp_data["load"]
+        pp_loads = self.pp_input_data["load"]
 
         if pp_loads.empty:
             return
@@ -337,13 +337,13 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_loads["p_specified"][-n_loads:] = const_i_multiplier * self._get_pp_attr("load", "p_mw")
         pgm_sym_loads["q_specified"][-n_loads:] = const_i_multiplier * self._get_pp_attr("load", "q_mvar")
 
-        self.pgm_data["sym_load"] = pgm_sym_loads
+        self.pgm_input_data["sym_load"] = pgm_sym_loads
 
     def _create_pgm_input_asym_loads(self):  # pragma: no cover
         # TODO: create unit tests for asym_load conversion
-        assert "asym_load" not in self.pgm_data
+        assert "asym_load" not in self.pgm_input_data
 
-        pp_asym_loads = self.pp_data["asymmetric_load"]
+        pp_asym_loads = self.pp_input_data["asymmetric_load"]
 
         if pp_asym_loads.empty:
             return
@@ -373,7 +373,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         )
         pgm_asym_loads["type"] = LoadGenType.const_power
 
-        self.pgm_data["asym_load"] = pgm_asym_loads
+        self.pgm_input_data["asym_load"] = pgm_asym_loads
 
     def _create_pgm_input_transformers(self):
         """
@@ -383,9 +383,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             returns a power-grid-model structured array for the Transformer component
         """
-        assert "transformer" not in self.pgm_data
+        assert "transformer" not in self.pgm_input_data
 
-        pp_trafo = self.pp_data["trafo"]
+        pp_trafo = self.pp_input_data["trafo"]
 
         if pp_trafo.empty:
             return
@@ -421,7 +421,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_transformers["tap_nom"] = self._get_pp_attr("trafo", "tap_neutral")
         pgm_transformers["tap_size"] = self._get_tap_size(pp_trafo)
 
-        self.pgm_data["transformer"] = pgm_transformers
+        self.pgm_input_data["transformer"] = pgm_transformers
 
     def _create_pgm_input_three_winding_transformers(self):
         """
@@ -431,9 +431,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             returns a power-grid-model structured array for the Three Winding Transformer component
         """
-        assert "three_winding_transformer" not in self.pgm_data
+        assert "three_winding_transformer" not in self.pgm_input_data
 
-        pp_trafo3w = self.pp_data["trafo3w"]
+        pp_trafo3w = self.pp_input_data["trafo3w"]
 
         if pp_trafo3w.empty:
             return
@@ -493,7 +493,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_3wtransformers["tap_nom"] = self._get_pp_attr("trafo3w", "tap_neutral")
         pgm_3wtransformers["tap_size"] = self._get_3wtransformer_tap_size(pp_trafo3w)
 
-        self.pgm_data["three_winding_transformer"] = pgm_3wtransformers
+        self.pgm_input_data["three_winding_transformer"] = pgm_3wtransformers
 
     def _create_pgm_input_links(self):
         """
@@ -503,21 +503,20 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             returns a power-grid-model structured array for the Link component
         """
-        assert "link" not in self.pgm_data
+        assert "link" not in self.pgm_input_data
 
-        pp_switches = self.pp_data["switch"]
+        pp_switches = self.pp_input_data["switch"]
 
         if pp_switches.empty:
             return
 
-        pp_switches = pp_switches[
-            self._get_pp_attr("switch", "et") == "b"
-        ]  # This should take all the switches which are b2b
+        # This should take all the switches which are b2b
+        pp_switches = pp_switches[self._get_pp_attr("switch", "et") == "b"]
 
-        self.pp_data["switch_b2b"] = pp_switches  # Create a table in pp_data for bus to bus switches and then access
-        # it to get the closed attribute. We do this so that we could later easily get the closed attribute,
-        # if we don't do this the attribute closed will be taken from all the switches, rather than from only bus to
-        # bus, that will result in an error
+        # Create a table in pp_data for bus to bus switches and then access it to get the closed attribute. We do this
+        # so that we could later easily get the closed attribute, if we don't do this the attribute closed will be taken
+        # from all the switches, rather than from only bus to bus, that will result in an error.
+        self.pp_input_data["switch_b2b"] = pp_switches
 
         pgm_links = initialize_array(data_type="input", component_type="link", shape=len(pp_switches))
         pgm_links["id"] = self._generate_ids("switch", pp_switches.index, name="bus_to_bus")
@@ -526,11 +525,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_links["from_status"] = self._get_pp_attr("switch_b2b", "closed")
         pgm_links["to_status"] = self._get_pp_attr("switch_b2b", "closed")
 
-        self.pgm_data["link"] = pgm_links
+        self.pgm_input_data["link"] = pgm_links
 
     def _create_pgm_input_storage(self):  # pragma: no cover
         # TODO: create unit tests for the function
-        pp_storage = self.pp_data["storage"]
+        pp_storage = self.pp_input_data["storage"]
 
         if pp_storage.empty:
             return
@@ -539,7 +538,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
     def _create_pgm_input_impedance(self):  # pragma: no cover
         # TODO: create unit tests for the function
-        pp_impedance = self.pp_data["impedance"]
+        pp_impedance = self.pp_input_data["impedance"]
 
         if pp_impedance.empty:
             return
@@ -548,7 +547,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
     def _create_pgm_input_ward(self):  # pragma: no cover
         # TODO: create unit tests for the function
-        pp_wards = self.pp_data["ward"]
+        pp_wards = self.pp_input_data["ward"]
 
         if pp_wards.empty:
             return
@@ -557,7 +556,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
     def _create_pgm_input_xward(self):  # pragma: no cover
         # TODO: create unit tests for the function
-        pp_xwards = self.pp_data["xward"]
+        pp_xwards = self.pp_input_data["xward"]
 
         if pp_xwards.empty:
             return
@@ -566,7 +565,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
     def _create_pgm_input_motor(self):  # pragma: no cover
         # TODO: create unit tests for the function
-        pp_motors = self.pp_data["motor"]
+        pp_motors = self.pp_input_data["motor"]
 
         if pp_motors.empty:
             return
@@ -742,11 +741,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         else:
             raise KeyError(f"Can't get switch states for {pp_table}")
 
-        component = self.pp_data[pp_table]
+        component = self.pp_input_data[pp_table]
         component["index"] = component.index
 
         # Select the appropriate switches and columns
-        pp_switches = self.pp_data["switch"]
+        pp_switches = self.pp_input_data["switch"]
         pp_switches = pp_switches[pp_switches["et"] == element_type]
         pp_switches = pp_switches[["element", "bus", "closed"]]
 
@@ -772,7 +771,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         trafo3w["index"] = trafo3w.index
 
         # Select the appropriate switches and columns
-        pp_switches = self.pp_data["switch"]
+        pp_switches = self.pp_input_data["switch"]
         pp_switches = pp_switches[pp_switches["et"] == element_type]
         pp_switches = pp_switches[["element", "bus", "closed"]]
 
@@ -805,7 +804,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         def std_type_to_winding_types(std_type: str) -> pd.Series:
             return vector_group_to_winding_types(self._std_types["trafo"][std_type]["vector_group"])
 
-        trafo = self.pp_data["trafo"]
+        trafo = self.pp_input_data["trafo"]
         if "vector_group" in trafo:
             trafo = trafo["vector_group"].apply(vector_group_to_winding_types)
         else:
@@ -836,7 +835,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         def std_type_to_winding_types(std_type: str) -> pd.Series:
             return vector_group_to_winding_types(self._std_types["trafo3w"][std_type]["vector_group"])
 
-        trafo3w = self.pp_data["trafo3w"]
+        trafo3w = self.pp_input_data["trafo3w"]
         if "vector_group" in trafo3w:
             trafo3w = trafo3w["vector_group"].apply(vector_group_to_winding_types)
         else:
@@ -855,7 +854,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             Returns the selected PandaPower attribute from the selected PandaPower table
         """
-        pp_component_data = self.pp_data[table]
+        pp_component_data = self.pp_input_data[table]
 
         # If the attribute exists, return it
         if attribute in pp_component_data:
