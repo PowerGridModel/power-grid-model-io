@@ -500,6 +500,15 @@ def test_get_pgm_ids():
     pd.testing.assert_series_equal(all_bus_ids, pd.Series([10, 11, 12], index=[0, 1, 2]))
 
 
+def test_get_pgm_ids__key_error():
+    # Arrange
+    converter = PandaPowerConverter()
+
+    # Act / Assert
+    with pytest.raises(KeyError, match=r"index.*bus"):
+        converter._get_pgm_ids(pp_table="bus")
+
+
 def test_get_pp_ids():
     # Arrange
     converter = PandaPowerConverter()
@@ -519,13 +528,13 @@ def test_get_pp_ids():
     pd.testing.assert_series_equal(all_bus_ids, pd.Series([0, 1, 2], index=[10, 11, 12]))
 
 
-def test_get_pgm_ids__key_error():
+def test_get_pp_ids__key_error():
     # Arrange
     converter = PandaPowerConverter()
 
     # Act / Assert
     with pytest.raises(KeyError, match=r"index.*bus"):
-        converter._get_pgm_ids(pp_table="bus", pp_idx=pd.Series(dtype=np.int32))
+        converter._get_pp_ids(pp_table="bus")
 
 
 def test_get_tap_size():
