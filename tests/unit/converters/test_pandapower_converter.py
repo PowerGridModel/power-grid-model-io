@@ -37,8 +37,8 @@ def _generate_ids(*args):
     return MockFn("_generate_ids", *args)
 
 
-def _get_ids(*args):
-    return MockFn("_get_ids", *args)
+def _get_pgm_ids(*args):
+    return MockFn("_get_pgm_ids", *args)
 
 
 def _get_pp_attr(*args):
@@ -53,7 +53,7 @@ def get_switch_states(*args):
 def converter() -> PandaPowerConverter:
     converter = PandaPowerConverter()
     converter._generate_ids = MagicMock(side_effect=_generate_ids)  # type: ignore
-    converter._get_ids = MagicMock(side_effect=_get_ids)  # type: ignore
+    converter._get_pgm_ids = MagicMock(side_effect=_get_pgm_ids)  # type: ignore
     converter._get_pp_attr = MagicMock(side_effect=_get_pp_attr)  # type: ignore
     converter.get_switch_states = MagicMock(side_effect=get_switch_states)  # type: ignore
     return converter
@@ -226,8 +226,8 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     # administration
     converter.get_switch_states.assert_called_once_with("line")
     converter._generate_ids.assert_called_once_with("line", two_pp_objs.index)
-    converter._get_ids.assert_any_call("bus", two_pp_objs["from_bus"])
-    converter._get_ids.assert_any_call("bus", two_pp_objs["to_bus"])
+    converter._get_pgm_ids.assert_any_call("bus", two_pp_objs["from_bus"])
+    converter._get_pgm_ids.assert_any_call("bus", two_pp_objs["to_bus"])
 
     # initialization
     mock_init_array.assert_called_once_with(data_type="input", component_type="line", shape=2)
@@ -247,9 +247,9 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     # assignment
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", _generate_ids("line", two_pp_objs.index))
-    pgm.assert_any_call("from_node", _get_ids("bus", two_pp_objs["from_bus"]))
+    pgm.assert_any_call("from_node", _get_pgm_ids("bus", two_pp_objs["from_bus"]))
     pgm.assert_any_call("from_status", _get_pp_attr("line", "in_service") & get_switch_states("line")["from"])
-    pgm.assert_any_call("to_node", _get_ids("bus", two_pp_objs["to_bus"]))
+    pgm.assert_any_call("to_node", _get_pgm_ids("bus", two_pp_objs["to_bus"]))
     pgm.assert_any_call("to_status", _get_pp_attr("line", "in_service") & get_switch_states("line")["to"])
     pgm.assert_any_call(
         "r1",
@@ -387,7 +387,7 @@ def test_get_index__key_error():
 
     # Act / Assert
     with pytest.raises(KeyError, match=r"index.*bus"):
-        converter._get_ids(pp_table="bus", pp_idx=pd.Series(dtype=np.int32))
+        converter._get_pgm_ids(pp_table="bus", pp_idx=pd.Series(dtype=np.int32))
 
 
 def test_get_tap_size():
