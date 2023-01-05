@@ -6,7 +6,7 @@
 Panda Power Converter
 """
 from functools import lru_cache
-from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
+from typing import Dict, List, Mapping, MutableMapping, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -19,7 +19,7 @@ from power_grid_model_io.functions import get_winding
 from power_grid_model_io.utils.regex import NODE_REF_RE, TRAFO3_CONNECTION_RE, TRAFO_CONNECTION_RE
 
 StdTypes = Mapping[str, Mapping[str, Mapping[str, Union[float, int, str]]]]
-PandaPowerData = Dict[str, pd.DataFrame]
+PandaPowerData = MutableMapping[str, pd.DataFrame]
 
 
 # pylint: disable=too-many-instance-attributes
@@ -29,20 +29,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
     """
 
     __slots__ = ("_std_types", "pp_data", "pgm_data", "idx", "idx_lookup", "next_idx", "system_frequency")
-
-    @staticmethod
-    def extract_pp_data_frames(pp_net: Mapping[str, Any]) -> Dict[str, pd.DataFrame]:
-        """
-        Pandapower uses a pandapowerNet object to store the input network. To avoid a dependency on pandapower,
-        this helper function lets you convert the object to a dictionary of str -> pd.DataFrame.
-
-        Args:
-            pp_net: The pandapowerNet object
-
-        Returns:
-            A dictionary storing all the pandas DataFrames available in the pp_net
-        """
-        return {component: data for component, data in pp_net.items() if isinstance(data, pd.DataFrame)}
 
     def __init__(self, std_types: Optional[StdTypes] = None, system_frequency: float = 50.0):
         """
