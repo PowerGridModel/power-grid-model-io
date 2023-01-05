@@ -908,18 +908,13 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         assert "sgen" not in self.pp_output_data
         assert "sym_gen" in self.pgm_data
 
-        pgm_input_sym_gens = self.pgm_data["sym_gen"]
-
         pgm_output_sym_gens = self.pgm_output_data["sym_gen"]
 
-        at_nodes = self.pgm_nodes_lookup.loc[pgm_input_sym_gens["node"]]
-
         pp_output_sgens = pd.DataFrame(
-            columns=["p_mw", "q_mvar", "vm_pu"], index=self._get_pp_ids("sgen", pgm_output_sym_gens["id"])
+            columns=["p_mw", "q_mvar"], index=self._get_pp_ids("sgen", pgm_output_sym_gens["id"])
         )
         pp_output_sgens["p_mw"] = pgm_output_sym_gens["p"] * 1e-6
         pp_output_sgens["q_mvar"] = pgm_output_sym_gens["q"] * 1e-6
-        pp_output_sgens["vm_pu"] = at_nodes["u_pu"]
 
         self.pp_output_data["res_sgen"] = pp_output_sgens
 
