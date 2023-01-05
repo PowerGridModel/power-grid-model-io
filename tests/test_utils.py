@@ -4,13 +4,13 @@
 
 from unittest.mock import MagicMock, call, patch
 
+import numpy as np
 import pytest
 import structlog
 from structlog.testing import capture_logs
 
 from .utils import (
     MockDf,
-    MockFn,
     MockVal,
     assert_log_exists,
     assert_log_match,
@@ -58,7 +58,16 @@ def test_assert_struct_array_equal(mock_assert_frame_equal: MagicMock, mock_data
     # Assert
     assert mock_data_frame.call_args_list[0] == call(actual_np)
     assert mock_data_frame.call_args_list[1] == call(expected_np)
-    mock_assert_frame_equal.assert_called_once_with(actual_pd, expected_pd)
+    mock_assert_frame_equal.assert_called_once_with(actual_pd, expected_pd, check_dtype=False)
+
+
+def test_assert_struct_array_equal__dict_list():
+    # Arrange
+    actual = np.array([(12, 1, 2), (23, 2, 3)], dtype=[("id", int), ("from", int), ("to", int)])
+    expected = [{"id": 12, "from": 1, "to": 2}, {"id": 23, "from": 2, "to": 3}]
+
+    # Act / Assert
+    assert_struct_array_equal(actual=actual, expected=expected)
 
 
 def test_assert_log_exists(captured_logs):

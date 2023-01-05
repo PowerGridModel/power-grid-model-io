@@ -111,33 +111,6 @@ def test_parse_data__update_data():
         converter._parse_data(data={}, data_type="update", extra_info=None)
 
 
-def test_create_input_data():
-    # Arrange
-    converter = MagicMock()
-
-    # Act
-    PandaPowerConverter._create_input_data(self=converter)  # type: ignore
-
-    # Assert
-    assert len(converter.method_calls) == 16
-    converter._create_pgm_input_nodes.assert_called_once_with()
-    converter._create_pgm_input_lines.assert_called_once_with()
-    converter._create_pgm_input_sources.assert_called_once_with()
-    converter._create_pgm_input_sym_loads.assert_called_once_with()
-    converter._create_pgm_input_asym_loads.assert_called_once_with()
-    converter._create_pgm_input_shunts.assert_called_once_with()
-    converter._create_pgm_input_transformers.assert_called_once_with()
-    converter._create_pgm_input_sym_gens.assert_called_once_with()
-    converter._create_pgm_input_asym_gens.assert_called_once_with()
-    converter._create_pgm_input_three_winding_transformers.assert_called_once_with()
-    converter._create_pgm_input_links.assert_called_once_with()
-    converter._create_pgm_input_storage.assert_called_once_with()
-    converter._create_pgm_input_impedance.assert_called_once_with()
-    converter._create_pgm_input_ward.assert_called_once_with()
-    converter._create_pgm_input_xward.assert_called_once_with()
-    converter._create_pgm_input_motor.assert_called_once_with()
-
-
 def test_fill_extra_info():
     # Arrange
     converter = PandaPowerConverter()
@@ -165,6 +138,84 @@ def test_fill_extra_info():
     assert extra_info[5] == {"id_reference": {"table": "load", "name": "const_current", "index": 203}, "node": 2}
     assert extra_info[6] == {"from_node": 0, "to_node": 1}
     assert extra_info[7] == {"from_node": 1, "to_node": 2}
+
+
+def test_extra_info_to_idx_lookup():
+    # Arrange
+    converter = PandaPowerConverter()
+    extra_info = {
+        0: {"id_reference": {"table": "bus", "index": 101}},
+        1: {"id_reference": {"table": "bus", "index": 102}},
+        2: {"id_reference": {"table": "bus", "index": 103}},
+        3: {"id_reference": {"table": "load", "name": "const_current", "index": 201}, "node": 0},
+        4: {"id_reference": {"table": "load", "name": "const_current", "index": 202}, "node": 1},
+        5: {"id_reference": {"table": "load", "name": "const_current", "index": 203}, "node": 2},
+        6: {"from_node": 0, "to_node": 1},
+        7: {"from_node": 1, "to_node": 2},
+    }
+
+    # Act
+    converter._extra_info_to_idx_lookup(extra_info=extra_info)
+
+    # Assert
+    pd.testing.assert_series_equal(converter.idx[("bus", None)], pd.Series([0, 1, 2], index=[101, 102, 103]))
+    pd.testing.assert_series_equal(converter.idx_lookup[("bus", None)], pd.Series([101, 102, 103], index=[0, 1, 2]))
+
+    pd.testing.assert_series_equal(
+        converter.idx[("load", "const_current")], pd.Series([3, 4, 5], index=[201, 202, 203])
+    )
+    pd.testing.assert_series_equal(
+        converter.idx_lookup[("load", "const_current")], pd.Series([201, 202, 203], index=[3, 4, 5])
+    )
+
+
+def test_extra_info_to_pgm_input_data():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.pgm_output_data["node"] = initialize_array("sym_output", "node", 3)
+    converter.pgm_output_data["line"] = initialize_array("sym_output", "line", 2)
+    converter.pgm_output_data["node"]["id"] = [1, 2, 3]
+    converter.pgm_output_data["line"]["id"] = [12, 23]
+    extra_info: ExtraInfoLookup = {
+        12: {"from_node": 1, "to_node": 2},
+        23: {"from_node": 2, "to_node": 3},
+    }
+
+    # Act
+    converter._extra_info_to_pgm_input_data(extra_info=extra_info)
+
+    # Assert
+    assert "node" not in converter.pgm_data
+    assert_struct_array_equal(
+        converter.pgm_data["line"], [{"id": 12, "from_node": 1, "to_node": 2}, {"id": 23, "from_node": 2, "to_node": 3}]
+    )
+
+
+def test_create_input_data():
+    # Arrange
+    converter = MagicMock()
+
+    # Act
+    PandaPowerConverter._create_input_data(self=converter)  # type: ignore
+
+    # Assert
+    assert len(converter.method_calls) == 16
+    converter._create_pgm_input_nodes.assert_called_once_with()
+    converter._create_pgm_input_lines.assert_called_once_with()
+    converter._create_pgm_input_sources.assert_called_once_with()
+    converter._create_pgm_input_sym_loads.assert_called_once_with()
+    converter._create_pgm_input_asym_loads.assert_called_once_with()
+    converter._create_pgm_input_shunts.assert_called_once_with()
+    converter._create_pgm_input_transformers.assert_called_once_with()
+    converter._create_pgm_input_sym_gens.assert_called_once_with()
+    converter._create_pgm_input_asym_gens.assert_called_once_with()
+    converter._create_pgm_input_three_winding_transformers.assert_called_once_with()
+    converter._create_pgm_input_links.assert_called_once_with()
+    converter._create_pgm_input_storage.assert_called_once_with()
+    converter._create_pgm_input_impedance.assert_called_once_with()
+    converter._create_pgm_input_ward.assert_called_once_with()
+    converter._create_pgm_input_xward.assert_called_once_with()
+    converter._create_pgm_input_motor.assert_called_once_with()
 
 
 @pytest.mark.parametrize(

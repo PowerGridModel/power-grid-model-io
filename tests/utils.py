@@ -16,11 +16,11 @@ def dict_in_dict(needle: Dict[str, Any], data: Dict[str, Any]) -> bool:
     return all(item in data.items() for item in needle.items())
 
 
-def assert_struct_array_equal(actual: np.ndarray, expected: np.ndarray):
+def assert_struct_array_equal(actual: np.ndarray, expected: Union[np.ndarray, pd.DataFrame, List[Dict[str, Any]]]):
     """
     Compare two structured numpy arrays by converting them to pandas DataFrames first
     """
-    pd.testing.assert_frame_equal(pd.DataFrame(actual), pd.DataFrame(expected))
+    pd.testing.assert_frame_equal(pd.DataFrame(actual), pd.DataFrame(expected), check_dtype=False)
 
 
 def assert_log_exists(
