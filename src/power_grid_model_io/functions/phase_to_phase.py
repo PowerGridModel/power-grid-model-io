@@ -6,21 +6,19 @@ These functions can be used in the mapping files to apply functions to vision da
 """
 
 import math
-import re
 from typing import Tuple
 
 from power_grid_model import WindingType
 
 from power_grid_model_io.functions import get_winding
-
-CONNECTION_PATTERN = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(\d|1[0-2])")
+from power_grid_model_io.utils.regex import TRAFO_CONNECTION_RE
 
 
 def relative_no_load_current(i_0: float, p_0: float, s_nom: float, u_nom: float) -> float:
     """
     Calculate the relative no load current.
     """
-    i_rel = max(i_0 / (s_nom / (u_nom / math.sqrt(3))), p_0 / s_nom)
+    i_rel = max(i_0 / (s_nom / (u_nom * math.sqrt(3))), p_0 / s_nom)
     if i_rel > 1.0:
         raise ValueError(f"Relative current can't be more than 100% (got {i_rel * 100.0:.2f}%)")
     return i_rel
@@ -40,12 +38,16 @@ def power_wind_speed(  # pylint: disable=too-many-arguments
     nominal_wind_speed: float = 14.0,
     cutting_out_wind_speed: float = 25.0,
     cut_out_wind_speed: float = 30.0,
+    axis_height: float = 30.0,
 ) -> float:
     """
     Estimate p_ref based on p_nom and wind_speed.
 
     See section "Wind turbine" in https://phasetophase.nl/pdf/VisionEN.pdf
     """
+
+    # Calculate wind speed at the axis height
+    wind_speed *= (axis_height / 10) ** 0.143
 
     # At a wind speed below cut-in, the power is zero.
     if wind_speed < cut_in_wind_speed:
@@ -109,7 +111,7 @@ def _split_connection_string(conn_str: str) -> Tuple[str, str, int]:
      * winding_to
      * clock
     """
-    match = CONNECTION_PATTERN.fullmatch(conn_str)
+    match = TRAFO_CONNECTION_RE.fullmatch(conn_str)
     if not match:
         raise ValueError(f"Invalid transformer connection string: '{conn_str}'")
     return match.group(1), match.group(2), int(match.group(3))
