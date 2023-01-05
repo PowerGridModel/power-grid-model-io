@@ -71,7 +71,7 @@ def test_parse_data(create_input_data_mock: MagicMock, fill_extra_info_mock: Mag
     converter = PandaPowerConverter()
 
     def create_input_data():
-        converter.pgm_data = {"node": np.array([])}
+        converter.pgm_input_data = {"node": np.array([])}
 
     create_input_data_mock.side_effect = create_input_data
 
@@ -81,8 +81,8 @@ def test_parse_data(create_input_data_mock: MagicMock, fill_extra_info_mock: Mag
     # Assert
     create_input_data_mock.assert_called_once_with()
     fill_extra_info_mock.assert_not_called()
-    assert len(converter.pp_data) == 1 and "bus" in converter.pp_data
-    assert len(converter.pgm_data) == 1 and "node" in converter.pgm_data
+    assert len(converter.pp_input_data) == 1 and "bus" in converter.pp_input_data
+    assert len(converter.pgm_input_data) == 1 and "node" in converter.pgm_input_data
     assert len(result) == 1 and "node" in result
 
 
@@ -116,13 +116,13 @@ def test_fill_extra_info():
     converter = PandaPowerConverter()
     converter.idx_lookup[("bus", None)] = pd.Series([101, 102, 103], index=[0, 1, 2])
     converter.idx_lookup[("load", "const_current")] = pd.Series([201, 202, 203], index=[3, 4, 5])
-    converter.pgm_data["sym_load"] = initialize_array("input", "sym_load", 3)
-    converter.pgm_data["sym_load"]["id"] = [3, 4, 5]
-    converter.pgm_data["sym_load"]["node"] = [0, 1, 2]
-    converter.pgm_data["line"] = initialize_array("input", "line", 2)
-    converter.pgm_data["line"]["id"] = [6, 7]
-    converter.pgm_data["line"]["from_node"] = [0, 1]
-    converter.pgm_data["line"]["to_node"] = [1, 2]
+    converter.pgm_input_data["sym_load"] = initialize_array("input", "sym_load", 3)
+    converter.pgm_input_data["sym_load"]["id"] = [3, 4, 5]
+    converter.pgm_input_data["sym_load"]["node"] = [0, 1, 2]
+    converter.pgm_input_data["line"] = initialize_array("input", "line", 2)
+    converter.pgm_input_data["line"]["id"] = [6, 7]
+    converter.pgm_input_data["line"]["from_node"] = [0, 1]
+    converter.pgm_input_data["line"]["to_node"] = [1, 2]
 
     # Act
     extra_info = {}
@@ -185,9 +185,10 @@ def test_extra_info_to_pgm_input_data():
     converter._extra_info_to_pgm_input_data(extra_info=extra_info)
 
     # Assert
-    assert "node" not in converter.pgm_data
+    assert "node" not in converter.pgm_input_data
     assert_struct_array_equal(
-        converter.pgm_data["line"], [{"id": 12, "from_node": 1, "to_node": 2}, {"id": 23, "from_node": 2, "to_node": 3}]
+        converter.pgm_input_data["line"],
+        [{"id": 12, "from_node": 1, "to_node": 2}, {"id": 23, "from_node": 2, "to_node": 3}],
     )
 
 
@@ -238,7 +239,7 @@ def test_create_pgm_input_object__empty(
 ):
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_data[table] = pd.DataFrame()  # type: ignore
+    converter.pp_input_data[table] = pd.DataFrame()  # type: ignore
 
     # Act
     create_fn(converter)
@@ -250,7 +251,7 @@ def test_create_pgm_input_object__empty(
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_nodes(mock_init_array: MagicMock, two_pp_objs: MockDf, converter):
     # Arrange
-    converter.pp_data["bus"] = two_pp_objs
+    converter.pp_input_data["bus"] = two_pp_objs
 
     # Act
     converter._create_pgm_input_nodes()
@@ -274,13 +275,13 @@ def test_create_pgm_input_nodes(mock_init_array: MagicMock, two_pp_objs: MockDf,
     assert len(pgm.call_args_list) == 2
 
     # result
-    assert converter.pgm_data["node"] == mock_init_array.return_value
+    assert converter.pgm_input_data["node"] == mock_init_array.return_value
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
-    converter.pp_data["line"] = two_pp_objs
+    converter.pp_input_data["line"] = two_pp_objs
 
     # Act
     converter._create_pgm_input_lines()
@@ -338,13 +339,13 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     )
 
     # result
-    assert converter.pgm_data["line"] == mock_init_array.return_value
+    assert converter.pgm_input_data["line"] == mock_init_array.return_value
 
 
 def test_create_pgm_input_sources(pp_example_simple: Tuple[PandaPowerData, float], pgm_example_simple: SingleDataset):
     # Arrange
     converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
-    converter.pp_data = pp_example_simple[0]
+    converter.pp_input_data = pp_example_simple[0]
     converter.idx = {("bus", None): pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
     converter.next_idx = 7
 
@@ -352,13 +353,13 @@ def test_create_pgm_input_sources(pp_example_simple: Tuple[PandaPowerData, float
     converter._create_pgm_input_sources()
 
     # Assert
-    assert_struct_array_equal(converter.pgm_data["source"], pgm_example_simple["source"])
+    assert_struct_array_equal(converter.pgm_input_data["source"], pgm_example_simple["source"])
 
 
 def test_create_pgm_input_sym_loads(pp_example_simple: Tuple[PandaPowerData, float], pgm_example_simple: SingleDataset):
     # Arrange
     converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
-    converter.pp_data = pp_example_simple[0]
+    converter.pp_input_data = pp_example_simple[0]
     converter.idx = {("bus", None): pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
     converter.next_idx = 8
 
@@ -366,7 +367,7 @@ def test_create_pgm_input_sym_loads(pp_example_simple: Tuple[PandaPowerData, flo
     converter._create_pgm_input_sym_loads()
 
     # Assert
-    assert_struct_array_equal(converter.pgm_data["sym_load"], pgm_example_simple["sym_load"])
+    assert_struct_array_equal(converter.pgm_input_data["sym_load"], pgm_example_simple["sym_load"])
 
 
 def test_create_pgm_input_transformers(
@@ -374,7 +375,7 @@ def test_create_pgm_input_transformers(
 ):
     # Arrange
     converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
-    converter.pp_data = pp_example_simple[0]
+    converter.pp_input_data = pp_example_simple[0]
     converter.idx = {("bus", None): pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
     converter.next_idx = 12
 
@@ -382,13 +383,13 @@ def test_create_pgm_input_transformers(
     converter._create_pgm_input_transformers()
 
     # Assert
-    assert_struct_array_equal(converter.pgm_data["transformer"], pgm_example_simple["transformer"])
+    assert_struct_array_equal(converter.pgm_input_data["transformer"], pgm_example_simple["transformer"])
 
 
 def test_create_pgm_input_shunts(pp_example_simple: Tuple[PandaPowerData, float], pgm_example_simple: SingleDataset):
     # Arrange
     converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
-    converter.pp_data = pp_example_simple[0]
+    converter.pp_input_data = pp_example_simple[0]
     converter.idx = {("bus", None): pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
     converter.next_idx = 11
 
@@ -396,13 +397,13 @@ def test_create_pgm_input_shunts(pp_example_simple: Tuple[PandaPowerData, float]
     converter._create_pgm_input_shunts()
 
     # Assert
-    assert_struct_array_equal(converter.pgm_data["shunt"], pgm_example_simple["shunt"])
+    assert_struct_array_equal(converter.pgm_input_data["shunt"], pgm_example_simple["shunt"])
 
 
 def test_create_pgm_input_sym_gens(pp_example_simple: Tuple[PandaPowerData, float], pgm_example_simple: SingleDataset):
     # Arrange
     converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
-    converter.pp_data = pp_example_simple[0]
+    converter.pp_input_data = pp_example_simple[0]
     converter.idx = {("bus", None): pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
     converter.next_idx = 13
 
@@ -410,7 +411,7 @@ def test_create_pgm_input_sym_gens(pp_example_simple: Tuple[PandaPowerData, floa
     converter._create_pgm_input_sym_gens()
 
     # Assert
-    assert_struct_array_equal(converter.pgm_data["sym_gen"], pgm_example_simple["sym_gen"])
+    assert_struct_array_equal(converter.pgm_input_data["sym_gen"], pgm_example_simple["sym_gen"])
 
 
 def test_create_pgm_input_three_winding_transformers(
@@ -418,7 +419,7 @@ def test_create_pgm_input_three_winding_transformers(
 ):
     # Arrange
     converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
-    converter.pp_data = pp_example_simple[0]
+    converter.pp_input_data = pp_example_simple[0]
     converter.idx = {("bus", None): pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
     converter.next_idx = 14
 
@@ -427,14 +428,14 @@ def test_create_pgm_input_three_winding_transformers(
 
     # Assert
     assert_struct_array_equal(
-        converter.pgm_data["three_winding_transformer"], pgm_example_simple["three_winding_transformer"]
+        converter.pgm_input_data["three_winding_transformer"], pgm_example_simple["three_winding_transformer"]
     )
 
 
 def test_create_pgm_input_links(pp_example_simple: Tuple[PandaPowerData, float], pgm_example_simple: SingleDataset):
     # Arrange
     converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
-    converter.pp_data = pp_example_simple[0]
+    converter.pp_input_data = pp_example_simple[0]
     converter.idx = {("bus", None): pd.Series([0, 1, 2, 3, 4, 5], index=[101, 102, 103, 104, 105, 106], dtype=np.int32)}
     converter.next_idx = 15
 
@@ -442,7 +443,7 @@ def test_create_pgm_input_links(pp_example_simple: Tuple[PandaPowerData, float],
     converter._create_pgm_input_links()
 
     # Assert
-    assert_struct_array_equal(converter.pgm_data["link"], pgm_example_simple["link"])
+    assert_struct_array_equal(converter.pgm_input_data["link"], pgm_example_simple["link"])
 
 
 # def test__pp_buses_output(pgm_output: SingleDataset, pp_expected_output: SingleDataset):
@@ -595,7 +596,9 @@ def test_get_3wtransformer_tap_size():
 def test_get_trafo_winding_types__vector_group(mock_get_winding: MagicMock):
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_data = {"trafo": pd.DataFrame([(1, "Dyn"), (2, "YNd"), (3, "Dyn")], columns=["id", "vector_group"])}
+    converter.pp_input_data = {
+        "trafo": pd.DataFrame([(1, "Dyn"), (2, "YNd"), (3, "Dyn")], columns=["id", "vector_group"])
+    }
     mock_get_winding.side_effect = [WindingType.delta, WindingType.wye_n, WindingType.wye_n, WindingType.delta]
     expected = pd.DataFrame([(2, 1), (1, 2), (2, 1)], columns=["winding_from", "winding_to"])
 
@@ -616,7 +619,7 @@ def test_get_trafo_winding_types__std_types(mock_get_winding: MagicMock):
     # Arrange
     std_types = {"trafo": {"std_trafo_1": {"vector_group": "YNd"}, "std_trafo_2": {"vector_group": "Dyn"}}}
     converter = PandaPowerConverter(std_types=std_types)
-    converter.pp_data = {
+    converter.pp_input_data = {
         "trafo": pd.DataFrame([(1, "std_trafo_2"), (2, "std_trafo_1"), (3, "std_trafo_2")], columns=["id", "std_type"])
     }
     mock_get_winding.side_effect = [WindingType.delta, WindingType.wye_n, WindingType.wye_n, WindingType.delta]
@@ -638,7 +641,7 @@ def test_get_trafo_winding_types__std_types(mock_get_winding: MagicMock):
 def test_get_trafo3w_winding_types__vector_group(mock_get_winding: MagicMock):
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_data = {
+    converter.pp_input_data = {
         "trafo3w": pd.DataFrame([(1, "Dynz"), (2, "YNdy"), (3, "Dyny")], columns=["id", "vector_group"])
     }
     mock_get_winding.side_effect = [
@@ -677,7 +680,7 @@ def test_get_trafo3w_winding_types__std_types(mock_get_winding: MagicMock):
     # Arrange
     std_types = {"trafo3w": {"std_trafo3w_1": {"vector_group": "Dynz"}, "std_trafo3w_2": {"vector_group": "YNdy"}}}
     converter = PandaPowerConverter(std_types=std_types)
-    converter.pp_data = {
+    converter.pp_input_data = {
         "trafo3w": pd.DataFrame(
             [(1, "std_trafo3w_2"), (2, "std_trafo3w_1"), (3, "std_trafo3w_2")], columns=["id", "std_type"]
         )
@@ -712,7 +715,7 @@ def test_get_trafo3w_winding_types__std_types(mock_get_winding: MagicMock):
 def test_get_winding_types__value_error():
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_data = {"trafo": pd.DataFrame([(1, "ADyn")], columns=["id", "vector_group"])}
+    converter.pp_input_data = {"trafo": pd.DataFrame([(1, "ADyn")], columns=["id", "vector_group"])}
 
     # Act / Assert
     with pytest.raises(ValueError):
@@ -722,7 +725,7 @@ def test_get_winding_types__value_error():
 def test_get_trafo3w_winding_types__value_error():
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_data = {"trafo3w": pd.DataFrame([(1, "ADyndrr")], columns=["id", "vector_group"])}
+    converter.pp_input_data = {"trafo3w": pd.DataFrame([(1, "ADyndrr")], columns=["id", "vector_group"])}
 
     # Act / Assert
     with pytest.raises(ValueError):
@@ -765,7 +768,7 @@ def test_get_id():
 def test_get_switch_states_lines(mock_get_individual_switch_states: MagicMock):
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_data = {
+    converter.pp_input_data = {
         "line": pd.DataFrame(columns=["from_bus", "to_bus"], data=[[101, 102]], index=[1]),
         "switch": pd.DataFrame(
             columns=["bus", "et", "element", "closed"],
@@ -812,7 +815,7 @@ def test_get_switch_states_lines(mock_get_individual_switch_states: MagicMock):
 def test_get_switch_states_trafos(mock_get_individual_switch_states: MagicMock):
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_data = {
+    converter.pp_input_data = {
         "trafo": pd.DataFrame([[2, 32, 31]], columns=["index", "hv_bus", "lv_bus"]),
         "switch": pd.DataFrame(
             [[101, 32, "t", 2, True], [321, 31, "t", 2, False]],
@@ -847,7 +850,7 @@ def test_get_switch_states__exception():
 def test_get_trafo3w_switch_states(mock_get_individual_switch_states: MagicMock):
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_data = {
+    converter.pp_input_data = {
         "trafo3w": pd.DataFrame([[2, 32, 31, 315]], columns=["index", "hv_bus", "mv_bus", "lv_bus"]),
         "switch": pd.DataFrame(
             [[101, 315, "t3", 2, False], [321, 32, "t3", 2, False]],
@@ -859,7 +862,7 @@ def test_get_trafo3w_switch_states(mock_get_individual_switch_states: MagicMock)
     expected = pd.DataFrame(data=([False], [True], [False]))
 
     # Act
-    actual = converter.get_trafo3w_switch_states(converter.pp_data["trafo3w"])
+    actual = converter.get_trafo3w_switch_states(converter.pp_input_data["trafo3w"])
 
     # Assert
     pd.testing.assert_frame_equal(actual, expected)
@@ -922,7 +925,7 @@ def test_pp_buses_output__accumulate_power():
     converter.idx_lookup = {("bus", None): pd.Series([101, 102, 103, 104], index=[0, 1, 2, 3], dtype=np.int32)}
     pp_buses = pd.DataFrame(np.empty((4, 2), np.float64), columns=["p_mw", "q_mvar"], index=[101, 102, 103, 104])
 
-    converter.pgm_data = {
+    converter.pgm_input_data = {
         "line": initialize_array("input", "line", 3),
         "link": initialize_array("input", "link", 2),
         "transformer": initialize_array("input", "transformer", 2),
@@ -934,15 +937,15 @@ def test_pp_buses_output__accumulate_power():
         "transformer": initialize_array("sym_output", "transformer", 2),
         "three_winding_transformer": initialize_array("sym_output", "three_winding_transformer", 2),
     }
-    converter.pgm_data["line"]["from_node"] = [0, 1, 1]
-    converter.pgm_data["line"]["to_node"] = [1, 2, 3]
-    converter.pgm_data["link"]["from_node"] = [0, 1]
-    converter.pgm_data["link"]["to_node"] = [1, 2]
-    converter.pgm_data["transformer"]["from_node"] = [0, 1]
-    converter.pgm_data["transformer"]["to_node"] = [1, 2]
-    converter.pgm_data["three_winding_transformer"]["node_1"] = [0, 1]
-    converter.pgm_data["three_winding_transformer"]["node_2"] = [1, 2]
-    converter.pgm_data["three_winding_transformer"]["node_3"] = [2, 3]
+    converter.pgm_input_data["line"]["from_node"] = [0, 1, 1]
+    converter.pgm_input_data["line"]["to_node"] = [1, 2, 3]
+    converter.pgm_input_data["link"]["from_node"] = [0, 1]
+    converter.pgm_input_data["link"]["to_node"] = [1, 2]
+    converter.pgm_input_data["transformer"]["from_node"] = [0, 1]
+    converter.pgm_input_data["transformer"]["to_node"] = [1, 2]
+    converter.pgm_input_data["three_winding_transformer"]["node_1"] = [0, 1]
+    converter.pgm_input_data["three_winding_transformer"]["node_2"] = [1, 2]
+    converter.pgm_input_data["three_winding_transformer"]["node_3"] = [2, 3]
     converter.pgm_output_data["line"]["p_from"] = [1.0, 2.0, 4.0]
     converter.pgm_output_data["line"]["q_from"] = [0.1, 0.2, 0.4]
     converter.pgm_output_data["line"]["p_to"] = [-1.0, -2.0, -4.0]
@@ -979,7 +982,9 @@ def test_pp_buses_output__accumulate_power():
 def test_get_pp_attr_attribute_exists():
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_data = {"trafo3w": pd.DataFrame([[2, 32, 31, 315]], columns=["index", "hv_bus", "mv_bus", "lv_bus"])}
+    converter.pp_input_data = {
+        "trafo3w": pd.DataFrame([[2, 32, 31, 315]], columns=["index", "hv_bus", "mv_bus", "lv_bus"])
+    }
     expected = np.array(32)
 
     # Act
@@ -992,7 +997,7 @@ def test_get_pp_attr_attribute_exists():
 def test_get_pp_attr_attribute_doesnt_exist():
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_data = {"trafo3w": pd.DataFrame([[2, 31, 315]], columns=["index", "mv_bus", "lv_bus"])}
+    converter.pp_input_data = {"trafo3w": pd.DataFrame([[2, 31, 315]], columns=["index", "mv_bus", "lv_bus"])}
 
     # Act / Assert
     with pytest.raises(KeyError):
@@ -1002,7 +1007,7 @@ def test_get_pp_attr_attribute_doesnt_exist():
 def test_get_pp_attr_use_default():
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_data = {"trafo3w": pd.DataFrame([[2, 31, 315]], columns=["index", "mv_bus", "lv_bus"])}
+    converter.pp_input_data = {"trafo3w": pd.DataFrame([[2, 31, 315]], columns=["index", "mv_bus", "lv_bus"])}
     expected = np.array(625)
 
     # Act
@@ -1016,7 +1021,7 @@ def test_get_pp_attr_from_std():
     # Arrange
     converter = PandaPowerConverter()
     converter._std_types = {"trafo3w": {"std_trafo3w_1": {"hv_bus": 964}}}
-    converter.pp_data = {
+    converter.pp_input_data = {
         "trafo3w": pd.DataFrame([[2, 31, 315, "std_trafo3w_1"]], columns=["index", "mv_bus", "lv_bus", "std_type"])
     }
 
@@ -1033,7 +1038,7 @@ def test_get_pp_attr_default_after_checking_std():
     # Arrange
     converter = PandaPowerConverter()
     converter._std_types = {"trafo3w": {"std_trafo3w_1": {"lv_bus": 23}}}
-    converter.pp_data = {
+    converter.pp_input_data = {
         "trafo3w": pd.DataFrame([[2, 31, 315, "std_trafo3w_1"]], columns=["index", "mv_bus", "lv_bus", "std_type"])
     }
 
@@ -1050,7 +1055,7 @@ def test_get_pp_attr_error_after_checking_std():
     # Arrange
     converter = PandaPowerConverter()
     converter._std_types = {"trafo3w": {"std_trafo3w_1": {"lv_bus": 23}}}
-    converter.pp_data = {
+    converter.pp_input_data = {
         "trafo3w": pd.DataFrame([[2, 31, 315, "std_trafo3w_1"]], columns=["index", "mv_bus", "lv_bus", "std_type"])
     }
 
