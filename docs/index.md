@@ -33,6 +33,7 @@ quickstart.md
 :maxdepth: 2
 converters/converter.md
 converters/tabular_converter.md
+converters/vision_converter.md
 ```
 
 ```{toctree}
