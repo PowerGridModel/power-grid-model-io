@@ -5,7 +5,7 @@
 import json
 from functools import lru_cache
 from pathlib import Path
-from typing import Generator, List, Tuple
+from typing import Generator, List, Mapping, Tuple
 
 import numpy as np
 import pandas as pd
@@ -77,6 +77,22 @@ def component_attributes(json_path: Path, data_type: str) -> Generator[Tuple[str
             yield component, attribute
 
 
+def component_attributes_df(data: Mapping[str, pd.DataFrame]) -> Generator[Tuple[str, str], None, None]:
+    """
+    Extract the component and attribute names from the DataFrames
+
+    Args:
+        data: A dictionary of pandas DataFrames
+
+    Yields: A tuple (component, attribute) for each attribute available in the json file
+
+    """
+
+    for component, df in sorted(data.items(), key=lambda x: x[0]):
+        for attribute in sorted(df.columns):
+            yield component, attribute
+
+
 def select_values(actual: SingleDataset, expected: SingleDataset, component: str, attribute: str):
     """
 
@@ -122,7 +138,7 @@ def select_values(actual: SingleDataset, expected: SingleDataset, component: str
     return actual_values, expected_values
 
 
-def extract_extra_info(data: SinglePythonDataset, data_type: str = "input") -> ExtraInfoLookup:
+def extract_extra_info(data: SinglePythonDataset, data_type: str) -> ExtraInfoLookup:
     """
     Reads the dataset and collect all arguments that aren't pgm attributes
 
@@ -156,7 +172,7 @@ def load_json_single_dataset(file_path: Path, data_type: str) -> Tuple[SingleDat
     raw_data = load_json_file(file_path)
     assert isinstance(raw_data, dict)
     dataset = convert_python_single_dataset_to_single_dataset(data=raw_data, data_type=data_type, ignore_extra=True)
-    extra_info = extract_extra_info(raw_data)
+    extra_info = extract_extra_info(raw_data, data_type=data_type)
     return dataset, extra_info
 
 

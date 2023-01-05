@@ -1,11 +1,11 @@
 {
   "line":
     [
-      {"id": 6, "energized": 0, "loading": 0.0, "p_from": 0.0, "q_from": 0.0, "i_from": 0.0, "s_from": 0.0, "p_to": 0.0, "q_to": 0.0, "i_to": 0.0, "s_to": 0.0, "id_reference": {"table": "line", "index": 101}}
+      {"id": 6, "energized": 0, "loading": 0.0, "p_from": 0.0, "q_from": 0.0, "i_from": 0.0, "s_from": 0.0, "p_to": 0.0, "q_to": 0.0, "i_to": 0.0, "s_to": 0.0, "id_reference": {"table": "line", "index": 101}, "from_node": 2, "to_node": 1}
     ],
   "link":
     [
-      {"id": 15, "energized": 1, "loading": 0.0, "p_from": -3.5629270125840327, "q_from": -6.480940163368415, "i_from": 1.2513730074917746e-06, "s_from": 7.395744336992918, "p_to": 3.5629270125840335, "q_to": 6.480940163368414, "i_to": 4.048559730120447e-06, "s_to": 7.395744336992917, "id_reference": {"table": "switch", "name": "bus_to_bus", "index": 3021}}
+      {"id": 15, "energized": 1, "loading": 0.0, "p_from": -3.5629270125840327, "q_from": -6.480940163368415, "i_from": 1.2513730074917746e-06, "s_from": 7.395744336992918, "p_to": 3.5629270125840335, "q_to": 6.480940163368414, "i_to": 4.048559730120447e-06, "s_to": 7.395744336992917, "id_reference": {"table": "switch", "name": "bus_to_bus", "index": 3021}, "from_node": 0, "to_node": 5}
     ],
   "node":
     [
@@ -18,28 +18,28 @@
     ],
   "shunt":
     [
-      {"id": 11, "energized": 0, "p": 0.0, "q": 0.0, "i": 0.0, "s": 0.0, "pf": 0.0, "id_reference": {"table": "shunt", "index": 1201}}
+      {"id": 11, "energized": 0, "p": 0.0, "q": 0.0, "i": 0.0, "s": 0.0, "pf": 0.0, "id_reference": {"table": "shunt", "index": 1201}, "node": 3}
     ],
   "source":
     [
-      {"id": 7, "energized": 1, "p": -0.5547484232098557, "q": -5.704080396672956, "i": 9.696941139485964e-07, "s": 5.73099284459181, "pf": -0.09679796123517367, "id_reference": {"table": "ext_grid", "index": 1}}
+      {"id": 7, "energized": 1, "p": -0.5547484232098557, "q": -5.704080396672956, "i": 9.696941139485964e-07, "s": 5.73099284459181, "pf": -0.09679796123517367, "id_reference": {"table": "ext_grid", "index": 1}, "node": 0}
     ],
   "sym_gen":
     [
-      {"id": 13, "energized": 0, "p": 0.0, "q": 0.0, "i": 0.0, "s": 0.0, "pf": 0.0, "id_reference": {"table": "sgen", "index": 31}}
+      {"id": 13, "energized": 0, "p": 0.0, "q": 0.0, "i": 0.0, "s": 0.0, "pf": 0.0, "id_reference": {"table": "sgen", "index": 31}, "node": 4}
     ],
   "sym_load":
     [
-      {"id": 8, "energized": 0, "p": 0.0, "q": 0.0, "i": 0.0, "s": 0.0, "pf": 0.0, "id_reference": {"table": "load", "name": "const_power", "index": 101}},
-      {"id": 9, "energized": 0, "p": 0.0, "q": 0.0, "i": 0.0, "s": 0.0, "pf": 0.0, "id_reference": {"table": "load", "name": "const_impedance", "index": 101}},
-      {"id": 10, "energized": 0, "p": 0.0, "q": 0.0, "i": 0.0, "s": 0.0, "pf": 0.0, "id_reference": {"table": "load", "name": "const_current", "index": 101}}
+      {"id": 8, "energized": 0, "p": 0.0, "q": 0.0, "i": 0.0, "s": 0.0, "pf": 0.0, "id_reference": {"table": "load", "name": "const_power", "index": 101}, "node": 2},
+      {"id": 9, "energized": 0, "p": 0.0, "q": 0.0, "i": 0.0, "s": 0.0, "pf": 0.0, "id_reference": {"table": "load", "name": "const_impedance", "index": 101}, "node": 2},
+      {"id": 10, "energized": 0, "p": 0.0, "q": 0.0, "i": 0.0, "s": 0.0, "pf": 0.0, "id_reference": {"table": "load", "name": "const_current", "index": 101}, "node": 2}
     ],
   "three_winding_transformer":
     [
-      {"id": 14, "energized": 0, "loading": 0.0, "p_1": 0.0, "q_1": 0.0, "i_1": 0.0, "s_1": 0.0, "p_2": 0.0, "q_2": 0.0, "i_2": 0.0, "s_2": 0.0, "p_3": 0.0, "q_3": 0.0, "i_3": 0.0, "s_3": 0.0, "id_reference": {"table": "trafo3w", "index": 102}}
+      {"id": 14, "energized": 0, "loading": 0.0, "p_1": 0.0, "q_1": 0.0, "i_1": 0.0, "s_1": 0.0, "p_2": 0.0, "q_2": 0.0, "i_2": 0.0, "s_2": 0.0, "p_3": 0.0, "q_3": 0.0, "i_3": 0.0, "s_3": 0.0, "id_reference": {"table": "trafo3w", "index": 102}, "node_1": 2, "node_2": 4, "node_3": 3}
     ],
   "transformer":
     [
-      {"id": 12, "energized": 0, "loading": 0.0, "p_from": 0.0, "q_from": 0.0, "i_from": 0.0, "s_from": 0.0, "p_to": 0.0, "q_to": 0.0, "i_to": 0.0, "s_to": 0.0, "id_reference": {"table": "trafo", "index": 101}}
+      {"id": 12, "energized": 0, "loading": 0.0, "p_from": 0.0, "q_from": 0.0, "i_from": 0.0, "s_from": 0.0, "p_to": 0.0, "q_to": 0.0, "i_to": 0.0, "s_to": 0.0, "id_reference": {"table": "trafo", "index": 101}, "from_node": 0, "to_node": 1}
     ]
 }

@@ -47,7 +47,7 @@ def test_extract_extra_info():
     }
 
     # Act
-    extra_info = extract_extra_info(data=data)
+    extra_info = extract_extra_info(data=data, data_type="input")
 
     # Assert
     assert extra_info[1] == {"name": "bar"}
