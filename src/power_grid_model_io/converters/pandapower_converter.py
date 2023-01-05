@@ -103,6 +103,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._create_pgm_input_sym_gens()
         self._create_pgm_input_three_winding_transformers()
         self._create_pgm_input_links()
+        self._create_pgm_input_storage()
+        self._create_pgm_input_impedance()
 
     def _create_pgm_input_nodes(self):
         """
