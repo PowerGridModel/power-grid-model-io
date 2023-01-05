@@ -31,7 +31,7 @@ def test_trafo3_connection__pos():
     assert TRAFO3_CONNECTION_RE.fullmatch("Yzny").groups() == ("Y", "zn", "y", None)
     assert TRAFO3_CONNECTION_RE.fullmatch("YNdz").groups() == ("YN", "d", "z", None)
     assert TRAFO3_CONNECTION_RE.fullmatch("Dyy5").groups() == ("D", "y", "y", "5")
-    assert TRAFO3_CONNECTION_RE.fullmatch("Dyd11").groups() == ("D", "y", "d" "11")
+    assert TRAFO3_CONNECTION_RE.fullmatch("Dyd11").groups() == ("D", "y", "d", "11")
 
 
 def test_trafo3_connection__neg():
