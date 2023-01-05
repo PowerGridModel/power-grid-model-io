@@ -10,7 +10,7 @@ from typing import Dict, Mapping, MutableMapping, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 from power_grid_model import Branch3Side, BranchSide, LoadGenType, initialize_array
-from power_grid_model.data_types import Dataset, SingleDataset
+from power_grid_model.data_types import Dataset
 
 from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_types import ExtraInfoLookup
