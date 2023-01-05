@@ -126,7 +126,7 @@ def test_create_input_data():
     PandaPowerConverter._create_input_data(self=converter)  # type: ignore
 
     # Assert
-    assert len(converter.method_calls) == 14
+    assert len(converter.method_calls) == 16
     converter._create_pgm_input_nodes.assert_called_once_with()
     converter._create_pgm_input_lines.assert_called_once_with()
     converter._create_pgm_input_sources.assert_called_once_with()
@@ -138,6 +138,8 @@ def test_create_input_data():
     converter._create_pgm_input_asym_gens.assert_called_once_with()
     converter._create_pgm_input_three_winding_transformers.assert_called_once_with()
     converter._create_pgm_input_links.assert_called_once_with()
+    converter._create_pgm_input_storage.assert_called_once_with()
+    converter._create_pgm_input_impedance.assert_called_once_with()
     converter._create_pgm_input_ward.assert_called_once_with()
     converter._create_pgm_input_xward.assert_called_once_with()
     converter._create_pgm_input_motor.assert_called_once_with()

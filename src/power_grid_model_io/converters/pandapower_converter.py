@@ -145,6 +145,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._create_pgm_input_asym_gens()
         self._create_pgm_input_three_winding_transformers()
         self._create_pgm_input_links()
+        self._create_pgm_input_storage()
+        self._create_pgm_input_impedance()
         self._create_pgm_input_ward()
         self._create_pgm_input_xward()
         self._create_pgm_input_motor()
@@ -665,6 +667,24 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_links["to_status"] = self._get_pp_attr("switch_b2b", "closed")
 
         self.pgm_input_data["link"] = pgm_links
+
+    def _create_pgm_input_storage(self):  # pragma: no cover
+        # TODO: create unit tests for the function
+        pp_storage = self.pp_data["storage"]
+
+        if pp_storage.empty:
+            return
+
+        raise NotImplementedError("Storage is not implemented yet!")
+
+    def _create_pgm_input_impedance(self):  # pragma: no cover
+        # TODO: create unit tests for the function
+        pp_impedance = self.pp_data["impedance"]
+
+        if pp_impedance.empty:
+            return
+
+        raise NotImplementedError("Impedance is not implemented yet!")
 
     def _create_pgm_input_ward(self):  # pragma: no cover
         # TODO: create unit tests for the function
