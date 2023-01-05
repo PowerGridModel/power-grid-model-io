@@ -20,7 +20,7 @@ def relative_no_load_current(i_0: float, p_0: float, s_nom: float, u_nom: float)
     """
     Calculate the relative no load current.
     """
-    i_rel = max(i_0 / (s_nom / (u_nom / math.sqrt(3))), p_0 / s_nom)
+    i_rel = max(i_0 / (s_nom / (u_nom * math.sqrt(3))), p_0 / s_nom)
     if i_rel > 1.0:
         raise ValueError(f"Relative current can't be more than 100% (got {i_rel * 100.0:.2f}%)")
     return i_rel
@@ -40,12 +40,16 @@ def power_wind_speed(  # pylint: disable=too-many-arguments
     nominal_wind_speed: float = 14.0,
     cutting_out_wind_speed: float = 25.0,
     cut_out_wind_speed: float = 30.0,
+    axis_height: float = 30.0,
 ) -> float:
     """
     Estimate p_ref based on p_nom and wind_speed.
 
     See section "Wind turbine" in https://phasetophase.nl/pdf/VisionEN.pdf
     """
+
+    # Calculate wind speed at the axis height
+    wind_speed *= (axis_height / 10) ** 0.143
 
     # At a wind speed below cut-in, the power is zero.
     if wind_speed < cut_in_wind_speed:
