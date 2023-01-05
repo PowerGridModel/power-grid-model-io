@@ -20,6 +20,7 @@ from power_grid_model.utils import (
 from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_stores.json_file_store import JsonFileStore
 from power_grid_model_io.data_types import ExtraInfoLookup, StructuredData
+from power_grid_model_io.utils.dict import merge_dicts
 
 
 class PgmJsonConverter(BaseConverter[StructuredData]):
@@ -233,13 +234,13 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
         # For example: {"node": [{"id": 0, ...}, {"id": 1, ...}], "line": [{"id": 2, ...}]}
         return {
             component: [
-                dict(
-                    **{
+                merge_dicts(
+                    {
                         attribute: obj[attribute].tolist()
                         for attribute in objects.dtype.names
                         if not is_nan(obj[attribute])
                     },
-                    **extra_info.get(obj["id"], {}),
+                    extra_info.get(obj["id"], {}),
                 )
                 for obj in objects
             ]
