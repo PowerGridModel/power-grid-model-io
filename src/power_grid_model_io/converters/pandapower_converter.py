@@ -260,8 +260,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         scaling = self._get_pp_attr("load", "scaling", 1.0)
         in_service = self._get_pp_attr("load", "in_service", True)
-        p_mw = self._get_pp_attr("load", "p_mw", 0)
-        q_mvar = self._get_pp_attr("load", "q_mvar", 0)
+        p_mw = self._get_pp_attr("load", "p_mw", 0.0)
+        q_mvar = self._get_pp_attr("load", "q_mvar", 0.0)
 
         n_loads = len(pp_loads)
 
