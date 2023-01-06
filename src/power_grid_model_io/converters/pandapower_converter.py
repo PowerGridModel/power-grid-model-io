@@ -330,7 +330,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_transformers["p0"] = self._get_pp_attr("trafo", "pfe_kw") * parallel * 1e3
         pgm_transformers["winding_from"] = winding_types["winding_from"]
         pgm_transformers["winding_to"] = winding_types["winding_to"]
-        pgm_transformers["clock"] = round(self._get_pp_attr("trafo", "shift_degree", 0) / 30) % 12
+        pgm_transformers["clock"] = round(self._get_pp_attr("trafo", "shift_degree", 0.0) / 30) % 12
         pgm_transformers["tap_pos"] = self._get_pp_attr("trafo", "tap_pos", np.nan)
         pgm_transformers["tap_side"] = self._get_transformer_tap_side(pp_trafo["tap_side"])
         pgm_transformers["tap_min"] = self._get_pp_attr("trafo", "tap_min", np.nan)
@@ -358,7 +358,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         sn_hv_mva = self._get_pp_attr("trafo3w", "sn_hv_mva")
         sn_mv_mva = self._get_pp_attr("trafo3w", "sn_mv_mva")
         sn_lv_mva = self._get_pp_attr("trafo3w", "sn_lv_mva")
-        in_service = self._get_pp_attr("trafo3w", "in_service")
+        in_service = self._get_pp_attr("trafo3w", "in_service", True)
 
         switch_states = self.get_trafo3w_switch_states(pp_trafo3w)
         winding_type = self.get_trafo3w_winding_types()
@@ -400,15 +400,15 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_3wtransformers["winding_1"] = winding_type["winding_1"]
         pgm_3wtransformers["winding_2"] = winding_type["winding_2"]
         pgm_3wtransformers["winding_3"] = winding_type["winding_3"]
-        pgm_3wtransformers["clock_12"] = round(self._get_pp_attr("trafo3w", "shift_mv_degree") / 30.0) % 12
-        pgm_3wtransformers["clock_13"] = round(self._get_pp_attr("trafo3w", "shift_lv_degree") / 30.0) % 12
-        pgm_3wtransformers["tap_pos"] = self._get_pp_attr("trafo3w", "tap_pos")
+        pgm_3wtransformers["clock_12"] = round(self._get_pp_attr("trafo3w", "shift_mv_degree", 0.0) / 30.0) % 12
+        pgm_3wtransformers["clock_13"] = round(self._get_pp_attr("trafo3w", "shift_lv_degree", 0.0) / 30.0) % 12
+        pgm_3wtransformers["tap_pos"] = self._get_pp_attr("trafo3w", "tap_pos", np.nan)
         pgm_3wtransformers["tap_side"] = self._get_3wtransformer_tap_side(
-            pd.Series(self._get_pp_attr("trafo3w", "tap_side"))
+            pd.Series(self._get_pp_attr("trafo3w", "tap_side", None))
         )
-        pgm_3wtransformers["tap_min"] = self._get_pp_attr("trafo3w", "tap_min")
-        pgm_3wtransformers["tap_max"] = self._get_pp_attr("trafo3w", "tap_max")
-        pgm_3wtransformers["tap_nom"] = self._get_pp_attr("trafo3w", "tap_neutral")
+        pgm_3wtransformers["tap_min"] = self._get_pp_attr("trafo3w", "tap_min", np.nan)
+        pgm_3wtransformers["tap_max"] = self._get_pp_attr("trafo3w", "tap_max", np.nan)
+        pgm_3wtransformers["tap_nom"] = self._get_pp_attr("trafo3w", "tap_neutral", np.nan)
         pgm_3wtransformers["tap_size"] = self._get_3wtransformer_tap_size(pp_trafo3w)
 
         self.pgm_data["three_winding_transformer"] = pgm_3wtransformers
@@ -432,12 +432,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             self._get_pp_attr("switch", "et") == "b"
         ]  # This should take all the switches which are b2b
 
-        self.pp_data["switch_b2b"] = pp_switches  # Create a table in pp_data for bus to bus switches and then access
-        # it to get the closed attribute. We do this so that we could later easily get the closed attribute,
-        # if we don't do this the attribute closed will be taken from all the switches, rather than from only bus to
-        # bus, that will result in an error
+        self.pp_data["switch_b2b"] = pp_switches
 
-        closed = self._get_pp_attr("switch_b2b", "closed")
+        closed = self._get_pp_attr("switch_b2b", "closed", True)
 
         pgm_links = initialize_array(data_type="input", component_type="link", shape=len(pp_switches))
         pgm_links["id"] = self._generate_ids("switch", pp_switches.index, name="bus_to_bus")
