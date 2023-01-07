@@ -428,7 +428,7 @@ grid:
           key:
             Number: Node.Number
       status: Switch state
-      type: 1
+      type: 0
       p_specified:
         power_grid_model_io.functions.value_or_default:
           value: Pref
