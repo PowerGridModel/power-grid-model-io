@@ -846,7 +846,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         trafo3w.columns = ["winding_1", "winding_2", "winding_3"]
         return trafo3w
 
-    def _get_pp_attr(self, table: str, attribute: str, default: Optional[float] = None) -> Union[np.ndarray, float]:
+    def _get_pp_attr(
+        self, table: str, attribute: str, default: Optional[Union[float, bool]] = None
+    ) -> Union[np.ndarray, float]:
         """
         Returns the selected PandaPower attribute from the selected PandaPower table.
 
