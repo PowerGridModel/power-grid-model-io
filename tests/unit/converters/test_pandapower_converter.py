@@ -3,33 +3,19 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from pathlib import Path
-from typing import Callable, Tuple
+from typing import Callable
 from unittest.mock import ANY, MagicMock, call, patch
 
 import numpy as np
 import pandas as pd
 import pytest
 from power_grid_model import WindingType
-from power_grid_model.data_types import SingleDataset
-from power_grid_model.utils import import_json_data
 
-from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter, PandaPowerData
+from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter
 
-from ...data.pandapower.pp_validation import pp_net
-from ...utils import MockDf, MockFn, assert_struct_array_equal
+from ...utils import MockDf, MockFn
 
 DATA_DIR = Path(__file__).parent.parent.parent / "data" / "pandapower"
-
-
-@pytest.fixture
-def pp_example_simple() -> Tuple[PandaPowerData, float]:
-    net = pp_net()
-    return net, net.f_hz
-
-
-@pytest.fixture
-def pgm_example_simple() -> SingleDataset:
-    return import_json_data(DATA_DIR / "pgm_input_data.json", data_type="input", ignore_extra=True)
 
 
 def _generate_ids(*args, **kwargs):
@@ -315,11 +301,10 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     assert converter.pgm_input_data["line"] == mock_init_array.return_value
 
 
-@pytest.mark.xfail(reason="Not implemented")
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_sources(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
-    converter.pp_input_data[...] = two_pp_objs
+    converter.pp_input_data["ext_grid"] = two_pp_objs
 
     # Act
     converter._create_pgm_input_sources()
@@ -329,20 +314,30 @@ def test_create_pgm_input_sources(mock_init_array: MagicMock, two_pp_objs, conve
     # administration: TODO
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type=..., shape=2)
+    mock_init_array.assert_called_once_with(data_type="input", component_type="source", shape=2)
 
-    # retrieval: TODO
-    converter._get_pp_attr.assert_any_call(..., ...)
-    assert len(converter._get_pp_attr.call_args_list) == 0
+    # retrieval:
+    converter._get_pp_attr.assert_any_call("ext_grid", "bus")
+    converter._get_pp_attr.assert_any_call("ext_grid", "vm_pu")
+    converter._get_pp_attr.assert_any_call("ext_grid", "va_degree")
+    converter._get_pp_attr.assert_any_call("ext_grid", "s_sc_max_mva")
+    converter._get_pp_attr.assert_any_call("ext_grid", "rx_max")
+    converter._get_pp_attr.assert_any_call("ext_grid", "in_service", True)
+    assert len(converter._get_pp_attr.call_args_list) == 6
 
-    # assignment: TODO
+    # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", ANY)
-    pgm.assert_any_call(..., ANY)
-    assert len(pgm.call_args_list) == 0
+    pgm.assert_any_call("node", ANY)
+    pgm.assert_any_call("status", ANY)
+    pgm.assert_any_call("u_ref", ANY)
+    pgm.assert_any_call("u_ref_angle", ANY)
+    pgm.assert_any_call("sk", ANY)
+    pgm.assert_any_call("rx_ratio", ANY)
+    assert len(pgm.call_args_list) == 7
 
     # result
-    assert converter.pgm_input_data[...] == mock_init_array.return_value
+    assert converter.pgm_input_data["source"] == mock_init_array.return_value
 
 
 @pytest.mark.xfail(reason="Not implemented")

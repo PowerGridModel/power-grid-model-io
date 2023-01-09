@@ -191,7 +191,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         pgm_sources = initialize_array(data_type="input", component_type="source", shape=len(pp_ext_grid))
         pgm_sources["id"] = self._generate_ids("ext_grid", pp_ext_grid.index)
-        pgm_sources["node"] = self._get_pgm_ids("bus", pp_ext_grid["bus"])
+        pgm_sources["node"] = self._get_pgm_ids("bus", self._get_pp_attr("ext_grid", "bus"))
         pgm_sources["status"] = self._get_pp_attr("ext_grid", "in_service")
         pgm_sources["u_ref"] = self._get_pp_attr("ext_grid", "vm_pu")
         pgm_sources["rx_ratio"] = self._get_pp_attr("ext_grid", "rx_max", np.nan)
@@ -609,7 +609,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self.next_idx += n_objects
         return pgm_idx
 
-    def _get_pgm_ids(self, pp_table: str, pp_idx: Optional[pd.Series] = None, name: Optional[str] = None) -> pd.Series:
+    def _get_pgm_ids(
+        self, pp_table: str, pp_idx: Optional[Union[pd.Series, np.array]] = None, name: Optional[str] = None
+    ) -> pd.Series:
         """
         Get numerical power-grid-model IDs for a PandaPower component
 
