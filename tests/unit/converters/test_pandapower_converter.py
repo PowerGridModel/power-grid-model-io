@@ -233,15 +233,15 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     mock_init_array.assert_called_once_with(data_type="input", component_type="line", shape=2)
 
     # retrieval
-    converter._get_pp_attr.assert_any_call("line", "in_service")
+    converter._get_pp_attr.assert_any_call("line", "in_service", True)
     converter._get_pp_attr.assert_any_call("line", "length_km")
-    converter._get_pp_attr.assert_any_call("line", "parallel")
+    converter._get_pp_attr.assert_any_call("line", "parallel", 1)
     converter._get_pp_attr.assert_any_call("line", "r_ohm_per_km")
     converter._get_pp_attr.assert_any_call("line", "x_ohm_per_km")
     converter._get_pp_attr.assert_any_call("line", "c_nf_per_km")
-    converter._get_pp_attr.assert_any_call("line", "g_us_per_km")
+    converter._get_pp_attr.assert_any_call("line", "g_us_per_km", 0)
     converter._get_pp_attr.assert_any_call("line", "max_i_ka")
-    converter._get_pp_attr.assert_any_call("line", "df")
+    converter._get_pp_attr.assert_any_call("line", "df", 1)
     assert len(converter._get_pp_attr.call_args_list) == 9
 
     # assignment
