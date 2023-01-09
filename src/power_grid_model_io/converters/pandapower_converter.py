@@ -220,13 +220,13 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 "u_pu": self.pgm_output_data["node"]["u_pu"],
                 "u_degree": self.pgm_output_data["node"]["u_angle"] * (180.0 / np.pi),
             },
-            index=self._get_pp_ids("bus", self.pgm_output_data["node"]["id"] ),
+            index=self.pgm_output_data["node"]["id"],
         )
 
         self._pp_buses_output()
         self._pp_lines_output()
         self._pp_ext_grids_output()
-        # self._pp_loads_output()
+        self._pp_loads_output()
         self._pp_shunts_output()
         self._pp_trafos_output()
         self._pp_sgens_output()
@@ -817,8 +817,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             index=self._get_pp_ids("line", pgm_output_lines["id"]),
         )
 
-        from_nodes = self.pgm_nodes_lookup.loc[self._get_pp_ids("bus", pgm_input_lines["from_node"])]
-        to_nodes = self.pgm_nodes_lookup.loc[self._get_pp_ids("bus", pgm_input_lines["to_node"])]
+        from_nodes = self.pgm_nodes_lookup.loc[pgm_input_lines["from_node"]]
+        to_nodes = self.pgm_nodes_lookup.loc[pgm_input_lines["to_node"]]
 
         pp_output_lines["p_from_mw"] = pgm_output_lines["p_from"] * 1e-6
         pp_output_lines["q_from_mvar"] = pgm_output_lines["q_from"] * 1e-6
@@ -828,11 +828,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_lines["ql_mvar"] = (pgm_output_lines["q_from"] + pgm_output_lines["q_to"]) * 1e-6
         pp_output_lines["i_from_ka"] = pgm_output_lines["i_from"] * 1e-3
         pp_output_lines["i_to_ka"] = pgm_output_lines["i_to"] * 1e-3
-        pp_output_lines["i_ka"] = np.maximum(pgm_output_lines["i_from"], pgm_output_lines["i_to"]) * 1e-3  # np.maximum?
-        pp_output_lines["vm_from_pu"] = from_nodes["u_pu"]
-        pp_output_lines["vm_to_pu"] = to_nodes["u_pu"]
-        pp_output_lines["va_from_degree"] = from_nodes["u_degree"]
-        pp_output_lines["va_to_degree"] = to_nodes["u_degree"]
+        pp_output_lines["i_ka"] = np.maximum(pgm_output_lines["i_from"], pgm_output_lines["i_to"]) * 1e-3
+        pp_output_lines["vm_from_pu"] = from_nodes["u_pu"].values
+        pp_output_lines["vm_to_pu"] = to_nodes["u_pu"].values
+        pp_output_lines["va_from_degree"] = from_nodes["u_degree"].values
+        pp_output_lines["va_to_degree"] = to_nodes["u_degree"].values
         pp_output_lines["loading_percent"] = pgm_output_lines["loading"] * 1e2
 
         self.pp_output_data["res_line"] = pp_output_lines
@@ -873,7 +873,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         pgm_output_shunts = self.pgm_output_data["shunt"]
 
-        at_nodes = self.pgm_nodes_lookup.loc[self._get_pp_ids("bus", pgm_input_shunts["node"])]
+        at_nodes = self.pgm_nodes_lookup.loc[pgm_input_shunts["node"]]
 
         pp_output_shunts = pd.DataFrame(
             columns=["p_mw", "q_mvar", "vm_pu"], index=self._get_pp_ids("shunt", pgm_output_shunts["id"])
@@ -922,8 +922,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         pgm_output_transformers = self.pgm_output_data["transformer"]
 
-        from_nodes = self.pgm_nodes_lookup.loc[self._get_pp_ids("bus", pgm_input_transformers["from_node"])]
-        to_nodes = self.pgm_nodes_lookup.loc[self._get_pp_ids("bus", pgm_input_transformers["to_node"])]
+        from_nodes = self.pgm_nodes_lookup.loc[pgm_input_transformers["from_node"]]
+        to_nodes = self.pgm_nodes_lookup.loc[pgm_input_transformers["to_node"]]
 
         pp_output_trafos = pd.DataFrame(
             columns=[
@@ -975,9 +975,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         pgm_output_transformers3w = self.pgm_output_data["three_winding_transformer"]
 
-        nodes_1 = self.pgm_nodes_lookup.loc[self._get_pp_ids("bus", pgm_input_transformers3w["node_1"])]
-        nodes_2 = self.pgm_nodes_lookup.loc[self._get_pp_ids("bus", pgm_input_transformers3w["node_2"])]
-        nodes_3 = self.pgm_nodes_lookup.loc[self._get_pp_ids("bus", pgm_input_transformers3w["node_3"])]
+        nodes_1 = self.pgm_nodes_lookup.loc[pgm_input_transformers3w["node_1"]]
+        nodes_2 = self.pgm_nodes_lookup.loc[pgm_input_transformers3w["node_2"]]
+        nodes_3 = self.pgm_nodes_lookup.loc[pgm_input_transformers3w["node_3"]]
 
         pp_output_trafos3w = pd.DataFrame(
             columns=[
@@ -1046,17 +1046,17 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         const_current_pgm_ids = self._get_pgm_ids("load", name="const_current")
 
         pp_output_loads_cp = pd.DataFrame(
-            columns=["p_mw", "q_mvar"], index=self._get_pp_ids("load", pgm_output_loads["id"], name="const_power")
+            columns=["p_mw", "q_mvar"], index=self._get_pp_ids("load", name="const_power")
         )
         pp_output_loads_cc = pd.DataFrame(
-            columns=["p_mw", "q_mvar"], index=self._get_pp_ids("load", pgm_output_loads["id"], name="const_current")
+            columns=["p_mw", "q_mvar"], index=self._get_pp_ids("load", name="const_current")
         )
         pp_output_loads_ci = pd.DataFrame(
-            columns=["p_mw", "q_mvar"], index=self._get_pp_ids("load", pgm_output_loads["id"], name="const_impedance")
+            columns=["p_mw", "q_mvar"], index=self._get_pp_ids("load", name="const_impedance")
         )
 
         pgm_idx = pd.Series(
-            np.arange(start=self.next_idx, stop=len(pgm_output_loads), dtype=np.int32), index=pgm_output_loads["id"]
+            np.arange(start=0, stop=len(pgm_output_loads), dtype=np.int32), index=pgm_output_loads["id"]
         )
 
         const_power_pgm_idx = pgm_idx[const_power_pgm_ids]

@@ -9,6 +9,7 @@ from typing import Tuple
 import pandapower as pp
 import pandas as pd
 import pytest
+from power_grid_model.validation import assert_valid_input_data
 
 from power_grid_model_io.converters import PandaPowerConverter
 from power_grid_model_io.converters.pandapower_converter import PandaPowerData
@@ -57,6 +58,7 @@ def test_generate_output():  # TODO: REMOVE THIS FUNCTION
     net = pp_net()
     converter = PandaPowerConverter(std_types=net.std_types)
     input_data, extra_info = converter.load_input_data(net)
+    assert_valid_input_data(input_data=input_data)
     pgm = PowerGridModel(input_data=input_data)
     output_data = pgm.calculate_power_flow()
     json_converter = PgmJsonConverter(destination_file=PGM_OUTPUT_FILE)

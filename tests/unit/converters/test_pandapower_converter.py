@@ -446,42 +446,6 @@ def test_create_pgm_input_links(pp_example_simple: Tuple[PandaPowerData, float],
     assert_struct_array_equal(converter.pgm_input_data["link"], pgm_example_simple["link"])
 
 
-# def test__pp_buses_output(pgm_output: SingleDataset, pp_expected_output: SingleDataset):
-#     # Arrange
-#     converter = PandaPowerConverter(system_frequency=50)
-#     converter.pgm_output_data = pgm_output
-#     converter.idx_lookup["bus"] = pd.Series([321, 5, 4, 3, 1, 6])
-#
-#     # Act
-#     converter._pp_buses_output()
-#
-#     # Assert
-#     np.testing.assert_array_equal(converter.pp_output_data["node"], pp_expected_output["bus"])
-
-
-# def test__pp_shunts_output(pgm_output: SingleDataset, pp_expected_output: SingleDataset):
-#     # Arrange
-#     converter = PandaPowerConverter(system_frequency=50)
-#     converter.pgm_output_data = pgm_output
-#
-#     source = initialize_array("input", "source", 1)
-#     source["id"] = [10]
-#     source["node"] = [1]
-#     source["status"] = [1]
-#     source["u_ref"] = [1.0]
-#
-#     converter.pgm_input_data["source"] = source
-#     converter.idx_lookup["bus"] = pd.Series([321, 5, 4, 3, 1, 6])
-#
-#     converter.pgm_nodes_lookup = pd.DataFrame()
-#
-#     # Act
-#     converter._pp_buses_output()
-#
-#     # Assert
-#     np.testing.assert_array_equal(converter.pp_output_data["node"], pp_expected_output["bus"])
-
-
 def test_get_pgm_ids():
     # Arrange
     converter = PandaPowerConverter()
