@@ -4,9 +4,8 @@
 """
 Panda Power Converter
 """
-import re
 from functools import lru_cache
-from typing import Dict, Mapping, Optional, Tuple, Union
+from typing import Dict, Mapping, MutableMapping, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -16,12 +15,10 @@ from power_grid_model.data_types import Dataset
 from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_types import ExtraInfoLookup
 from power_grid_model_io.functions import get_winding
+from power_grid_model_io.utils.regex import TRAFO3_CONNECTION_RE, TRAFO_CONNECTION_RE
 
 StdTypes = Mapping[str, Mapping[str, Mapping[str, Union[float, int, str]]]]
-PandaPowerData = Mapping[str, pd.DataFrame]
-
-CONNECTION_PATTERN_PP = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)\d*")
-CONNECTION_PATTERN_PP_3WDG = re.compile(r"(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(y|yn|d|z|zn)\d*")
+PandaPowerData = MutableMapping[str, pd.DataFrame]
 
 
 class PandaPowerConverter(BaseConverter[PandaPowerData]):
@@ -52,6 +49,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
     ) -> Dataset:
         """
         Set up for conversion from PandaPower to power-grid-model
+
         Args:
             data: PandaPowerData, i.e. a dictionary with the components as keys and pd.DataFrames as values, with
             attribute names as columns and their values in the table
@@ -70,6 +68,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         # Set pandas data
         self.pp_input_data = data
+
         # Convert
         if data_type == "input":
             self._create_input_data()
@@ -78,16 +77,14 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         # Construct extra_info
         if extra_info is not None:
-            for (pp_table, name), indices in self.idx_lookup.items():
-                for pgm_idx, pp_idx in zip(indices.index, indices):
-                    if name:
-                        extra_info[pgm_idx] = {"id_reference": {"table": pp_table, "name": name, "index": pp_idx}}
-                    else:
-                        extra_info[pgm_idx] = {"id_reference": {"table": pp_table, "index": pp_idx}}
+            self._fill_extra_info(extra_info=extra_info)
 
         return self.pgm_input_data
 
     def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup]) -> PandaPowerData:
+        """
+        Set up for conversion from power-grid-model to PandaPower
+        """
         raise NotImplementedError()
 
     def _create_input_data(self):
@@ -111,12 +108,20 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._create_pgm_input_xward()
         self._create_pgm_input_motor()
 
+    def _fill_extra_info(self, extra_info: ExtraInfoLookup):
+        for (pp_table, name), indices in self.idx_lookup.items():
+            for pgm_id, pp_idx in zip(indices.index, indices):
+                if name:
+                    extra_info[pgm_id] = {"id_reference": {"table": pp_table, "name": name, "index": pp_idx}}
+                else:
+                    extra_info[pgm_id] = {"id_reference": {"table": pp_table, "index": pp_idx}}
+
     def _create_pgm_input_nodes(self):
         """
         This function converts a Bus Dataframe of PandaPower to a power-grid-model Node input array.
 
         Returns:
-            returns a power-grid-model structured array for the Node component
+            a power-grid-model structured array for the Node component
         """
         assert "node" not in self.pgm_input_data
 
@@ -136,7 +141,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         This function converts a Line Dataframe of PandaPower to a power-grid-model Line input array.
 
         Returns:
-            returns a power-grid-model structured array for the Line component
+            a power-grid-model structured array for the Line component
         """
         assert "line" not in self.pgm_input_data
 
@@ -174,7 +179,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         This function converts External Grid Dataframe of PandaPower to a power-grid-model Source input array.
 
         Returns:
-            returns a power-grid-model structured array for the Source component
+            a power-grid-model structured array for the Source component
         """
         assert "source" not in self.pgm_input_data
 
@@ -199,7 +204,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         This function converts a Shunt Dataframe of PandaPower to a power-grid-model Shunt input array.
 
         Returns:
-            returns a power-grid-model structured array for the Shunt component
+            a power-grid-model structured array for the Shunt component
         """
         assert "shunt" not in self.pgm_input_data
 
@@ -228,7 +233,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Symmetrical Generator input array.
 
         Returns:
-            returns a power-grid-model structured array for the Symmetrical Generator component
+            a power-grid-model structured array for the Symmetrical Generator component
         """
         assert "sym_gen" not in self.pgm_input_data
 
@@ -255,7 +260,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Asymmetrical Generator input array.
 
         Returns:
-            returns a power-grid-model structured array for the Asymmetrical Generator component
+            a power-grid-model structured array for the Asymmetrical Generator component
         """
         # TODO: create unit tests for asym_gen conversion
         assert "asym_gen" not in self.pgm_input_data
@@ -299,7 +304,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         power-grid-model created.
 
         Returns:
-            returns a power-grid-model structured array for the Symmetrical Load component
+            a power-grid-model structured array for the Symmetrical Load component
         """
         assert "sym_load" not in self.pgm_input_data
 
@@ -345,6 +350,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self.pgm_input_data["sym_load"] = pgm_sym_loads
 
     def _create_pgm_input_asym_loads(self):  # pragma: no cover
+        """
+        This function converts an asymmetric_load Dataframe of PandaPower to a power-grid-model asym_load input array.
+
+        Returns:
+            a power-grid-model structured array for the asym_load component
+        """
         # TODO: create unit tests for asym_load conversion
         assert "asym_load" not in self.pgm_input_data
 
@@ -386,7 +397,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Transformer input array.
 
         Returns:
-            returns a power-grid-model structured array for the Transformer component
+            a power-grid-model structured array for the Transformer component
         """
         assert "transformer" not in self.pgm_input_data
 
@@ -432,7 +443,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Three Winding Transformer input array.
 
         Returns:
-            returns a power-grid-model structured array for the Three Winding Transformer component
+            a power-grid-model structured array for the Three Winding Transformer component
         """
         assert "three_winding_transformer" not in self.pgm_input_data
 
@@ -505,7 +516,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         connection and converts them to a power-grid-model Link input array.
 
         Returns:
-            returns a power-grid-model structured array for the Link component
+            a power-grid-model structured array for the Link component
         """
         assert "link" not in self.pgm_input_data
 
@@ -584,7 +595,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             pp_idx: PandaPower component identifier
 
         Returns:
-            The generated IDs
+            the generated IDs
         """
         key = (pp_table, name)
         assert key not in self.idx_lookup
@@ -595,7 +606,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self.next_idx += n_objects
         return pgm_idx
 
-    def _get_pgm_ids(self, pp_table: str, pp_idx: pd.Series, name: Optional[str] = None) -> pd.Series:
+    def _get_pgm_ids(self, pp_table: str, pp_idx: Optional[pd.Series] = None, name: Optional[str] = None) -> pd.Series:
         """
         Get numerical power-grid-model IDs for a PandaPower component
 
@@ -604,11 +615,13 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             pp_idx: PandaPower component identifier
 
         Returns:
-            The IDs if they were previously generated
+            the power-grid-model IDs if they were previously generated
         """
         key = (pp_table, name)
         if key not in self.idx:
             raise KeyError(f"No indexes have been created for '{pp_table}' (name={name})!")
+        if pp_idx is None:
+            return self.idx[key]
         return self.idx[key][pp_idx]
 
     @staticmethod
@@ -621,7 +634,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             the Network (e.g. "hv_bus", "i0_percent")
 
         Returns:
-            The "tap size" of Transformers
+            the "tap size" of Transformers
         """
         tap_side_hv = np.array(pp_trafo["tap_side"] == "hv")
         tap_side_lv = np.array(pp_trafo["tap_side"] == "lv")
@@ -642,7 +655,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             tap_side: PandaPower series with information about the "tap_side" attribute
 
         Returns:
-            The enumerated "tap side"
+            the enumerated "tap side"
         """
         new_tap_side = np.array(tap_side)
         new_tap_side[new_tap_side == "hv"] = BranchSide.from_side
@@ -659,7 +672,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             tap_side: PandaPower series with information about the "tap_side" attribute
 
         Returns:
-            The enumerated "tap side"
+            the enumerated "tap side"
         """
         new_tap_side = np.array(tap_side)
         new_tap_side[new_tap_side == "hv"] = Branch3Side.side_1
@@ -678,7 +691,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             the Network (e.g. "hv_bus", "i0_percent")
 
         Returns:
-            The "tap size" of Three Winding Transformers
+            the "tap size" of Three Winding Transformers
         """
         tap_side_hv = np.array(pp_3wtrafo["tap_side"] == "hv")
         tap_side_mv = np.array(pp_3wtrafo["tap_side"] == "mv")
@@ -708,7 +721,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             bus: name of the bus attribute that the component connects to (e.g "hv_bus", "from_bus", "lv_bus", etc.)
 
         Returns:
-            The "closed" value of a Switch
+            the "closed" value of a Switch
         """
         switch_state = (
             component[["index", bus]]
@@ -731,7 +744,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             pp_table: Table name (e.g. "bus")
 
         Returns:
-            The switch states of either Lines or Transformers
+            the switch states of either Lines or Transformers
         """
         if pp_table == "line":
             element_type = "l"
@@ -765,7 +778,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             trafo3w: PandaPower dataframe with information about the Three Winding Transformers.
 
         Returns:
-            The switch states of Three Winding Transformers
+            the switch states of Three Winding Transformers
         """
         element_type = "t3"
         bus1 = "hv_bus"
@@ -791,12 +804,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         through "std_type" attribute.
 
         Returns:
-            returns the "from" and "to" winding types of a transformer
+            the "from" and "to" winding types of a transformer
         """
 
         @lru_cache
         def vector_group_to_winding_types(vector_group: str) -> pd.Series:
-            match = CONNECTION_PATTERN_PP.fullmatch(vector_group)
+            match = TRAFO_CONNECTION_RE.fullmatch(vector_group)
             if not match:
                 raise ValueError(f"Invalid transformer connection string: '{vector_group}'")
             winding_from = get_winding(match.group(1)).value
@@ -821,12 +834,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         through "std_type" attribute.
 
         Returns:
-            returns the three winding types of Three Winding Transformers
+            the three winding types of Three Winding Transformers
         """
 
         @lru_cache
         def vector_group_to_winding_types(vector_group: str) -> pd.Series:
-            match = CONNECTION_PATTERN_PP_3WDG.fullmatch(vector_group)
+            match = TRAFO3_CONNECTION_RE.fullmatch(vector_group)
             if not match:
                 raise ValueError(f"Invalid transformer connection string: '{vector_group}'")
             winding_1 = get_winding(match.group(1)).value
@@ -857,7 +870,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             attribute: an attribute from the table (e.g "vn_kv")
 
         Returns:
-            Returns the selected PandaPower attribute from the selected PandaPower table
+            the selected PandaPower attribute from the selected PandaPower table
         """
         pp_component_data = self.pp_input_data[table]
 

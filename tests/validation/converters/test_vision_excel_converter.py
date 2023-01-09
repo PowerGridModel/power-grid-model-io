@@ -40,7 +40,7 @@ def load_validation_data(language: str) -> Tuple[SingleDataset, ExtraInfoLookup]
     Load the validation data from the json file
     """
     validation_file = Path(str(VALIDATION_FILE).format(language=language))
-    data, extra_info = load_json_single_dataset(validation_file)
+    data, extra_info = load_json_single_dataset(validation_file, data_type="input")
     return data, extra_info
 
 
@@ -75,7 +75,7 @@ def test_input_data(input_data: Tuple[SingleDataset, SingleDataset]):
     assert len(expected) <= len(actual)
 
 
-@pytest.mark.parametrize(("component", "attribute"), component_attributes(VALIDATION_EN))
+@pytest.mark.parametrize(("component", "attribute"), component_attributes(VALIDATION_EN, data_type="input"))
 @pytest.mark.parametrize("input_data", LANGUAGES, indirect=True)
 def test_attributes(input_data: Tuple[SingleDataset, SingleDataset], component: str, attribute: str):
     """
