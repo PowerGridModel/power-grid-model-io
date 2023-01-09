@@ -67,6 +67,8 @@ def idx_to_str(idx: Union[str, int, slice, Tuple[Union[int, slice], ...]]) -> st
 class MockFn:
     __slots__ = ["fn", "args", "kwargs", "postfix"]
 
+    __array_struct__ = np.array([]).__array_struct__
+
     def __init__(self, fn: str, *args, **kwargs):
         self.fn = fn
         self.args = list(args)
@@ -102,7 +104,9 @@ class MockFn:
         return obj
 
     def is_operator(self) -> bool:
-        return isinstance(self.fn, str) and self.fn in {"+", "-", "*", "/", "&"} and not (self.kwargs or self.postfix)
+        return (
+            isinstance(self.fn, str) and self.fn in {"+", "-", "*", "/", "&", "%"} and not (self.kwargs or self.postfix)
+        )
 
     def is_commutative(self) -> bool:
         return isinstance(self.fn, str) and self.fn in {"+", "*", "&", "|"} and not (self.kwargs or self.postfix)
@@ -115,6 +119,9 @@ class MockFn:
     def __add__(self, other):
         return MockFn._apply_operator("+", self, other)
 
+    def __radd__(self, other):
+        return MockFn._apply_operator("+", other, self)
+
     def __and__(self, other):
         return MockFn._apply_operator("&", self, other)
 
@@ -124,11 +131,26 @@ class MockFn:
     def __truediv__(self, other):
         return MockFn._apply_operator("/", self, other)
 
+    def __rtruediv__(self, other):
+        return MockFn._apply_operator("/", other, self)
+
     def __sub__(self, other):
         return MockFn._apply_operator("-", self, other)
 
+    def __rsub__(self, other):
+        return MockFn._apply_operator("-", other, self)
+
     def __mul__(self, other):
         return MockFn._apply_operator("*", self, other)
+
+    def __rmul__(self, other):
+        return MockFn._apply_operator("*", other, self)
+
+    def __mod__(self, other):
+        return MockFn._apply_operator("%", self, other)
+
+    def __round__(self):
+        return MockFn("round", self)
 
     def __eq__(self, other):
         if not isinstance(other, MockFn):
@@ -197,7 +219,7 @@ class MockDf:
     def __init__(self, shape: Union[int, Tuple[int, ...]]):
         self.shape = shape
         self.empty = shape == 0 or (isinstance(shape, tuple) and (len(shape) == 0 or shape[0] == 0))
-        self.index = MagicMock()
+        self.index = MagicMock(name="DataFrame.index")
 
     def __len__(self):
         if isinstance(self.shape, int):

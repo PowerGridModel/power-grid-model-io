@@ -275,14 +275,16 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_asym_gens["status"] = self._get_pp_attr("asymmetric_sgen", "in_service")
         pgm_asym_gens["p_specified"] = (
             np.array(
-                self._get_pp_attr("asymmetric_sgen", "p_a_mw"),
-                self._get_pp_attr("asymmetric_sgen", "p_b_mw"),
-                self._get_pp_attr("asymmetric_sgen", "p_c_mw"),
+                (
+                    self._get_pp_attr("asymmetric_sgen", "p_a_mw"),
+                    self._get_pp_attr("asymmetric_sgen", "p_b_mw"),
+                    self._get_pp_attr("asymmetric_sgen", "p_c_mw"),
+                )
             )
             * multiplier
         )
-        pgm_asym_gens["q_specified"] = (
-            np.array(
+        pgm_asym_gens["q_specified"] = np.array(
+            (
                 self._get_pp_attr("asymmetric_sgen", "q_a_mvar"),
                 self._get_pp_attr("asymmetric_sgen", "q_b_mvar"),
                 self._get_pp_attr("asymmetric_sgen", "q_c_mvar"),
@@ -368,17 +370,21 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_asym_loads["status"] = self._get_pp_attr("asymmetric_load", "in_service")
         pgm_asym_loads["p_specified"] = (
             np.array(
-                self._get_pp_attr("asymmetric_load", "p_a_mw"),
-                self._get_pp_attr("asymmetric_load", "p_b_mw"),
-                self._get_pp_attr("asymmetric_load", "p_c_mw"),
+                (
+                    self._get_pp_attr("asymmetric_load", "p_a_mw"),
+                    self._get_pp_attr("asymmetric_load", "p_b_mw"),
+                    self._get_pp_attr("asymmetric_load", "p_c_mw"),
+                )
             )
             * multiplier
         )
         pgm_asym_loads["q_specified"] = (
             np.array(
-                self._get_pp_attr("asymmetric_load", "q_a_mvar"),
-                self._get_pp_attr("asymmetric_load", "q_b_mvar"),
-                self._get_pp_attr("asymmetric_load", "q_c_mvar"),
+                (
+                    self._get_pp_attr("asymmetric_load", "q_a_mvar"),
+                    self._get_pp_attr("asymmetric_load", "q_b_mvar"),
+                    self._get_pp_attr("asymmetric_load", "q_c_mvar"),
+                )
             )
             * multiplier
         )
