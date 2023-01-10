@@ -23,15 +23,15 @@ def pp_net() -> pp.pandapowerNet:
     pp.create_bus(net, index=104, vn_kv=30.1)
     pp.create_bus(net, index=105, vn_kv=60)
     pp.create_bus(net, index=106, vn_kv=110)
-    pp.create_ext_grid(net, index=1, in_service=True, bus=101, vm_pu=1, s_sc_max_mva=3.0, rx_max=0.6, va_degree=61.2)
+    pp.create_ext_grid(net, index=1, in_service=True, bus=101, vm_pu=1, s_sc_max_mva=3.0, rx_max=0.6, va_degree=0)
     pp.create_transformer_from_parameters(
         net,
         index=101,
         hv_bus=101,
         lv_bus=102,
-        i0_percent=38.0,
+        i0_percent=3.0,
         pfe_kw=11.6,
-        vkr_percent=0.322,
+        vkr_percent=10.22,
         sn_mva=40,
         vn_lv_kv=22.0,
         vn_hv_kv=110.0,
@@ -40,11 +40,11 @@ def pp_net() -> pp.pandapowerNet:
         shift_degree=30,
         tap_side="hv",
         tap_pos=2,
-        tap_min=1,
+        tap_min=-1,
         tap_max=3,
-        tap_step_percent=4,
-        tap_neutral=2,
-        parallel=3,
+        tap_step_percent=2,
+        tap_neutral=1,
+        parallel=2,
     )
     pp.create_line(
         net, index=101, from_bus=103, to_bus=102, length_km=1.23, parallel=2, df=10, std_type="NAYY 4x150 SE"
@@ -55,8 +55,8 @@ def pp_net() -> pp.pandapowerNet:
     pp.create_switch(net, index=101, et="l", bus=103, element=101, closed=True)
     pp.create_switch(net, index=3021, et="b", bus=101, element=106, closed=True)
     pp.create_switch(net, index=321, et="t", bus=101, element=101, closed=True)
-    pp.create_shunt(net, index=1201, in_service=True, bus=104, p_mw=0.51, q_mvar=1.5, step=3)
-    pp.create_sgen(net, index=31, bus=105, p_mw=1.21, q_mvar=.81)
+    pp.create_shunt(net, index=1201, in_service=True, bus=104, p_mw=0.1, q_mvar=0.55, step=3)
+    pp.create_sgen(net, index=31, bus=105, p_mw=1.21, q_mvar=0.81)
     pp.create_transformer3w_from_parameters(
         net,
         index=102,

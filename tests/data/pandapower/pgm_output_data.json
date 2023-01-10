@@ -1,45 +1,45 @@
 {
   "line":
     [
-      {"id": 6, "energized": 0, "loading": 0.0, "p_from": 0.0, "q_from": 0.0, "i_from": 0.0, "s_from": 0.0, "p_to": 0.0, "q_to": 0.0, "i_to": 0.0, "s_to": 0.0, "id_reference": {"table": "line", "index": 101}, "from_node": 2, "to_node": 1}
+      {"id": 6, "energized": 1, "loading": 0.0031109779350662415, "p_from": -99537.82275032277, "q_from": -277107.5582214947, "i_from": 16.799280849357704, "s_from": 294442.4850142278, "p_to": 99639.10903456461, "q_to": 256486.36365441885, "i_to": 15.695182236746287, "s_to": 275160.3292443673, "id_reference": {"table": "line", "index": 101}, "from_node": 2, "to_node": 1}
     ],
   "link":
     [
-      {"id": 15, "energized": 1, "loading": 0.0, "p_from": -3.5629270125840327, "q_from": -6.480940163368415, "i_from": 1.2513730074917746e-06, "s_from": 7.395744336992918, "p_to": 3.5629270125840335, "q_to": 6.480940163368414, "i_to": 4.048559730120447e-06, "s_to": 7.395744336992917, "id_reference": {"table": "switch", "name": "bus_to_bus", "index": 3021}, "from_node": 0, "to_node": 5}
+      {"id": 15, "energized": 1, "loading": 0.0, "p_from": 0.0, "q_from": 0.0, "i_from": 0.0, "s_from": 0.0, "p_to": 0.0, "q_to": 0.0, "i_to": 0.0, "s_to": 0.0, "id_reference": {"table": "switch", "name": "bus_to_bus", "index": 3021}, "from_node": 0, "to_node": 5}
     ],
   "node":
     [
-      {"id": 0, "energized": 1, "u_pu": 31.020000055626742, "u": 3412200.0061189416, "u_angle": 1.0681415013686872, "id_reference": {"table": "bus", "index": 101}},
-      {"id": 1, "energized": 0, "u_pu": 0.0, "u": 0.0, "u_angle": 0.0, "id_reference": {"table": "bus", "index": 102}},
-      {"id": 2, "energized": 0, "u_pu": 0.0, "u": 0.0, "u_angle": 0.0, "id_reference": {"table": "bus", "index": 103}},
-      {"id": 3, "energized": 0, "u_pu": 0.0, "u": 0.0, "u_angle": 0.0, "id_reference": {"table": "bus", "index": 104}},
-      {"id": 4, "energized": 0, "u_pu": 0.0, "u": 0.0, "u_angle": 0.0, "id_reference": {"table": "bus", "index": 105}},
-      {"id": 5, "energized": 1, "u_pu": 31.02000005562674, "u": 1054680.0018913092, "u_angle": 1.068141501368687, "id_reference": {"table": "bus", "index": 106}}
+      {"id": 0, "energized": 1, "u_pu": 0.47163661079771957, "u": 51880.027187749154, "u_angle": 0.21709546021720588, "id_reference": {"table": "bus", "index": 101}},
+      {"id": 1, "energized": 1, "u_pu": 0.5060912570597685, "u": 10121.825141195372, "u_angle": -0.304312067807514, "id_reference": {"table": "bus", "index": 102}},
+      {"id": 2, "energized": 1, "u_pu": 0.5059634680443073, "u": 10119.269360886145, "u_angle": -0.3040266969189321, "id_reference": {"table": "bus", "index": 103}},
+      {"id": 3, "energized": 1, "u_pu": 0.5004910359357764, "u": 15064.780181666869, "u_angle": -0.8257999235761204, "id_reference": {"table": "bus", "index": 104}},
+      {"id": 4, "energized": 1, "u_pu": 0.5130590448855178, "u": 30783.54269313107, "u_angle": -0.8046960711744302, "id_reference": {"table": "bus", "index": 105}},
+      {"id": 5, "energized": 1, "u_pu": 0.47163661079771957, "u": 51880.027187749154, "u_angle": 0.21709546021720585, "id_reference": {"table": "bus", "index": 106}}
     ],
   "shunt":
     [
-      {"id": 11, "energized": 0, "p": 0.0, "q": 0.0, "i": 0.0, "s": 0.0, "pf": 0.0, "id_reference": {"table": "shunt", "index": 1201}, "node": 3}
+      {"id": 11, "energized": 1, "p": 75147.38311562, "q": 413310.6071359099, "i": 16.09961334805116, "s": 420086.64244436554, "pf": 0.17888543819998323, "id_reference": {"table": "shunt", "index": 1201}, "node": 3}
     ],
   "source":
     [
-      {"id": 7, "energized": 1, "p": -0.5547484232098557, "q": -5.704080396672956, "i": 9.696941139485964e-07, "s": 5.73099284459181, "pf": -0.09679796123517367, "id_reference": {"table": "ext_grid", "index": 1}, "node": 0}
+      {"id": 7, "energized": 1, "p": 106210.31853915902, "q": 769370.6442366535, "i": 8.643190777879083, "s": 776667.1230181645, "pf": 0.13675140274564576, "id_reference": {"table": "ext_grid", "index": 1}, "node": 0}
     ],
   "sym_gen":
     [
-      {"id": 13, "energized": 0, "p": 0.0, "q": 0.0, "i": 0.0, "s": 0.0, "pf": 0.0, "id_reference": {"table": "sgen", "index": 31}, "node": 4}
+      {"id": 13, "energized": 1, "p": 1210000.0, "q": 810000.0, "i": 27.309213266507676, "s": 1456090.6565183362, "pf": 0.8309922150680065, "id_reference": {"table": "sgen", "index": 31}, "node": 4}
     ],
   "sym_load":
     [
-      {"id": 8, "energized": 0, "p": 0.0, "q": 0.0, "i": 0.0, "s": 0.0, "pf": 0.0, "id_reference": {"table": "load", "name": "const_power", "index": 101}, "node": 2},
-      {"id": 9, "energized": 0, "p": 0.0, "q": 0.0, "i": 0.0, "s": 0.0, "pf": 0.0, "id_reference": {"table": "load", "name": "const_impedance", "index": 101}, "node": 2},
-      {"id": 10, "energized": 0, "p": 0.0, "q": 0.0, "i": 0.0, "s": 0.0, "pf": 0.0, "id_reference": {"table": "load", "name": "const_current", "index": 101}, "node": 2}
+      {"id": 8, "energized": 1, "p": 575000.0, "q": 55200.0, "i": 32.95718611432218, "s": 577643.5232909652, "pf": 0.9954236078405164, "id_reference": {"table": "load", "name": "const_power", "index": 101}, "node": 2},
+      {"id": 9, "energized": 1, "p": 326398.76451916393, "q": 31334.281393839745, "i": 18.708147529987663, "s": 327899.3605820313, "pf": 0.9954236078405161, "id_reference": {"table": "load", "name": "const_impedance", "index": 101}, "node": 2},
+      {"id": 10, "energized": 1, "p": 328876.2542287997, "q": 31572.12040596477, "i": 18.85014942469511, "s": 330388.24038166803, "pf": 0.9954236078405162, "id_reference": {"table": "load", "name": "const_current", "index": 101}, "node": 2}
     ],
   "three_winding_transformer":
     [
-      {"id": 14, "energized": 0, "loading": 0.0, "p_1": 0.0, "q_1": 0.0, "i_1": 0.0, "s_1": 0.0, "p_2": 0.0, "q_2": 0.0, "i_2": 0.0, "s_2": 0.0, "p_3": 0.0, "q_3": 0.0, "i_3": 0.0, "s_3": 0.0, "id_reference": {"table": "trafo3w", "index": 102}, "node_1": 2, "node_2": 4, "node_3": 3}
+      {"id": 14, "energized": 1, "loading": 0.02854654066340801, "p_1": -1130737.1959976947, "q_1": 159001.1564217126, "i_1": 65.14839104948163, "s_1": 1141861.6265363204, "p_2": 1210000.000000004, "q_2": 809999.9999999871, "i_2": 27.30921326650761, "s_2": 1456090.6565183324, "p_3": -75147.38311562111, "q_3": -413310.6071359115, "i_3": 16.099613348051225, "s_3": 420086.64244436735, "id_reference": {"table": "trafo3w", "index": 102}, "node_1": 2, "node_2": 4, "node_3": 3}
     ],
   "transformer":
     [
-      {"id": 12, "energized": 0, "loading": 0.0, "p_from": 0.0, "q_from": 0.0, "i_from": 0.0, "s_from": 0.0, "p_to": 0.0, "q_to": 0.0, "i_to": 0.0, "s_to": 0.0, "id_reference": {"table": "trafo", "index": 101}, "from_node": 0, "to_node": 1}
+      {"id": 12, "energized": 1, "loading": 0.009708339051407614, "p_from": 106210.3187671069, "q_from": 769370.6453100096, "i_from": 8.643190790058682, "s_from": 776667.1241126092, "p_to": -99639.10903465557, "q_to": -256486.3636544205, "i_to": 15.69518223674825, "s_to": 275160.32924440183, "id_reference": {"table": "trafo", "index": 101}, "from_node": 0, "to_node": 1}
     ]
 }
