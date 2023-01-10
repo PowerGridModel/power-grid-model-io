@@ -42,7 +42,7 @@ def pp_net() -> pp.pandapowerNet:
         tap_pos=2,
         tap_min=1,
         tap_max=3,
-        tap_step_percent=30,
+        tap_step_percent=4,
         tap_neutral=2,
         parallel=3,
     )
@@ -55,8 +55,8 @@ def pp_net() -> pp.pandapowerNet:
     pp.create_switch(net, index=101, et="l", bus=103, element=101, closed=True)
     pp.create_switch(net, index=3021, et="b", bus=101, element=106, closed=True)
     pp.create_switch(net, index=321, et="t", bus=101, element=101, closed=True)
-    pp.create_shunt(net, index=1201, in_service=True, bus=104, p_mw=2.1, q_mvar=31.5, step=3)
-    pp.create_sgen(net, index=31, bus=105, p_mw=6.21, q_mvar=20.1)
+    pp.create_shunt(net, index=1201, in_service=True, bus=104, p_mw=0.51, q_mvar=1.5, step=3)
+    pp.create_sgen(net, index=31, bus=105, p_mw=1.21, q_mvar=.81)
     pp.create_transformer3w_from_parameters(
         net,
         index=102,
@@ -76,16 +76,16 @@ def pp_net() -> pp.pandapowerNet:
         vkr_hv_percent=1,
         vkr_mv_percent=2,
         vkr_lv_percent=4,
-        i0_percent=38,
+        i0_percent=5,
         pfe_kw=11.6,
-        vector_group="Dynz",
+        vector_group="Dyny",
         shift_mv_degree=30,
-        shift_lv_degree=60,
+        shift_lv_degree=30,
         tap_pos=2,
         tap_side="lv",
         tap_min=1,
         tap_max=3,
-        tap_step_percent=30,
+        tap_step_percent=3,
         tap_neutral=2,
     )
 
