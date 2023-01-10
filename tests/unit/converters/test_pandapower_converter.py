@@ -261,29 +261,32 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", _generate_ids("line", two_pp_objs.index))
     pgm.assert_any_call("from_node", _get_pgm_ids("bus", two_pp_objs["from_bus"]))
-    pgm.assert_any_call("from_status", _get_pp_attr("line", "in_service") & get_switch_states("line")["from"])
+    pgm.assert_any_call("from_status", _get_pp_attr("line", "in_service", True) & get_switch_states("line")["from"])
     pgm.assert_any_call("to_node", _get_pgm_ids("bus", two_pp_objs["to_bus"]))
-    pgm.assert_any_call("to_status", _get_pp_attr("line", "in_service") & get_switch_states("line")["to"])
+    pgm.assert_any_call("to_status", _get_pp_attr("line", "in_service", True) & get_switch_states("line")["to"])
     pgm.assert_any_call(
         "r1",
-        _get_pp_attr("line", "r_ohm_per_km") * (_get_pp_attr("line", "length_km") / _get_pp_attr("line", "parallel")),
+        _get_pp_attr("line", "r_ohm_per_km")
+        * (_get_pp_attr("line", "length_km") / _get_pp_attr("line", "parallel", 1)),
     )
     pgm.assert_any_call(
         "x1",
-        _get_pp_attr("line", "x_ohm_per_km") * (_get_pp_attr("line", "length_km") / _get_pp_attr("line", "parallel")),
+        _get_pp_attr("line", "x_ohm_per_km")
+        * (_get_pp_attr("line", "length_km") / _get_pp_attr("line", "parallel", 1)),
     )
     pgm.assert_any_call(
         "c1",
         _get_pp_attr("line", "c_nf_per_km")
         * _get_pp_attr("line", "length_km")
-        * _get_pp_attr("line", "parallel")
+        * _get_pp_attr("line", "parallel", 1)
         * 1e-9,
     )
     pgm.assert_any_call(
-        "tan1", _get_pp_attr("line", "g_us_per_km") / _get_pp_attr("line", "c_nf_per_km") / (np.pi / 10)
+        "tan1", _get_pp_attr("line", "g_us_per_km", 0) / _get_pp_attr("line", "c_nf_per_km") / (np.pi / 10)
     )
     pgm.assert_any_call(
-        "i_n", _get_pp_attr("line", "max_i_ka") * 1e3 * _get_pp_attr("line", "df") * _get_pp_attr("line", "parallel")
+        "i_n",
+        _get_pp_attr("line", "max_i_ka") * 1e3 * _get_pp_attr("line", "df", 1) * _get_pp_attr("line", "parallel", 1),
     )
 
     # result
