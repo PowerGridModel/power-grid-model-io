@@ -1026,3 +1026,27 @@ def test_get_pp_attr_error_after_checking_std():
     # Act/Assert
     with pytest.raises(KeyError):
         converter._get_pp_attr("trafo3w", "hv_bus")
+
+
+def test_pp_loads_output():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.pgm_output_data["sym_load"] = initialize_array("sym_output", "sym_load", 6)
+    converter.pgm_output_data["sym_load"]["id"] = [0, 1, 2, 3, 4, 5]
+    converter.pgm_output_data["sym_load"]["p"] = [1e6, 2e6, 4e6, 8e6, 16e6, 32e6]
+    converter.pgm_output_data["sym_load"]["q"] = [1e4, 2e4, 4e4, 8e4, 16e4, 32e4]
+    converter.idx[("load", "const_power")] = pd.Series([2, 4], index=[101, 100])
+    converter.idx[("load", "const_current")] = pd.Series([1, 3], index=[102, 100])
+    converter.idx[("load", "const_impedance")] = pd.Series([0, 5], index=[101, 102])
+
+    expected = pd.DataFrame(
+        [[16.0 + 8.0, 0.16 + 0.08], [4.0 + 1.0, 0.04 + 0.01], [2.0 + 32.0, 0.02 + 0.32]],
+        columns=["p_mw", "q_mvar"],
+        index=[100, 101, 102],
+    )
+
+    # Act
+    converter._pp_loads_output()
+
+    # Assert
+    pd.testing.assert_frame_equal(converter.pp_output_data["res_load"], expected)
