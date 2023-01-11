@@ -779,8 +779,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
                 # Now add the active and reactive powers to the pp busses
                 # Note that the units are incorrect; for efficiency, unit conversions will be applied at the end.
-                pp_output_buses.loc[idx, "p_mw"] += accumulated_data[p_col]
-                pp_output_buses.loc[idx, "q_mvar"] += accumulated_data[q_col]
+                pp_output_buses.loc[idx, "p_mw"] -= accumulated_data[p_col]
+                pp_output_buses.loc[idx, "q_mvar"] -= accumulated_data[q_col]
 
         # Finally apply the unit conversion (W -> MW and VAR -> MVAR)
         pp_output_buses["p_mw"] /= 1e6
@@ -1016,7 +1016,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             pgm_output_transformers3w["p_1"] + pgm_output_transformers3w["p_2"] + pgm_output_transformers3w["p_3"]
         ) * 1e-6
         pp_output_trafos3w["ql_mvar"] = (
-            pgm_output_transformers3w["p_1"] + pgm_output_transformers3w["p_2"] + pgm_output_transformers3w["p_3"]
+            pgm_output_transformers3w["q_1"] + pgm_output_transformers3w["q_2"] + pgm_output_transformers3w["q_3"]
         ) * 1e-6
         pp_output_trafos3w["i_hv_ka"] = pgm_output_transformers3w["i_1"] * 1e-3
         pp_output_trafos3w["i_mv_ka"] = pgm_output_transformers3w["i_2"] * 1e-3

@@ -11,7 +11,7 @@ import pandapower as pp
 def pp_net() -> pp.pandapowerNet:
     #  (ext #1)         shunt - [104]  - 3w - [105] - sym_gen
     #   |                                |
-    #  [101] -/- -OO- [102] ----/----- [103]
+    #  [101] ---OO- [102] ---------- [103]
     #   |                                |
     #  -/-                          (load #31)
     #   |
@@ -23,7 +23,7 @@ def pp_net() -> pp.pandapowerNet:
     pp.create_bus(net, index=104, vn_kv=30.1)
     pp.create_bus(net, index=105, vn_kv=60)
     pp.create_bus(net, index=106, vn_kv=110)
-    pp.create_ext_grid(net, index=1, in_service=True, bus=101, vm_pu=1, s_sc_max_mva=3.0, rx_max=0.6, va_degree=0)
+    pp.create_ext_grid(net, index=1, in_service=True, bus=101, vm_pu=1, s_sc_max_mva=1e14, rx_max=0.6, va_degree=0)
     pp.create_transformer_from_parameters(
         net,
         index=101,

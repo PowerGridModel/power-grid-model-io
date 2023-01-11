@@ -36,7 +36,7 @@ def load_validation_data() -> PandaPowerData:
     Load the validation data from the pp file
     """
     net = pp_net()
-    pp.runpp(net)
+    pp.runpp(net, calculate_voltage_angles=True)
     return net
 
 
