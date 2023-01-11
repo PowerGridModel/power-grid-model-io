@@ -15,7 +15,7 @@
     ],
   "source":
     [
-      {"id": 7, "node": 0, "status": 1, "u_ref": 1.0, "sk": 3000000, "rx_ratio": 0.6, "u_ref_angle": 1.06814150222, "id_reference": {"table": "ext_grid", "index": 1}}
+      {"id": 7, "node": 0, "status": 1, "u_ref": 1.0, "sk": 3000000, "rx_ratio": 0.6, "u_ref_angle": 0.0, "id_reference": {"table": "ext_grid", "index": 1}}
     ],
   "sym_load":
     [
@@ -25,20 +25,20 @@
     ],
   "shunt":
     [
-      {"id": 11, "node": 3, "status": 1, "g1": 0.00695356563, "b1": -0.1043034845, "id_reference": {"table": "shunt", "index": 1201}}
+      {"id": 11, "node": 3, "status": 1, "g1": 0.00033112217304444763, "b1": -0.001821171951744462, "id_reference": {"table": "shunt", "index": 1201}}
     ],
   "transformer":
     [
-      {"id": 12, "from_node": 0, "from_status": 1, "to_node": 1, "to_status": 1, "u1": 110000.0, "u2": 22000.0, "sn":
-       120000000.0, "uk": 0.178, "pk": 386400.0,  "i0": 0.38, "p0": 34800, "winding_from": 2, "winding_to": 1, "clock": 1, "tap_side": 0, "tap_pos": 2, "tap_min": 1, "tap_max": 3, "tap_size": 33000, "tap_nom": 2, "id_reference": {"table": "trafo", "index": 101}}
+      {"id": 12, "from_node": 0, "from_status": 1, "to_node": 1, "to_status": 1, "u1": 110000.0, "u2": 20000.0, "sn":
+       80000000.0, "uk": 0.178, "pk": 8176000.0,  "i0": 0.03, "p0": 23200, "winding_from": 2, "winding_to": 1, "clock": 1, "tap_side": 0, "tap_pos": 2, "tap_min": -1, "tap_max": 3, "tap_size": 2200.0, "tap_nom": 1, "id_reference": {"table": "trafo", "index": 101}}
     ],
   "sym_gen":
     [
-      {"id": 13, "node": 4, "status": 1, "type": 0,"p_specified": 6210000, "q_specified": 20100000, "id_reference": {"table": "sgen", "index": 31}}
+      {"id": 13, "node": 4, "status": 1, "type": 0,"p_specified": 1210000, "q_specified": 810000, "id_reference": {"table": "sgen", "index": 31}}
     ],
   "three_winding_transformer":
     [
-      {"id": 14, "node_1": 2, "node_2": 4, "node_3": 3, "status_1": 1, "status_2": 1, "status_3": 1, "u1": 20000.0, "u2": 60000.0, "u3": 30100.0 , "sn_1": 40000000.0, "sn_2": 100000000.0, "sn_3": 50000000.0, "uk_12": 0.2, "uk_13": 0.35, "uk_23": 0.6, "pk_12": 400000.0, "pk_13": 1600000.0, "pk_23": 1000000.0,  "i0": 0.38, "p0": 11600, "winding_1": 2, "winding_2": 1, "winding_3": 3, "clock_12": 1, "clock_13": 2, "tap_pos": 2, "tap_side": 2, "tap_min": 1, "tap_max": 3, "tap_nom": 2, "tap_size": 9030, "id_reference": {"table": "trafo3w", "index": 102}}
+      {"id": 14, "node_1": 2, "node_2": 4, "node_3": 3, "status_1": 1, "status_2": 1, "status_3": 1, "u1": 20000.0, "u2": 60000.0, "u3": 30100.0 , "sn_1": 40000000.0, "sn_2": 100000000.0, "sn_3": 50000000.0, "uk_12": 0.2, "uk_13": 0.35, "uk_23": 0.6, "pk_12": 400000.0, "pk_13": 1600000.0, "pk_23": 1000000.0,  "i0": 0.05, "p0": 11600, "winding_1": 2, "winding_2": 1, "winding_3": 0, "clock_12": 1, "clock_13": 1, "tap_pos": 2, "tap_side": 2, "tap_min": 1, "tap_max": 3, "tap_nom": 2, "tap_size": 903.0, "id_reference": {"table": "trafo3w", "index": 102}}
     ],
   "link":
     [

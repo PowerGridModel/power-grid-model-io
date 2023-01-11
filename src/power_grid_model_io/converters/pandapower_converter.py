@@ -329,7 +329,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_shunts.empty:
             return
 
-        vn_kv = self._get_pp_attr("shunt", "vn_kv", None)
+        vn_kv = self._get_pp_attr("shunt", "vn_kv")
         vn_kv_2 = vn_kv * vn_kv
 
         step = self._get_pp_attr("shunt", "step", 1)
@@ -545,7 +545,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_transformers["winding_to"] = winding_types["winding_to"]
         pgm_transformers["clock"] = round(self._get_pp_attr("trafo", "shift_degree", 0.0) / 30) % 12
         pgm_transformers["tap_pos"] = self._get_pp_attr("trafo", "tap_pos", np.nan)
-        pgm_transformers["tap_side"] = self._get_transformer_tap_side(pp_trafo["tap_side"])
+        pgm_transformers["tap_side"] = self._get_transformer_tap_side(self._get_pp_attr("trafo", "tap_side"))
         pgm_transformers["tap_min"] = self._get_pp_attr("trafo", "tap_min", np.nan)
         pgm_transformers["tap_max"] = self._get_pp_attr("trafo", "tap_max", np.nan)
         pgm_transformers["tap_nom"] = self._get_pp_attr("trafo", "tap_neutral", np.nan)
@@ -617,7 +617,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_3wtransformers["clock_13"] = round(self._get_pp_attr("trafo3w", "shift_lv_degree", 0.0) / 30.0) % 12
         pgm_3wtransformers["tap_pos"] = self._get_pp_attr("trafo3w", "tap_pos", np.nan)
         pgm_3wtransformers["tap_side"] = self._get_3wtransformer_tap_side(
-            pd.Series(self._get_pp_attr("trafo3w", "tap_side", None))
+            pd.Series(self._get_pp_attr("trafo3w", "tap_side"))
         )
         pgm_3wtransformers["tap_min"] = self._get_pp_attr("trafo3w", "tap_min", np.nan)
         pgm_3wtransformers["tap_max"] = self._get_pp_attr("trafo3w", "tap_max", np.nan)
@@ -719,8 +719,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             index=self._get_pp_ids("bus", pgm_nodes["id"]),
         )
 
-        pp_output_buses["vm_pu"] = self.pgm_nodes_lookup["u_pu"]
-        pp_output_buses["va_degree"] = self.pgm_nodes_lookup["u_degree"]
+        pp_output_buses["vm_pu"] = self.pgm_nodes_lookup["u_pu"].values
+        pp_output_buses["va_degree"] = self.pgm_nodes_lookup["u_degree"].values
 
         # p_to, p_from, q_to and q_from connected to the bus have to be summed up
         self._pp_buses_output__accumulate_power(pp_output_buses)
@@ -883,7 +883,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         )
         pp_output_shunts["p_mw"] = pgm_output_shunts["p"] * 1e-6
         pp_output_shunts["q_mvar"] = pgm_output_shunts["q"] * 1e-6
-        pp_output_shunts["vm_pu"] = at_nodes["u_pu"]
+        pp_output_shunts["vm_pu"] = at_nodes["u_pu"].values
 
         self.pp_output_data["res_shunt"] = pp_output_shunts
 
@@ -954,10 +954,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_trafos["ql_mvar"] = (pgm_output_transformers["q_from"] + pgm_output_transformers["q_to"]) * 1e-6
         pp_output_trafos["i_hv_ka"] = pgm_output_transformers["i_from"] * 1e-3
         pp_output_trafos["i_lv_ka"] = pgm_output_transformers["i_to"] * 1e-3
-        pp_output_trafos["vm_hv_pu"] = from_nodes["u_pu"]
-        pp_output_trafos["vm_lv_pu"] = to_nodes["u_pu"]
-        pp_output_trafos["va_hv_degree"] = from_nodes["u_degree"]
-        pp_output_trafos["va_lv_degree"] = to_nodes["u_degree"]
+        pp_output_trafos["vm_hv_pu"] = from_nodes["u_pu"].values
+        pp_output_trafos["vm_lv_pu"] = to_nodes["u_pu"].values
+        pp_output_trafos["va_hv_degree"] = from_nodes["u_degree"].values
+        pp_output_trafos["va_lv_degree"] = to_nodes["u_degree"].values
         pp_output_trafos["loading_percent"] = pgm_output_transformers["loading"] * 1e2
 
         self.pp_output_data["res_trafo"] = pp_output_trafos
@@ -1021,12 +1021,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_trafos3w["i_hv_ka"] = pgm_output_transformers3w["i_1"] * 1e-3
         pp_output_trafos3w["i_mv_ka"] = pgm_output_transformers3w["i_2"] * 1e-3
         pp_output_trafos3w["i_lv_ka"] = pgm_output_transformers3w["i_3"] * 1e-3
-        pp_output_trafos3w["vm_hv_pu"] = nodes_1["u_pu"]
-        pp_output_trafos3w["vm_mv_pu"] = nodes_2["u_pu"]
-        pp_output_trafos3w["vm_lv_pu"] = nodes_3["u_pu"]
-        pp_output_trafos3w["va_hv_degree"] = nodes_1["u_degree"]
-        pp_output_trafos3w["va_mv_degree"] = nodes_2["u_degree"]
-        pp_output_trafos3w["va_lv_degree"] = nodes_3["u_degree"]
+        pp_output_trafos3w["vm_hv_pu"] = nodes_1["u_pu"].values
+        pp_output_trafos3w["vm_mv_pu"] = nodes_2["u_pu"].values
+        pp_output_trafos3w["vm_lv_pu"] = nodes_3["u_pu"].values
+        pp_output_trafos3w["va_hv_degree"] = nodes_1["u_degree"].values
+        pp_output_trafos3w["va_mv_degree"] = nodes_2["u_degree"].values
+        pp_output_trafos3w["va_lv_degree"] = nodes_3["u_degree"].values
         pp_output_trafos3w["loading_percent"] = pgm_output_transformers3w["loading"] * 1e2
 
         self.pp_output_data["res_trafo3w"] = pp_output_trafos3w
