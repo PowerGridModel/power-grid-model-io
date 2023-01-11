@@ -1038,47 +1038,32 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the Load component
         """
-        # TODO: create unit tests for the function
-        assert "load" not in self.pp_output_data
-        assert "sym_load" in self.pgm_input_data
 
+        # Create a DataFrame wih all the pgm output loads and index it in the pgm id
         pgm_output_loads = self.pgm_output_data["sym_load"]
+        all_loads = pd.DataFrame(pgm_output_loads, index=pgm_output_loads["id"])
 
-        const_power_pgm_ids = self._get_pgm_ids("load", name="const_power")
-        const_impedance_pgm_ids = self._get_pgm_ids("load", name="const_impedance")
-        const_current_pgm_ids = self._get_pgm_ids("load", name="const_current")
+        # Create an empty DataFrame with two columns p and q to accumulate all the loads per pp id
+        accumulated_loads = pd.DataFrame(columns=["p", "q"], dtype=np.float64)
 
-        pp_output_loads_cp = pd.DataFrame(
-            columns=["p_mw", "q_mvar"], index=self._get_pp_ids("load", name="const_power")
-        )
-        pp_output_loads_cc = pd.DataFrame(
-            columns=["p_mw", "q_mvar"], index=self._get_pp_ids("load", name="const_current")
-        )
-        pp_output_loads_ci = pd.DataFrame(
-            columns=["p_mw", "q_mvar"], index=self._get_pp_ids("load", name="const_impedance")
-        )
+        # Loop over the load types;
+        #   find the pgm ids
+        #   select those loads
+        #   replace the index by the pp ids
+        #   add the p and q columns to the accumulator DataFrame
+        for load_type in ["const_power", "const_impedance", "const_current"]:
+            pgm_load_ids = self._get_pgm_ids("load", name=load_type)
+            selected_loads = all_loads.loc[pgm_load_ids]
+            selected_loads.index = pgm_load_ids.index  # The index contains the pp ids
+            accumulated_loads = accumulated_loads.add(selected_loads[["p", "q"]], fill_value=0.0)
 
-        pgm_idx = pd.Series(
-            np.arange(start=0, stop=len(pgm_output_loads), dtype=np.int32), index=pgm_output_loads["id"]
-        )
+        # Multiply the values and rename the columns to match pandapower
+        accumulated_loads *= 1e-6
+        accumulated_loads.columns = ["p_mw", "q_mvar"]
 
-        const_power_pgm_idx = pgm_idx[const_power_pgm_ids]
-        const_impedance_pgm_idx = pgm_idx[const_impedance_pgm_ids]
-        const_current_pgm_idx = pgm_idx[const_current_pgm_ids]
-
-        p_multiplied = pgm_output_loads["p"]
-        q_multiplied = pgm_output_loads["q"]
-
-        pp_output_loads_cp["p_mw"] = p_multiplied[const_power_pgm_idx]
-        pp_output_loads_cp["q_mvar"] = q_multiplied[const_power_pgm_idx]
-
-        pp_output_loads_cc["p_mw"] = p_multiplied[const_impedance_pgm_idx]
-        pp_output_loads_cc["q_mvar"] = q_multiplied[const_impedance_pgm_idx]
-
-        pp_output_loads_ci["p_mw"] = p_multiplied[const_current_pgm_idx]
-        pp_output_loads_ci["q_mvar"] = q_multiplied[const_current_pgm_idx]
-
-        self.pp_output_data["res_load"] = (pp_output_loads_cp + pp_output_loads_cc + pp_output_loads_ci) * 1e-6
+        # Store the results, while assuring that we are not overwriting any data
+        assert "res_load" not in self.pp_output_data
+        self.pp_output_data["res_load"] = accumulated_loads
 
     def _pp_asym_loads_output(self):  # pragma: no cover
         """
