@@ -482,35 +482,12 @@ def test_create_pgm_input_transformers__tap_side():
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
     pp.create_transformer_from_parameters(
-        net=pp_net,
-        hv_bus=0,
-        lv_bus=0,
-        sn_mva=0.0,
-        vn_hv_kv=0.0,
-        vn_lv_kv=0.0,
-        vkr_percent=0.0,
-        vk_percent=0.0,
-        pfe_kw=0.0,
-        i0_percent=0.0,
-        tap_neutral=12.0,
-        tap_pos=34.0,
-        tap_side="hv",
+        pp_net, 0, 0, 0, 0, 0, 0, 0, 0, 0, tap_neutral=12.0, tap_pos=34.0, tap_side="hv"
     )
     pp.create_transformer_from_parameters(
-        net=pp_net,
-        hv_bus=0,
-        lv_bus=0,
-        sn_mva=0.0,
-        vn_hv_kv=0.0,
-        vn_lv_kv=0.0,
-        vkr_percent=0.0,
-        vk_percent=0.0,
-        pfe_kw=0.0,
-        i0_percent=0.0,
-        tap_neutral=12.0,
-        tap_pos=34.0,
-        tap_side=None,  # << We're testing tap_side=None
+        pp_net, 0, 0, 0, 0, 0, 0, 0, 0, 0, tap_neutral=12.0, tap_pos=34.0, tap_side=None
     )
+
     converter = PandaPowerConverter()
     converter.pp_input_data = {k: v for k, v in pp_net.items() if isinstance(v, pd.DataFrame)}
 
@@ -519,8 +496,8 @@ def test_create_pgm_input_transformers__tap_side():
     result = converter.pgm_input_data["transformer"]
 
     # Assert
-    assert result[0]["tap_pos"] != result[0]["tap_nom"]
-    assert result[1]["tap_pos"] == result[1]["tap_nom"] == 12.0
+    assert result[0]["tap_pos"] == 34.0 != result[0]["tap_nom"]
+    assert result[1]["tap_pos"] == 12.0 == result[1]["tap_nom"]
 
 
 @pytest.mark.xfail(reason="Not implemented")
