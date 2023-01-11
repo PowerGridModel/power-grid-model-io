@@ -191,7 +191,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sources = initialize_array(data_type="input", component_type="source", shape=len(pp_ext_grid))
         pgm_sources["id"] = self._generate_ids("ext_grid", pp_ext_grid.index)
         pgm_sources["node"] = self._get_pgm_ids("bus", self._get_pp_attr("ext_grid", "bus"))
-        pgm_sources["status"] = self._get_pp_attr("ext_grid", "in_service")
+        pgm_sources["status"] = self._get_pp_attr("ext_grid", "in_service", True)
         pgm_sources["u_ref"] = self._get_pp_attr("ext_grid", "vm_pu", 1.0)
         pgm_sources["rx_ratio"] = self._get_pp_attr("ext_grid", "rx_max", np.nan)
         pgm_sources["u_ref_angle"] = self._get_pp_attr("ext_grid", "va_degree", 0.0) * (np.pi / 180)
@@ -213,7 +213,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_shunts.empty:
             return
 
-        vn_kv = self._get_pp_attr("shunt", "vn_kv", None)
+        vn_kv = self._get_pp_attr("shunt", "vn_kv")
         vn_kv_2 = vn_kv * vn_kv
 
         step = self._get_pp_attr("shunt", "step", 1)
@@ -435,7 +435,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_transformers["winding_to"] = winding_types["winding_to"]
         pgm_transformers["clock"] = round(self._get_pp_attr("trafo", "shift_degree", 0.0) / 30) % 12
         pgm_transformers["tap_pos"] = self._get_pp_attr("trafo", "tap_pos", np.nan)
-        pgm_transformers["tap_side"] = self._get_transformer_tap_side(pp_trafo["tap_side"])
+        pgm_transformers["tap_side"] = self._get_transformer_tap_side(self._get_pp_attr("trafo", "tap_side", None))
         pgm_transformers["tap_min"] = self._get_pp_attr("trafo", "tap_min", np.nan)
         pgm_transformers["tap_max"] = self._get_pp_attr("trafo", "tap_max", np.nan)
         pgm_transformers["tap_nom"] = self._get_pp_attr("trafo", "tap_neutral", np.nan)

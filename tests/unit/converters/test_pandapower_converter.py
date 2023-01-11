@@ -321,10 +321,10 @@ def test_create_pgm_input_sources(mock_init_array: MagicMock, two_pp_objs, conve
 
     # retrieval:
     converter._get_pp_attr.assert_any_call("ext_grid", "bus")
-    converter._get_pp_attr.assert_any_call("ext_grid", "vm_pu")
-    converter._get_pp_attr.assert_any_call("ext_grid", "va_degree")
-    converter._get_pp_attr.assert_any_call("ext_grid", "s_sc_max_mva")
-    converter._get_pp_attr.assert_any_call("ext_grid", "rx_max")
+    converter._get_pp_attr.assert_any_call("ext_grid", "vm_pu", 1.0)
+    converter._get_pp_attr.assert_any_call("ext_grid", "va_degree", 0.0)
+    converter._get_pp_attr.assert_any_call("ext_grid", "s_sc_max_mva", np.nan)
+    converter._get_pp_attr.assert_any_call("ext_grid", "rx_max", np.nan)
     converter._get_pp_attr.assert_any_call("ext_grid", "in_service", True)
     assert len(converter._get_pp_attr.call_args_list) == 6
 
