@@ -13,6 +13,7 @@ import pytest
 from power_grid_model import WindingType
 
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter
+from power_grid_model import BranchSide
 
 from ...utils import MockDf, MockFn
 
@@ -485,6 +486,9 @@ def test_create_pgm_input_transformers__tap_side():
         pp_net, 0, 0, 0, 0, 0, 0, 0, 0, 0, tap_neutral=12.0, tap_pos=34.0, tap_side="hv"
     )
     pp.create_transformer_from_parameters(
+        pp_net, 0, 0, 0, 0, 0, 0, 0, 0, 0, tap_neutral=12.0, tap_pos=34.0, tap_side="lv"
+    )
+    pp.create_transformer_from_parameters(
         pp_net, 0, 0, 0, 0, 0, 0, 0, 0, 0, tap_neutral=12.0, tap_pos=34.0, tap_side=None
     )
 
@@ -496,8 +500,12 @@ def test_create_pgm_input_transformers__tap_side():
     result = converter.pgm_input_data["transformer"]
 
     # Assert
+    assert result[0]["tap_side"] == BranchSide.from_side.value
+    assert result[1]["tap_side"] == BranchSide.to_side.value
+    assert result[2]["tap_side"] == BranchSide.from_side.value
     assert result[0]["tap_pos"] == 34.0 != result[0]["tap_nom"]
-    assert result[1]["tap_pos"] == 12.0 == result[1]["tap_nom"]
+    assert result[1]["tap_pos"] == 34.0 != result[1]["tap_nom"]
+    assert result[2]["tap_pos"] == 12.0 == result[2]["tap_nom"]
 
 
 @pytest.mark.xfail(reason="Not implemented")
