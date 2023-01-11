@@ -665,9 +665,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             the enumerated "tap side"
         """
-        new_tap_side = np.array(tap_side)
-        new_tap_side[new_tap_side == "hv"] = BranchSide.from_side
-        new_tap_side[new_tap_side == "lv"] = BranchSide.to_side
+        new_tap_side = np.full(shape=tap_side.shape, fill_value=BranchSide.from_side)
+        new_tap_side[tap_side == "lv"] = BranchSide.to_side
 
         return new_tap_side
 
