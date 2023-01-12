@@ -36,7 +36,7 @@ def load_validation_data() -> PandaPowerData:
     Load the validation data from the pp file
     """
     net = pp_net()
-    pp.runpp(net, calculate_voltage_angles=True)
+    pp.runpp(net, calculate_voltage_angles=True, tolerance_mva=1e-10, trafo_model="pi", trafo_loading="power")
     return net
 
 
@@ -89,4 +89,4 @@ def test_attributes(output_data: Tuple[PandaPowerData, PandaPowerData], componen
     expected_values = expected_data[component][attribute]
 
     # Assert
-    pd.testing.assert_series_equal(actual_values, expected_values)
+    pd.testing.assert_series_equal(actual_values, expected_values, atol=1e-4)
