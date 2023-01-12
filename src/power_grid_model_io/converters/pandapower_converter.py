@@ -672,8 +672,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             the enumerated "tap side"
         """
 
-        # Initialize the tap_side with the default `from_side` values; tap_side="hv" should be converted to this
-        # default, as well as tap_side=None.
+        # Both "hv" and None should be converted to BranchSide.from_side
         new_tap_side = np.full(shape=tap_side.shape, fill_value=BranchSide.from_side)
         new_tap_side[tap_side == "lv"] = BranchSide.to_side
 
@@ -690,6 +689,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             the enumerated "tap side"
         """
+        # Both "hv" and None should be converted to Branch3Side.side_1
         new_tap_side = np.full(shape=tap_side.shape, fill_value=Branch3Side.side_1)
         new_tap_side[tap_side == "mv"] = Branch3Side.side_2
         new_tap_side[tap_side == "lv"] = Branch3Side.side_3
