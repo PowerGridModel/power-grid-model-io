@@ -10,10 +10,9 @@ import numpy as np
 import pandapower as pp
 import pandas as pd
 import pytest
-from power_grid_model import WindingType
+from power_grid_model import BranchSide, WindingType
 
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter
-from power_grid_model import BranchSide
 
 from ...utils import MockDf, MockFn
 
