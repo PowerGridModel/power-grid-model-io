@@ -418,6 +418,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         switch_states = self.get_switch_states("trafo")
         winding_types = self.get_trafo_winding_types()
 
+        tap_side = self._get_pp_attr("trafo", "tap_side")
+        tap_nom = self._get_pp_attr("trafo", "tap_neutral", np.nan)
+        tap_pos = self._get_pp_attr("trafo", "tap_pos", np.nan)
+
         pgm_transformers = initialize_array(data_type="input", component_type="transformer", shape=len(pp_trafo))
         pgm_transformers["id"] = self._generate_ids("trafo", pp_trafo.index)
         pgm_transformers["from_node"] = self._get_pgm_ids("bus", pp_trafo["hv_bus"])
@@ -434,11 +438,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_transformers["winding_from"] = winding_types["winding_from"]
         pgm_transformers["winding_to"] = winding_types["winding_to"]
         pgm_transformers["clock"] = round(self._get_pp_attr("trafo", "shift_degree", 0.0) / 30) % 12
-        pgm_transformers["tap_pos"] = self._get_pp_attr("trafo", "tap_pos", np.nan)
-        pgm_transformers["tap_side"] = self._get_transformer_tap_side(self._get_pp_attr("trafo", "tap_side", None))
+        pgm_transformers["tap_pos"] = np.where(tap_side.isnull(), tap_nom, tap_pos)
+        pgm_transformers["tap_side"] = self._get_transformer_tap_side(tap_side)
         pgm_transformers["tap_min"] = self._get_pp_attr("trafo", "tap_min", np.nan)
         pgm_transformers["tap_max"] = self._get_pp_attr("trafo", "tap_max", np.nan)
-        pgm_transformers["tap_nom"] = self._get_pp_attr("trafo", "tap_neutral", np.nan)
+        pgm_transformers["tap_nom"] = tap_nom
         pgm_transformers["tap_size"] = self._get_tap_size(pp_trafo)
 
         self.pgm_input_data["transformer"] = pgm_transformers
@@ -507,7 +511,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_3wtransformers["clock_13"] = round(self._get_pp_attr("trafo3w", "shift_lv_degree", 0.0) / 30.0) % 12
         pgm_3wtransformers["tap_pos"] = self._get_pp_attr("trafo3w", "tap_pos", np.nan)
         pgm_3wtransformers["tap_side"] = self._get_3wtransformer_tap_side(
-            pd.Series(self._get_pp_attr("trafo3w", "tap_side", None))
+            pd.Series(self._get_pp_attr("trafo3w", "tap_side"))
         )
         pgm_3wtransformers["tap_min"] = self._get_pp_attr("trafo3w", "tap_min", np.nan)
         pgm_3wtransformers["tap_max"] = self._get_pp_attr("trafo3w", "tap_max", np.nan)
@@ -655,7 +659,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         return tap_size
 
     @staticmethod
-    def _get_transformer_tap_side(tap_side: np.ndarray) -> np.ndarray:
+    def _get_transformer_tap_side(tap_side: pd.Series) -> np.ndarray:
         """
         Get the enumerated "tap side" of Transformers
 
@@ -665,6 +669,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             the enumerated "tap side"
         """
+
+        # Initialize the tap_side with the default `from_side` values; tap_side="hv" should be converted to this
+        # default, as well as tap_side=None.
         new_tap_side = np.full(shape=tap_side.shape, fill_value=BranchSide.from_side)
         new_tap_side[tap_side == "lv"] = BranchSide.to_side
 
@@ -866,9 +873,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         trafo3w.columns = ["winding_1", "winding_2", "winding_3"]
         return trafo3w
 
-    def _get_pp_attr(
-        self, table: str, attribute: str, default: Optional[Union[float, bool]] = None
-    ) -> Union[np.ndarray, float]:
+    def _get_pp_attr(self, table: str, attribute: str, default: Optional[Union[float, bool]] = None) -> pd.Series:
         """
         Returns the selected PandaPower attribute from the selected PandaPower table.
 
@@ -903,7 +908,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # Return the default value (assume that broadcasting is handled by the caller / numpy)
         if default is None:
             raise KeyError(f"No '{attribute}' value for '{table}'.")
-        return default
+        return pd.Series([default], name=attribute)
 
     def get_id(self, pp_table: str, pp_idx: int, name: Optional[str] = None) -> int:
         """
