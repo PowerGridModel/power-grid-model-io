@@ -438,7 +438,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_transformers["winding_from"] = winding_types["winding_from"]
         pgm_transformers["winding_to"] = winding_types["winding_to"]
         pgm_transformers["clock"] = np.round(self._get_pp_attr("trafo", "shift_degree", 0.0) / 30) % 12
-        pgm_transformers["tap_pos"] = np.where(tap_side, tap_pos, tap_nom)
+        pgm_transformers["tap_pos"] = np.where(np.equal(tap_side, None), tap_nom, tap_pos)
         pgm_transformers["tap_side"] = self._get_transformer_tap_side(tap_side)
         pgm_transformers["tap_min"] = self._get_pp_attr("trafo", "tap_min", np.nan)
         pgm_transformers["tap_max"] = self._get_pp_attr("trafo", "tap_max", np.nan)
