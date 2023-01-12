@@ -10,7 +10,7 @@ import numpy as np
 import pandapower as pp
 import pandas as pd
 import pytest
-from power_grid_model import BranchSide, WindingType
+from power_grid_model import Branch3Side, BranchSide, WindingType
 
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter
 
@@ -597,6 +597,57 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
     assert converter.pgm_input_data[...] == mock_init_array.return_value
 
 
+@patch(
+    "power_grid_model_io.converters.pandapower_converter.PandaPowerConverter.get_trafo3w_switch_states",
+    new=MagicMock(return_value=pd.DataFrame({"side_1": [True], "side_2": [True], "side_3": [True]})),
+)
+@patch(
+    "power_grid_model_io.converters.pandapower_converter.PandaPowerConverter.get_trafo3w_winding_types",
+    new=MagicMock(return_value=pd.DataFrame({"winding_1": [0], "winding_2": [0], "winding_3": [0]})),
+)
+@patch(
+    "power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._generate_ids",
+    new=MagicMock(return_value=np.arange(1)),
+)
+@patch(
+    "power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._get_pgm_ids",
+    new=MagicMock(return_value=pd.Series([0])),
+)
+def test_create_pgm_input_transformers3w__tap_side():
+    # Arrange
+    pp_net: pp.pandapowerNet = pp.create_empty_network()
+    pp.create_bus(net=pp_net, vn_kv=0.0)
+    pp.create_transformer3w_from_parameters(
+        pp_net, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, tap_neutral=12.0, tap_pos=34.0, tap_side="hv"
+    )
+    pp.create_transformer3w_from_parameters(
+        pp_net, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, tap_neutral=12.0, tap_pos=34.0, tap_side="mv"
+    )
+    pp.create_transformer3w_from_parameters(
+        pp_net, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, tap_neutral=12.0, tap_pos=34.0, tap_side="lv"
+    )
+    pp.create_transformer3w_from_parameters(
+        pp_net, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, tap_neutral=12.0, tap_pos=34.0, tap_side=None
+    )
+
+    converter = PandaPowerConverter()
+    converter.pp_input_data = {k: v for k, v in pp_net.items() if isinstance(v, pd.DataFrame)}
+
+    # Act
+    converter._create_pgm_input_three_winding_transformers()
+    result = converter.pgm_input_data["three_winding_transformer"]
+
+    # Assert
+    assert result[0]["tap_side"] == Branch3Side.side_1.value
+    assert result[1]["tap_side"] == Branch3Side.side_2.value
+    assert result[2]["tap_side"] == Branch3Side.side_3.value
+    assert result[3]["tap_side"] == Branch3Side.side_1.value
+    assert result[0]["tap_pos"] == 34.0 != result[0]["tap_nom"]
+    assert result[1]["tap_pos"] == 34.0 != result[1]["tap_nom"]
+    assert result[2]["tap_pos"] == 34.0 != result[2]["tap_nom"]
+    assert result[3]["tap_pos"] == 12.0 == result[3]["tap_nom"]
+
+
 @pytest.mark.xfail(reason="Not implemented")
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_links(mock_init_array: MagicMock, two_pp_objs, converter):
@@ -737,7 +788,7 @@ def test_get_tap_size():
 
 def test_get_transformer_tap_side():
     # Arrange
-    pp_trafo_tap_side = pd.Series(["hv", "lv", "lv", "hv"])
+    pp_trafo_tap_side = np.array(["hv", "lv", "lv", "hv"])
     expected_tap_side = np.array([0, 1, 1, 0], dtype=np.int8)
 
     # Act
@@ -749,8 +800,8 @@ def test_get_transformer_tap_side():
 
 def test_get_3wtransformer_tap_side():
     # Arrange
-    pp_trafo3w_tap_side = pd.Series(["hv", "mv", "lv", "mv", "lv", "hv", "lv"])
-    expected_tap_side = np.array([0, 1, 2, 1, 2, 0, 2], dtype=np.int8)
+    pp_trafo3w_tap_side = pd.Series(["hv", "mv", "lv", None, "mv", "lv", "hv", "lv", None])
+    expected_tap_side = np.array([0, 1, 2, 0, 1, 2, 0, 2, 0], dtype=np.int8)
 
     # Act
     actual_tap_side = PandaPowerConverter._get_3wtransformer_tap_side(pp_trafo3w_tap_side)
@@ -1041,7 +1092,7 @@ def test_get_trafo3w_switch_states(mock_get_individual_switch_states: MagicMock)
     }
     mock_get_individual_switch_states.side_effect = [False, True, False]
 
-    expected = pd.DataFrame(data=([False], [True], [False]))
+    expected = pd.DataFrame(columns=["side_1", "side_2", "side_3"], data=[[False, True, False]])
 
     # Act
     actual = converter.get_trafo3w_switch_states(converter.pp_input_data["trafo3w"])
