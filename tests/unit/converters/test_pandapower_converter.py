@@ -800,7 +800,7 @@ def test_get_transformer_tap_side():
 
 def test_get_3wtransformer_tap_side():
     # Arrange
-    pp_trafo3w_tap_side = pd.Series(["hv", "mv", "lv", None, "mv", "lv", "hv", "lv", None])
+    pp_trafo3w_tap_side = np.array(["hv", "mv", "lv", None, "mv", "lv", "hv", "lv", None])
     expected_tap_side = np.array([0, 1, 2, 0, 1, 2, 0, 2, 0], dtype=np.int8)
 
     # Act
