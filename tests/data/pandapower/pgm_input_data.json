@@ -15,7 +15,7 @@
     ],
   "source":
     [
-      {"id": 7, "node": 0, "status": 1, "u_ref": 1.0, "sk": 3000000, "rx_ratio": 0.6, "u_ref_angle": 0.0, "id_reference": {"table": "ext_grid", "index": 1}}
+      {"id": 7, "node": 0, "status": 1, "u_ref": 1.0, "sk": 1e+16, "rx_ratio": 0.0, "u_ref_angle": 0.0, "id_reference": {"table": "ext_grid", "index": 1}}
     ],
   "sym_load":
     [
