@@ -568,12 +568,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             return
 
         length = len(pp_wards)
-        in_service = self._get_pp_attr("load", "in_service", True)
+        in_service = self._get_pp_attr("ward", "in_service", True)
         bus = self._get_pp_attr("ward", "bus")
 
         pgm_sym_loads_from_ward = initialize_array(data_type="input", component_type="sym_load", shape=length * 2)
         pgm_sym_loads_from_ward["id"][:length] = self._generate_ids(
-            "load", pp_wards.index, name="ward_const_power_load"
+            "ward", pp_wards.index, name="ward_const_power_load"
         )
         pgm_sym_loads_from_ward["node"][:length] = self._get_pgm_ids("bus", bus)
         pgm_sym_loads_from_ward["status"][:length] = in_service
@@ -582,7 +582,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_loads_from_ward["q_specified"][:length] = self._get_pp_attr("ward", "qs_mvar")
 
         pgm_sym_loads_from_ward["id"][-length:] = self._generate_ids(
-            "load", pp_wards.index, name="ward_const_impedance_load"
+            "ward", pp_wards.index, name="ward_const_impedance_load"
         )
         pgm_sym_loads_from_ward["node"][-length:] = self._get_pgm_ids("bus", bus)
         pgm_sym_loads_from_ward["status"][-length:] = in_service
@@ -616,7 +616,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             return
 
         pgm_sym_loads_from_motor = initialize_array(data_type="input", component_type="sym_load", shape=len(pp_motors))
-        pgm_sym_loads_from_motor["id"] = self._generate_ids("load", pp_motors.index, name="motor_load")
+        pgm_sym_loads_from_motor["id"] = self._generate_ids("motor", pp_motors.index, name="motor_load")
         pgm_sym_loads_from_motor["node"] = self._get_pgm_ids("bus", self._get_pp_attr("motor", "bus"))
         pgm_sym_loads_from_motor["status"] = self._get_pp_attr("motor", "in_service")
         pgm_sym_loads_from_motor["type"] = LoadGenType.const_power
