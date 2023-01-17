@@ -239,13 +239,15 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     # administration
     converter.get_switch_states.assert_called_once_with("line")
     converter._generate_ids.assert_called_once_with("line", two_pp_objs.index)
-    converter._get_pgm_ids.assert_any_call("bus", two_pp_objs["from_bus"])
-    converter._get_pgm_ids.assert_any_call("bus", two_pp_objs["to_bus"])
+    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("line", "from_bus"))
+    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("line", "to_bus"))
 
     # initialization
     mock_init_array.assert_called_once_with(data_type="input", component_type="line", shape=2)
 
     # retrieval
+    converter._get_pp_attr.assert_any_call("line", "from_bus")
+    converter._get_pp_attr.assert_any_call("line", "to_bus")
     converter._get_pp_attr.assert_any_call("line", "in_service", True)
     converter._get_pp_attr.assert_any_call("line", "length_km")
     converter._get_pp_attr.assert_any_call("line", "parallel", 1)
@@ -255,14 +257,14 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     converter._get_pp_attr.assert_any_call("line", "g_us_per_km", 0)
     converter._get_pp_attr.assert_any_call("line", "max_i_ka")
     converter._get_pp_attr.assert_any_call("line", "df", 1)
-    assert len(converter._get_pp_attr.call_args_list) == 9
+    assert len(converter._get_pp_attr.call_args_list) == 11
 
     # assignment
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", _generate_ids("line", two_pp_objs.index))
-    pgm.assert_any_call("from_node", _get_pgm_ids("bus", two_pp_objs["from_bus"]))
+    pgm.assert_any_call("from_node", _get_pgm_ids("bus", _get_pp_attr("line", "from_bus")))
     pgm.assert_any_call("from_status", _get_pp_attr("line", "in_service", True) & get_switch_states("line")["from"])
-    pgm.assert_any_call("to_node", _get_pgm_ids("bus", two_pp_objs["to_bus"]))
+    pgm.assert_any_call("to_node", _get_pgm_ids("bus", _get_pp_attr("line", "to_bus")))
     pgm.assert_any_call("to_status", _get_pp_attr("line", "in_service", True) & get_switch_states("line")["to"])
     pgm.assert_any_call(
         "r1",
