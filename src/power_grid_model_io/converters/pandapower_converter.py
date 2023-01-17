@@ -887,6 +887,32 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_shunt"] = pp_output_shunts
 
+    def _pp_shunts_output_3ph(self):  # pragma: no cover
+        """
+        This function converts a power-grid-model Shunt output array to a Shunt Dataframe of PandaPower.
+
+        Returns:
+            a PandaPower Dataframe for the Shunt component
+        """
+        # TODO: create unit tests for the function
+        assert "shunt" not in self.pp_output_data
+        assert "shunt" in self.pgm_input_data
+
+        pgm_input_shunts = self.pgm_input_data["shunt"]
+
+        pgm_output_shunts = self.pgm_output_data["shunt"]
+
+        at_nodes = self.pgm_nodes_lookup.loc[pgm_input_shunts["node"]]
+
+        pp_output_shunts = pd.DataFrame(
+            columns=["p_mw", "q_mvar", "vm_pu"], index=self._get_pp_ids("shunt", pgm_output_shunts["id"])
+        )
+        pp_output_shunts["p_mw"] = pgm_output_shunts["p"] * 1e-6
+        pp_output_shunts["q_mvar"] = pgm_output_shunts["q"] * 1e-6
+        pp_output_shunts["vm_pu"] = at_nodes["u_pu"].values
+
+        self.pp_output_data["res_shunt_3ph"] = pp_output_shunts
+
     def _pp_sgens_output(self):  # pragma: no cover
         """
         This function converts a power-grid-model Symmetrical Generator output array to a Static Generator Dataframe of

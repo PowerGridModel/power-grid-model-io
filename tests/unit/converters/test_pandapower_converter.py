@@ -936,14 +936,14 @@ def test_pp_buses_output__accumulate_power():
     converter._pp_buses_output__accumulate_power(pp_buses)
 
     # Assert
-    assert pp_buses["p_mw"][101] * 1e6 == 1.0 + 10.0 + 100.0 + 1000.0
-    assert pp_buses["p_mw"][102] * 1e6 == 2.0 + 4.0 - 1.0 + 20.0 - 10.0 + 200.0 - 100.0 + 10000.0 + 2000.0
-    assert pp_buses["p_mw"][103] * 1e6 == -2.0 - 20.0 - 200.0 + 20000.0 + 4000.0
-    assert pp_buses["p_mw"][104] * 1e6 == -4.0 + 40000.0
-    assert pp_buses["q_mvar"][101] * 1e6 == 0.1 + 0.01 + 0.001 + 0.0001
-    assert pp_buses["q_mvar"][102] * 1e6 == 0.2 + 0.4 - 0.1 + 0.02 - 0.01 + 0.002 - 0.001 + 0.00001 + 0.0002
-    assert pp_buses["q_mvar"][103] * 1e6 == -0.2 - 0.02 - 0.002 + 0.00002 + 0.0004
-    assert pp_buses["q_mvar"][104] * 1e6 == -0.4 + 0.00004
+    assert pp_buses["p_mw"][101] * 1e6 == -1.0 - 10.0 - 100.0 - 1000.0
+    assert pp_buses["p_mw"][102] * 1e6 == -2.0 - 4.0 + 1.0 - 20.0 + 10.0 - 200.0 + 100.0 - 10000.0 - 2000.0
+    assert pp_buses["p_mw"][103] * 1e6 == 2.0 + 20.0 + 200.0 - 20000.0 - 4000.0
+    assert pp_buses["p_mw"][104] * 1e6 == 4.0 - 40000.0
+    assert pp_buses["q_mvar"][101] * 1e6 == -0.1 - 0.01 - 0.001 - 0.0001
+    assert pp_buses["q_mvar"][102] * 1e6 == -0.2 - 0.4 + 0.1 - 0.02 + 0.01 - 0.002 + 0.001 - 0.00001 - 0.0002
+    assert pp_buses["q_mvar"][103] * 1e6 == 0.2 + 0.02 + 0.002 - 0.00002 - 0.0004
+    assert pp_buses["q_mvar"][104] * 1e6 == 0.4 - 0.00004
 
 
 def test_get_pp_attr_attribute_exists():
