@@ -460,7 +460,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if "tap_dependent_impedance" in pp_trafo3w.columns and any(pp_trafo3w["tap_dependent_impedance"]):
             raise RuntimeError("Tap dependent impedance is not supported in Power Grid Model")
         if "tap_at_star_point" in pp_trafo3w.columns and any(pp_trafo3w["tap_at_star_point"]):
-            raise RuntimeError("Tap at star point is not supported in Power Grid Model")
+            raise RuntimeError("Tap at star point is not supported in Power Grid Model")  # pragma: no cover
 
         sn_hv_mva = self._get_pp_attr("trafo3w", "sn_hv_mva")
         sn_mv_mva = self._get_pp_attr("trafo3w", "sn_mv_mva")
