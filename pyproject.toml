@@ -40,7 +40,7 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
-    "pandapower",
+    "git+https://github.com/BrainBuilders/pandapower.git@bugfix/tap_dependent_impedance",
     "pre-commit",
     "pylint",
     "pytest",
