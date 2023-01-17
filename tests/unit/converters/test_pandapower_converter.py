@@ -342,8 +342,7 @@ def test_create_pgm_input_transformers__tap_dependent_impedance():
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
     args = [0, 0, 0, 0, 0, 0, 0, 0, 0]
-    kwargs = {"tap_dependent_impedance": True}
-    pp.create_transformer_from_parameters(pp_net, *args, **kwargs)
+    pp.create_transformer_from_parameters(pp_net, *args, tap_dependent_impedance=True)
 
     converter = PandaPowerConverter()
     converter.pp_input_data = {k: v for k, v in pp_net.items() if isinstance(v, pd.DataFrame)}
@@ -404,9 +403,7 @@ def test_create_pgm_input_three_winding_transformers__tap_at_star_point():
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
     args = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
-    kwargs = {"tap_at_star_point": True}
-    pp.create_transformer3w_from_parameters(pp_net, *args, **kwargs)
+    pp.create_transformer3w_from_parameters(pp_net, *args, tap_at_star_point=True)
 
     converter = PandaPowerConverter()
     converter.pp_input_data = {k: v for k, v in pp_net.items() if isinstance(v, pd.DataFrame)}
@@ -421,9 +418,7 @@ def test_create_pgm_input_three_winding_transformers__tap_dependent_impedance():
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
     args = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
-    kwargs = {"tap_dependent_impedance": True}
-    pp.create_transformer3w_from_parameters(pp_net, *args, **kwargs)
+    pp.create_transformer3w_from_parameters(pp_net, *args, tap_dependent_impedance=True)
 
     converter = PandaPowerConverter()
     converter.pp_input_data = {k: v for k, v in pp_net.items() if isinstance(v, pd.DataFrame)}
