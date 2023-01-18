@@ -7,14 +7,14 @@ from typing import Callable, Tuple
 from unittest.mock import ANY, MagicMock, call, patch
 
 import numpy as np
+import pandapower as pp
 import pandas as pd
 import pytest
-from power_grid_model import WindingType, initialize_array
+from power_grid_model import WindingType
 from power_grid_model.data_types import SingleDataset
 from power_grid_model.utils import import_json_data
 
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter, PandaPowerData
-from power_grid_model_io.data_types import ExtraInfoLookup
 
 from ...data.pandapower.pp_validation import pp_net
 from ...utils import MockDf, MockFn, assert_struct_array_equal
@@ -239,13 +239,15 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     # administration
     converter.get_switch_states.assert_called_once_with("line")
     converter._generate_ids.assert_called_once_with("line", two_pp_objs.index)
-    converter._get_pgm_ids.assert_any_call("bus", two_pp_objs["from_bus"])
-    converter._get_pgm_ids.assert_any_call("bus", two_pp_objs["to_bus"])
+    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("line", "from_bus"))
+    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("line", "to_bus"))
 
     # initialization
     mock_init_array.assert_called_once_with(data_type="input", component_type="line", shape=2)
 
     # retrieval
+    converter._get_pp_attr.assert_any_call("line", "from_bus")
+    converter._get_pp_attr.assert_any_call("line", "to_bus")
     converter._get_pp_attr.assert_any_call("line", "in_service", True)
     converter._get_pp_attr.assert_any_call("line", "length_km")
     converter._get_pp_attr.assert_any_call("line", "parallel", 1)
@@ -255,14 +257,14 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     converter._get_pp_attr.assert_any_call("line", "g_us_per_km", 0)
     converter._get_pp_attr.assert_any_call("line", "max_i_ka")
     converter._get_pp_attr.assert_any_call("line", "df", 1)
-    assert len(converter._get_pp_attr.call_args_list) == 9
+    assert len(converter._get_pp_attr.call_args_list) == 11
 
     # assignment
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", _generate_ids("line", two_pp_objs.index))
-    pgm.assert_any_call("from_node", _get_pgm_ids("bus", two_pp_objs["from_bus"]))
+    pgm.assert_any_call("from_node", _get_pgm_ids("bus", _get_pp_attr("line", "from_bus")))
     pgm.assert_any_call("from_status", _get_pp_attr("line", "in_service", True) & get_switch_states("line")["from"])
-    pgm.assert_any_call("to_node", _get_pgm_ids("bus", two_pp_objs["to_bus"]))
+    pgm.assert_any_call("to_node", _get_pgm_ids("bus", _get_pp_attr("line", "to_bus")))
     pgm.assert_any_call("to_status", _get_pp_attr("line", "in_service", True) & get_switch_states("line")["to"])
     pgm.assert_any_call(
         "r1",
@@ -337,6 +339,21 @@ def test_create_pgm_input_transformers(
     assert_struct_array_equal(converter.pgm_input_data["transformer"], pgm_example_simple["transformer"])
 
 
+def test_create_pgm_input_transformers__tap_dependent_impedance():
+    # Arrange
+    pp_net: pp.pandapowerNet = pp.create_empty_network()
+    pp.create_bus(net=pp_net, vn_kv=0.0)
+    args = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    pp.create_transformer_from_parameters(pp_net, *args, tap_dependent_impedance=True)
+
+    converter = PandaPowerConverter()
+    converter.pp_input_data = {k: v for k, v in pp_net.items() if isinstance(v, pd.DataFrame)}
+
+    # Act/Assert
+    with pytest.raises(RuntimeError, match="not supported"):
+        converter._create_pgm_input_transformers()
+
+
 def test_create_pgm_input_shunts(pp_example_simple: Tuple[PandaPowerData, float], pgm_example_simple: SingleDataset):
     # Arrange
     converter = PandaPowerConverter(system_frequency=pp_example_simple[1])
@@ -381,6 +398,37 @@ def test_create_pgm_input_three_winding_transformers(
     assert_struct_array_equal(
         converter.pgm_input_data["three_winding_transformer"], pgm_example_simple["three_winding_transformer"]
     )
+
+
+def test_create_pgm_input_three_winding_transformers__tap_at_star_point():
+    # Arrange
+    pp_net: pp.pandapowerNet = pp.create_empty_network()
+    pp.create_bus(net=pp_net, vn_kv=0.0)
+    args = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    pp.create_transformer3w_from_parameters(pp_net, *args, tap_at_star_point=True)
+
+    converter = PandaPowerConverter()
+    converter.pp_input_data = {k: v for k, v in pp_net.items() if isinstance(v, pd.DataFrame)}
+
+    # Act/Assert
+    with pytest.raises(RuntimeError, match="not supported"):
+        converter._create_pgm_input_three_winding_transformers()
+
+
+@pytest.mark.xfail(reason="https://github.com/e2nIEE/pandapower/issues/1831")
+def test_create_pgm_input_three_winding_transformers__tap_dependent_impedance():
+    # Arrange
+    pp_net: pp.pandapowerNet = pp.create_empty_network()
+    pp.create_bus(net=pp_net, vn_kv=0.0)
+    args = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    pp.create_transformer3w_from_parameters(pp_net, *args, tap_dependent_impedance=True)
+
+    converter = PandaPowerConverter()
+    converter.pp_input_data = {k: v for k, v in pp_net.items() if isinstance(v, pd.DataFrame)}
+
+    # Act/Assert
+    with pytest.raises(RuntimeError, match="not supported"):
+        converter._create_pgm_input_three_winding_transformers()
 
 
 def test_create_pgm_input_links(pp_example_simple: Tuple[PandaPowerData, float], pgm_example_simple: SingleDataset):
