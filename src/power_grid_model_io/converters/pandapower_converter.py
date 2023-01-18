@@ -566,28 +566,28 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_wards.empty:
             return
 
-        length = len(pp_wards)
+        n_wards = len(pp_wards)
         in_service = self._get_pp_attr("ward", "in_service", True)
         bus = self._get_pp_attr("ward", "bus")
 
-        pgm_sym_loads_from_ward = initialize_array(data_type="input", component_type="sym_load", shape=length * 2)
-        pgm_sym_loads_from_ward["id"][:length] = self._generate_ids(
+        pgm_sym_loads_from_ward = initialize_array(data_type="input", component_type="sym_load", shape=n_wards * 2)
+        pgm_sym_loads_from_ward["id"][:n_wards] = self._generate_ids(
             "ward", pp_wards.index, name="ward_const_power_load"
         )
-        pgm_sym_loads_from_ward["node"][:length] = self._get_pgm_ids("bus", bus)
-        pgm_sym_loads_from_ward["status"][:length] = in_service
-        pgm_sym_loads_from_ward["type"][:length] = LoadGenType.const_power
-        pgm_sym_loads_from_ward["p_specified"][:length] = self._get_pp_attr("ward", "ps_mw")
-        pgm_sym_loads_from_ward["q_specified"][:length] = self._get_pp_attr("ward", "qs_mvar")
+        pgm_sym_loads_from_ward["node"][:n_wards] = self._get_pgm_ids("bus", bus)
+        pgm_sym_loads_from_ward["status"][:n_wards] = in_service
+        pgm_sym_loads_from_ward["type"][:n_wards] = LoadGenType.const_power
+        pgm_sym_loads_from_ward["p_specified"][:n_wards] = self._get_pp_attr("ward", "ps_mw")
+        pgm_sym_loads_from_ward["q_specified"][:n_wards] = self._get_pp_attr("ward", "qs_mvar")
 
-        pgm_sym_loads_from_ward["id"][-length:] = self._generate_ids(
+        pgm_sym_loads_from_ward["id"][-n_wards:] = self._generate_ids(
             "ward", pp_wards.index, name="ward_const_impedance_load"
         )
-        pgm_sym_loads_from_ward["node"][-length:] = self._get_pgm_ids("bus", bus)
-        pgm_sym_loads_from_ward["status"][-length:] = in_service
-        pgm_sym_loads_from_ward["type"][-length:] = LoadGenType.const_impedance
-        pgm_sym_loads_from_ward["p_specified"][-length:] = self._get_pp_attr("ward", "pz_mw")
-        pgm_sym_loads_from_ward["q_specified"][-length:] = self._get_pp_attr("ward", "qz_mvar")
+        pgm_sym_loads_from_ward["node"][-n_wards:] = self._get_pgm_ids("bus", bus)
+        pgm_sym_loads_from_ward["status"][-n_wards:] = in_service
+        pgm_sym_loads_from_ward["type"][-n_wards:] = LoadGenType.const_impedance
+        pgm_sym_loads_from_ward["p_specified"][-n_wards:] = self._get_pp_attr("ward", "pz_mw")
+        pgm_sym_loads_from_ward["q_specified"][-n_wards:] = self._get_pp_attr("ward", "qz_mvar")
 
         #  If input data of loads has already been filled then extend it with data of motors. If it is empty and there
         #  is no data about loads,then assign motor data to it
