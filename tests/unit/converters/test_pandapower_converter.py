@@ -145,7 +145,7 @@ def test_fill_extra_info():
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._extra_info_to_pgm_input_data")
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._create_output_data")
 def test__serialize_data(
-    create_output_data_mock: MagicMock, extra_info_to_idx_lookup: MagicMock, extra_info_pgm_input_data: MagicMock
+    create_output_data_mock: MagicMock, extra_info_pgm_input_data: MagicMock, extra_info_to_idx_lookup: MagicMock
 ):
     # Arrange
     converter = PandaPowerConverter()
@@ -165,6 +165,28 @@ def test__serialize_data(
     assert len(converter.pp_output_data) == 1 and "res_line" in converter.pp_output_data
     assert len(converter.pgm_output_data) == 1 and "line" in converter.pgm_output_data
     assert len(result) == 1 and "res_line" in result
+
+
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._extra_info_to_idx_lookup")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._extra_info_to_pgm_input_data")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._create_output_data")
+def test_serialize_data__extra_info(
+    create_output_data_mock: MagicMock,
+    extra_info_pgm_input_data_mock: MagicMock,
+    extra_info_to_idx_lookup_mock: MagicMock,
+):
+    # Arrange
+    converter = PandaPowerConverter()
+
+    extra_info = MagicMock("extra_info")
+
+    # Act
+    converter._serialize_data(data={}, extra_info=extra_info)
+
+    # Assert
+    create_output_data_mock.assert_called_once_with()
+    extra_info_pgm_input_data_mock.assert_called_once_with(extra_info)
+    extra_info_to_idx_lookup_mock.assert_called_once_with(extra_info)
 
 
 def test_extra_info_to_idx_lookup():
