@@ -141,6 +141,32 @@ def test_fill_extra_info():
     assert extra_info[7] == {"from_node": 1, "to_node": 2}
 
 
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._extra_info_to_idx_lookup")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._extra_info_to_pgm_input_data")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._create_output_data")
+def test__serialize_data(
+    create_output_data_mock: MagicMock, extra_info_to_idx_lookup: MagicMock, extra_info_pgm_input_data: MagicMock
+):
+    # Arrange
+    converter = PandaPowerConverter()
+
+    def create_output_data():
+        converter.pp_output_data = {"res_line": pd.DataFrame(np.array([]))}
+
+    create_output_data_mock.side_effect = create_output_data
+
+    # Act
+    result = converter._serialize_data(data={"line": np.array([])}, extra_info=None)
+
+    # Assert
+    create_output_data_mock.assert_called_once_with()
+    extra_info_to_idx_lookup.assert_not_called()
+    extra_info_pgm_input_data.assert_not_called()
+    assert len(converter.pp_output_data) == 1 and "res_line" in converter.pp_output_data
+    assert len(converter.pgm_output_data) == 1 and "line" in converter.pgm_output_data
+    assert len(result) == 1 and "res_line" in result
+
+
 def test_extra_info_to_idx_lookup():
     # Arrange
     converter = PandaPowerConverter()
