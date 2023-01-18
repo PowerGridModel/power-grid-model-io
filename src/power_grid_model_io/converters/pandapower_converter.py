@@ -8,7 +8,6 @@ from functools import lru_cache
 from typing import Dict, Mapping, MutableMapping, Optional, Tuple, Union
 
 import numpy as np
-import numpy.lib.recfunctions as rfn
 import pandas as pd
 from power_grid_model import Branch3Side, BranchSide, LoadGenType, initialize_array
 from power_grid_model.data_types import Dataset
@@ -592,11 +591,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         #  If input data of loads has already been filled then extend it with data of motors. If it is empty and there
         #  is no data about loads,then assign motor data to it
-        if self.pgm_input_data["sym_load"].size > 0:
-            self.pgm_input_data["sym_load"] = rfn.merge_arrays(
-                (self.pgm_input_data["sym_load"], pgm_sym_loads_from_ward), flatten=True, usemask=False
-            )
-        elif self.pgm_input_data["sym_load"].size == 0:
+        if "sym_load" in self.pgm_input_data:
+            self.pgm_input_data["sym_load"] = np.concatenate([self.pgm_input_data["sym_load"], pgm_sym_loads_from_ward])
+        else:
             self.pgm_input_data["sym_load"] = pgm_sym_loads_from_ward
 
     def _create_pgm_input_xward(self):  # pragma: no cover
@@ -635,11 +632,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         #  If input data of loads has already been filled then extend it with data of motors. If it is empty and there
         #  is no data about loads,then assign motor data to it
-        if self.pgm_input_data["sym_load"].size > 0:
-            self.pgm_input_data["sym_load"] = rfn.merge_arrays(
-                (self.pgm_input_data["sym_load"], pgm_sym_loads_from_motor), flatten=True, usemask=False
+        if "sym_load" in self.pgm_input_data:
+            self.pgm_input_data["sym_load"] = np.concatenate(
+                [self.pgm_input_data["sym_load"], pgm_sym_loads_from_motor]
             )
-        elif self.pgm_input_data["sym_load"].size == 0:
+        else:
             self.pgm_input_data["sym_load"] = pgm_sym_loads_from_motor
 
     def _generate_ids(self, pp_table: str, pp_idx: pd.Index, name: Optional[str] = None) -> np.arange:
