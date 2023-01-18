@@ -566,7 +566,35 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_wards.empty:
             return
 
-        raise NotImplementedError("Ward is not implemented yet!")
+        n_wards = len(pp_wards)
+        in_service = self._get_pp_attr("ward", "in_service", True)
+        bus = self._get_pp_attr("ward", "bus")
+
+        pgm_sym_loads_from_ward = initialize_array(data_type="input", component_type="sym_load", shape=n_wards * 2)
+        pgm_sym_loads_from_ward["id"][:n_wards] = self._generate_ids(
+            "ward", pp_wards.index, name="ward_const_power_load"
+        )
+        pgm_sym_loads_from_ward["node"][:n_wards] = self._get_pgm_ids("bus", bus)
+        pgm_sym_loads_from_ward["status"][:n_wards] = in_service
+        pgm_sym_loads_from_ward["type"][:n_wards] = LoadGenType.const_power
+        pgm_sym_loads_from_ward["p_specified"][:n_wards] = self._get_pp_attr("ward", "ps_mw")
+        pgm_sym_loads_from_ward["q_specified"][:n_wards] = self._get_pp_attr("ward", "qs_mvar")
+
+        pgm_sym_loads_from_ward["id"][-n_wards:] = self._generate_ids(
+            "ward", pp_wards.index, name="ward_const_impedance_load"
+        )
+        pgm_sym_loads_from_ward["node"][-n_wards:] = self._get_pgm_ids("bus", bus)
+        pgm_sym_loads_from_ward["status"][-n_wards:] = in_service
+        pgm_sym_loads_from_ward["type"][-n_wards:] = LoadGenType.const_impedance
+        pgm_sym_loads_from_ward["p_specified"][-n_wards:] = self._get_pp_attr("ward", "pz_mw")
+        pgm_sym_loads_from_ward["q_specified"][-n_wards:] = self._get_pp_attr("ward", "qz_mvar")
+
+        #  If input data of loads has already been filled then extend it with data of motors. If it is empty and there
+        #  is no data about loads,then assign motor data to it
+        if "sym_load" in self.pgm_input_data:
+            self.pgm_input_data["sym_load"] = np.concatenate([self.pgm_input_data["sym_load"], pgm_sym_loads_from_ward])
+        else:
+            self.pgm_input_data["sym_load"] = pgm_sym_loads_from_ward
 
     def _create_pgm_input_xward(self):  # pragma: no cover
         # TODO: create unit tests for the function
@@ -584,7 +612,32 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_motors.empty:
             return
 
-        raise NotImplementedError("Motor is not implemented yet!")
+        pgm_sym_loads_from_motor = initialize_array(data_type="input", component_type="sym_load", shape=len(pp_motors))
+        pgm_sym_loads_from_motor["id"] = self._generate_ids("motor", pp_motors.index, name="motor_load")
+        pgm_sym_loads_from_motor["node"] = self._get_pgm_ids("bus", self._get_pp_attr("motor", "bus"))
+        pgm_sym_loads_from_motor["status"] = self._get_pp_attr("motor", "in_service")
+        pgm_sym_loads_from_motor["type"] = LoadGenType.const_power
+        #  The formula for p_specified is pn_mech_mw /(efficiency_percent/100) * (loading_percent/100) * scaling * 1e6
+        pgm_sym_loads_from_motor["p_specified"] = (
+            self._get_pp_attr("motor", "pn_mech_mw")
+            / self._get_pp_attr("motor", "efficiency_percent")
+            * self._get_pp_attr("motor", "loading_percent")
+            * self._get_pp_attr("motor", "scaling")
+            * 1e6
+        )
+        p_spec = pgm_sym_loads_from_motor["p_specified"]
+        pgm_sym_loads_from_motor["q_specified"] = np.sqrt(
+            np.power(p_spec / self._get_pp_attr("motor", "cos_phi"), 2) - p_spec**2
+        )
+
+        #  If input data of loads has already been filled then extend it with data of motors. If it is empty and there
+        #  is no data about loads,then assign motor data to it
+        if "sym_load" in self.pgm_input_data:
+            self.pgm_input_data["sym_load"] = np.concatenate(
+                [self.pgm_input_data["sym_load"], pgm_sym_loads_from_motor]
+            )
+        else:
+            self.pgm_input_data["sym_load"] = pgm_sym_loads_from_motor
 
     def _generate_ids(self, pp_table: str, pp_idx: pd.Index, name: Optional[str] = None) -> np.arange:
         """
