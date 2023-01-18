@@ -47,7 +47,7 @@ def pp_net() -> pp.pandapowerNet:
         parallel=2,
     )
     pp.create_line(
-        net, index=101, from_bus=103, to_bus=102, length_km=1.23, parallel=2, df=10, std_type="NAYY 4x150 SE"
+        net, index=101, from_bus=103, to_bus=102, length_km=1.23, parallel=2, df=0.2, std_type="NAYY 4x150 SE"
     )
     pp.create_load(
         net, index=101, bus=103, p_mw=2.5, q_mvar=0.24, const_i_percent=26.0, const_z_percent=51.0, cos_phi=2
@@ -70,14 +70,14 @@ def pp_net() -> pp.pandapowerNet:
         sn_hv_mva=40,
         sn_mv_mva=100,
         sn_lv_mva=50,
-        vk_hv_percent=20,
-        vk_mv_percent=60,
-        vk_lv_percent=35,
+        vk_hv_percent=6,
+        vk_mv_percent=7,
+        vk_lv_percent=8,
         vkr_hv_percent=1,
         vkr_mv_percent=2,
         vkr_lv_percent=4,
-        i0_percent=5,
-        pfe_kw=11.6,
+        i0_percent=0,
+        pfe_kw=0,
         vector_group="Dyny",
         shift_mv_degree=30,
         shift_lv_degree=30,
