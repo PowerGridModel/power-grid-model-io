@@ -102,11 +102,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._create_pgm_input_asym_gens()
         self._create_pgm_input_three_winding_transformers()
         self._create_pgm_input_links()
-        self._create_pgm_input_storage()
-        self._create_pgm_input_impedance()
-        self._create_pgm_input_ward()
-        self._create_pgm_input_xward()
-        self._create_pgm_input_motor()
+        self._create_pgm_input_storages()
+        self._create_pgm_input_impedances()
+        self._create_pgm_input_wards()
+        self._create_pgm_input_xwards()
+        self._create_pgm_input_motors()
 
     def _fill_extra_info(self, extra_info: ExtraInfoLookup):
         for (pp_table, name), indices in self.idx_lookup.items():
@@ -420,9 +420,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_transformers = initialize_array(data_type="input", component_type="transformer", shape=len(pp_trafo))
         pgm_transformers["id"] = self._generate_ids("trafo", pp_trafo.index)
         pgm_transformers["from_node"] = self._get_pgm_ids("bus", self._get_pp_attr("trafo", "hv_bus"))
-        pgm_transformers["from_status"] = in_service & switch_states["from"]
+        pgm_transformers["from_status"] = in_service & switch_states["from"].values
         pgm_transformers["to_node"] = self._get_pgm_ids("bus", self._get_pp_attr("trafo", "lv_bus"))
-        pgm_transformers["to_status"] = in_service & switch_states["to"]
+        pgm_transformers["to_status"] = in_service & switch_states["to"].values
         pgm_transformers["u1"] = self._get_pp_attr("trafo", "vn_hv_kv") * 1e3
         pgm_transformers["u2"] = self._get_pp_attr("trafo", "vn_lv_kv") * 1e3
         pgm_transformers["sn"] = sn_mva * parallel * 1e6
@@ -482,9 +482,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_3wtransformers["node_1"] = self._get_pgm_ids("bus", self._get_pp_attr("trafo3w", "hv_bus"))
         pgm_3wtransformers["node_2"] = self._get_pgm_ids("bus", self._get_pp_attr("trafo3w", "mv_bus"))
         pgm_3wtransformers["node_3"] = self._get_pgm_ids("bus", self._get_pp_attr("trafo3w", "lv_bus"))
-        pgm_3wtransformers["status_1"] = in_service & switch_states["side_1"]
-        pgm_3wtransformers["status_2"] = in_service & switch_states["side_2"]
-        pgm_3wtransformers["status_3"] = in_service & switch_states["side_3"]
+        pgm_3wtransformers["status_1"] = in_service & switch_states["side_1"].values
+        pgm_3wtransformers["status_2"] = in_service & switch_states["side_2"].values
+        pgm_3wtransformers["status_3"] = in_service & switch_states["side_3"].values
         pgm_3wtransformers["u1"] = self._get_pp_attr("trafo3w", "vn_hv_kv") * 1e3
         pgm_3wtransformers["u2"] = self._get_pp_attr("trafo3w", "vn_mv_kv") * 1e3
         pgm_3wtransformers["u3"] = self._get_pp_attr("trafo3w", "vn_lv_kv") * 1e3
@@ -554,7 +554,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         assert "link" not in self.pgm_input_data
         self.pgm_input_data["link"] = pgm_links
 
-    def _create_pgm_input_storage(self):  # pragma: no cover
+    def _create_pgm_input_storages(self):  # pragma: no cover
         # TODO: create unit tests for the function
         pp_storage = self.pp_input_data["storage"]
 
@@ -563,7 +563,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         raise NotImplementedError("Storage is not implemented yet!")
 
-    def _create_pgm_input_impedance(self):  # pragma: no cover
+    def _create_pgm_input_impedances(self):  # pragma: no cover
         # TODO: create unit tests for the function
         pp_impedance = self.pp_input_data["impedance"]
 
@@ -572,7 +572,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         raise NotImplementedError("Impedance is not implemented yet!")
 
-    def _create_pgm_input_ward(self):  # pragma: no cover
+    def _create_pgm_input_wards(self):  # pragma: no cover
         # TODO: create unit tests for the function
         pp_wards = self.pp_input_data["ward"]
 
@@ -609,7 +609,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         else:
             self.pgm_input_data["sym_load"] = pgm_sym_loads_from_ward
 
-    def _create_pgm_input_xward(self):  # pragma: no cover
+    def _create_pgm_input_xwards(self):  # pragma: no cover
         # TODO: create unit tests for the function
         pp_xwards = self.pp_input_data["xward"]
 
@@ -618,7 +618,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         raise NotImplementedError("Extended Ward is not implemented yet!")
 
-    def _create_pgm_input_motor(self):  # pragma: no cover
+    def _create_pgm_input_motors(self):  # pragma: no cover
         # TODO: create unit tests for the function
         pp_motors = self.pp_input_data["motor"]
 

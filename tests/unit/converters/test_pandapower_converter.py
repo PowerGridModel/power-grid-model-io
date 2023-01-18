@@ -173,11 +173,11 @@ def test_create_input_data():
     converter._create_pgm_input_asym_gens.assert_called_once_with()
     converter._create_pgm_input_three_winding_transformers.assert_called_once_with()
     converter._create_pgm_input_links.assert_called_once_with()
-    converter._create_pgm_input_storage.assert_called_once_with()
-    converter._create_pgm_input_impedance.assert_called_once_with()
-    converter._create_pgm_input_ward.assert_called_once_with()
-    converter._create_pgm_input_xward.assert_called_once_with()
-    converter._create_pgm_input_motor.assert_called_once_with()
+    converter._create_pgm_input_storages.assert_called_once_with()
+    converter._create_pgm_input_impedances.assert_called_once_with()
+    converter._create_pgm_input_wards.assert_called_once_with()
+    converter._create_pgm_input_xwards.assert_called_once_with()
+    converter._create_pgm_input_motors.assert_called_once_with()
 
 
 @pytest.mark.parametrize(
@@ -705,7 +705,7 @@ def test_create_pgm_input_links(mock_init_array: MagicMock, two_pp_objs, convert
     converter.pp_input_data[...] = two_pp_objs
 
     # Act
-    converter._create_pgm_input_sources()
+    converter._create_pgm_input_links()
 
     # Assert
 
@@ -735,7 +735,7 @@ def test_create_pgm_input_storage(mock_init_array: MagicMock, two_pp_objs, conve
 
     # Act / Assert
     with pytest.raises(NotImplementedError, match=r"Storage.*not implemented"):
-        converter._create_pgm_input_storage()
+        converter._create_pgm_input_storages()
 
     # initialization
     mock_init_array.assert_not_called()
@@ -748,23 +748,40 @@ def test_create_pgm_input_impedance(mock_init_array: MagicMock, two_pp_objs, con
 
     # Act / Assert
     with pytest.raises(NotImplementedError, match=r"Impedance.*not implemented"):
-        converter._create_pgm_input_impedance()
+        converter._create_pgm_input_impedances()
 
     # initialization
     mock_init_array.assert_not_called()
 
 
+@pytest.mark.xfail(reason="Not implemented")
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
-def test_create_pgm_input_ward(mock_init_array: MagicMock, two_pp_objs, converter):
+def test_create_pgm_input_wards(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
-    converter.pp_input_data["ward"] = two_pp_objs
+    converter.pp_input_data[...] = two_pp_objs
 
-    # Act / Assert
-    with pytest.raises(NotImplementedError, match=r"Ward.*not implemented"):
-        converter._create_pgm_input_ward()
+    # Act
+    converter._create_pgm_input_wards()
+
+    # Assert
+
+    # administration: TODO
 
     # initialization
-    mock_init_array.assert_not_called()
+    mock_init_array.assert_called_once_with(data_type="input", component_type=..., shape=2)
+
+    # retrieval: TODO
+    converter._get_pp_attr.assert_any_call(..., ...)
+    assert len(converter._get_pp_attr.call_args_list) == 0
+
+    # assignment: TODO
+    pgm: MagicMock = mock_init_array.return_value.__setitem__
+    pgm.assert_any_call("id", ANY)
+    pgm.assert_any_call(..., ANY)
+    assert len(pgm.call_args_list) == 0
+
+    # result
+    assert converter.pgm_input_data[...] == mock_init_array.return_value
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -774,23 +791,40 @@ def test_create_pgm_input_xward(mock_init_array: MagicMock, two_pp_objs, convert
 
     # Act / Assert
     with pytest.raises(NotImplementedError, match=r"Extended Ward.*not implemented"):
-        converter._create_pgm_input_xward()
+        converter._create_pgm_input_xwards()
 
     # initialization
     mock_init_array.assert_not_called()
 
 
+@pytest.mark.xfail(reason="Not implemented")
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
-def test_create_pgm_input_motor(mock_init_array: MagicMock, two_pp_objs, converter):
+def test_create_pgm_input_motors(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
-    converter.pp_input_data["motor"] = two_pp_objs
+    converter.pp_input_data[...] = two_pp_objs
 
-    # Act / Assert
-    with pytest.raises(NotImplementedError, match=r"Motor.*not implemented"):
-        converter._create_pgm_input_motor()
+    # Act
+    converter._create_pgm_input_motors()
+
+    # Assert
+
+    # administration: TODO
 
     # initialization
-    mock_init_array.assert_not_called()
+    mock_init_array.assert_called_once_with(data_type="input", component_type=..., shape=2)
+
+    # retrieval: TODO
+    converter._get_pp_attr.assert_any_call(..., ...)
+    assert len(converter._get_pp_attr.call_args_list) == 0
+
+    # assignment: TODO
+    pgm: MagicMock = mock_init_array.return_value.__setitem__
+    pgm.assert_any_call("id", ANY)
+    pgm.assert_any_call(..., ANY)
+    assert len(pgm.call_args_list) == 0
+
+    # result
+    assert converter.pgm_input_data[...] == mock_init_array.return_value
 
 
 def test_get_pgm_ids():
