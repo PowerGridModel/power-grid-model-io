@@ -12,6 +12,7 @@ import pytest
 from power_grid_model import WindingType, initialize_array
 from power_grid_model.data_types import SingleDataset
 from power_grid_model.utils import import_json_data
+from pytest import approx
 
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter, PandaPowerData
 from power_grid_model_io.data_types import ExtraInfoLookup
@@ -217,6 +218,64 @@ def test_create_input_data():
     converter._create_pgm_input_ward.assert_called_once_with()
     converter._create_pgm_input_xward.assert_called_once_with()
     converter._create_pgm_input_motor.assert_called_once_with()
+
+
+def test_create_output_data():
+    # Arrange
+    converter = MagicMock()
+
+    # Act
+    PandaPowerConverter._create_output_data(self=converter)  # type: ignore
+
+    # Assert
+    assert len(converter.method_calls) == 8
+    converter._pp_buses_output.assert_called_once_with()
+    converter._pp_lines_output.assert_called_once_with()
+    converter._pp_ext_grids_output.assert_called_once_with()
+    converter._pp_loads_output.assert_called_once_with()
+    converter._pp_shunts_output.assert_called_once_with()
+    converter._pp_trafos_output.assert_called_once_with()
+    converter._pp_sgens_output.assert_called_once_with()
+    converter._pp_trafos3w_output.assert_called_once_with()
+
+
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._pp_buses_output")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._pp_lines_output")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._pp_ext_grids_output")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._pp_loads_output")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._pp_shunts_output")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._pp_trafos_output")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._pp_sgens_output")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._pp_trafos3w_output")
+def test_create_output_data_node_lookup(
+    mock__pp_buses_output: MagicMock,
+    mock__pp_lines_output: MagicMock,
+    mock__pp_ext_grids_output: MagicMock,
+    mock__pp_loads_output: MagicMock,
+    mock__pp_shunts_output: MagicMock,
+    mock__pp_trafos_output: MagicMock,
+    mock__pp_sgens_output: MagicMock,
+    mock__pp_trafos3w_output: MagicMock,
+):
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.pgm_output_data = {
+        "node": initialize_array("sym_output", "node", 3),
+    }
+    converter.pgm_output_data["node"]["id"] = [22, 32, 42]
+    converter.pgm_output_data["node"]["u_pu"] = [31, 12, 4]
+    converter.pgm_output_data["node"]["u_angle"] = [0.5, 1, 2]
+
+    # Act
+    converter._create_output_data()
+
+    # Assert
+    assert converter.pgm_nodes_lookup["u_pu"][22] == 31
+    assert converter.pgm_nodes_lookup["u_pu"][32] == 12
+    assert converter.pgm_nodes_lookup["u_pu"][42] == 4
+    assert converter.pgm_nodes_lookup["u_degree"][22] == approx(28.6478897565)
+    assert converter.pgm_nodes_lookup["u_degree"][32] == approx(57.2957795131)
+    assert converter.pgm_nodes_lookup["u_degree"][42] == approx(114.591559026)
 
 
 @pytest.mark.parametrize(
