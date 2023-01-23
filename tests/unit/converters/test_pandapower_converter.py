@@ -11,8 +11,10 @@ import pandapower as pp
 import pandas as pd
 import pytest
 from power_grid_model import Branch3Side, BranchSide, WindingType
+from power_grid_model.data_types import SingleDataset
+from power_grid_model.utils import import_json_data
 
-from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter
+from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter, PandaPowerData
 
 from ...utils import MockDf, MockFn
 
@@ -171,11 +173,11 @@ def test_create_input_data():
     converter._create_pgm_input_asym_gens.assert_called_once_with()
     converter._create_pgm_input_three_winding_transformers.assert_called_once_with()
     converter._create_pgm_input_links.assert_called_once_with()
-    converter._create_pgm_input_storage.assert_called_once_with()
-    converter._create_pgm_input_impedance.assert_called_once_with()
-    converter._create_pgm_input_ward.assert_called_once_with()
-    converter._create_pgm_input_xward.assert_called_once_with()
-    converter._create_pgm_input_motor.assert_called_once_with()
+    converter._create_pgm_input_storages.assert_called_once_with()
+    converter._create_pgm_input_impedances.assert_called_once_with()
+    converter._create_pgm_input_wards.assert_called_once_with()
+    converter._create_pgm_input_xwards.assert_called_once_with()
+    converter._create_pgm_input_motors.assert_called_once_with()
 
 
 @pytest.mark.parametrize(
@@ -250,13 +252,15 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     # administration
     converter.get_switch_states.assert_called_once_with("line")
     converter._generate_ids.assert_called_once_with("line", two_pp_objs.index)
-    converter._get_pgm_ids.assert_any_call("bus", two_pp_objs["from_bus"])
-    converter._get_pgm_ids.assert_any_call("bus", two_pp_objs["to_bus"])
+    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("line", "from_bus"))
+    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("line", "to_bus"))
 
     # initialization
     mock_init_array.assert_called_once_with(data_type="input", component_type="line", shape=2)
 
     # retrieval
+    converter._get_pp_attr.assert_any_call("line", "from_bus")
+    converter._get_pp_attr.assert_any_call("line", "to_bus")
     converter._get_pp_attr.assert_any_call("line", "in_service", True)
     converter._get_pp_attr.assert_any_call("line", "length_km")
     converter._get_pp_attr.assert_any_call("line", "parallel", 1)
@@ -266,14 +270,14 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     converter._get_pp_attr.assert_any_call("line", "g_us_per_km", 0)
     converter._get_pp_attr.assert_any_call("line", "max_i_ka")
     converter._get_pp_attr.assert_any_call("line", "df", 1)
-    assert len(converter._get_pp_attr.call_args_list) == 9
+    assert len(converter._get_pp_attr.call_args_list) == 11
 
     # assignment
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", _generate_ids("line", two_pp_objs.index))
-    pgm.assert_any_call("from_node", _get_pgm_ids("bus", two_pp_objs["from_bus"]))
+    pgm.assert_any_call("from_node", _get_pgm_ids("bus", _get_pp_attr("line", "from_bus")))
     pgm.assert_any_call("from_status", _get_pp_attr("line", "in_service", True) & get_switch_states("line")["from"])
-    pgm.assert_any_call("to_node", _get_pgm_ids("bus", two_pp_objs["to_bus"]))
+    pgm.assert_any_call("to_node", _get_pgm_ids("bus", _get_pp_attr("line", "to_bus")))
     pgm.assert_any_call("to_status", _get_pp_attr("line", "in_service", True) & get_switch_states("line")["to"])
     pgm.assert_any_call(
         "r1",
@@ -370,6 +374,7 @@ def test_create_pgm_input_sym_loads(mock_init_array: MagicMock, two_pp_objs, con
     assert converter.pgm_input_data[...] == mock_init_array.return_value
 
 
+@pytest.mark.xfail(reason="Not implemented")
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_asym_loads(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
@@ -430,7 +435,22 @@ def test_create_pgm_input_asym_loads(mock_init_array: MagicMock, two_pp_objs, co
     assert converter.pgm_input_data["asymmetric_load"] == mock_init_array.return_value
 
 
-# @pytest.mark.xfail(reason="Not implemented")
+def test_create_pgm_input_transformers__tap_dependent_impedance():
+    # Arrange
+    pp_net: pp.pandapowerNet = pp.create_empty_network()
+    pp.create_bus(net=pp_net, vn_kv=0.0)
+    args = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    pp.create_transformer_from_parameters(pp_net, *args, tap_dependent_impedance=True)
+
+    converter = PandaPowerConverter()
+    converter.pp_input_data = {k: v for k, v in pp_net.items() if isinstance(v, pd.DataFrame)}
+
+    # Act/Assert
+    with pytest.raises(RuntimeError, match="not supported"):
+        converter._create_pgm_input_transformers()
+
+
+@pytest.mark.xfail(reason="Not implemented")
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_shunts(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
@@ -482,6 +502,7 @@ def test_create_pgm_input_shunts(mock_init_array: MagicMock, two_pp_objs, conver
     assert converter.pgm_input_data["shunt"] == mock_init_array.return_value
 
 
+@pytest.mark.xfail(reason="Not implemented")
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
@@ -786,6 +807,37 @@ def test_create_pgm_input_transformers3w__tap_side():
     assert result[3]["tap_pos"] == 12.0 == result[3]["tap_nom"]
 
 
+def test_create_pgm_input_three_winding_transformers__tap_at_star_point():
+    # Arrange
+    pp_net: pp.pandapowerNet = pp.create_empty_network()
+    pp.create_bus(net=pp_net, vn_kv=0.0)
+    args = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    pp.create_transformer3w_from_parameters(pp_net, *args, tap_at_star_point=True)
+
+    converter = PandaPowerConverter()
+    converter.pp_input_data = {k: v for k, v in pp_net.items() if isinstance(v, pd.DataFrame)}
+
+    # Act/Assert
+    with pytest.raises(RuntimeError, match="not supported"):
+        converter._create_pgm_input_three_winding_transformers()
+
+
+@pytest.mark.xfail(reason="https://github.com/e2nIEE/pandapower/issues/1831")
+def test_create_pgm_input_three_winding_transformers__tap_dependent_impedance():
+    # Arrange
+    pp_net: pp.pandapowerNet = pp.create_empty_network()
+    pp.create_bus(net=pp_net, vn_kv=0.0)
+    args = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    pp.create_transformer3w_from_parameters(pp_net, *args, tap_dependent_impedance=True)
+
+    converter = PandaPowerConverter()
+    converter.pp_input_data = {k: v for k, v in pp_net.items() if isinstance(v, pd.DataFrame)}
+
+    # Act/Assert
+    with pytest.raises(RuntimeError, match="not supported"):
+        converter._create_pgm_input_three_winding_transformers()
+
+
 @pytest.mark.xfail(reason="Not implemented")
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_links(mock_init_array: MagicMock, two_pp_objs, converter):
@@ -793,7 +845,7 @@ def test_create_pgm_input_links(mock_init_array: MagicMock, two_pp_objs, convert
     converter.pp_input_data[...] = two_pp_objs
 
     # Act
-    converter._create_pgm_input_sources()
+    converter._create_pgm_input_links()
 
     # Assert
 
@@ -823,7 +875,7 @@ def test_create_pgm_input_storage(mock_init_array: MagicMock, two_pp_objs, conve
 
     # Act / Assert
     with pytest.raises(NotImplementedError, match=r"Storage.*not implemented"):
-        converter._create_pgm_input_storage()
+        converter._create_pgm_input_storages()
 
     # initialization
     mock_init_array.assert_not_called()
@@ -836,23 +888,40 @@ def test_create_pgm_input_impedance(mock_init_array: MagicMock, two_pp_objs, con
 
     # Act / Assert
     with pytest.raises(NotImplementedError, match=r"Impedance.*not implemented"):
-        converter._create_pgm_input_impedance()
+        converter._create_pgm_input_impedances()
 
     # initialization
     mock_init_array.assert_not_called()
 
 
+@pytest.mark.xfail(reason="Not implemented")
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
-def test_create_pgm_input_ward(mock_init_array: MagicMock, two_pp_objs, converter):
+def test_create_pgm_input_wards(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
-    converter.pp_input_data["ward"] = two_pp_objs
+    converter.pp_input_data[...] = two_pp_objs
 
-    # Act / Assert
-    with pytest.raises(NotImplementedError, match=r"Ward.*not implemented"):
-        converter._create_pgm_input_ward()
+    # Act
+    converter._create_pgm_input_wards()
+
+    # Assert
+
+    # administration: TODO
 
     # initialization
-    mock_init_array.assert_not_called()
+    mock_init_array.assert_called_once_with(data_type="input", component_type=..., shape=2)
+
+    # retrieval: TODO
+    converter._get_pp_attr.assert_any_call(..., ...)
+    assert len(converter._get_pp_attr.call_args_list) == 0
+
+    # assignment: TODO
+    pgm: MagicMock = mock_init_array.return_value.__setitem__
+    pgm.assert_any_call("id", ANY)
+    pgm.assert_any_call(..., ANY)
+    assert len(pgm.call_args_list) == 0
+
+    # result
+    assert converter.pgm_input_data[...] == mock_init_array.return_value
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -862,23 +931,40 @@ def test_create_pgm_input_xward(mock_init_array: MagicMock, two_pp_objs, convert
 
     # Act / Assert
     with pytest.raises(NotImplementedError, match=r"Extended Ward.*not implemented"):
-        converter._create_pgm_input_xward()
+        converter._create_pgm_input_xwards()
 
     # initialization
     mock_init_array.assert_not_called()
 
 
+@pytest.mark.xfail(reason="Not implemented")
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
-def test_create_pgm_input_motor(mock_init_array: MagicMock, two_pp_objs, converter):
+def test_create_pgm_input_motors(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
-    converter.pp_input_data["motor"] = two_pp_objs
+    converter.pp_input_data[...] = two_pp_objs
 
-    # Act / Assert
-    with pytest.raises(NotImplementedError, match=r"Motor.*not implemented"):
-        converter._create_pgm_input_motor()
+    # Act
+    converter._create_pgm_input_motors()
+
+    # Assert
+
+    # administration: TODO
 
     # initialization
-    mock_init_array.assert_not_called()
+    mock_init_array.assert_called_once_with(data_type="input", component_type=..., shape=2)
+
+    # retrieval: TODO
+    converter._get_pp_attr.assert_any_call(..., ...)
+    assert len(converter._get_pp_attr.call_args_list) == 0
+
+    # assignment: TODO
+    pgm: MagicMock = mock_init_array.return_value.__setitem__
+    pgm.assert_any_call("id", ANY)
+    pgm.assert_any_call(..., ANY)
+    assert len(pgm.call_args_list) == 0
+
+    # result
+    assert converter.pgm_input_data[...] == mock_init_array.return_value
 
 
 def test_get_pgm_ids():
