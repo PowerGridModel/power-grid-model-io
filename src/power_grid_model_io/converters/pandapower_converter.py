@@ -329,9 +329,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_loads["p_specified"][:n_loads] = const_p_multiplier * p_mw
         pgm_sym_loads["q_specified"][:n_loads] = const_p_multiplier * q_mvar
 
-        pgm_sym_loads["id"][n_loads: 2 * n_loads] = self._generate_ids("load", pp_loads.index, name="const_impedance")
-        pgm_sym_loads["node"][n_loads: 2 * n_loads] = self._get_pgm_ids("bus", bus)
-        pgm_sym_loads["status"][n_loads: 2 * n_loads] = in_service
+        pgm_sym_loads["id"][n_loads : 2 * n_loads] = self._generate_ids("load", pp_loads.index, name="const_impedance")
+        pgm_sym_loads["node"][n_loads : 2 * n_loads] = self._get_pgm_ids("bus", bus)
+        pgm_sym_loads["status"][n_loads : 2 * n_loads] = in_service
         pgm_sym_loads["type"][n_loads : 2 * n_loads] = LoadGenType.const_impedance
         pgm_sym_loads["p_specified"][n_loads : 2 * n_loads] = const_z_multiplier * p_mw
         pgm_sym_loads["q_specified"][n_loads : 2 * n_loads] = const_z_multiplier * q_mvar
@@ -633,15 +633,15 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_loads_from_motor["type"] = LoadGenType.const_power
         #  The formula for p_specified is pn_mech_mw /(efficiency_percent/100) * (loading_percent/100) * scaling * 1e6
         pgm_sym_loads_from_motor["p_specified"] = (
-                self._get_pp_attr("motor", "pn_mech_mw")
-                / self._get_pp_attr("motor", "efficiency_percent")
-                * self._get_pp_attr("motor", "loading_percent")
-                * self._get_pp_attr("motor", "scaling")
-                * 1e6
+            self._get_pp_attr("motor", "pn_mech_mw")
+            / self._get_pp_attr("motor", "efficiency_percent")
+            * self._get_pp_attr("motor", "loading_percent")
+            * self._get_pp_attr("motor", "scaling")
+            * 1e6
         )
         p_spec = pgm_sym_loads_from_motor["p_specified"]
         pgm_sym_loads_from_motor["q_specified"] = np.sqrt(
-            np.power(p_spec / self._get_pp_attr("motor", "cos_phi"), 2) - p_spec ** 2
+            np.power(p_spec / self._get_pp_attr("motor", "cos_phi"), 2) - p_spec**2
         )
 
         #  If input data of loads has already been filled then extend it with data of motors. If it is empty and there

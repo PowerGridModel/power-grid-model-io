@@ -116,6 +116,9 @@ class MockFn:
         mock_fn.postfix = self.postfix
         return mock_fn
 
+    def __neg__(self):
+        return MockFn("-", self)
+
     def __add__(self, other):
         return MockFn._apply_operator("+", self, other)
 
@@ -156,6 +159,14 @@ class MockFn:
         if not isinstance(other, MockFn):
             return False
 
+        def isnan(
+            x: Any,
+        ):
+            try:
+                return np.isnan(x)
+            except TypeError:
+                return False
+
         def eq(left, right) -> bool:
             if isinstance(left, pd.DataFrame):
                 if left.columns != right.columns:
@@ -165,6 +176,8 @@ class MockFn:
                     return False
             if isinstance(left, NDFrame):
                 return (left == right).all()
+            if isnan(left) and isnan(right):
+                return True
             return left == right
 
         if not eq(self.fn, other.fn):
@@ -214,12 +227,13 @@ class MockVal(MockFn):
 
 
 class MockDf:
-    __slots__ = ["empty", "index", "shape"]
+    __slots__ = ["columns", "empty", "index", "shape"]
 
     def __init__(self, shape: Union[int, Tuple[int, ...]]):
         self.shape = shape
         self.empty = shape == 0 or (isinstance(shape, tuple) and (len(shape) == 0 or shape[0] == 0))
         self.index = MagicMock(name="DataFrame.index")
+        self.columns = MagicMock(name="DataFrame.columns")
 
     def __len__(self):
         if isinstance(self.shape, int):

@@ -10,7 +10,7 @@ import numpy as np
 import pandapower as pp
 import pandas as pd
 import pytest
-from power_grid_model import Branch3Side, BranchSide, WindingType, LoadGenType
+from power_grid_model import Branch3Side, BranchSide, LoadGenType, WindingType
 from power_grid_model.data_types import SingleDataset
 from power_grid_model.utils import import_json_data
 
@@ -676,7 +676,7 @@ def test_create_pgm_input_asym_gens(mock_init_array: MagicMock, two_pp_objs, con
     converter.pp_input_data["asymmetric_sgen"] = two_pp_objs
 
     # Act
-    converter._create_pgm_input_asym_loads()
+    converter._create_pgm_input_asym_gens()
 
     # Assert
 
