@@ -10,7 +10,7 @@ import numpy as np
 import pandapower as pp
 import pandas as pd
 import pytest
-from power_grid_model import WindingType
+from power_grid_model import WindingType, initialize_array
 from power_grid_model.data_types import SingleDataset
 from power_grid_model.utils import import_json_data
 
