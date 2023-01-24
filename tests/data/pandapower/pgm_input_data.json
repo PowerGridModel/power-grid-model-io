@@ -38,7 +38,7 @@
     ],
   "three_winding_transformer":
     [
-      {"id": 14, "node_1": 2, "node_2": 4, "node_3": 3, "status_1": 1, "status_2": 1, "status_3": 1, "u1": 20000.0, "u2": 60000.0, "u3": 30100.0 , "sn_1": 40000000.0, "sn_2": 100000000.0, "sn_3": 50000000.0, "uk_12": 0.06, "uk_13": 0.08, "uk_23": 0.07, "pk_12": 400000.0, "pk_13": 1600000.0, "pk_23": 1000000.0,  "i0": 0.0, "p0": 0.0, "winding_1": 2, "winding_2": 1, "winding_3": 0, "clock_12": 1, "clock_13": 1, "tap_pos": 2, "tap_side": 2, "tap_min": 1, "tap_max": 3, "tap_nom": 2, "tap_size": 903.0, "id_reference": {"table": "trafo3w", "index": 102}}
+      {"id": 14, "node_1": 2, "node_2": 4, "node_3": 3, "status_1": 1, "status_2": 1, "status_3": 1, "u1": 20000.0, "u2": 60000.0, "u3": 30100.0 , "sn_1": 40000000.0, "sn_2": 100000000.0, "sn_3": 50000000.0, "uk_12": 0.1, "uk_13": 0.12, "uk_23": 0.11, "pk_12": 400000.0, "pk_13": 1600000.0, "pk_23": 1000000.0,  "i0": 0.001, "p0": 10000.0, "winding_1": 2, "winding_2": 1, "winding_3": 0, "clock_12": 1, "clock_13": 1, "tap_pos": 2, "tap_side": 2, "tap_min": 1, "tap_max": 3, "tap_nom": 2, "tap_size": 903.0, "id_reference": {"table": "trafo3w", "index": 102}}
     ],
   "link":
     [
