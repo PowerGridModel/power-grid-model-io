@@ -219,7 +219,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_shunts["node"] = self._get_pgm_ids("bus", self._get_pp_attr("shunt", "bus"))
         pgm_shunts["status"] = self._get_pp_attr("shunt", "in_service", 1)
         pgm_shunts["g1"] = self._get_pp_attr("shunt", "p_mw") * step / vn_kv_2
-        pgm_shunts["b1"] = -(self._get_pp_attr("shunt", "q_mvar") * step) / vn_kv_2
+        pgm_shunts["b1"] = -self._get_pp_attr("shunt", "q_mvar") * step / vn_kv_2
 
         assert "shunt" not in self.pgm_input_data
         self.pgm_input_data["shunt"] = pgm_shunts
