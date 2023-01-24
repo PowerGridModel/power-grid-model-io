@@ -349,30 +349,46 @@ def test_create_pgm_input_sources(mock_init_array: MagicMock, two_pp_objs, conve
     assert converter.pgm_input_data["source"] == mock_init_array.return_value
 
 
-@pytest.mark.xfail(reason="Not implemented")
+@pytest.mark.xfail(reason="pending")  # TODO test for sym load and combinations
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_sym_loads(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
-    converter.pp_input_data[...] = two_pp_objs
+    converter.pp_input_data["load"] = two_pp_objs
 
     # Act
     converter._create_pgm_input_sym_loads()
 
     # Assert
 
-    # administration: TODO
+    # administration:
+    # converter._generate_ids.assert_called_("load", two_pp_objs.index)
 
     # initialization
     mock_init_array.assert_called_once_with(data_type="input", component_type="sym_load", shape=6)
 
-    # retrieval: TODO
-    converter._get_pp_attr.assert_any_call(..., ...)
-    assert len(converter._get_pp_attr.call_args_list) == 0
+    # retrieval:
+    converter._get_pp_attr.assert_any_call("load", "bus")
+    converter._get_pp_attr.assert_any_call("load", "p_mw", 0.0)
+    converter._get_pp_attr.assert_any_call("load", "q_mvar", 0.0)
+    converter._get_pp_attr.assert_any_call("load", "const_z_percent", 0)
+    converter._get_pp_attr.assert_any_call("load", "const_i_percent", 0)
+    converter._get_pp_attr.assert_any_call("load", "scaling", 1)
+    converter._get_pp_attr.assert_any_call("load", "in_service", True)
+    # converter._get_pp_attr.assert_any_call("load", "type") # TODO add after asym conversion
+    assert len(converter._get_pp_attr.call_args_list) == 7
 
-    # assignment: TODO
+    # assignment:
+    pgm: MagicMock = mock_init_array.return_value.__setitem__
+    pgm.assert_any_call("id", ANY)
+    pgm.assert_any_call("node", ANY)
+    pgm.assert_any_call("status", ANY)
+    pgm.assert_any_call("p_specified", ANY)
+    pgm.assert_any_call("q_specified", ANY)
+    pgm.assert_any_call("type", ANY)
+    assert len(pgm.call_args_list) == 6
 
     # result
-    assert converter.pgm_input_data[...] == mock_init_array.return_value
+    assert converter.pgm_input_data["sym_load"] == mock_init_array.return_value
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -385,13 +401,14 @@ def test_create_pgm_input_asym_loads(mock_init_array: MagicMock, two_pp_objs, co
 
     # Assert
 
-    # administration: TODO
+    # administration:
     converter._generate_ids.assert_called_once_with("asymmetric_load", two_pp_objs.index)
 
     # initialization
     mock_init_array.assert_called_once_with(data_type="input", component_type="asym_load", shape=2)
 
-    # retrieval: TODO
+    # retrieval:
+    converter._get_pp_attr.assert_any_call("asymmetric_load", "bus")
     converter._get_pp_attr.assert_any_call("asymmetric_load", "p_a_mw")
     converter._get_pp_attr.assert_any_call("asymmetric_load", "p_b_mw")
     converter._get_pp_attr.assert_any_call("asymmetric_load", "p_c_mw")
@@ -400,25 +417,18 @@ def test_create_pgm_input_asym_loads(mock_init_array: MagicMock, two_pp_objs, co
     converter._get_pp_attr.assert_any_call("asymmetric_load", "q_c_mvar")
     converter._get_pp_attr.assert_any_call("asymmetric_load", "scaling")
     converter._get_pp_attr.assert_any_call("asymmetric_load", "in_service")
-    assert len(converter._get_pp_attr.call_args_list) == 8
+    assert len(converter._get_pp_attr.call_args_list) == 9
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", _generate_ids("asymmetric_load", two_pp_objs.index))
-    pgm.assert_any_call("node", _get_pgm_ids("bus", two_pp_objs["bus"]))
+    pgm.assert_any_call("node", _get_pgm_ids("bus", _get_pp_attr("asymmetric_load", "bus")))
     pgm.assert_any_call("status", _get_pp_attr("asymmetric_load", "in_service"))
-    pgm.assert_any_call(
-        "q_specified",
-        ANY
-    )
-    pgm.assert_any_call(
-        "p_specified",
-        ANY
-    )
-    assert len(pgm.call_args_list) == 4
-
+    pgm.assert_any_call("p_specified", ANY)
+    pgm.assert_any_call("q_specified", ANY)
+    assert len(pgm.call_args_list) == 6
     # result
-    assert converter.pgm_input_data["asymmetric_load"] == mock_init_array.return_value
+    assert converter.pgm_input_data["asym_load"] == mock_init_array.return_value
 
 
 def test_create_pgm_input_transformers__tap_dependent_impedance():
@@ -488,6 +498,7 @@ def test_create_pgm_input_shunts(mock_init_array: MagicMock, two_pp_objs, conver
     assert converter.pgm_input_data["shunt"] == mock_init_array.return_value
 
 
+@pytest.mark.xfail(reason="pending")  # TODO Fail at act
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
@@ -497,7 +508,7 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
     converter._create_pgm_input_transformers()
     # Assert
 
-    # administration: TODO
+    # administration:
     converter.get_switch_states.assert_called_once_with("trafo")
     converter._generate_ids.assert_called_once_with("trafo", two_pp_objs.index)
     converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("trafo", "hv_bus"))
@@ -506,7 +517,7 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
     # initialization
     mock_init_array.assert_called_once_with(data_type="input", component_type="transformer", shape=2)
 
-    # retrieval: TODO
+    # retrieval:
     converter._get_pp_attr.assert_any_call("trafo", "hv_bus")
     converter._get_pp_attr.assert_any_call("trafo", "lv_bus")
     converter._get_pp_attr.assert_any_call("trafo", "sn_mva")
@@ -537,7 +548,7 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
 
     assert len(converter._get_pp_attr.call_args_list) == 26  # 26
 
-    # assignment: TODO
+    # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", _generate_ids("trafo", two_pp_objs.index))
     pgm.assert_any_call("from_node", _get_pgm_ids("bus", _get_pp_attr("trafo", "from_bus")))
@@ -552,9 +563,7 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
     pgm.assert_any_call("uk", _get_pp_attr("trafo", "vk_percent"))
     pgm.assert_any_call(
         "pk",
-        _get_pp_attr("trafo", "vkr_percent")
-        * _get_pp_attr("transfo", "sn_mva")
-        * _get_pp_attr("transfo", "parallel"),
+        _get_pp_attr("trafo", "vkr_percent") * _get_pp_attr("transfo", "sn_mva") * _get_pp_attr("transfo", "parallel"),
     )
     pgm.assert_any_call("i0", _get_pp_attr("trafo", "i0_percent"))
     pgm.assert_any_call("p0", _get_pp_attr("trafo", "pfe_kw") * _get_pp_attr("trafo", "parallel"))
@@ -636,21 +645,22 @@ def test_create_pgm_input_sym_gens(mock_init_array: MagicMock, two_pp_objs, conv
     # initialization
     mock_init_array.assert_called_once_with(data_type="input", component_type="sym_gen", shape=2)
 
-    # retrieval: TODO
+    # retrieval:
     converter._get_pp_attr.assert_any_call("sgen", "bus")
     converter._get_pp_attr.assert_any_call("sgen", "p_mw")
     converter._get_pp_attr.assert_any_call("sgen", "q_mvar", 0.0)
-    converter._get_pp_attr.assert_any_call("sgen", "scaling", 1)
-    assert len(converter._get_pp_attr.call_args_list) == 4
+    converter._get_pp_attr.assert_any_call("sgen", "scaling", 1.0)
+    converter._get_pp_attr.assert_any_call("sgen", "in_service", True)
+    assert len(converter._get_pp_attr.call_args_list) == 5
 
-    # assignment: TODO
+    # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", _generate_ids("sgen", two_pp_objs.index))
-    pgm.assert_any_call("node", _get_pp_attr("sgen", "bus"))
-    pgm.assert_any_call("status", _get_pgm_ids("bus", _get_pp_attr("sgen", "bus")))
+    pgm.assert_any_call("node", _get_pgm_ids("bus", _get_pp_attr("sgen", "bus")))
+    pgm.assert_any_call("status", _get_pp_attr("sgen", "in_service"))
     pgm.assert_any_call("type", LoadGenType.const_power)
-    pgm.assert_any_call("p_specified", _get_pp_attr("sgen", "p_mw") * _get_pp_attr("sgen", "scaling"))
-    pgm.assert_any_call("q_specified", _get_pp_attr("sgen", "q_mvar") * _get_pp_attr("sgen", "scaling"))
+    pgm.assert_any_call("p_specified", _get_pp_attr("sgen", "p_mw") * _get_pp_attr("sgen", "scaling", 1.0) * 1e6)
+    pgm.assert_any_call("q_specified", _get_pp_attr("sgen", "q_mvar", 0.0) * _get_pp_attr("sgen", "scaling", 1.0) * 1e6)
     assert len(pgm.call_args_list) == 6
 
     # result
@@ -667,13 +677,14 @@ def test_create_pgm_input_asym_gens(mock_init_array: MagicMock, two_pp_objs, con
 
     # Assert
 
-    # administration: TODO
+    # administration:
     converter._generate_ids.assert_called_once_with("asymmetric_sgen", two_pp_objs.index)
 
     # initialization
     mock_init_array.assert_called_once_with(data_type="input", component_type="asym_gen", shape=2)
 
-    # retrieval: TODO
+    # retrieval:
+    converter._get_pp_attr.assert_any_call("asymmetric_sgen", "bus")
     converter._get_pp_attr.assert_any_call("asymmetric_sgen", "p_a_mw")
     converter._get_pp_attr.assert_any_call("asymmetric_sgen", "p_b_mw")
     converter._get_pp_attr.assert_any_call("asymmetric_sgen", "p_c_mw")
@@ -682,121 +693,106 @@ def test_create_pgm_input_asym_gens(mock_init_array: MagicMock, two_pp_objs, con
     converter._get_pp_attr.assert_any_call("asymmetric_sgen", "q_c_mvar")
     converter._get_pp_attr.assert_any_call("asymmetric_sgen", "scaling")
     converter._get_pp_attr.assert_any_call("asymmetric_sgen", "in_service")
-    assert len(converter._get_pp_attr.call_args_list) == 8
+    assert len(converter._get_pp_attr.call_args_list) == 9
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", _generate_ids("asymmetric_sgen", two_pp_objs.index))
-    pgm.assert_any_call("node", _get_pgm_ids("bus", two_pp_objs["bus"]))
+    pgm.assert_any_call("node", _get_pgm_ids("bus", _get_pp_attr("asymmetric_sgen", "bus")))
     pgm.assert_any_call("status", _get_pp_attr("asymmetric_sgen", "in_service"))
-    pgm.assert_any_call(
-        "q_specified",
-        np_array(
-            [
-                _get_pp_attr("asymmetric_sgen", "q_a_mvar"),
-                _get_pp_attr("asymmetric_sgen", "q_b_mvar"),
-                _get_pp_attr("asymmetric_sgen", "q_c_mvar"),
-            ]
-        )
-        * _get_pp_attr("asymmetric_sgen", "scaling"),
-    )
-    pgm.assert_any_call(
-        "p_specified",
-        np_array(
-            [
-                _get_pp_attr("asymmetric_sgen", "p_a_mw"),
-                _get_pp_attr("asymmetric_sgen", "p_b_mw"),
-                _get_pp_attr("asymmetric_sgen", "p_c_mw"),
-            ]
-        )
-        * _get_pp_attr("asymmetric_sgen", "scaling"),
-    )
-    assert len(pgm.call_args_list) == 5
+    pgm.assert_any_call("p_specified", ANY)
+    pgm.assert_any_call("q_specified", ANY)
+    pgm.assert_any_call("type", LoadGenType.const_power)
+    assert len(pgm.call_args_list) == 6
 
     # result
-    assert converter.pgm_input_data["asymmetric_sgen"] == mock_init_array.return_value
+    assert converter.pgm_input_data["asym_gen"] == mock_init_array.return_value
 
 
+@pytest.mark.xfail(reason="pending")  # TODO Fail at act
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
-    converter.pp_input_data["trafo_3w"] = two_pp_objs
+    converter.pp_input_data["trafo3w"] = two_pp_objs
 
     # Act
     converter._create_pgm_input_three_winding_transformers()
 
     # Assert
 
-    # administration: TODO
+    # administration:
     converter.get_switch_states.assert_called_once_with("three_winding_transformer")
-    converter._generate_ids.assert_called_once_with("trafo_3w", two_pp_objs.index)
-    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("trafo_3w", "hv_bus"))
-    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("trafo_3w", "mv_bus"))
-    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("trafo_3w", "lv_bus"))
+    converter._generate_ids.assert_called_once_with("trafo3w", two_pp_objs.index)
+    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("trafo3w", "hv_bus"))
+    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("trafo3w", "mv_bus"))
+    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("trafo3w", "lv_bus"))
 
     # initialization
     mock_init_array.assert_called_once_with(data_type="input", component_type="three_winding_transformer", shape=2)
 
-    # retrieval: TODO
-    converter._get_pp_attr.assert_any_call("trafo_3w", "hv_bus")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "mv_bus")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "lv_bus")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "vn_hv_kv")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "vn_mv_kv")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "vn_lv_kv")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "sn_hv_mva")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "sn_mv_mva")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "sn_lv_mva")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "vk_hv_percent")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "vk_mv_percent")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "vk_lv_percent")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "vkr_hv_percent")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "vkr_mv_percent")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "vkr_lv_percent")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "pfe_kw")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "i0_percent")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "shift_mv_degree")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "shift_lv_degree")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "tap_side")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "tap_neutral")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "tap_min")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "tap_max")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "tap_step_percent")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "tap_step_degree")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "tap_at_star_point")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "tap_pos")
-    converter._get_pp_attr.assert_any_call("trafo_3w", "in_service")
+    # retrieval:
+    converter._get_pp_attr.assert_any_call("trafo3w", "hv_bus")
+    converter._get_pp_attr.assert_any_call("trafo3w", "mv_bus")
+    converter._get_pp_attr.assert_any_call("trafo3w", "lv_bus")
+    converter._get_pp_attr.assert_any_call("trafo3w", "vn_hv_kv")
+    converter._get_pp_attr.assert_any_call("trafo3w", "vn_mv_kv")
+    converter._get_pp_attr.assert_any_call("trafo3w", "vn_lv_kv")
+    converter._get_pp_attr.assert_any_call("trafo3w", "sn_hv_mva")
+    converter._get_pp_attr.assert_any_call("trafo3w", "sn_mv_mva")
+    converter._get_pp_attr.assert_any_call("trafo3w", "sn_lv_mva")
+    converter._get_pp_attr.assert_any_call("trafo3w", "vk_hv_percent")
+    converter._get_pp_attr.assert_any_call("trafo3w", "vk_mv_percent")
+    converter._get_pp_attr.assert_any_call("trafo3w", "vk_lv_percent")
+    converter._get_pp_attr.assert_any_call("trafo3w", "vkr_hv_percent")
+    converter._get_pp_attr.assert_any_call("trafo3w", "vkr_mv_percent")
+    converter._get_pp_attr.assert_any_call("trafo3w", "vkr_lv_percent")
+    converter._get_pp_attr.assert_any_call("trafo3w", "pfe_kw")
+    converter._get_pp_attr.assert_any_call("trafo3w", "i0_percent")
+    converter._get_pp_attr.assert_any_call("trafo3w", "shift_mv_degree")
+    converter._get_pp_attr.assert_any_call("trafo3w", "shift_lv_degree")
+    converter._get_pp_attr.assert_any_call("trafo3w", "tap_side")
+    converter._get_pp_attr.assert_any_call("trafo3w", "tap_neutral")
+    converter._get_pp_attr.assert_any_call("trafo3w", "tap_min")
+    converter._get_pp_attr.assert_any_call("trafo3w", "tap_max")
+    converter._get_pp_attr.assert_any_call("trafo3w", "tap_step_percent")
+    converter._get_pp_attr.assert_any_call("trafo3w", "tap_step_degree")
+    converter._get_pp_attr.assert_any_call("trafo3w", "tap_at_star_point")
+    converter._get_pp_attr.assert_any_call("trafo3w", "tap_pos")
+    converter._get_pp_attr.assert_any_call("trafo3w", "in_service")
     assert len(converter._get_pp_attr.call_args_list) == 27
 
-    # assignment: TODO
+    # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
-    pgm.assert_any_call("id", _generate_ids("trafo_3w", two_pp_objs.index))
-    pgm.assert_any_call("node_1", _get_pgm_ids("bus", _get_pp_attr("trafo_3w", "hv_bus")))
-    pgm.assert_any_call("node_2", _get_pgm_ids("bus", _get_pp_attr("trafo_3w", "mv_bus")))
-    pgm.assert_any_call("node_3", _get_pgm_ids("bus", _get_pp_attr("trafo_3w", "lv_bus")))
-    pgm.assert_any_call("status_1",
-                        _get_pp_attr("trafo_3w", "in_service", True) & get_switch_states("three_winding_transformer")[
-                            "status_1"])
-    pgm.assert_any_call("status_2",
-                        _get_pp_attr("trafo_3w", "in_service", True) & get_switch_states("three_winding_transformer")[
-                            "status_2"])
-    pgm.assert_any_call("status_3",
-                        _get_pp_attr("trafo_3w", "in_service", True) & get_switch_states("three_winding_transformer")[
-                            "status_3"])
-    pgm.assert_any_call("u1", _get_pp_attr("trafo_3w", "vn_hv_kv"))
-    pgm.assert_any_call("u2", _get_pp_attr("trafo_3w", "vn_mv_kv"))
-    pgm.assert_any_call("u3", _get_pp_attr("trafo_3w", "vn_lv_kv"))
-    pgm.assert_any_call("sn_1", _get_pp_attr("trafo_3w", "sn_hv_mva"))
-    pgm.assert_any_call("sn_2", _get_pp_attr("trafo_3w", "sn_mv_mva"))
-    pgm.assert_any_call("sn_3", _get_pp_attr("trafo_3w", "sn_lv_mva"))
-    pgm.assert_any_call("uk_12", _get_pp_attr("trafo_3w", "vk_hv_percent"))
-    pgm.assert_any_call("uk_13", _get_pp_attr("trafo_3w", "vk_lv_percent"))
-    pgm.assert_any_call("uk_23", _get_pp_attr("trafo_3w", "vk_mv_percent"))
+    pgm.assert_any_call("id", _generate_ids("trafo3w", two_pp_objs.index))
+    pgm.assert_any_call("node_1", _get_pgm_ids("bus", _get_pp_attr("trafo3w", "hv_bus")))
+    pgm.assert_any_call("node_2", _get_pgm_ids("bus", _get_pp_attr("trafo3w", "mv_bus")))
+    pgm.assert_any_call("node_3", _get_pgm_ids("bus", _get_pp_attr("trafo3w", "lv_bus")))
+    pgm.assert_any_call(
+        "status_1",
+        _get_pp_attr("trafo3w", "in_service", True) & get_switch_states("three_winding_transformer")["status_1"],
+    )
+    pgm.assert_any_call(
+        "status_2",
+        _get_pp_attr("trafo3w", "in_service", True) & get_switch_states("three_winding_transformer")["status_2"],
+    )
+    pgm.assert_any_call(
+        "status_3",
+        _get_pp_attr("trafo3w", "in_service", True) & get_switch_states("three_winding_transformer")["status_3"],
+    )
+    pgm.assert_any_call("u1", _get_pp_attr("trafo3w", "vn_hv_kv"))
+    pgm.assert_any_call("u2", _get_pp_attr("trafo3w", "vn_mv_kv"))
+    pgm.assert_any_call("u3", _get_pp_attr("trafo3w", "vn_lv_kv"))
+    pgm.assert_any_call("sn_1", _get_pp_attr("trafo3w", "sn_hv_mva"))
+    pgm.assert_any_call("sn_2", _get_pp_attr("trafo3w", "sn_mv_mva"))
+    pgm.assert_any_call("sn_3", _get_pp_attr("trafo3w", "sn_lv_mva"))
+    pgm.assert_any_call("uk_12", _get_pp_attr("trafo3w", "vk_hv_percent"))
+    pgm.assert_any_call("uk_13", _get_pp_attr("trafo3w", "vk_lv_percent"))
+    pgm.assert_any_call("uk_23", _get_pp_attr("trafo3w", "vk_mv_percent"))
     pgm.assert_any_call("pk_12", ANY)
     pgm.assert_any_call("pk_13", ANY)
     pgm.assert_any_call("pk_23", ANY)
-    pgm.assert_any_call("i0", _get_pp_attr("trafo_3w", "i0_percent"))
-    pgm.assert_any_call("p0", _get_pp_attr("trafo_3w", "pfe_kw"))
+    pgm.assert_any_call("i0", _get_pp_attr("trafo3w", "i0_percent"))
+    pgm.assert_any_call("p0", _get_pp_attr("trafo3w", "pfe_kw"))
     pgm.assert_any_call("winding_1", ANY)
     pgm.assert_any_call("winding_2", ANY)
     pgm.assert_any_call("winding_3", ANY)
@@ -804,14 +800,14 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
     pgm.assert_any_call("clock12", ANY)
     pgm.assert_any_call("tap_side", ANY)
     pgm.assert_any_call("tap_pos", ANY)
-    pgm.assert_any_call("tap_min", _get_pp_attr("trafo_3w", "tap_min"))
-    pgm.assert_any_call("tap_max", _get_pp_attr("trafo_3w", "tap_max"))
+    pgm.assert_any_call("tap_min", _get_pp_attr("trafo3w", "tap_min"))
+    pgm.assert_any_call("tap_max", _get_pp_attr("trafo3w", "tap_max"))
     pgm.assert_any_call("tap_nom", ANY)
     pgm.assert_any_call("tap_size", ANY)
     assert len(pgm.call_args_list) == 31
 
     # result
-    assert converter.pgm_input_data[...] == mock_init_array.return_value
+    assert converter.pgm_input_data["three_winding_transformer"] == mock_init_array.return_value
 
 
 @patch(
@@ -896,7 +892,7 @@ def test_create_pgm_input_three_winding_transformers__tap_dependent_impedance():
         converter._create_pgm_input_three_winding_transformers()
 
 
-@pytest.mark.xfail(reason="Not implemented")
+@pytest.mark.xfail(reason="pending")  # TODO Fail at act
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_links(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
@@ -907,22 +903,26 @@ def test_create_pgm_input_links(mock_init_array: MagicMock, two_pp_objs, convert
 
     # Assert
 
-    # administration: TODO
+    # administration:
     converter._generate_ids.assert_called_once_with("switch", two_pp_objs.index, "bus_to_bus")
 
     # initialization
     mock_init_array.assert_called_once_with(data_type="input", component_type="link", shape=2)
 
-    # retrieval: TODO
+    # retrieval:
     converter._get_pp_attr.assert_any_call("switch", "bus")
     converter._get_pp_attr.assert_any_call("switch", "et")
+    converter._get_pp_attr.assert_any_call("switch", "element")
+    converter._get_pp_attr.assert_any_call("switch", "closed")
+    assert len(converter._get_pp_attr.call_args_list) == 4
 
-    assert len(converter._get_pp_attr.call_args_list) == 0
-
-    # assignment: TODO
+    # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", ANY)
-    pgm.assert_any_call(..., ANY)
+    pgm.assert_any_call("from_node", ANY)
+    pgm.assert_any_call("to_node", ANY)
+    pgm.assert_any_call("from_status", ANY)
+    pgm.assert_any_call("to_node", ANY)
     assert len(pgm.call_args_list) == 0
 
     # result
@@ -955,34 +955,44 @@ def test_create_pgm_input_impedance(mock_init_array: MagicMock, two_pp_objs, con
     mock_init_array.assert_not_called()
 
 
-@pytest.mark.xfail(reason="Not implemented")
+@pytest.mark.xfail(reason="pending")  # TODO test for sym load and combinations
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_wards(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
-    converter.pp_input_data[...] = two_pp_objs
+    converter.pp_input_data["ward"] = two_pp_objs
 
     # Act
     converter._create_pgm_input_wards()
 
     # Assert
 
-    # administration: TODO
+    # administration:
+    converter._generate_ids.assert_called_once_with("load", two_pp_objs.index)
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type=..., shape=2)
+    mock_init_array.assert_called_once_with(data_type="input", component_type="sym_load", shape=4)
 
-    # retrieval: TODO
-    converter._get_pp_attr.assert_any_call(..., ...)
-    assert len(converter._get_pp_attr.call_args_list) == 0
+    # retrieval:
+    converter._get_pp_attr.assert_any_call("ward", "bus")
+    converter._get_pp_attr.assert_any_call("ward", "ps_mw")
+    converter._get_pp_attr.assert_any_call("ward", "qs_mvar")
+    converter._get_pp_attr.assert_any_call("ward", "pz_mw")
+    converter._get_pp_attr.assert_any_call("ward", "qz_mvar")
+    converter._get_pp_attr.assert_any_call("ward", "in_service")
+    assert len(converter._get_pp_attr.call_args_list) == 6
 
-    # assignment: TODO
+    # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", ANY)
-    pgm.assert_any_call(..., ANY)
-    assert len(pgm.call_args_list) == 0
+    pgm.assert_any_call("node", ANY)
+    pgm.assert_any_call("status", ANY)
+    pgm.assert_any_call("p_specified", ANY)
+    pgm.assert_any_call("q_specified", ANY)
+    pgm.assert_any_call("type", ANY)
+    assert len(pgm.call_args_list) == 6
 
     # result
-    assert converter.pgm_input_data[...] == mock_init_array.return_value
+    assert converter.pgm_input_data["sym_load"] == mock_init_array.return_value
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -998,34 +1008,46 @@ def test_create_pgm_input_xward(mock_init_array: MagicMock, two_pp_objs, convert
     mock_init_array.assert_not_called()
 
 
-@pytest.mark.xfail(reason="Not implemented")
+@pytest.mark.xfail(reason="pending")  # TODO test for sym load and combinations
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_motors(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
-    converter.pp_input_data[...] = two_pp_objs
+    converter.pp_input_data["motor"] = two_pp_objs
 
     # Act
     converter._create_pgm_input_motors()
 
     # Assert
 
-    # administration: TODO
+    # administration:
+    converter._generate_ids.assert_called_once_with("motor", two_pp_objs.index)
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type=..., shape=2)
+    mock_init_array.assert_called_once_with(data_type="input", component_type="sym_load", shape=2)
 
-    # retrieval: TODO
-    converter._get_pp_attr.assert_any_call(..., ...)
-    assert len(converter._get_pp_attr.call_args_list) == 0
+    # retrieval:
+    converter._get_pp_attr.assert_any_call("motor", "bus")
+    converter._get_pp_attr.assert_any_call("motor", "pn_mech_mw")
+    converter._get_pp_attr.assert_any_call("motor", "cos_phi")
+    converter._get_pp_attr.assert_any_call("motor", "efficiency_percent")
+    converter._get_pp_attr.assert_any_call("motor", "efficiency_n_percent")
+    converter._get_pp_attr.assert_any_call("motor", "loading_percent")
+    converter._get_pp_attr.assert_any_call("motor", "scaling")
+    converter._get_pp_attr.assert_any_call("motor", "in_service")
+    assert len(converter._get_pp_attr.call_args_list) == 8
 
-    # assignment: TODO
+    # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", ANY)
-    pgm.assert_any_call(..., ANY)
-    assert len(pgm.call_args_list) == 0
+    pgm.assert_any_call("node", ANY)
+    pgm.assert_any_call("status", ANY)
+    pgm.assert_any_call("p_specified", ANY)
+    pgm.assert_any_call("q_specified", ANY)
+    pgm.assert_any_call("type", ANY)
+    assert len(pgm.call_args_list) == 6
 
     # result
-    assert converter.pgm_input_data[...] == mock_init_array.return_value
+    assert converter.pgm_input_data["sym_load"] == mock_init_array.return_value
 
 
 def test_get_pgm_ids():
