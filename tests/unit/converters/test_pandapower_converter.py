@@ -51,6 +51,14 @@ def _get_transformer_tap_side(*args, **kwargs):
     return MockFn("_get_transformer_tap_side", *args, **kwargs)
 
 
+def _get_3wtransformer_tap_side(*args, **kwargs):
+    return MockFn("_get_3wtransformer_tap_side", *args, **kwargs)
+
+
+def _get_3wtransformer_tap_size(*args, **kwargs):
+    return MockFn("_get_3wtransformer_tap_size", *args, **kwargs)
+
+
 def _get_tap_size(*args, **kwargs):
     return MockFn("_get_tap_size", *args, **kwargs)
 
@@ -73,6 +81,9 @@ def converter() -> PandaPowerConverter:
     converter.get_trafo3w_switch_states = MagicMock(side_effect=get_trafo3w_switch_states)
     converter.get_trafo3w_winding_types = MagicMock(side_effect=get_trafo3w_winding_types)
     converter._get_transformer_tap_side = MagicMock(side_effect=_get_transformer_tap_side)
+    converter._get_3wtransformer_tap_side = MagicMock(side_effect=_get_3wtransformer_tap_side)
+    converter._get_3wtransformer_tap_size = MagicMock(side_effect=_get_3wtransformer_tap_size)
+
     return converter
 
 
@@ -715,8 +726,8 @@ def test_create_pgm_input_asym_gens(mock_init_array: MagicMock, two_pp_objs, con
     assert converter.pgm_input_data["asym_gen"] == mock_init_array.return_value
 
 
-@pytest.mark.xfail(reason="pending")  # TODO Fail at act
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
+@patch("power_grid_model_io.converters.pandapower_converter.np.round", new=lambda x: x)
 def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
     converter.pp_input_data["trafo3w"] = two_pp_objs
