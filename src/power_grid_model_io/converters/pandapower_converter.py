@@ -539,8 +539,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             return
 
         # This should take all the switches which are b2b
-        pp_switches = pp_switches[self._get_pp_attr("switch", "et") == "b"]
+        pp_switches = pp_switches[pp_switches["et"] == "b"]
 
+        # TODO: Don't update the pp input data... (Bram)
         self.pp_input_data["switch_b2b"] = pp_switches
 
         closed = self._get_pp_attr("switch_b2b", "closed", True)

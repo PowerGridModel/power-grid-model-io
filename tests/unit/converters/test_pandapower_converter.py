@@ -69,20 +69,19 @@ def np_array(*args, **kwargs):
 
 @pytest.fixture
 def converter() -> PandaPowerConverter:
-    # type: ignore
     converter = PandaPowerConverter()
-    converter._generate_ids = MagicMock(side_effect=_generate_ids)
-    converter._get_pgm_ids = MagicMock(side_effect=_get_pgm_ids)
-    converter._get_pp_attr = MagicMock(side_effect=_get_pp_attr)
-    converter.get_switch_states = MagicMock(side_effect=get_switch_states)
-    converter.get_trafo_winding_types = MagicMock(side_effect=get_trafo_winding_types)
-    converter._get_tap_size = MagicMock(side_effect=_get_tap_size)
-    converter.get_trafo_winding_types = MagicMock(side_effect=get_trafo_winding_types)
-    converter.get_trafo3w_switch_states = MagicMock(side_effect=get_trafo3w_switch_states)
-    converter.get_trafo3w_winding_types = MagicMock(side_effect=get_trafo3w_winding_types)
-    converter._get_transformer_tap_side = MagicMock(side_effect=_get_transformer_tap_side)
-    converter._get_3wtransformer_tap_side = MagicMock(side_effect=_get_3wtransformer_tap_side)
-    converter._get_3wtransformer_tap_size = MagicMock(side_effect=_get_3wtransformer_tap_size)
+    converter._generate_ids = MagicMock(side_effect=_generate_ids)  # type: ignore
+    converter._get_pgm_ids = MagicMock(side_effect=_get_pgm_ids)  # type: ignore
+    converter._get_pp_attr = MagicMock(side_effect=_get_pp_attr)  # type: ignore
+    converter.get_switch_states = MagicMock(side_effect=get_switch_states)  # type: ignore
+    converter.get_trafo_winding_types = MagicMock(side_effect=get_trafo_winding_types)  # type: ignore
+    converter._get_tap_size = MagicMock(side_effect=_get_tap_size)  # type: ignore
+    converter.get_trafo_winding_types = MagicMock(side_effect=get_trafo_winding_types)  # type: ignore
+    converter.get_trafo3w_switch_states = MagicMock(side_effect=get_trafo3w_switch_states)  # type: ignore
+    converter.get_trafo3w_winding_types = MagicMock(side_effect=get_trafo3w_winding_types)  # type: ignore
+    converter._get_transformer_tap_side = MagicMock(side_effect=_get_transformer_tap_side)  # type: ignore
+    converter._get_3wtransformer_tap_side = MagicMock(side_effect=_get_3wtransformer_tap_side)  # type: ignore
+    converter._get_3wtransformer_tap_size = MagicMock(side_effect=_get_3wtransformer_tap_size)  # type: ignore
 
     return converter
 
@@ -909,11 +908,16 @@ def test_create_pgm_input_three_winding_transformers__tap_dependent_impedance():
         converter._create_pgm_input_three_winding_transformers()
 
 
-@pytest.mark.xfail(reason="pending")  # TODO Fail at act
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
-def test_create_pgm_input_links(mock_init_array: MagicMock, two_pp_objs, converter):
+def test_create_pgm_input_links(mock_init_array: MagicMock, converter):
     # Arrange
-    converter.pp_input_data["switch"] = two_pp_objs
+    # three switches, of which two switches (#1 and #3) are bus to bus switches
+    pp_switches = pd.DataFrame(
+        [[0, 0, "b", False], [0, 0, "l", False], [0, 0, "b", False]],
+        index=[1, 2, 3],
+        columns=["bus", "element", "et", "closed"],
+    )
+    converter.pp_input_data["switch"] = pp_switches
 
     # Act
     converter._create_pgm_input_links()
@@ -921,7 +925,8 @@ def test_create_pgm_input_links(mock_init_array: MagicMock, two_pp_objs, convert
     # Assert
 
     # administration:
-    converter._generate_ids.assert_called_once_with("switch", two_pp_objs.index, "bus_to_bus")
+    converter._generate_ids.assert_called_once_with("switch", ANY, name="bus_to_bus")
+    pd.testing.assert_index_equal(converter._generate_ids.call_args_list[0].args[1], pd.Index([1, 3]))
 
     # initialization
     mock_init_array.assert_called_once_with(data_type="input", component_type="link", shape=2)
@@ -972,7 +977,6 @@ def test_create_pgm_input_impedance(mock_init_array: MagicMock, two_pp_objs, con
     mock_init_array.assert_not_called()
 
 
-@pytest.mark.xfail(reason="pending")  # TODO test for sym load and combinations
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_wards(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
@@ -1025,7 +1029,6 @@ def test_create_pgm_input_xward(mock_init_array: MagicMock, two_pp_objs, convert
     mock_init_array.assert_not_called()
 
 
-@pytest.mark.xfail(reason="pending")  # TODO test for sym load and combinations
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_motors(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
