@@ -571,11 +571,13 @@ grid:
       status: Switch state
       type: 0
       p_specified:
-        multiply:
-          - min:
-              - Pnom
-              - Inverter.Pnom | Inverter.Snom
-          - Scaling
+        - power_grid_model_io.functions.phase_to_phase.pvs_power_adjustment:
+          - multiply:
+              - min:
+                  - Pnom
+                  - Inverter.Pnom | Inverter.Snom
+              - Scaling
+          - Inverter.efficiency type
       q_specified:
         multiply:
           - power_grid_model_io.functions.phase_to_phase.reactive_power:

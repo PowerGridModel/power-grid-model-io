@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import numpy as np
+import pytest
 from power_grid_model.enum import WindingType
 from pytest import approx, mark, param, raises
 
@@ -13,6 +14,7 @@ from power_grid_model_io.functions.phase_to_phase import (
     reactive_power,
     reactive_power_to_susceptance,
     relative_no_load_current,
+    pvs_power_adjustmnet,
 )
 
 
@@ -195,4 +197,20 @@ def test_get_clock__exception(code):
 )
 def test_reactive_power_to_susceptance(q_var: float, u_nom: float, expected: float):
     actual = reactive_power_to_susceptance(q_var, u_nom)
+    assert actual == approx(expected) or (np.isnan(actual) and np.isnan(expected))
+
+
+@mark.parametrize(
+    ("p", "efficiency_type", "expected"),
+    [
+        (float("nan"), str(""), float("nan")),
+        (1000.0, "0,1 pu: 93 %; 1 pu: 97 %", 970.0),
+        (1000.0, "0,1..1 pu: 95 %", 950.0),
+        (1000.0, "100 %", 1000.0),
+        (1000.0, "0,1..1 pu: 91 %", 1000.0),
+        (1000.0, "5 %", 1000.0),
+    ],
+)
+def test_pvs_power_adjustment(p: float, efficiency_type: str, expected: float):
+    actual = pvs_power_adjustmnet(p, efficiency_type)
     assert actual == approx(expected) or (np.isnan(actual) and np.isnan(expected))

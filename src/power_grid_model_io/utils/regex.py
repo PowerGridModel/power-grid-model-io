@@ -40,3 +40,13 @@ node            The word 'node'
 (_.+)?          Optional suffix, starting with in an underscore
 $               End of the string
 """
+
+PVS_EFFICIENCY_TYPE_RE = re.compile(r"[ ,..]1 pu: (95|97) %")
+r"""
+Regular expressions to match the efficiency type percentage at 1 pu, eg:
+    - 0,1 pu: 93 %; 1 pu: 97 %
+    - 0,1..1 pu: 95 %
+1 pu            After 1 pu  '1 pu:'
+(95|97)         95 or 97 % type
+%               before  '%'
+"""
