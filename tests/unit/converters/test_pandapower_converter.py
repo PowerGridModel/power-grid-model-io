@@ -349,11 +349,17 @@ def test_create_pgm_input_sources(mock_init_array: MagicMock, two_pp_objs, conve
     assert converter.pgm_input_data["source"] == mock_init_array.return_value
 
 
-@pytest.mark.xfail(reason="pending")  # TODO test for sym load and combinations
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_sym_loads(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
     converter.pp_input_data["load"] = two_pp_objs
+    pgm_attr = ["id", "node", "status", "p_specified", "q_specified", "type"]
+    pgm = {attr: MagicMock() for attr in pgm_attr}
+    mock_init_array.return_value = pgm
+    slices = [slice(None, 2), slice(2, 4), slice(-2, None)]
+    assert slices[0].indices(3 * 2) == (0, 2, 1)
+    assert slices[1].indices(3 * 2) == (2, 4, 1)
+    assert slices[2].indices(3 * 2) == (4, 6, 1)
 
     # Act
     converter._create_pgm_input_sym_loads()
@@ -364,7 +370,7 @@ def test_create_pgm_input_sym_loads(mock_init_array: MagicMock, two_pp_objs, con
     # converter._generate_ids.assert_called_("load", two_pp_objs.index)
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type="sym_load", shape=6)
+    mock_init_array.assert_called_once_with(data_type="input", component_type="sym_load", shape=3 * 2)
 
     # retrieval:
     converter._get_pp_attr.assert_any_call("load", "bus")
@@ -378,17 +384,13 @@ def test_create_pgm_input_sym_loads(mock_init_array: MagicMock, two_pp_objs, con
     assert len(converter._get_pp_attr.call_args_list) == 7
 
     # assignment:
-    pgm: MagicMock = mock_init_array.return_value.__setitem__
-    pgm.assert_any_call("id", ANY)
-    pgm.assert_any_call("node", ANY)
-    pgm.assert_any_call("status", ANY)
-    pgm.assert_any_call("p_specified", ANY)
-    pgm.assert_any_call("q_specified", ANY)
-    pgm.assert_any_call("type", ANY)
-    assert len(pgm.call_args_list) == 6
+    for attr in pgm_attr:
+        for s in slices:
+            pgm[attr].__setitem__.assert_any_call(s, ANY)
+        assert len(pgm[attr].__setitem__.call_args_list) == len(slices)
 
     # result
-    assert converter.pgm_input_data["sym_load"] == mock_init_array.return_value
+    assert converter.pgm_input_data["sym_load"] == pgm
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")

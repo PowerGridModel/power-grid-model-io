@@ -444,7 +444,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         assert "transformer" not in self.pgm_input_data
         self.pgm_input_data["transformer"] = pgm_transformers
 
-    def _create_pgm_input_three_winding_transformers(self):
+    def _create_pgm_input_three_winding_transformers(self):  # pylint: disable=too-many-statements
         """
         This function converts a Three Winding Transformer Dataframe of PandaPower to a power-grid-model
         Three Winding Transformer input array.
