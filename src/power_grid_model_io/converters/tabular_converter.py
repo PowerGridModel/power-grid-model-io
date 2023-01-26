@@ -285,7 +285,11 @@ class TabularConverter(BaseConverter[TabularData]):
 
         extra = self._parse_col_def(data=data, table=table, col_def=col_def, extra_info=None).to_dict(orient="records")
         for i, xtr in zip(uuids, extra):
-            xtr = {k: v for k, v in xtr.items() if not isinstance(v, float) or not np.isnan(v)}
+            xtr = {
+                k[0] if isinstance(k, tuple) else k: v
+                for k, v in xtr.items()
+                if not isinstance(v, float) or not np.isnan(v)
+            }
             if xtr:
                 if i in extra_info:
                     extra_info[i].update(xtr)
