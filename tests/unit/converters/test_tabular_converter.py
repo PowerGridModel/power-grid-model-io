@@ -676,6 +676,7 @@ def test_parse_auto_id__invalid_key_definition(
     [
         ("multiply", (1 * 1, 2 * 10, 3 * 100)),
         ("prod", (1 * 1, 2 * 10, 3 * 100)),
+        ("divide", (1 / 1, 2 / 10, 3 / 100)),
         ("sum", (1 + 1, 2 + 10, 3 + 100)),
         ("min", (1, 2, 3)),
         ("max", (1, 10, 100)),
