@@ -10,7 +10,9 @@ import numpy as np
 import pandapower as pp
 import pandas as pd
 import pytest
-from power_grid_model import Branch3Side, BranchSide, LoadGenType, WindingType
+from power_grid_model import Branch3Side, BranchSide, LoadGenType, WindingType, initialize_array
+from power_grid_model.data_types import SingleDataset
+from power_grid_model.utils import import_json_data
 
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter
 
@@ -143,28 +145,128 @@ def test_fill_extra_info():
     converter = PandaPowerConverter()
     converter.idx_lookup[("bus", None)] = pd.Series([101, 102, 103], index=[0, 1, 2])
     converter.idx_lookup[("load", "const_current")] = pd.Series([201, 202, 203], index=[3, 4, 5])
+    converter.pgm_input_data["sym_load"] = initialize_array("input", "sym_load", 3)
+    converter.pgm_input_data["sym_load"]["id"] = [3, 4, 5]
+    converter.pgm_input_data["sym_load"]["node"] = [0, 1, 2]
+    converter.pgm_input_data["line"] = initialize_array("input", "line", 2)
+    converter.pgm_input_data["line"]["id"] = [6, 7]
+    converter.pgm_input_data["line"]["from_node"] = [0, 1]
+    converter.pgm_input_data["line"]["to_node"] = [1, 2]
 
     # Act
     extra_info = {}
     converter._fill_extra_info(extra_info=extra_info)
 
     # Assert
-    assert len(extra_info) == 6
+    assert len(extra_info) == 8
     assert extra_info[0] == {"id_reference": {"table": "bus", "index": 101}}
     assert extra_info[1] == {"id_reference": {"table": "bus", "index": 102}}
     assert extra_info[2] == {"id_reference": {"table": "bus", "index": 103}}
-    assert extra_info[3] == {"id_reference": {"table": "load", "name": "const_current", "index": 201}}
-    assert extra_info[4] == {"id_reference": {"table": "load", "name": "const_current", "index": 202}}
-    assert extra_info[5] == {"id_reference": {"table": "load", "name": "const_current", "index": 203}}
+    assert extra_info[3] == {"id_reference": {"table": "load", "name": "const_current", "index": 201}, "node": 0}
+    assert extra_info[4] == {"id_reference": {"table": "load", "name": "const_current", "index": 202}, "node": 1}
+    assert extra_info[5] == {"id_reference": {"table": "load", "name": "const_current", "index": 203}, "node": 2}
+    assert extra_info[6] == {"from_node": 0, "to_node": 1}
+    assert extra_info[7] == {"from_node": 1, "to_node": 2}
 
 
-def test_serialize_data():
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._extra_info_to_idx_lookup")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._extra_info_to_pgm_input_data")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._create_output_data")
+def test__serialize_data(
+    create_output_data_mock: MagicMock, extra_info_pgm_input_data: MagicMock, extra_info_to_idx_lookup: MagicMock
+):
     # Arrange
     converter = PandaPowerConverter()
 
-    # Act/Assert
-    with pytest.raises(NotImplementedError):
-        converter._serialize_data(data={}, extra_info=None)
+    def create_output_data():
+        converter.pp_output_data = {"res_line": pd.DataFrame(np.array([]))}
+
+    create_output_data_mock.side_effect = create_output_data
+
+    # Act
+    result = converter._serialize_data(data={"line": np.array([])}, extra_info=None)
+
+    # Assert
+    create_output_data_mock.assert_called_once_with()
+    extra_info_to_idx_lookup.assert_not_called()
+    extra_info_pgm_input_data.assert_not_called()
+    assert len(converter.pp_output_data) == 1 and "res_line" in converter.pp_output_data
+    assert len(converter.pgm_output_data) == 1 and "line" in converter.pgm_output_data
+    assert len(result) == 1 and "res_line" in result
+
+
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._extra_info_to_idx_lookup")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._extra_info_to_pgm_input_data")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._create_output_data")
+def test_serialize_data__extra_info(
+    create_output_data_mock: MagicMock,
+    extra_info_pgm_input_data_mock: MagicMock,
+    extra_info_to_idx_lookup_mock: MagicMock,
+):
+    # Arrange
+    converter = PandaPowerConverter()
+
+    extra_info = MagicMock("extra_info")
+
+    # Act
+    converter._serialize_data(data={}, extra_info=extra_info)
+
+    # Assert
+    create_output_data_mock.assert_called_once_with()
+    extra_info_pgm_input_data_mock.assert_called_once_with(extra_info)
+    extra_info_to_idx_lookup_mock.assert_called_once_with(extra_info)
+
+
+def test_extra_info_to_idx_lookup():
+    # Arrange
+    converter = PandaPowerConverter()
+    extra_info = {
+        0: {"id_reference": {"table": "bus", "index": 101}},
+        1: {"id_reference": {"table": "bus", "index": 102}},
+        2: {"id_reference": {"table": "bus", "index": 103}},
+        3: {"id_reference": {"table": "load", "name": "const_current", "index": 201}, "node": 0},
+        4: {"id_reference": {"table": "load", "name": "const_current", "index": 202}, "node": 1},
+        5: {"id_reference": {"table": "load", "name": "const_current", "index": 203}, "node": 2},
+        6: {"from_node": 0, "to_node": 1},
+        7: {"from_node": 1, "to_node": 2},
+    }
+
+    # Act
+    converter._extra_info_to_idx_lookup(extra_info=extra_info)
+
+    # Assert
+    pd.testing.assert_series_equal(converter.idx[("bus", None)], pd.Series([0, 1, 2], index=[101, 102, 103]))
+    pd.testing.assert_series_equal(converter.idx_lookup[("bus", None)], pd.Series([101, 102, 103], index=[0, 1, 2]))
+
+    pd.testing.assert_series_equal(
+        converter.idx[("load", "const_current")], pd.Series([3, 4, 5], index=[201, 202, 203])
+    )
+    pd.testing.assert_series_equal(
+        converter.idx_lookup[("load", "const_current")], pd.Series([201, 202, 203], index=[3, 4, 5])
+    )
+
+
+def test_extra_info_to_pgm_input_data():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.pgm_output_data["node"] = initialize_array("sym_output", "node", 3)
+    converter.pgm_output_data["line"] = initialize_array("sym_output", "line", 2)
+    converter.pgm_output_data["node"]["id"] = [1, 2, 3]
+    converter.pgm_output_data["line"]["id"] = [12, 23]
+    extra_info = {
+        12: {"from_node": 1, "to_node": 2},
+        23: {"from_node": 2, "to_node": 3},
+    }
+
+    # Act
+    converter._extra_info_to_pgm_input_data(extra_info=extra_info)
+
+    # Assert
+    assert "node" not in converter.pgm_input_data
+    assert_struct_array_equal(
+        converter.pgm_input_data["line"],
+        [{"id": 12, "from_node": 1, "to_node": 2}, {"id": 23, "from_node": 2, "to_node": 3}],
+    )
 
 
 def test_create_input_data():
@@ -192,6 +294,64 @@ def test_create_input_data():
     converter._create_pgm_input_wards.assert_called_once_with()
     converter._create_pgm_input_xwards.assert_called_once_with()
     converter._create_pgm_input_motors.assert_called_once_with()
+
+
+def test_create_output_data():
+    # Arrange
+    converter = MagicMock()
+
+    # Act
+    PandaPowerConverter._create_output_data(self=converter)  # type: ignore
+
+    # Assert
+    assert len(converter.method_calls) == 8
+    converter._pp_buses_output.assert_called_once_with()
+    converter._pp_lines_output.assert_called_once_with()
+    converter._pp_ext_grids_output.assert_called_once_with()
+    converter._pp_loads_output.assert_called_once_with()
+    converter._pp_shunts_output.assert_called_once_with()
+    converter._pp_trafos_output.assert_called_once_with()
+    converter._pp_sgens_output.assert_called_once_with()
+    converter._pp_trafos3w_output.assert_called_once_with()
+
+
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._pp_buses_output")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._pp_lines_output")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._pp_ext_grids_output")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._pp_loads_output")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._pp_shunts_output")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._pp_trafos_output")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._pp_sgens_output")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._pp_trafos3w_output")
+def test_create_output_data_node_lookup(
+    mock__pp_buses_output: MagicMock,
+    mock__pp_lines_output: MagicMock,
+    mock__pp_ext_grids_output: MagicMock,
+    mock__pp_loads_output: MagicMock,
+    mock__pp_shunts_output: MagicMock,
+    mock__pp_trafos_output: MagicMock,
+    mock__pp_sgens_output: MagicMock,
+    mock__pp_trafos3w_output: MagicMock,
+):
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.pgm_output_data = {
+        "node": initialize_array("sym_output", "node", 3),
+    }
+    converter.pgm_output_data["node"]["id"] = [22, 32, 42]
+    converter.pgm_output_data["node"]["u_pu"] = [31, 12, 4]
+    converter.pgm_output_data["node"]["u_angle"] = [0.5, 1, 2]
+
+    # Act
+    converter._create_output_data()
+
+    # Assert
+    assert converter.pgm_nodes_lookup["u_pu"][22] == 31
+    assert converter.pgm_nodes_lookup["u_pu"][32] == 12
+    assert converter.pgm_nodes_lookup["u_pu"][42] == 4
+    assert converter.pgm_nodes_lookup["u_degree"][22] == pytest.approx(28.6478897565)
+    assert converter.pgm_nodes_lookup["u_degree"][32] == pytest.approx(57.2957795131)
+    assert converter.pgm_nodes_lookup["u_degree"][42] == pytest.approx(114.591559026)
 
 
 @pytest.mark.parametrize(
@@ -1079,6 +1239,34 @@ def test_get_pgm_ids__key_error():
         converter._get_pgm_ids(pp_table="bus")
 
 
+def test_get_pp_ids():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.idx_lookup = {
+        ("bus", None): pd.Series([0, 1, 2], index=[10, 11, 12]),
+        ("load", "const_current"): pd.Series([3, 4], index=[13, 14]),
+    }
+
+    # Act
+    bus_ids = converter._get_pp_ids(pp_table="bus", pgm_idx=pd.Series([12, 11]))
+    load_ids = converter._get_pp_ids(pp_table="load", name="const_current", pgm_idx=pd.Series([13]))
+    all_bus_ids = converter._get_pp_ids(pp_table="bus")
+
+    # Assert
+    pd.testing.assert_series_equal(bus_ids, pd.Series([2, 1], index=[12, 11]))
+    pd.testing.assert_series_equal(load_ids, pd.Series([3], index=[13]))
+    pd.testing.assert_series_equal(all_bus_ids, pd.Series([0, 1, 2], index=[10, 11, 12]))
+
+
+def test_get_pp_ids__key_error():
+    # Arrange
+    converter = PandaPowerConverter()
+
+    # Act / Assert
+    with pytest.raises(KeyError, match=r"index.*bus"):
+        converter._get_pp_ids(pp_table="bus")
+
+
 def test_get_tap_size():
     # Arrange
     pp_trafo = pd.DataFrame(
@@ -1440,6 +1628,86 @@ def test_lookup_id__value_error():
         converter.lookup_id(5)
 
 
+def test_pp_buses_output__accumulate_power__zero():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.idx = {"bus": pd.Series([0, 1, 2, 3], index=[101, 102, 103, 104], dtype=np.int32)}
+    pp_buses = pd.DataFrame(np.empty((4, 2), np.float64), columns=["p_mw", "q_mvar"], index=[101, 102, 103, 104])
+
+    # Act
+    converter._pp_buses_output__accumulate_power(pp_buses)
+
+    # Assert
+    assert pp_buses["p_mw"][101] == 0.0
+    assert pp_buses["p_mw"][102] == 0.0
+    assert pp_buses["p_mw"][103] == 0.0
+    assert pp_buses["p_mw"][104] == 0.0
+    assert pp_buses["q_mvar"][101] == 0.0
+    assert pp_buses["q_mvar"][102] == 0.0
+    assert pp_buses["q_mvar"][103] == 0.0
+    assert pp_buses["q_mvar"][104] == 0.0
+
+
+def test_pp_buses_output__accumulate_power():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.idx_lookup = {("bus", None): pd.Series([101, 102, 103, 104], index=[0, 1, 2, 3], dtype=np.int32)}
+    pp_buses = pd.DataFrame(np.empty((4, 2), np.float64), columns=["p_mw", "q_mvar"], index=[101, 102, 103, 104])
+
+    converter.pgm_input_data = {
+        "line": initialize_array("input", "line", 3),
+        "link": initialize_array("input", "link", 2),
+        "transformer": initialize_array("input", "transformer", 2),
+        "three_winding_transformer": initialize_array("input", "three_winding_transformer", 2),
+    }
+    converter.pgm_output_data = {
+        "line": initialize_array("sym_output", "line", 3),
+        "link": initialize_array("sym_output", "link", 2),
+        "transformer": initialize_array("sym_output", "transformer", 2),
+        "three_winding_transformer": initialize_array("sym_output", "three_winding_transformer", 2),
+    }
+    converter.pgm_input_data["line"]["from_node"] = [0, 1, 1]
+    converter.pgm_input_data["line"]["to_node"] = [1, 2, 3]
+    converter.pgm_input_data["link"]["from_node"] = [0, 1]
+    converter.pgm_input_data["link"]["to_node"] = [1, 2]
+    converter.pgm_input_data["transformer"]["from_node"] = [0, 1]
+    converter.pgm_input_data["transformer"]["to_node"] = [1, 2]
+    converter.pgm_input_data["three_winding_transformer"]["node_1"] = [0, 1]
+    converter.pgm_input_data["three_winding_transformer"]["node_2"] = [1, 2]
+    converter.pgm_input_data["three_winding_transformer"]["node_3"] = [2, 3]
+    converter.pgm_output_data["line"]["p_from"] = [1.0, 2.0, 4.0]
+    converter.pgm_output_data["line"]["q_from"] = [0.1, 0.2, 0.4]
+    converter.pgm_output_data["line"]["p_to"] = [-1.0, -2.0, -4.0]
+    converter.pgm_output_data["line"]["q_to"] = [-0.1, -0.2, -0.4]
+    converter.pgm_output_data["link"]["p_from"] = [10.0, 20.0]
+    converter.pgm_output_data["link"]["q_from"] = [0.01, 0.02]
+    converter.pgm_output_data["link"]["p_to"] = [-10.0, -20.0]
+    converter.pgm_output_data["link"]["q_to"] = [-0.01, -0.02]
+    converter.pgm_output_data["transformer"]["p_from"] = [100.0, 200.0]
+    converter.pgm_output_data["transformer"]["q_from"] = [0.001, 0.002]
+    converter.pgm_output_data["transformer"]["p_to"] = [-100.0, -200.0]
+    converter.pgm_output_data["transformer"]["q_to"] = [-0.001, -0.002]
+    converter.pgm_output_data["three_winding_transformer"]["p_1"] = [1000.0, 10000.0]
+    converter.pgm_output_data["three_winding_transformer"]["q_1"] = [0.0001, 0.00001]
+    converter.pgm_output_data["three_winding_transformer"]["p_2"] = [2000.0, 20000.0]
+    converter.pgm_output_data["three_winding_transformer"]["q_2"] = [0.0002, 0.00002]
+    converter.pgm_output_data["three_winding_transformer"]["p_3"] = [4000.0, 40000.0]
+    converter.pgm_output_data["three_winding_transformer"]["q_3"] = [0.0004, 0.00004]
+
+    # Act
+    converter._pp_buses_output__accumulate_power(pp_buses)
+
+    # Assert
+    assert pp_buses["p_mw"][101] * 1e6 == -1.0 - 10.0 - 100.0 - 1000.0
+    assert pp_buses["p_mw"][102] * 1e6 == -2.0 - 4.0 + 1.0 - 20.0 + 10.0 - 200.0 + 100.0 - 10000.0 - 2000.0
+    assert pp_buses["p_mw"][103] * 1e6 == 2.0 + 20.0 + 200.0 - 20000.0 - 4000.0
+    assert pp_buses["p_mw"][104] * 1e6 == 4.0 - 40000.0
+    assert pp_buses["q_mvar"][101] * 1e6 == -0.1 - 0.01 - 0.001 - 0.0001
+    assert pp_buses["q_mvar"][102] * 1e6 == -0.2 - 0.4 + 0.1 - 0.02 + 0.01 - 0.002 + 0.001 - 0.00001 - 0.0002
+    assert pp_buses["q_mvar"][103] * 1e6 == 0.2 + 0.02 + 0.002 - 0.00002 - 0.0004
+    assert pp_buses["q_mvar"][104] * 1e6 == 0.4 - 0.00004
+
+
 def test_get_pp_attr_attribute_exists():
     # Arrange
     converter = PandaPowerConverter()
@@ -1523,3 +1791,27 @@ def test_get_pp_attr_error_after_checking_std():
     # Act/Assert
     with pytest.raises(KeyError):
         converter._get_pp_attr("trafo3w", "hv_bus")
+
+
+def test_pp_loads_output():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.pgm_output_data["sym_load"] = initialize_array("sym_output", "sym_load", 6)
+    converter.pgm_output_data["sym_load"]["id"] = [0, 1, 2, 3, 4, 5]
+    converter.pgm_output_data["sym_load"]["p"] = [1e6, 2e6, 4e6, 8e6, 16e6, 32e6]
+    converter.pgm_output_data["sym_load"]["q"] = [1e4, 2e4, 4e4, 8e4, 16e4, 32e4]
+    converter.idx[("load", "const_power")] = pd.Series([2, 4], index=[101, 100])
+    converter.idx[("load", "const_current")] = pd.Series([1, 3], index=[102, 100])
+    converter.idx[("load", "const_impedance")] = pd.Series([0, 5], index=[101, 102])
+
+    expected = pd.DataFrame(
+        [[16.0 + 8.0, 0.16 + 0.08], [4.0 + 1.0, 0.04 + 0.01], [2.0 + 32.0, 0.02 + 0.32]],
+        columns=["p_mw", "q_mvar"],
+        index=[100, 101, 102],
+    )
+
+    # Act
+    converter._pp_loads_output()
+
+    # Assert
+    pd.testing.assert_frame_equal(converter.pp_output_data["res_load"], expected)

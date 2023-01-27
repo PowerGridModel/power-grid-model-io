@@ -77,6 +77,22 @@ def component_attributes(json_path: Path, data_type: str) -> Generator[Tuple[str
             yield component, attribute
 
 
+def component_attributes_df(data: Mapping[str, pd.DataFrame]) -> Generator[Tuple[str, str], None, None]:
+    """
+    Extract the component and attribute names from the DataFrames
+
+    Args:
+        data: A dictionary of pandas DataFrames
+
+    Yields: A tuple (component, attribute) for each attribute available in the json file
+
+    """
+
+    for component, df in sorted(data.items(), key=lambda x: x[0]):
+        for attribute in sorted(df.columns):
+            yield component, attribute
+
+
 def select_values(actual: SingleDataset, expected: SingleDataset, component: str, attribute: str):
     """
 
