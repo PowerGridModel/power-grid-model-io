@@ -604,6 +604,158 @@ def test_create_pgm_input_links(pp_example_simple: Tuple[PandaPowerData, float],
     assert_struct_array_equal(converter.pgm_input_data["link"], pgm_example_simple["link"])
 
 
+@pytest.mark.xfail()
+def test_output_bus():
+    pgm_output_attributes = ["id", "u_pu", "u_angle", ""]  # Left blank because this part depends on what kind of
+    # Branch the node is connected to. However, If the node_injection becomes finished then it will be easier to input
+    # a specific attribute
+    pp_output_attributes = ["index", "vm_pu", "va_degree", "p_mw", "q_mvar"]
+
+
+@pytest.mark.xfail()
+def test_output_line():
+    # for pgm attributes I did not include any attributes that are taken from nodes in node_lookup
+    # However I included some attributes that were taken from pgm_input_lines such as: from_node, to_node
+    pgm_output_attributes = [
+        "id",
+        "from_node",
+        "to_node",
+        "p_from",
+        "q_from",
+        "p_to",
+        "q_to",
+        "i_from",
+        "i_to",
+        "loading",
+    ]
+    pp_output_attributes = [
+        "index",
+        "p_from_mw",
+        "q_from_mvar",
+        "p_to_mw",
+        "q_to_mvar",
+        "pl_mw",
+        "ql_mvar",
+        "i_from_ka",
+        "i_to_ka",
+        "i_ka",
+        "vm_from_pu",
+        "vm_to_pu",
+        "va_from_degree",
+        "va_to_degree",
+        "loading_percent",
+    ]
+
+
+@pytest.mark.xfail()
+def test_output_ext_grids():
+    pgm_output_attributes = ["id", "p", "q"]
+    pp_output_attributes = ["index", "p_mw", "q_mvar"]
+
+
+@pytest.mark.xfail()
+def test_output_shunts():
+    pgm_output_attributes = ["id", "node", "p", "q"]
+    pp_output_attributes = ["index", "p_mw", "q_mvar", "vm_pu"]
+
+
+@pytest.mark.xfail()
+def test_output_sgen():
+    pgm_output_attributes = ["id", "p", "q"]
+    pp_output_attributes = ["index", "p_mw", "q_mvar"]
+
+
+@pytest.mark.xfail()
+def test_output_trafos():
+    pgm_output_attributes = [
+        "id",
+        "from_node",
+        "to_node",
+        "p_from",
+        "q_from",
+        "p_to",
+        "q_to",
+        "i_from",
+        "i_to",
+        "loading",
+    ]
+    pp_output_attributes = [
+        "index",
+        "p_hv_mw",
+        "q_hv_mvar",
+        "p_lv_mw",
+        "q_lv_mvar",
+        "pl_mw",
+        "ql_mvar",
+        "i_hv_ka",
+        "i_lv_ka",
+        "vm_hv_pu",
+        "vm_lv_pu",
+        "va_hv_degree",
+        "va_lv_degree",
+        "loading_percent",
+    ]
+
+
+@pytest.mark.xfail()
+def test_output_trafo3w():
+    pgm_output_attributes = [
+        "id",
+        "node_1",
+        "node_2",
+        "node_3",
+        "p_1",
+        "q_1",
+        "p_2",
+        "q_2",
+        "p_3",
+        "q_3",
+        "i_1",
+        "i_2",
+        "i_3",
+        "loading",
+    ]
+    pp_output_attributes = [
+        "index",
+        "p_hv_mw",
+        "q_hv_mvar",
+        "p_mv_mw",
+        "q_mv_mvar",
+        "p_lv_mw",
+        "q_lv_mvar",
+        "pl_mw",
+        "ql_mvar",
+        "i_hv_ka",
+        "i_mv_ka",
+        "i_lv_ka",
+        "vm_hv_pu",
+        "vm_mv_pu",
+        "vm_lv_pu",
+        "va_hv_degree",
+        "va_mv_degree",
+        "va_lv_degree",
+        "loading_percent",
+    ]
+
+
+@pytest.mark.xfail()
+def test_output_load():
+    pgm_output_attributes = ["id", "p", "q"]
+    pp_output_attributes = ["index", "p_mw", "q_mvar"]
+
+
+@pytest.mark.xfail()
+def test_output_asymmetric_load():
+    pgm_output_attributes = ["id", "p", "q"]
+    pp_output_attributes = ["index", "p_a_mw", "q_a_mvar", "p_b_mw", "q_b_mvar", "p_c_mw", "q_c_mvar"]
+
+
+@pytest.mark.xfail()
+def test_output_asymmetric_sgen():
+    pgm_output_attributes = ["id", "p", "q"]
+    pp_output_attributes = ["index", "p_a_mw", "q_a_mvar", "p_b_mw", "q_b_mvar", "p_c_mw", "q_c_mvar"]
+
+
 def test_get_pgm_ids():
     # Arrange
     converter = PandaPowerConverter()
