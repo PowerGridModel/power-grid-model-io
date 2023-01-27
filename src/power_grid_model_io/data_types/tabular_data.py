@@ -138,10 +138,16 @@ class TabularData:
             try:
                 table_data[field] *= multiplier
             except TypeError as ex:
-                raise TypeError(
-                    f"The column '{field}' on table '{table}' (or the multiplier) does not seem to be numerical "
-                    f"while trying to apply a multiplier ({multiplier}) for unit '{unit}': {ex}"
-                ) from ex
+                self._log.error(
+                    "Failed to apply unit conversion; the column is not numerical.",
+                    table=table,
+                    field=field,
+                    unit=unit,
+                    si_unit=si_unit,
+                    multiplier=multiplier,
+                    ex=str(ex),
+                )
+                si_unit = ""
 
             # Replace the unit with the SI unit
             table_data.columns = table_data.columns.values

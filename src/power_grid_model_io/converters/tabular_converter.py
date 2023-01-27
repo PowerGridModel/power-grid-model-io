@@ -4,7 +4,7 @@
 """
 Tabular Data Converter: Load data from multiple tables and use a mapping file to convert the data to PGM
 """
-
+import inspect
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Union, cast
 
@@ -285,7 +285,11 @@ class TabularConverter(BaseConverter[TabularData]):
 
         extra = self._parse_col_def(data=data, table=table, col_def=col_def, extra_info=None).to_dict(orient="records")
         for i, xtr in zip(uuids, extra):
-            xtr = {k: v for k, v in xtr.items() if not isinstance(v, float) or not np.isnan(v)}
+            xtr = {
+                k[0] if isinstance(k, tuple) else k: v
+                for k, v in xtr.items()
+                if not isinstance(v, float) or not np.isnan(v)
+            }
             if xtr:
                 if i in extra_info:
                     extra_info[i].update(xtr)
@@ -571,10 +575,21 @@ class TabularConverter(BaseConverter[TabularData]):
         except AttributeError as ex:
             raise ValueError(f"Pandas DataFrame has no function '{function}'") from ex
 
-        try:
-            return pd.DataFrame(fn_ptr(axis=1))
-        except TypeError as ex:
-            raise ValueError(f"Invalid pandas function DataFrame.{function}") from ex
+        # If the function expects an 'other' argument, apply the function per column (e.g. divide)
+        empty = inspect.Parameter.empty
+        fn_sig = inspect.signature(fn_ptr)
+        if "other" in fn_sig.parameters and fn_sig.parameters["other"].default == empty:
+            n_columns = col_data.shape[1] if col_data.ndim > 1 else 1
+            result = col_data.iloc[:, 0]
+            for i in range(1, n_columns):
+                result = getattr(result, function)(other=col_data.iloc[:, i])
+            return pd.DataFrame(result)
+
+        # If the function expects any argument
+        if any(param.default == empty for name, param in fn_sig.parameters.items() if name != "kwargs"):
+            raise ValueError(f"Invalid pandas function DataFrame.{function}")
+
+        return pd.DataFrame(fn_ptr(axis=1))
 
     def _parse_function(self, data: TabularData, table: str, function: str, col_def: Dict[str, Any]) -> pd.DataFrame:
         """Import the function by name and apply it to each row.
