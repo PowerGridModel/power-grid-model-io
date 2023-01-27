@@ -40,6 +40,16 @@ def load_validation_data() -> PandaPowerData:
     return net
 
 
+@lru_cache
+def load_validation_data_3ph() -> PandaPowerData:
+    """
+    Load the validation data from the pp file
+    """
+    net = pp_net()
+    pp.runpp(net, calculate_voltage_angles=True, tolerance_mva=1e-10, trafo_model="pi", trafo_loading="power")
+    return net
+
+
 @pytest.fixture
 def output_data() -> Tuple[PandaPowerData, PandaPowerData]:
     """

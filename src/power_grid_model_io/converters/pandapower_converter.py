@@ -312,9 +312,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sources["rx_ratio"] = self._get_pp_attr("ext_grid", "rx_max", np.nan)
         pgm_sources["u_ref_angle"] = self._get_pp_attr("ext_grid", "va_degree", 0.0) * (np.pi / 180)
         pgm_sources["sk"] = self._get_pp_attr("ext_grid", "s_sc_max_mva", np.nan) * 1e6
-        if (self._get_pp_attr("ext_grid", "r0x0_max", np.nan) != 1.0).all():  # == rx_max
-            raise NotImplementedError("r0x0_max is not equal to 1, this feature is not supported.")
-        # warning if r0x0_max is not equal to 1, then this feature is not supported
+        if self._get_pp_attr("ext_grid", "rx_max", np.nan) != self._get_pp_attr("ext_grid", "r0x0_ratio", np.nan):
+            raise NotImplementedError("r0x0_max is not equal to rx_max, this feature is not supported.")
 
         assert "source" not in self.pgm_input_data
         self.pgm_input_data["source"] = pgm_sources
@@ -342,7 +341,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_shunts["status"] = self._get_pp_attr("shunt", "in_service", 1)
         pgm_shunts["g1"] = self._get_pp_attr("shunt", "p_mw") * step / vn_kv_2
         pgm_shunts["b1"] = -(self._get_pp_attr("shunt", "q_mvar") * step) / vn_kv_2
-        pgm_shunts["g0"] = 0  # Discuss shunt power
+        pgm_shunts["g0"] = 0
         pgm_shunts["b0"] = 0
 
         assert "shunt" not in self.pgm_input_data
@@ -430,6 +429,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_loads.empty:
             return
 
+        if self._get_pp_attr("load", "type").any() == "delta":
+            raise NotImplementedError("Delta loads are not implemented, only wye loads are supported.")
+
         scaling = self._get_pp_attr("load", "scaling", 1.0)
         in_service = self._get_pp_attr("load", "in_service", True)
         p_mw = self._get_pp_attr("load", "p_mw", 0.0)
@@ -466,7 +468,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_loads["q_specified"][-n_loads:] = const_i_multiplier * q_mvar
 
         assert "sym_load" not in self.pgm_input_data
-        # Discuss PP's type attribute (delta/star) notimplemented error
         self.pgm_input_data["sym_load"] = pgm_sym_loads
 
     def _create_pgm_input_asym_loads(self):  # pragma: no cover
@@ -481,6 +482,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         if pp_asym_loads.empty:
             return
+
+        if self._get_pp_attr("asymmetric_load", "type").any() == "delta":
+            raise NotImplementedError("Delta loads are not implemented, only wye loads are supported.")
 
         scaling = self._get_pp_attr("asymmetric_load", "scaling")
         multiplier = 1e6 * scaling
@@ -508,7 +512,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_asym_loads["type"] = LoadGenType.const_power
 
         assert "asym_load" not in self.pgm_input_data
-        # Discuss PP's type attribute (delta/star)
         self.pgm_input_data["asym_load"] = pgm_asym_loads
 
     def _create_pgm_input_transformers(self):
@@ -1224,35 +1227,36 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         node_u_pu = pgm_nodes["u_pu"]
         node_u_angle = pgm_nodes["u_angle"]
+        node_u_degrees = self.pgm_nodes_lookup["u_degree"]
 
-        pp_output_buses_3ph["vm_a_pu"] = node_u_pu[0].values
-        pp_output_buses_3ph["va_a_degree"] = self.pgm_nodes_lookup["u_degree"][0].values
-        pp_output_buses_3ph["vm_b_pu"] = node_u_pu[1].values
-        pp_output_buses_3ph["va_b_degree"] = self.pgm_nodes_lookup["u_degree"][1].values
-        pp_output_buses_3ph["vm_c_pu"] = node_u_pu[2].values
-        pp_output_buses_3ph["va_c_degree"] = self.pgm_nodes_lookup["u_degree"][2].values
-        u_pu_and_angle = np.array([node_u_pu[0].values * np.exp(1j * node_u_angle[0])])
+        pp_output_buses_3ph["vm_a_pu"] = node_u_pu[0]
+        pp_output_buses_3ph["va_a_degree"] = node_u_degrees[0].values
+        pp_output_buses_3ph["vm_b_pu"] = node_u_pu[1]
+        pp_output_buses_3ph["va_b_degree"] = node_u_degrees[1].values
+        pp_output_buses_3ph["vm_c_pu"] = node_u_pu[2]
+        pp_output_buses_3ph["va_c_degree"] = node_u_degrees[2].values
+        u_pu_and_angle = np.array([node_u_pu[0] * np.exp(1j * node_u_angle[0])])
         degrees_120_to_radians = 120 * np.pi / 180
-        degrees_240_to_radians = 240 * np.pi / 180
         pp_output_buses_3ph["unbalance_percent"] = (
-            (
+            np.abs(
                 u_pu_and_angle
-                + np.array([node_u_pu[1].values * np.exp(1j * node_u_angle[1])])
-                + np.array([node_u_pu[2].values * np.exp(1j * node_u_angle[2])])
+                + np.array([node_u_pu[1] * np.exp(1j * node_u_angle[1])])
+                + np.array([node_u_pu[2] * np.exp(1j * node_u_angle[2])])
             )
             / (
                 3
-                * (
+                * np.abs(
                     u_pu_and_angle
-                    + np.array([node_u_pu[1].values * np.exp(1j * (node_u_angle[1] + degrees_120_to_radians))])
-                    + np.array([node_u_pu[2].values * np.exp(1j * (node_u_angle[2] + degrees_240_to_radians))])
+                    + np.array([node_u_pu[1] * np.exp(1j * (node_u_angle[1] + degrees_120_to_radians))])
+                    + np.array([node_u_pu[2] * np.exp(1j * (node_u_angle[2] - degrees_120_to_radians))])
                 )
             )
             * 100
         )
 
         # p_to, p_from, q_to and q_from connected to the bus have to be summed up
-        # self._pp_buses_output_3ph_accumulate_power(pp_output_buses_3ph)
+        #  self._pp_buses_output_3ph_accumulate_power(pp_output_buses_3ph)
+        # TODO: construct a function that could accumulate power of busses for 3ph calculations
 
         self.pp_output_data["res_bus_3ph"] = pp_output_buses_3ph
 
@@ -1302,7 +1306,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 "i_n_to_ka",
                 "i_ka",
                 "loading_percent",
-            ],  #  Jupyter notebook showed loading_a_percent, loading_b_percent... no such thing in the documentation
+            ],
             index=self._get_pp_ids("line", pgm_output_lines["id"]),
         )
 
@@ -1328,9 +1332,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_lines_3ph["i_b_from_ka"] = pgm_output_lines["i_from"][1] * 1e-3
         pp_output_lines_3ph["i_c_from_ka"] = pgm_output_lines["i_from"][2] * 1e-3
         i_n_from_ka = 0
+        u_pu_from_node_lookup = self.pgm_nodes_lookup["u_pu"]
         for i in range(3):
             i_n_from_ka += np.array([pgm_output_lines["p_from"][i] + 1j * pgm_output_lines["q_from"][i]]) / np.array(
-                [self.pgm_nodes_lookup["u_pu"][i].values * np.exp(1j * pgm_output_nodes["u_angle"][i])]
+                [u_pu_from_node_lookup[i].values * np.exp(1j * pgm_output_nodes["u_angle"][i])]
             )
         pp_output_lines_3ph["i_n_from_ka"] = np.abs(i_n_from_ka)
         pp_output_lines_3ph["i_a_to_ka"] = pgm_output_lines["i_to"][0] * 1e-3
@@ -1339,19 +1344,19 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         i_n_to_ka = 0
         for i in range(3):
             i_n_to_ka += np.array([pgm_output_lines["p_to"][i] + 1j * pgm_output_lines["q_to"][i]]) / np.array(
-                [self.pgm_nodes_lookup["u_pu"][i].values * np.exp(1j * pgm_output_nodes["u_angle"][i])]
+                [u_pu_from_node_lookup[i].values * np.exp(1j * pgm_output_nodes["u_angle"][i])]
             )
         pp_output_lines_3ph["i_n_to_ka"] = np.abs(i_n_to_ka)
         pp_output_lines_3ph["i_ka"] = np.maximum(pgm_output_lines["i_from"], pgm_output_lines["i_to"]) * 1e-3
         pp_output_lines_3ph["loading_a_percent"] = (
             np.maximum(pp_output_lines_3ph["i_a_from_ka"], pp_output_lines_3ph["i_a_to_ka"]) / pgm_input_lines["i_n"]
-        )  # max(i_a_from_ka,i_a_to_ka)/i_n(input data)
+        )
         pp_output_lines_3ph["loading_b_percent"] = (
             np.maximum(pp_output_lines_3ph["i_b_from_ka"], pp_output_lines_3ph["i_b_to_ka"]) / pgm_input_lines["i_n"]
-        )  # max(i_b_from_ka,i_b_to_ka)/i_n(input data)
+        )
         pp_output_lines_3ph["loading_b_percent"] = (
             np.maximum(pp_output_lines_3ph["i_c_from_ka"], pp_output_lines_3ph["i_c_to_ka"]) / pgm_input_lines["i_n"]
-        )  # max(i_c_from_ka,i_c_to_ka)/i_n(input data)
+        )
         pp_output_lines_3ph["loading_percent"] = pgm_output_lines["loading"] * 1e2
 
         self.pp_output_data["res_line_3ph"] = pp_output_lines_3ph
@@ -1379,7 +1384,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_ext_grids_3ph["q_b_mvar"] = pgm_output_sources["q"][1] * 1e-6
         pp_output_ext_grids_3ph["p_c_mw"] = pgm_output_sources["p"][2] * 1e-6
         pp_output_ext_grids_3ph["q_c_mvar"] = pgm_output_sources["q"][2] * 1e-6
-        #  Jupyter notebook and the documentation match
+
         self.pp_output_data["res_ext_grid_3ph"] = pp_output_ext_grids_3ph
 
     def _pp_sgens_output_3ph(self):  # pragma: no cover
@@ -1391,22 +1396,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Static Generator component
         """
         # TODO: create unit tests for the function
-        assert "sgen" not in self.pp_output_data
-        assert "sym_gen" in self.pgm_input_data
-
-        pgm_output_sym_gens = self.pgm_output_data["sym_gen"]
-
-        pp_output_sgens_3ph = pd.DataFrame(
-            columns=["p_mw", "q_mvar"], index=self._get_pp_ids("sgen", pgm_output_sym_gens["id"])
-        )
-        pp_output_sgens_3ph["p_mw"] = (
-            pgm_output_sym_gens["p"][0] + pgm_output_sym_gens["p"][1] + pgm_output_sym_gens["p"][2]
-        ) * 1e-6
-        pp_output_sgens_3ph["q_mvar"] = (
-            pgm_output_sym_gens["q"][0] + pgm_output_sym_gens["q"][1] + pgm_output_sym_gens["q"][2]
-        ) * 1e-6
-
-        self.pp_output_data["res_sgen_3ph"] = pp_output_sgens_3ph
+        if "res_sgen" in self.pp_output_data:
+            self.pp_output_data["res_sgen_3ph"] = self.pp_output_data["res_sgen"]
+        else:
+            self._pp_sgens_output()
+            self.pp_output_data["res_sgen_3ph"] = self.pp_output_data.pop("res_sgen")
+            del self.pp_output_data["res_sgen"]
 
     def _pp_trafos_output_3ph(self):  # pragma: no cover
         """
@@ -1499,33 +1494,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the Load component
         """
-
-        # Create a DataFrame wih all the pgm output loads and index it in the pgm id
-        pgm_output_loads = self.pgm_output_data["sym_load"]
-        all_loads = pd.DataFrame(pgm_output_loads, index=pgm_output_loads["id"])
-
-        # Create an empty DataFrame with two columns p and q to accumulate all the loads per pp id
-        accumulated_loads = pd.DataFrame(columns=["p", "q"], dtype=np.float64)
-
-        # Loop over the load types;
-        #   find the pgm ids
-        #   select those loads
-        #   replace the index by the pp ids
-        #   add the p and q columns to the accumulator DataFrame
-        for load_type in ["const_power", "const_impedance", "const_current"]:
-            pgm_load_ids = self._get_pgm_ids("load", name=load_type)
-            selected_loads = all_loads.loc[pgm_load_ids]
-            selected_loads.index = pgm_load_ids.index  # The index contains the pp ids
-            accumulated_loads = accumulated_loads.add(selected_loads[["p", "q"]], fill_value=0.0)
-
-        # Multiply the values and rename the columns to match pandapower
-        accumulated_loads *= 1e-6
-        accumulated_loads.columns = ["p_mw", "q_mvar"]
-
-        # Store the results, while assuring that we are not overwriting any data
-        assert "res_load" not in self.pp_output_data
-        #  Sum again
-        self.pp_output_data["res_load_3ph"] = accumulated_loads
+        if "res_load" in self.pp_output_data:
+            self.pp_output_data["res_load_3ph"] = self.pp_output_data["res_load"]
+        else:
+            self._pp_loads_output()
+            self.pp_output_data["res_load_3ph"] = self.pp_output_data.pop("res_load")
+            del self.pp_output_data["res_load"]
 
     def _pp_asym_loads_output_3ph(self):  # pragma: no cover
         """
