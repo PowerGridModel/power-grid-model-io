@@ -86,3 +86,10 @@ def is_greater_than(left_side, right_side) -> bool:
     Return true if the first argument is greater than the second
     """
     return left_side > right_side
+
+
+def zeros_to_nan(value: float) -> float:
+    """
+    Return the value, or a default value if no value was supplied.
+    """
+    return float("nan") if not has_value(value) or value == 0.0 else value

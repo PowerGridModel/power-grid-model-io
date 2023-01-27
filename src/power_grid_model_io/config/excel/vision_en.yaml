@@ -33,8 +33,12 @@ grid:
       x1: X
       c1: C
       tan1: 0
-      r0: R0
-      x0: X0
+      r0:
+        power_grid_model_io.functions.zeros_to_nan:
+          value: R0
+      x0:
+        power_grid_model_io.functions.zeros_to_nan:
+          value: X0
       c0: C0
       tan0: 0
       i_n: Inom'
@@ -62,8 +66,12 @@ grid:
       x1: X
       c1: C
       tan1: 0
-      r0: R0
-      x0: X0
+      r0:
+        power_grid_model_io.functions.zeros_to_nan:
+          value: R0
+      x0:
+        power_grid_model_io.functions.zeros_to_nan:
+          value: X0
       c0: C0
       tan0: 0
       i_n: Inom'
@@ -111,8 +119,12 @@ grid:
       x1: X
       c1: 0
       tan1: 0
-      r0: R0
-      x0: X0
+      r0:
+        power_grid_model_io.functions.zeros_to_nan:
+          value: R0
+      x0:
+        power_grid_model_io.functions.zeros_to_nan:
+          value: X0
       c0: 0
       tan0: 0
       i_n: Inom
@@ -139,7 +151,14 @@ grid:
       u1: Unom1
       u2: Unom2
       sn: Snom
-      uk: uk
+      uk:
+        max:
+          - divide:
+              - Pk
+              - Snom
+          - power_grid_model_io.functions.value_or_default:
+              value: uk
+              default: 0.001
       pk: Pk
       i0:
         power_grid_model_io.functions.phase_to_phase.relative_no_load_current:
@@ -165,8 +184,22 @@ grid:
       tap_max: Tap max
       tap_nom: Tap nom
       tap_size: Tap size
-      uk_min: uk
-      uk_max: uk
+      uk_min:
+        max:
+          - divide:
+              - Pk
+              - Snom
+          - power_grid_model_io.functions.value_or_default:
+              value: uk
+              default: 0.001
+      uk_max:
+        max:
+          - divide:
+              - Pk
+              - Snom
+          - power_grid_model_io.functions.value_or_default:
+              value: uk
+              default: 0.001
       pk_min: Pk
       pk_max: Pk
       r_grounding_from: Re1
@@ -196,7 +229,14 @@ grid:
       u1: Unom1
       u2: Unom2
       sn: Snom
-      uk: uknom
+      uk:
+        max:
+          - divide:
+              - Pknom
+              - Snom
+          - power_grid_model_io.functions.value_or_default:
+              value: uknom
+              default: 0.001
       pk: Pknom
       i0:
         power_grid_model_io.functions.phase_to_phase.relative_no_load_current:
@@ -214,8 +254,22 @@ grid:
       tap_max: Tap max
       tap_nom: Tap nom
       tap_size: Tap size
-      uk_min: ukmin
-      uk_max: ukmax
+      uk_min:
+        max:
+          - divide:
+              - Pkmin
+              - Snom
+          - power_grid_model_io.functions.value_or_default:
+              value: ukmin
+              default: 0.001
+      uk_max:
+        max:
+          - divide:
+              - Pkmax
+              - Snom
+          - power_grid_model_io.functions.value_or_default:
+              value: ukmax
+              default: 0.001
       pk_min: Pkmin
       pk_max: Pkmax
       r_grounding_from: 0
@@ -249,7 +303,14 @@ grid:
       u1: Unom1
       u2: Unom2
       sn: Snom
-      uk: uk
+      uk:
+        max:
+          - divide:
+              - Pk
+              - Snom
+          - power_grid_model_io.functions.value_or_default:
+              value: uk
+              default: 0.001
       pk: Pk
       p0: Po
       i0:
@@ -273,8 +334,22 @@ grid:
       tap_max: Tap max
       tap_nom: Tap nom
       tap_size: Tap size
-      uk_min: uk
-      uk_max: uk
+      uk_min:
+        max:
+          - divide:
+              - Pk
+              - Snom
+          - power_grid_model_io.functions.value_or_default:
+              value: uk
+              default: 0.001
+      uk_max:
+        max:
+          - divide:
+              - Pk
+              - Snom
+          - power_grid_model_io.functions.value_or_default:
+              value: uk
+              default: 0.001
       pk_min: Pk
       pk_max: Pk
       r_grounding_from: 0
@@ -571,13 +646,14 @@ grid:
       status: Switch state
       type: 0
       p_specified:
-        - power_grid_model_io.functions.phase_to_phase.pvs_power_adjustment:
-          - multiply:
+        power_grid_model_io.functions.phase_to_phase.pvs_power_adjustment:
+          p:
+            multiply:
               - min:
-                  - Pnom
-                  - Inverter.Pnom | Inverter.Snom
+                - Pnom
+                - Inverter.Pnom | Inverter.Snom
               - Scaling
-          - Inverter.efficiency type
+          efficiency_type: Inverter.efficiency type
       q_specified:
         multiply:
           - power_grid_model_io.functions.phase_to_phase.reactive_power:

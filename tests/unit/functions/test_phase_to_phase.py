@@ -11,10 +11,10 @@ from power_grid_model_io.functions.phase_to_phase import (
     get_winding_from,
     get_winding_to,
     power_wind_speed,
+    pvs_power_adjustment,
     reactive_power,
     reactive_power_to_susceptance,
     relative_no_load_current,
-    pvs_power_adjustmnet,
 )
 
 
@@ -212,5 +212,5 @@ def test_reactive_power_to_susceptance(q_var: float, u_nom: float, expected: flo
     ],
 )
 def test_pvs_power_adjustment(p: float, efficiency_type: str, expected: float):
-    actual = pvs_power_adjustmnet(p, efficiency_type)
+    actual = pvs_power_adjustment(p, efficiency_type)
     assert actual == approx(expected) or (np.isnan(actual) and np.isnan(expected))

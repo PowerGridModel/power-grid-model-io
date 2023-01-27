@@ -11,7 +11,7 @@ from typing import Tuple
 from power_grid_model import WindingType
 
 from power_grid_model_io.functions import get_winding
-from power_grid_model_io.utils.regex import TRAFO_CONNECTION_RE, PVS_EFFICIENCY_TYPE_RE
+from power_grid_model_io.utils.regex import PVS_EFFICIENCY_TYPE_RE, TRAFO_CONNECTION_RE
 
 
 def relative_no_load_current(i_0: float, p_0: float, s_nom: float, u_nom: float) -> float:
@@ -117,7 +117,7 @@ def _split_connection_string(conn_str: str) -> Tuple[str, str, int]:
     return match.group(1), match.group(2), int(match.group(3))
 
 
-def pvs_power_adjustmnet(p: float, efficiency_type: str) -> float:
+def pvs_power_adjustment(p: float, efficiency_type: str) -> float:
     """
     Adjust power of PV for the default efficiency type of 97% or 95%. Defaults to 100 % for other custom types
     """
