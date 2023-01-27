@@ -381,7 +381,6 @@ def test_create_pgm_input_sym_loads(mock_init_array: MagicMock, two_pp_objs, con
     # Assert
 
     # administration:
-    # converter._generate_ids.assert_called_("load", two_pp_objs.index)
 
     # initialization
     mock_init_array.assert_called_once_with(data_type="input", component_type="sym_load", shape=3 * 2)
@@ -915,11 +914,10 @@ def test_create_pgm_input_links(mock_init_array: MagicMock, converter):
     mock_init_array.assert_called_once_with(data_type="input", component_type="link", shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call("switch", "bus")
-    converter._get_pp_attr.assert_any_call("switch", "et")
-    converter._get_pp_attr.assert_any_call("switch", "element")
-    converter._get_pp_attr.assert_any_call("switch", "closed")
-    assert len(converter._get_pp_attr.call_args_list) == 4
+    converter._get_pp_attr.assert_any_call("switch_b2b", "bus")
+    converter._get_pp_attr.assert_any_call("switch_b2b", "element")
+    converter._get_pp_attr.assert_any_call("switch_b2b", "closed", True)
+    assert len(converter._get_pp_attr.call_args_list) == 3
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
@@ -928,10 +926,10 @@ def test_create_pgm_input_links(mock_init_array: MagicMock, converter):
     pgm.assert_any_call("to_node", ANY)
     pgm.assert_any_call("from_status", ANY)
     pgm.assert_any_call("to_node", ANY)
-    assert len(pgm.call_args_list) == 0
+    assert len(pgm.call_args_list) == 5
 
     # result
-    assert converter.pgm_input_data[...] == mock_init_array.return_value
+    assert converter.pgm_input_data["link"] == mock_init_array.return_value
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -964,6 +962,12 @@ def test_create_pgm_input_impedance(mock_init_array: MagicMock, two_pp_objs, con
 def test_create_pgm_input_wards(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
     converter.pp_input_data["ward"] = two_pp_objs
+    pgm_attr = ["id", "node", "status", "p_specified", "q_specified", "type"]
+    pgm = {attr: MagicMock() for attr in pgm_attr}
+    mock_init_array.return_value = pgm
+    slices = [slice(None, 2), slice(-2, None)]
+    assert slices[0].indices(2 * 2) == (0, 2, 1)
+    assert slices[1].indices(2 * 2) == (2, 4, 1)
 
     # Act
     converter._create_pgm_input_wards()
@@ -971,10 +975,9 @@ def test_create_pgm_input_wards(mock_init_array: MagicMock, two_pp_objs, convert
     # Assert
 
     # administration:
-    converter._generate_ids.assert_called_once_with("load", two_pp_objs.index)
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type="sym_load", shape=4)
+    mock_init_array.assert_called_once_with(data_type="input", component_type="sym_load", shape=2 * 2)
 
     # retrieval:
     converter._get_pp_attr.assert_any_call("ward", "bus")
@@ -982,21 +985,17 @@ def test_create_pgm_input_wards(mock_init_array: MagicMock, two_pp_objs, convert
     converter._get_pp_attr.assert_any_call("ward", "qs_mvar")
     converter._get_pp_attr.assert_any_call("ward", "pz_mw")
     converter._get_pp_attr.assert_any_call("ward", "qz_mvar")
-    converter._get_pp_attr.assert_any_call("ward", "in_service")
+    converter._get_pp_attr.assert_any_call("ward", "in_service", True)
     assert len(converter._get_pp_attr.call_args_list) == 6
 
     # assignment:
-    pgm: MagicMock = mock_init_array.return_value.__setitem__
-    pgm.assert_any_call("id", ANY)
-    pgm.assert_any_call("node", ANY)
-    pgm.assert_any_call("status", ANY)
-    pgm.assert_any_call("p_specified", ANY)
-    pgm.assert_any_call("q_specified", ANY)
-    pgm.assert_any_call("type", ANY)
-    assert len(pgm.call_args_list) == 6
+    for attr in pgm_attr:
+        for s in slices:
+            pgm[attr].__setitem__.assert_any_call(s, ANY)
+        assert len(pgm[attr].__setitem__.call_args_list) == len(slices)
 
     # result
-    assert converter.pgm_input_data["sym_load"] == mock_init_array.return_value
+    assert converter.pgm_input_data["sym_load"] == pgm
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -1023,7 +1022,7 @@ def test_create_pgm_input_motors(mock_init_array: MagicMock, two_pp_objs, conver
     # Assert
 
     # administration:
-    converter._generate_ids.assert_called_once_with("motor", two_pp_objs.index)
+    converter._generate_ids.assert_called_once_with("motor", two_pp_objs.index, name="motor_load")
 
     # initialization
     mock_init_array.assert_called_once_with(data_type="input", component_type="sym_load", shape=2)
@@ -1033,11 +1032,10 @@ def test_create_pgm_input_motors(mock_init_array: MagicMock, two_pp_objs, conver
     converter._get_pp_attr.assert_any_call("motor", "pn_mech_mw")
     converter._get_pp_attr.assert_any_call("motor", "cos_phi")
     converter._get_pp_attr.assert_any_call("motor", "efficiency_percent")
-    converter._get_pp_attr.assert_any_call("motor", "efficiency_n_percent")
     converter._get_pp_attr.assert_any_call("motor", "loading_percent")
     converter._get_pp_attr.assert_any_call("motor", "scaling")
     converter._get_pp_attr.assert_any_call("motor", "in_service")
-    assert len(converter._get_pp_attr.call_args_list) == 8
+    assert len(converter._get_pp_attr.call_args_list) == 7
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
