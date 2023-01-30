@@ -11,12 +11,10 @@ import pandapower as pp
 import pandas as pd
 import pytest
 from power_grid_model import Branch3Side, BranchSide, LoadGenType, WindingType, initialize_array
-from power_grid_model.data_types import SingleDataset
-from power_grid_model.utils import import_json_data
 
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter
 
-from ...utils import MockDf, MockFn
+from ...utils import MockDf, MockFn, assert_struct_array_equal
 
 DATA_DIR = Path(__file__).parent.parent.parent / "data" / "pandapower"
 
