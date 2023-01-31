@@ -907,7 +907,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_line"] = pp_output_lines
 
-    def _pp_ext_grids_output(self):
+    def _pp_ext_grids_output(self):  # pragma: no cover
         """
         This function converts a power-grid-model Source output array to an External Grid Dataframe of PandaPower.
 
@@ -928,7 +928,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_ext_grid"] = pp_output_ext_grids
 
-    def _pp_shunts_output(self):
+    def _pp_shunts_output(self):  # pragma: no cover
         """
         This function converts a power-grid-model Shunt output array to a Shunt Dataframe of PandaPower.
 
