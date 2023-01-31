@@ -34,6 +34,7 @@ quickstart.md
 converters/converter.md
 converters/tabular_converter.md
 converters/vision_converter.md
+converters/pandapower_converter.md
 ```
 
 ```{toctree}
@@ -41,6 +42,7 @@ converters/vision_converter.md
 :maxdepth: 2
 examples/pgm_json_example.ipynb
 examples/vision_example.ipynb
+examples/pandapower_example.ipynb
 ```
 
 
