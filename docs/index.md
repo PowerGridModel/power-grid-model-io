@@ -45,8 +45,6 @@ examples/vision_example.ipynb
 examples/pandapower_example.ipynb
 ```
 
-
-
 ```{toctree}
 :caption: "API Documentation"
 :maxdepth: 4
