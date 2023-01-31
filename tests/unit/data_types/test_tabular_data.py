@@ -7,10 +7,13 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pandas as pd
 import pytest
+from structlog.testing import capture_logs
 
 from power_grid_model_io.data_types import TabularData
 from power_grid_model_io.mappings.unit_mapping import UnitMapping
 from power_grid_model_io.mappings.value_mapping import ValueMapping
+
+from ...utils import assert_log_exists
 
 
 @pytest.fixture()
@@ -136,7 +139,7 @@ def test_get_column__invalid_multiplier(nodes_kv: pd.DataFrame, lines: pd.DataFr
     data.set_unit_multipliers(UnitMapping({"V": {"kV": "1000x"}}))  # type: ignore
 
     # Act / Assert
-    with pytest.raises(TypeError, match=r"u_rated.+nodes.+does not seem to be numerical.+kV"):
+    with pytest.raises(TypeError, match=r"1000x.*kV.*not numerical"):
         data.get_column(table_name="nodes", column_name="u_rated")
 
 
@@ -150,8 +153,10 @@ def test_get_column__non_numerical_value(lines: pd.DataFrame):
     data.set_unit_multipliers(UnitMapping({"V": {"kV": 1e3}}))
 
     # Act / Assert
-    with pytest.raises(TypeError, match=r"u_rated.+nodes.+does not seem to be numerical.+kV"):
-        data.get_column(table_name="nodes", column_name="u_rated")
+    with capture_logs() as cap_log:
+        col_data = data.get_column(table_name="nodes", column_name="u_rated")
+    pd.testing.assert_series_equal(col_data, pd.Series(["150 kV", "10.5 kV", "0.4 kV"], name=("u_rated", "")))
+    assert_log_exists(cap_log, "error", "Failed to apply unit conversion; the column is not numerical.")
 
 
 def test_get_column__no_unit_conversion(nodes_kv: pd.DataFrame, lines: pd.DataFrame):
