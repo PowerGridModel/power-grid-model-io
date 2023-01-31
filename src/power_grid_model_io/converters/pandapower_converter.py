@@ -1194,7 +1194,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_asymmetric_sgen"] = pp_output_asym_gens
 
-    def _generate_ids(self, pp_table: str, pp_idx: pd.Index, name: Optional[str] = None) -> np.arange:
+    def _generate_ids(self, pp_table: str, pp_idx: pd.Index, name: Optional[str] = None) -> np.arange:  # pragma: no cover
         """
         Generate numerical power-grid-model IDs for a PandaPower component
 
