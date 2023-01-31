@@ -1232,6 +1232,28 @@ def test_create_pgm_input_motors__existing_loads(mock_init_array: MagicMock, two
     converter.pgm_input_data["sym_load"] = np.concatenate([pgm_sym_load, mock_init_array()])
 
 
+def test_generate_ids():
+    converter = PandaPowerConverter()
+    test_table = pd.DataFrame(
+        [[1, 2, 3], [4, 5, 6], [7, 8, 9]],
+        columns=["col1", "col2", "col3"],
+        index=[11, 12, 13],
+    )
+    converter.pp_input_data["test_table"] = test_table
+    converter.next_idx = 1
+    pgm_idx_actual = converter._generate_ids("test_table", test_table.index, name="ids_name")
+    pgm_idx_expected = np.array([1, 2, 3])
+
+    assert converter.next_idx == 4
+    pd.testing.assert_series_equal(
+        converter.idx[("test_table", "ids_name")], pd.Series(pgm_idx_expected, index=test_table.index)
+    )
+    pd.testing.assert_series_equal(
+        converter.idx_lookup[("test_table", "ids_name")], pd.Series(test_table.index, index=pgm_idx_expected)
+    )
+    np.testing.assert_array_equal(pgm_idx_actual, pgm_idx_expected)
+
+
 def test_get_pgm_ids():
     # Arrange
     converter = PandaPowerConverter()
