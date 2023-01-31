@@ -5,6 +5,7 @@
 Unit mapping helper class
 """
 
+from numbers import Number
 from typing import Dict, Optional, Set, Tuple
 
 import structlog
@@ -71,4 +72,12 @@ class UnitMapping:
         """
         Find the correct unit multiplier and the corresponding SI unit
         """
-        return (1.0, unit) if unit in self._si_units else self._mapping[unit]
+        if unit in self._si_units:
+            return 1.0, unit
+
+        multiplier, si_unit = self._mapping[unit]
+
+        if not isinstance(multiplier, Number):
+            raise TypeError(f"The multiplier ({multiplier}) for unit '{unit}' is not numerical.")
+
+        return multiplier, si_unit
