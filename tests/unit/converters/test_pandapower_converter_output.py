@@ -2,11 +2,13 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+from typing import Callable
+from unittest.mock import ANY, MagicMock, patch
+
 import numpy as np
 import pandas as pd
-from power_grid_model import initialize_array
 import pytest
-from unittest.mock import MagicMock
+from power_grid_model import initialize_array
 
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter
 
@@ -14,6 +16,8 @@ from power_grid_model_io.converters.pandapower_converter import PandaPowerConver
 @pytest.fixture
 def converter() -> PandaPowerConverter:
     converter = PandaPowerConverter()
+    converter._get_pp_ids = MagicMock()  # type: ignore
+    converter.pp_output_data = MagicMock()
     return converter
 
 
@@ -34,6 +38,32 @@ def test_create_output_data():
     converter._pp_trafos_output.assert_called_once_with()
     converter._pp_sgens_output.assert_called_once_with()
     converter._pp_trafos3w_output.assert_called_once_with()
+
+
+@pytest.mark.parametrize(
+    ("create_fn", "table"),
+    [
+        (PandaPowerConverter._pp_ext_grids_output, "source"),
+        # TODO: Add the rest of the pp components and functions
+    ],
+)
+def test_create_pp_output_object__empty(create_fn: Callable[[PandaPowerConverter], None], table: str):
+    # Arrange: No table
+    converter = PandaPowerConverter()
+
+    # Act / Assert
+    with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_df:
+        create_fn(converter)
+        mock_df.assert_not_called()
+
+    # Arrange: Empty table
+    converter.pgm_output_data[table] = np.array([])  # type: ignore
+
+    # Act / Assert
+    with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_df:
+        create_fn(converter)
+        mock_df.assert_not_called()
+
 
 def test_output_bus():
     pgm_output_attributes = ["id", "u_pu", "u_angle", ""]  # Left blank because this part depends on what kind of
@@ -76,9 +106,36 @@ def test_output_line():
     ]
 
 
-def test_output_ext_grids():
-    pgm_output_attributes = ["id", "p", "q"]
-    pp_output_attributes = ["index", "p_mw", "q_mvar"]
+def test_output_ext_grids(converter):
+
+    # TODO: Do we really expect "node", "index" and "vm_pu"? (Bram)
+    pgm_output_attributes = ["id", "node", "p", "q"]
+    pp_output_attributes = ["index", "p_mw", "q_mvar", "vm_pu"]
+
+    # Arrange
+    mock_pgm_array = MagicMock()
+    converter.pgm_output_data["source"] = mock_pgm_array
+
+    with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
+        # Act
+        converter._pp_ext_grids_output()
+
+        # Assert
+
+        # initialization
+        converter._get_pp_ids.assert_called_once_with("ext_grid", mock_pgm_array["X"])
+
+        # retrieval
+        mock_pgm_array.__getitem__.assert_any_call("id")
+        mock_pgm_array.__getitem__.assert_any_call("p")
+        mock_pgm_array.__getitem__.assert_any_call("q")
+
+        # assignment
+        mock_pp_df.return_value.__setitem__.assert_any_call("p_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("q_mvar", ANY)
+
+        # result
+        converter.pp_output_data.__setitem__.assert_called_once_with("res_ext_grid", mock_pp_df.return_value)
 
 
 def test_output_shunts():

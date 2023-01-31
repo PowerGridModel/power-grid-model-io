@@ -914,9 +914,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the External Grid component
         """
-        # TODO: create unit tests for the function
-        assert "ext_grid" not in self.pp_output_data
-        assert "source" in self.pgm_input_data
+        # assert "ext_grid" not in self.pp_output_data # TODO: This should be res_ext_grid (Bram)
+        # assert "source" in self.pgm_input_data  # TODO: Why is this necessary? (Bram)
+
+        if "source" not in self.pgm_output_data or self.pgm_output_data["source"].size == 0:
+            return
 
         pgm_output_sources = self.pgm_output_data["source"]
 
