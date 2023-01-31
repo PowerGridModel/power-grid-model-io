@@ -5,9 +5,35 @@
 import numpy as np
 import pandas as pd
 from power_grid_model import initialize_array
+import pytest
+from unittest.mock import MagicMock
 
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter
 
+
+@pytest.fixture
+def converter() -> PandaPowerConverter:
+    converter = PandaPowerConverter()
+    return converter
+
+
+def test_create_output_data():
+    # Arrange
+    converter = MagicMock()
+
+    # Act
+    PandaPowerConverter._create_output_data(self=converter)  # type: ignore
+
+    # Assert
+    assert len(converter.method_calls) == 8
+    converter._pp_buses_output.assert_called_once_with()
+    converter._pp_lines_output.assert_called_once_with()
+    converter._pp_ext_grids_output.assert_called_once_with()
+    converter._pp_loads_output.assert_called_once_with()
+    converter._pp_shunts_output.assert_called_once_with()
+    converter._pp_trafos_output.assert_called_once_with()
+    converter._pp_sgens_output.assert_called_once_with()
+    converter._pp_trafos3w_output.assert_called_once_with()
 
 def test_output_bus():
     pgm_output_attributes = ["id", "u_pu", "u_angle", ""]  # Left blank because this part depends on what kind of
