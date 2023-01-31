@@ -17,6 +17,19 @@ So we may observe a variation in power inflow/outflow result (ie. P,Q and S) due
 When we make conversion to PGM, the input data attributes of PGM for loads like `p_specified` and `q_specified` are modified as per simultaneity. The resulting loading then takes simultaneity into account. 
 **Hence, the loading of such elements may not correspond to the load rate obtained in vision**
 
+## Transformer load modelling
+
+power-grid-model-io converts the transformer load into a individual transformer and a load for usage in power-grid-model. 
+In vision, the modelling of a transformer load seems to be different from an individual transformer and load.
+There is a minor difference in both in the reactive power consumed/generated. 
+This can correspond to a minor voltage deviation too in the results.
+
+```{tip}
+It is recommended to split the transformer load into a individual components in vision beforehand to avoid this issue.
+This can be done by first selecting the transformer loads: (Start | Select | Object -> Element -> Check Transformer load, Ok)
+Then split it into individual components: (Start | Edit | Topological | Split)
+```
+
 ## Voltage angle of buses in symmetric power-flow
 
 Note that vision does not include clock angles of transformer for symmetrical calculations in the result of voltage angles. power-grid-model however does consider them so a direct comparison of angle results needs to be done with this knowledge.
