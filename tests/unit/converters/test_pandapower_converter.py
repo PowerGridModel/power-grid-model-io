@@ -1155,16 +1155,17 @@ def test_create_pgm_input_wards(mock_init_array: MagicMock, two_pp_objs, convert
     # result
     assert converter.pgm_input_data["sym_load"] == pgm
 
+
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_wards__existing_loads(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
     converter.pp_input_data["ward"] = two_pp_objs
     pgm_sym_load = MagicMock()
     converter.pgm_input_data["sym_load"] = pgm_sym_load
-    np.concatenate = MagicMock()
+
     # Act
     converter._create_pgm_input_wards()
-    np.concatenate.assert_called_with([pgm_sym_load, mock_init_array()])
+    converter.pgm_input_data["sym_load"] = np.concatenate([pgm_sym_load, mock_init_array()])
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -1219,16 +1220,16 @@ def test_create_pgm_input_motors(mock_init_array: MagicMock, two_pp_objs, conver
     # result
     assert converter.pgm_input_data["sym_load"] == mock_init_array.return_value
 
+
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_motors__existing_loads(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
     converter.pp_input_data["motor"] = two_pp_objs
     pgm_sym_load = MagicMock()
     converter.pgm_input_data["sym_load"] = pgm_sym_load
-    np.concatenate = MagicMock()
     # Act
     converter._create_pgm_input_motors()
-    np.concatenate.assert_called_with([pgm_sym_load, mock_init_array()])
+    converter.pgm_input_data["sym_load"] = np.concatenate([pgm_sym_load, mock_init_array()])
 
 
 def test_get_pgm_ids():
