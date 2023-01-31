@@ -365,7 +365,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         assert "sym_gen" not in self.pgm_input_data
         self.pgm_input_data["sym_gen"] = pgm_sym_gens
 
-    def _create_pgm_input_asym_gens(self):  # pragma: no cover
+    def _create_pgm_input_asym_gens(self):
         """
         This function converts an Asymmetric Static Generator Dataframe of PandaPower to a power-grid-model
         Asymmetrical Generator input array.
@@ -461,7 +461,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         assert "sym_load" not in self.pgm_input_data
         self.pgm_input_data["sym_load"] = pgm_sym_loads
 
-    def _create_pgm_input_asym_loads(self):  # pragma: no cover
+    def _create_pgm_input_asym_loads(self):
         """
         This function converts an asymmetric_load Dataframe of PandaPower to a power-grid-model asym_load input array.
 
@@ -671,7 +671,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         assert "link" not in self.pgm_input_data
         self.pgm_input_data["link"] = pgm_links
 
-    def _create_pgm_input_storages(self):  # pragma: no cover
+    def _create_pgm_input_storages(self):
         # TODO: create unit tests for the function
         pp_storage = self.pp_input_data["storage"]
 
@@ -680,7 +680,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         raise NotImplementedError("Storage is not implemented yet!")
 
-    def _create_pgm_input_impedances(self):  # pragma: no cover
+    def _create_pgm_input_impedances(self):
         # TODO: create unit tests for the function
         pp_impedance = self.pp_input_data["impedance"]
 
@@ -689,7 +689,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         raise NotImplementedError("Impedance is not implemented yet!")
 
-    def _create_pgm_input_wards(self):  # pragma: no cover
+    def _create_pgm_input_wards(self):
         # TODO: create unit tests for the function
         pp_wards = self.pp_input_data["ward"]
 
@@ -726,7 +726,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         else:
             self.pgm_input_data["sym_load"] = pgm_sym_loads_from_ward
 
-    def _create_pgm_input_xwards(self):  # pragma: no cover
+    def _create_pgm_input_xwards(self):
         # TODO: create unit tests for the function
         pp_xwards = self.pp_input_data["xward"]
 
@@ -735,7 +735,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         raise NotImplementedError("Extended Ward is not implemented yet!")
 
-    def _create_pgm_input_motors(self):  # pragma: no cover
+    def _create_pgm_input_motors(self):
         # TODO: create unit tests for the function
         pp_motors = self.pp_input_data["motor"]
 
@@ -907,7 +907,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_line"] = pp_output_lines
 
-    def _pp_ext_grids_output(self):  # pragma: no cover
+    def _pp_ext_grids_output(self):
         """
         This function converts a power-grid-model Source output array to an External Grid Dataframe of PandaPower.
 
@@ -928,7 +928,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_ext_grid"] = pp_output_ext_grids
 
-    def _pp_shunts_output(self):  # pragma: no cover
+    def _pp_shunts_output(self):
         """
         This function converts a power-grid-model Shunt output array to a Shunt Dataframe of PandaPower.
 
@@ -1194,7 +1194,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_asymmetric_sgen"] = pp_output_asym_gens
 
-    def _generate_ids(self, pp_table: str, pp_idx: pd.Index, name: Optional[str] = None) -> np.arange:  # pragma: no cover
+    def _generate_ids(self, pp_table: str, pp_idx: pd.Index, name: Optional[str] = None) -> np.arange:
         """
         Generate numerical power-grid-model IDs for a PandaPower component
 
