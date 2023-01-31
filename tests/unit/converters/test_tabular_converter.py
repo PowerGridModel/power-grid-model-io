@@ -731,7 +731,7 @@ def test_parse_pandas_function__invalid(mock_parse_col_def: MagicMock, converter
         converter._parse_pandas_function(data=MagicMock(), table="foo", function="bar", col_def=[])
 
     # Act / Assert
-    with pytest.raises(ValueError, match=f"Invalid pandas function DataFrame.apply"):
+    with pytest.raises(ValueError, match="Invalid pandas function DataFrame.apply"):
         converter._parse_pandas_function(data=MagicMock(), table="foo", function="apply", col_def=[])
 
 
