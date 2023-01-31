@@ -76,7 +76,7 @@ def converter() -> PandaPowerConverter:
     converter.get_switch_states = MagicMock(side_effect=get_switch_states)  # type: ignore
     converter.get_trafo_winding_types = MagicMock(side_effect=get_trafo_winding_types)  # type: ignore
     converter._get_tap_size = MagicMock(side_effect=_get_tap_size)  # type: ignore
-    converter.get_trafo_winding_types = MagicMock(side_effect=get_trafo_winding_types)  # type: ignore
+    converter.get_trafo_winding_types = MagicMock(side_effect=get_trafo_winding_types)  # type: ignore # TODO check this
     converter.get_trafo3w_switch_states = MagicMock(side_effect=get_trafo3w_switch_states)  # type: ignore
     converter.get_trafo3w_winding_types = MagicMock(side_effect=get_trafo3w_winding_types)  # type: ignore
     converter._get_transformer_tap_side = MagicMock(side_effect=_get_transformer_tap_side)  # type: ignore
@@ -1262,6 +1262,8 @@ def test_output_ext_grids():
 def test_output_shunts():
     pgm_output_attributes = ["id", "node", "p", "q"]
     pp_output_attributes = ["index", "p_mw", "q_mvar", "vm_pu"]
+
+    converter()
 
 
 @pytest.mark.xfail()
