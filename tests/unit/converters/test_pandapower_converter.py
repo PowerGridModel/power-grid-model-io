@@ -1242,7 +1242,7 @@ def test_generate_ids():
     converter.pp_input_data["test_table"] = test_table
     converter.next_idx = 1
     pgm_idx_actual = converter._generate_ids("test_table", test_table.index, name="ids_name")
-    pgm_idx_expected = np.array([1, 2, 3])
+    pgm_idx_expected = np.array([1, 2, 3], dtype=np.int32)
 
     assert converter.next_idx == 4
     pd.testing.assert_series_equal(
