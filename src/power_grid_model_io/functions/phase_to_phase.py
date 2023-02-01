@@ -12,7 +12,7 @@ import structlog
 from power_grid_model import WindingType
 
 from power_grid_model_io.functions import get_winding
-from power_grid_model_io.utils.regex import PVS_EFFICIENCY_TYPE_RE, TRAFO_CONNECTION_RE
+from power_grid_model_io.utils.regex import PVS_EFFICIENCY_TYPE_RE, TRAFO_CONNECTION_RE, TRAFO3_CONNECTION_RE
 
 _LOG = structlog.get_logger(__file__)
 
@@ -92,12 +92,52 @@ def get_winding_to(conn_str: str, neutral_grounding: bool = True) -> WindingType
     return get_winding(winding=winding_to, neutral_grounding=neutral_grounding)
 
 
+def get_winding_1(conn_str: str, neutral_grounding: bool = True) -> WindingType:
+    """
+    Get the winding type, based on a textual encoding of the conn_str
+    """
+    winding_1, _, _, _, _ = _split_connection_string_3w(conn_str)
+    return get_winding(winding=winding_1, neutral_grounding=neutral_grounding)
+
+
+def get_winding_2(conn_str: str, neutral_grounding: bool = True) -> WindingType:
+    """
+    Get the winding type, based on a textual encoding of the conn_str
+    """
+    _, winding_2, _, _, _ = _split_connection_string_3w(conn_str)
+    return get_winding(winding=winding_2, neutral_grounding=neutral_grounding)
+
+
+def get_winding_3(conn_str: str, neutral_grounding: bool = True) -> WindingType:
+    """
+    Get the winding type, based on a textual encoding of the conn_str
+    """
+    _, _, _, winding_3, _ = _split_connection_string_3w(conn_str)
+    return get_winding(winding=winding_3, neutral_grounding=neutral_grounding)
+
+
 def get_clock(conn_str: str) -> int:
     """
     Extract the clock part of the conn_str
     """
     _, _, clock = _split_connection_string(conn_str)
     return clock
+
+
+def get_clock_12(conn_str: str) -> int:
+    """
+    Extract the clock part of the conn_str
+    """
+    _, _, clock_12, _, _ = _split_connection_string_3w(conn_str)
+    return clock_12
+
+
+def get_clock_13(conn_str: str) -> int:
+    """
+    Extract the clock part of the conn_str
+    """
+    _, _, _, _, clock_13 = _split_connection_string_3w(conn_str)
+    return clock_13
 
 
 def reactive_power_to_susceptance(q: float, u_nom: float) -> float:
@@ -118,6 +158,21 @@ def _split_connection_string(conn_str: str) -> Tuple[str, str, int]:
     if not match:
         raise ValueError(f"Invalid transformer connection string: '{conn_str}'")
     return match.group(1), match.group(2), int(match.group(3))
+
+
+def _split_connection_string_3w(conn_str: str) -> Tuple[str, str, int, str, int]:
+    """
+    Helper function to split the conn_str into three parts:
+     * winding_1
+     * winding_2
+     * clock 12
+     * winding_3
+     * clock 13
+    """
+    match = TRAFO3_CONNECTION_RE.fullmatch(conn_str)
+    if not match:
+        raise ValueError(f"Invalid three winding transformer connection string: '{conn_str}'")
+    return match.group(1), match.group(2), int(match.group(3)), match.group(4), int(match.group(5))
 
 
 def pvs_power_adjustment(p: float, efficiency_type: str) -> float:

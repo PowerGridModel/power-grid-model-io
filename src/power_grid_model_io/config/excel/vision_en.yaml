@@ -666,6 +666,111 @@ grid:
       extra:
         - ID
         - Name
+
+  Three winding transformers:
+    three_winding_transformer:
+      id:
+        auto_id:
+          key:
+            - Number
+      node_1:
+        auto_id:
+          table: Nodes
+          key:
+            Number: Node1.Number
+      status_1: Switch state 1
+      node_2:
+        auto_id:
+          table: Nodes
+          key:
+            Number: Node2.Number
+      status_2: Switch state 2
+      node_3:
+        auto_id:
+          table: Nodes
+          key:
+            Number: Node3.Number
+      status_3: Switch state 3
+      u1: Unom1
+      u2: Unom2
+      u3: Unom3
+      sn_1: Snom1
+      sn_2: Snom2
+      sn_3: Snom3
+      uk_12:
+        max:
+          - divide:
+              - Pk12
+              - min:
+                  - Snom1
+                  - Snom2
+          - power_grid_model_io.functions.value_or_default:
+              value: uk12
+              default: 0.001
+      uk_13:
+        max:
+          - divide:
+              - Pk13
+              - min:
+                  - Snom1
+                  - Snom3
+          - power_grid_model_io.functions.value_or_default:
+              value: uk13
+              default: 0.001
+      uk_23:
+        max:
+          - divide:
+              - Pk23
+              - min:
+                  - Snom2
+                  - Snom3
+          - power_grid_model_io.functions.value_or_default:
+              value: uk23
+              default: 0.001
+      pk_12: Pk12
+      pk_13: Pk13
+      pk_23: Pk23
+      i0:
+        power_grid_model_io.functions.phase_to_phase.relative_no_load_current:
+          i_0: Io
+          p_0: Po
+          s_nom: Snom3
+          u_nom: Unom3
+      p0: Po
+      winding_1:
+        power_grid_model_io.functions.phase_to_phase.get_winding_1:
+          conn_str: Connection
+          neutral_grounding: N1
+      winding_2:
+        power_grid_model_io.functions.phase_to_phase.get_winding_2:
+          conn_str: Connection
+          neutral_grounding: N2
+      winding_3:
+        power_grid_model_io.functions.phase_to_phase.get_winding_2:
+          conn_str: Connection
+          neutral_grounding: N3
+      clock_12:
+        power_grid_model_io.functions.phase_to_phase.get_clock_12:
+          conn_str: Connection
+      clock_13:
+        power_grid_model_io.functions.phase_to_phase.get_clock_13:
+          conn_str: Connection
+      tap_side: Tap side a
+      tap_pos: Tap a
+      tap_min: Tap min a
+      tap_max: Tap max a
+      tap_nom: Tap nom a
+      tap_size: Tap size a
+      r_grounding_1: Re1
+      x_grounding_1: Xe1
+      r_grounding_2: Re2
+      x_grounding_2: Xe2
+      r_grounding_3: Re3
+      x_grounding_3: Xe3
+      extra:
+        - ID
+        - Name
+
 units:
   A: null
   F:
@@ -697,10 +802,22 @@ substitutions:
   ".*Switch state":
     "off": 0
     "in": 1
+  "Switch state .*":
+    "off": 0
+    "in": 1
   N1:
+    0: false
+    1: true
     none: false
     own: true
   N2:
+    0: false
+    1: true
+    none: false
+    own: true
+  N3:
+    0: false
+    1: true
     none: false
     own: true
   Behaviour:

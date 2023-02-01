@@ -26,12 +26,16 @@ def test_trafo_connection__neg():
 
 
 def test_trafo3_connection__pos():
-    assert TRAFO3_CONNECTION_RE.fullmatch("Dynyn").groups() == ("D", "yn", "yn", None)
-    assert TRAFO3_CONNECTION_RE.fullmatch("Yynd").groups() == ("Y", "yn", "d", None)
-    assert TRAFO3_CONNECTION_RE.fullmatch("Yzny").groups() == ("Y", "zn", "y", None)
-    assert TRAFO3_CONNECTION_RE.fullmatch("YNdz").groups() == ("YN", "d", "z", None)
-    assert TRAFO3_CONNECTION_RE.fullmatch("Dyy5").groups() == ("D", "y", "y", "5")
-    assert TRAFO3_CONNECTION_RE.fullmatch("Dyd11").groups() == ("D", "y", "d", "11")
+    assert TRAFO3_CONNECTION_RE.fullmatch("Dynyn").groups() == ("D", "yn", None, "yn", None)
+    assert TRAFO3_CONNECTION_RE.fullmatch("Yynd").groups() == ("Y", "yn", None, "d", None)
+    assert TRAFO3_CONNECTION_RE.fullmatch("Yzny").groups() == ("Y", "zn", None, "y", None)
+    assert TRAFO3_CONNECTION_RE.fullmatch("YNdz").groups() == ("YN", "d", None, "z", None)
+    assert TRAFO3_CONNECTION_RE.fullmatch("Dynyn1").groups() == ("D", "yn", None, "yn", "1")
+    assert TRAFO3_CONNECTION_RE.fullmatch("Yyn2d").groups() == ("Y", "yn", "2", "d", None)
+    assert TRAFO3_CONNECTION_RE.fullmatch("Yzn4y0").groups() == ("Y", "zn", "4", "y", "0")
+    assert TRAFO3_CONNECTION_RE.fullmatch("YNd1z0").groups() == ("YN", "d", "1", "z", "0")
+    assert TRAFO3_CONNECTION_RE.fullmatch("Dy1y5").groups() == ("D", "y", "1", "y", "5")
+    assert TRAFO3_CONNECTION_RE.fullmatch("Dy5d11").groups() == ("D", "y", "5", "d", "11")
 
 
 def test_trafo3_connection__neg():
@@ -40,8 +44,12 @@ def test_trafo3_connection__neg():
     assert not TRAFO3_CONNECTION_RE.fullmatch("DYZN")
     assert not TRAFO3_CONNECTION_RE.fullmatch("YNxd")
     assert not TRAFO3_CONNECTION_RE.fullmatch("Dyd13")
-    assert not TRAFO3_CONNECTION_RE.fullmatch("DyD13")
+    assert not TRAFO3_CONNECTION_RE.fullmatch("DyD10")
     assert not TRAFO3_CONNECTION_RE.fullmatch("Dynd-1")
+    assert not TRAFO3_CONNECTION_RE.fullmatch("Dyn+5d-1")
+    assert not TRAFO3_CONNECTION_RE.fullmatch("Dy1d13")
+    assert not TRAFO3_CONNECTION_RE.fullmatch("Da1d10")
+    assert not TRAFO3_CONNECTION_RE.fullmatch("Xy1d10")
 
 
 def test_node_ref__pos():
