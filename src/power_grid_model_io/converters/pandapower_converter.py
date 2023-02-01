@@ -674,12 +674,23 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
     def _create_pgm_input_storages(self):  # pragma: no cover
         # TODO: create unit tests for the function
-        pp_storage = self.pp_input_data["storage"]
+        pp_storages = self.pp_input_data["storage"]
 
-        if pp_storage.empty:
+        if pp_storages.empty:
             return
 
-        raise NotImplementedError("Storage is not implemented yet!")
+        multiplier = self._get_pp_attr("storage", "scaling") * 1e6
+
+        pgm_sym_loads_from_storage = initialize_array(data_type="input", component_type="sym_load",
+                                                    shape=len(pp_storages))
+        pgm_sym_loads_from_storage["id"] = self._generate_ids("storage", pp_storages.index, name="storage_load")
+        pgm_sym_loads_from_storage["node"] = self._get_pgm_ids("bus", self._get_pp_attr("storage", "bus"))
+        pgm_sym_loads_from_storage["status"] = self._get_pp_attr("storage", "in_service")
+        pgm_sym_loads_from_storage["type"] = LoadGenType.const_power
+        pgm_sym_loads_from_storage["p_specified"] = self._get_pp_attr("storage", "p_mw") * multiplier
+        pgm_sym_loads_from_storage["q_specified"] = self._get_pp_attr("storage", "q_mvar") * multiplier
+        self._merge_to_pgm_data(pgm_name="sym_load", pgm_data_to_add=pgm_sym_loads_from_storage)
+
 
     def _create_pgm_input_impedances(self):  # pragma: no cover
         # TODO: create unit tests for the function
