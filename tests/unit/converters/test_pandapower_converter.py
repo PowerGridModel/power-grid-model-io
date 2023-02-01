@@ -1107,13 +1107,40 @@ def test_create_pgm_input_storage(mock_init_array: MagicMock, two_pp_objs, conve
 def test_create_pgm_input_impedance(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
     converter.pp_input_data["impedance"] = two_pp_objs
+    converter.pp_input_data["bus"] = two_pp_objs
 
     # Act / Assert
-    with pytest.raises(NotImplementedError, match=r"Impedance.*not implemented"):
-        converter._create_pgm_input_impedances()
+    converter._create_pgm_input_impedances()
 
     # initialization
-    mock_init_array.assert_not_called()
+    mock_init_array.assert_called_once_with(data_type="input", component_type="line", shape=len(two_pp_objs))
+
+    # retrieval:
+    converter._get_pp_attr.assert_any_call("impedance", "from_bus")
+    converter._get_pp_attr.assert_any_call("impedance", "to_bus")
+    converter._get_pp_attr.assert_any_call("impedance", "rft_pu")
+    converter._get_pp_attr.assert_any_call("impedance", "xft_pu")
+    converter._get_pp_attr.assert_any_call("impedance", "rtf_pu")
+    converter._get_pp_attr.assert_any_call("impedance", "xtf_pu")
+    converter._get_pp_attr.assert_any_call("impedance", "sn_mva")
+    converter._get_pp_attr.assert_any_call("impedance", "in_service")
+    assert len(converter._get_pp_attr.call_args_list) == 8
+
+    # assignment
+    pgm: MagicMock = mock_init_array.return_value.__setitem__
+    pgm.assert_any_call("id", _generate_ids("line", two_pp_objs.index))
+    pgm.assert_any_call("from_node", _get_pgm_ids("bus", _get_pp_attr("impedance", "from_bus")))
+    pgm.assert_any_call("from_status", _get_pp_attr("line", "in_service", True))
+    pgm.assert_any_call("to_node", _get_pgm_ids("bus", _get_pp_attr("impedance", "to_bus")))
+    pgm.assert_any_call("to_status", _get_pp_attr("line", "in_service", True))
+    pgm.assert_any_call("r1", ANY)
+    pgm.assert_any_call("x1", ANY)
+    pgm.assert_any_call("c1", 0)
+    pgm.assert_any_call("tan1", 0)
+    pgm.assert_any_call("i_n", ANY)
+    assert len(pgm.call_args_list) == 10
+    # result
+    assert converter.pgm_input_data["line"] == pgm
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -1160,13 +1187,41 @@ def test_create_pgm_input_wards(mock_init_array: MagicMock, two_pp_objs, convert
 def test_create_pgm_input_xward(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
     converter.pp_input_data["xward"] = two_pp_objs
+    converter.pp_input_data["bus"] = two_pp_objs
+    pgm_attr = ["id", "node", "status", "p_specified", "q_specified", "type"]
+    pgm = {attr: MagicMock() for attr in pgm_attr}
+    mock_init_array.return_value = pgm
+    slices = [slice(None, 2), slice(-2, None)]
+    assert slices[0].indices(2 * 2) == (0, 2, 1)
+    assert slices[1].indices(2 * 2) == (2, 4, 1)
 
-    # Act / Assert
-    with pytest.raises(NotImplementedError, match=r"Extended Ward.*not implemented"):
-        converter._create_pgm_input_xwards()
+    # Act
+    converter._create_pgm_input_xwards()
+
+    # Assert
+
+    # administration:
 
     # initialization
-    mock_init_array.assert_not_called()
+    mock_init_array.assert_called_once_with(data_type="input", component_type="sym_load", shape=2 * 2)
+
+    # retrieval:
+    converter._get_pp_attr.assert_any_call("xward", "bus")
+    converter._get_pp_attr.assert_any_call("xward", "ps_mw")
+    converter._get_pp_attr.assert_any_call("xward", "qs_mvar")
+    converter._get_pp_attr.assert_any_call("xward", "pz_mw")
+    converter._get_pp_attr.assert_any_call("xward", "qz_mvar")
+    converter._get_pp_attr.assert_any_call("xward", "in_service", True)
+    assert len(converter._get_pp_attr.call_args_list) == 6
+
+    # assignment:
+    for attr in pgm_attr:
+        for s in slices:
+            pgm[attr].__setitem__.assert_any_call(s, ANY)
+        assert len(pgm[attr].__setitem__.call_args_list) == len(slices)
+
+    # result
+    assert converter.pgm_input_data["sym_load"] == pgm
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
