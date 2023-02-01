@@ -1105,32 +1105,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the Load component
         """
-
-        # Create a DataFrame wih all the pgm output loads and index it in the pgm id
-        pgm_output_loads = self.pgm_output_data["sym_load"]
-        all_loads = pd.DataFrame(pgm_output_loads, index=pgm_output_loads["id"])
-
-        # Create an empty DataFrame with two columns p and q to accumulate all the loads per pp id
-        accumulated_loads = pd.DataFrame(columns=["p", "q"], dtype=np.float64)
-
-        # Loop over the load types;
-        #   find the pgm ids
-        #   select those loads
-        #   replace the index by the pp ids
-        #   add the p and q columns to the accumulator DataFrame
-        for load_type in ["const_power", "const_impedance", "const_current"]:
-            pgm_load_ids = self._get_pgm_ids("load", name=load_type)
-            selected_loads = all_loads.loc[pgm_load_ids]
-            selected_loads.index = pgm_load_ids.index  # The index contains the pp ids
-            accumulated_loads = accumulated_loads.add(selected_loads[["p", "q"]], fill_value=0.0)
-
-        # Multiply the values and rename the columns to match pandapower
-        accumulated_loads *= 1e-6
-        accumulated_loads.columns = ["p_mw", "q_mvar"]
-
-        # Store the results, while assuring that we are not overwriting any data
-        assert "res_load" not in self.pp_output_data
-        self.pp_output_data["res_load"] = accumulated_loads
+        self._pp_load_result_accumulate(pp_component_name="load", load_id_names=["const_power", "const_impedance", "const_current"])
 
     def _pp_asym_loads_output(self):  # pragma: no cover
         """
@@ -1213,6 +1188,49 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self.idx_lookup[key] = pd.Series(pp_idx, index=pgm_idx)
         self.next_idx += n_objects
         return pgm_idx
+
+    def _pp_ward_output(self):
+        self._pp_load_result_accumulate(pp_component_name="ward", load_id_names=["ward_const_power_load", "ward_const_impedance_load"])
+        pgm_input_wards = self.pgm_input_data["ward"]
+        nodes = self.pgm_nodes_lookup.loc[pgm_input_wards["node"]]
+        self.pp_output_data["ward"]["vm_pu"] = nodes["u_pu"].values
+
+    def _pp_motor_output(self):
+        self._pp_load_result_accumulate(pp_component_name="motor", load_id_names=["motor_load"])
+
+    def _pp_load_result_accumulate(self, pp_component_name: str, load_id_names: List[str]):  # pragma: no cover
+        """
+        This function converts a power-grid-model Symmetrical Load output array to a respective Dataframe of PandaPower.
+
+        Returns:
+            a PandaPower Dataframe for the Load component
+        """
+
+        # Create a DataFrame wih all the pgm output loads and index it in the pgm id
+        pgm_output_loads = self.pgm_output_data["sym_load"]
+        all_loads = pd.DataFrame(pgm_output_loads, index=pgm_output_loads["id"])
+
+        # Create an empty DataFrame with two columns p and q to accumulate all the loads per pp id
+        accumulated_loads = pd.DataFrame(columns=["p", "q"], dtype=np.float64)
+
+        # Loop over the load types;
+        #   find the pgm ids
+        #   select those loads
+        #   replace the index by the pp ids
+        #   add the p and q columns to the accumulator DataFrame
+        for load_type in load_id_names:
+            pgm_load_ids = self._get_pgm_ids(pp_component_name, name=load_type)
+            selected_loads = all_loads.loc[pgm_load_ids]
+            selected_loads.index = pgm_load_ids.index  # The index contains the pp ids
+            accumulated_loads = accumulated_loads.add(selected_loads[["p", "q"]], fill_value=0.0)
+
+        # Multiply the values and rename the columns to match pandapower
+        accumulated_loads *= 1e-6
+        accumulated_loads.columns = ["p_mw", "q_mvar"]
+
+        # Store the results, while assuring that we are not overwriting any data
+        assert pp_component_name not in self.pp_output_data
+        self.pp_output_data["res_" + pp_component_name] = accumulated_loads
 
     def _get_pgm_ids(
         self, pp_table: str, pp_idx: Optional[Union[pd.Series, np.array]] = None, name: Optional[str] = None
