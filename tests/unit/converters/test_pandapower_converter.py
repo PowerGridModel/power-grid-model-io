@@ -1232,6 +1232,40 @@ def test_create_pgm_input_motors__existing_loads(mock_init_array: MagicMock, two
     converter.pgm_input_data["sym_load"] = np.concatenate([pgm_sym_load, mock_init_array()])
 
 
+@pytest.mark.parametrize(
+    "create_fn",
+    [
+        PandaPowerConverter._create_pgm_input_sources,
+        PandaPowerConverter._create_pgm_input_shunts,
+        PandaPowerConverter._create_pgm_input_lines,
+        PandaPowerConverter._create_pgm_input_sym_gens,
+        PandaPowerConverter._create_pgm_input_sym_loads,
+        PandaPowerConverter._create_pgm_input_asym_gens,
+        PandaPowerConverter._create_pgm_input_asym_loads,
+        PandaPowerConverter._create_pgm_input_impedances,
+        PandaPowerConverter._create_pgm_input_links,
+        PandaPowerConverter._create_pgm_input_motors,
+        PandaPowerConverter._create_pgm_input_nodes,
+        PandaPowerConverter._create_pgm_input_storages,
+        PandaPowerConverter._create_pgm_input_three_winding_transformers,
+        PandaPowerConverter._create_pgm_input_transformers,
+        PandaPowerConverter._create_pgm_input_wards,
+        PandaPowerConverter._create_pgm_input_xwards,
+        PandaPowerConverter._create_pgm_input_sources,
+        PandaPowerConverter._create_pgm_input_sources,
+    ],
+)
+def test_create_pp_input_object__empty(create_fn: Callable[[PandaPowerConverter], None]):
+    # Arrange: No table
+    converter = PandaPowerConverter()
+    converter.pp_input_data = pp.create_empty_network()
+
+    # Act / Assert
+    with patch("power_grid_model_io.converters.pandapower_converter.initialize_array") as mock_init_array:
+        create_fn(converter)
+        mock_init_array.assert_not_called()
+
+
 def test_generate_ids():
     converter = PandaPowerConverter()
     test_table = pd.DataFrame(
