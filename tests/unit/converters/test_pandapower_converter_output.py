@@ -43,8 +43,16 @@ def test_create_output_data():
 @pytest.mark.parametrize(
     ("create_fn", "table"),
     [
+        (PandaPowerConverter._pp_buses_output, "node"),
+        (PandaPowerConverter._pp_lines_output, "line"),
         (PandaPowerConverter._pp_ext_grids_output, "source"),
-        # TODO: Add the rest of the pp components and functions
+        (PandaPowerConverter._pp_shunts_output, "shunt"),
+        (PandaPowerConverter._pp_sgens_output, "sym_gen"),
+        (PandaPowerConverter._pp_trafos_output, "transformer"),
+        (PandaPowerConverter._pp_trafos3w_output, "three_winding_transformer"),
+        (PandaPowerConverter._pp_loads_output, "sym_load"),
+        (PandaPowerConverter._pp_asym_loads_output, "asym_load"),
+        (PandaPowerConverter._pp_asym_gens_output, "asym_gen"),
     ],
 )
 def test_create_pp_output_object__empty(create_fn: Callable[[PandaPowerConverter], None], table: str):
@@ -65,14 +73,39 @@ def test_create_pp_output_object__empty(create_fn: Callable[[PandaPowerConverter
         mock_df.assert_not_called()
 
 
-def test_output_bus():
+def test_output_bus(converter):
     pgm_output_attributes = ["id", "u_pu", "u_angle", ""]  # Left blank because this part depends on what kind of
     # Branch the node is connected to. However, If the node_injection becomes finished then it will be easier to input
     # a specific attribute
     pp_output_attributes = ["vm_pu", "va_degree", "p_mw", "q_mvar"]
 
+    # Arrange
+    mock_pgm_array = MagicMock()
+    converter.pgm_output_data["node"] = mock_pgm_array
 
-def test_output_line():
+    with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
+        # Act
+        converter._pp_buses_output()
+
+        # Assert
+
+        # initialization
+        converter._get_pp_ids.assert_called_once_with("bus", mock_pgm_array["X"])
+
+        # retrieval
+        mock_pgm_array.__getitem__.assert_any_call("id")
+        mock_pgm_array.__getitem__.assert_any_call("u_pu")
+        mock_pgm_array.__getitem__.assert_any_call("u_angle")
+
+        # assignment
+        mock_pp_df.return_value.__setitem__.assert_any_call("vm_pu", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("va_degree", ANY)
+
+        # result
+        converter.pp_output_data.__setitem__.assert_called_once_with("res_bus", mock_pp_df.return_value)
+
+
+def test_output_line(converter):
     # for pgm attributes I did not include any attributes that are taken from nodes in node_lookup
     # However I included some attributes that were taken from pgm_input_lines such as: from_node, to_node
     pgm_output_attributes = [
@@ -104,10 +137,58 @@ def test_output_line():
         "loading_percent",
     ]
 
+    # Arrange
+    mock_pgm_array = MagicMock()
+    converter.pgm_input_data["line"] = mock_pgm_array
+    converter.pgm_output_data["line"] = mock_pgm_array
+    converter.pgm_nodes_lookup = pd.DataFrame(
+        {"u_pu": mock_pgm_array, "u_degree": mock_pgm_array}, index=mock_pgm_array
+    )
+
+    with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
+        # Act
+        converter._pp_lines_output()
+
+        # Assert
+
+        # initialization
+        converter._get_pp_ids.assert_called_once_with("line", mock_pgm_array["X"])
+
+        # retrieval
+        mock_pgm_array.__getitem__.assert_any_call("id")
+        mock_pgm_array.__getitem__.assert_any_call("from_node")
+        mock_pgm_array.__getitem__.assert_any_call("to_node")
+        mock_pgm_array.__getitem__.assert_any_call("p_from")
+        mock_pgm_array.__getitem__.assert_any_call("q_from")
+        mock_pgm_array.__getitem__.assert_any_call("p_to")
+        mock_pgm_array.__getitem__.assert_any_call("q_to")
+        mock_pgm_array.__getitem__.assert_any_call("i_from")
+        mock_pgm_array.__getitem__.assert_any_call("i_to")
+        # mock_pgm_array.__getitem__.assert_any_call("u_pu")
+        # mock_pgm_array.__getitem__.assert_any_call("u_degree")
+        mock_pgm_array.__getitem__.assert_any_call("loading")
+
+        # assignment
+        mock_pp_df.return_value.__setitem__.assert_any_call("p_from_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("q_from_mvar", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("p_to_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("q_to_mvar", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("pl_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("ql_mvar", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("i_from_ka", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("i_to_ka", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("i_ka", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("vm_from_pu", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("vm_to_pu", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("va_from_degree", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("va_to_degree", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("loading_percent", ANY)
+
+        # result
+        converter.pp_output_data.__setitem__.assert_called_once_with("res_line", mock_pp_df.return_value)
+
 
 def test_output_ext_grids(converter):
-
-    # TODO: Do we really expect "node", "index" and "vm_pu"? (Bram)
     pgm_output_attributes = ["id", "p", "q"]
     pp_output_attributes = ["p_mw", "q_mvar"]
 
@@ -137,17 +218,72 @@ def test_output_ext_grids(converter):
         converter.pp_output_data.__setitem__.assert_called_once_with("res_ext_grid", mock_pp_df.return_value)
 
 
-def test_output_shunts():
+def test_output_shunts(converter):
     pgm_output_attributes = ["id", "node", "p", "q"]  # node is taken from pgm_input_shunts
     pp_output_attributes = ["p_mw", "q_mvar", "vm_pu"]
 
+    # Arrange
+    mock_pgm_array = MagicMock()
+    converter.pgm_input_data["shunt"] = mock_pgm_array
+    converter.pgm_output_data["shunt"] = mock_pgm_array
+    converter.pgm_nodes_lookup = pd.DataFrame({"u_pu": mock_pgm_array}, index=mock_pgm_array)
 
-def test_output_sgen():
+    with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
+        # Act
+        converter._pp_shunts_output()
+
+        # Assert
+
+        # initialization
+        converter._get_pp_ids.assert_called_once_with("shunt", mock_pgm_array["X"])
+
+        # retrieval
+        mock_pgm_array.__getitem__.assert_any_call("id")
+        mock_pgm_array.__getitem__.assert_any_call("node")
+        mock_pgm_array.__getitem__.assert_any_call("p")
+        mock_pgm_array.__getitem__.assert_any_call("q")
+        # mock_pgm_array.__getitem__.assert_any_call("u_pu")
+
+        # assignment
+        mock_pp_df.return_value.__setitem__.assert_any_call("p_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("q_mvar", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("vm_pu", ANY)
+
+        # result
+        converter.pp_output_data.__setitem__.assert_called_once_with("res_shunt", mock_pp_df.return_value)
+
+
+def test_output_sgen(converter):
     pgm_output_attributes = ["id", "p", "q"]
     pp_output_attributes = ["p_mw", "q_mvar"]
 
+    # Arrange
+    mock_pgm_array = MagicMock()
+    converter.pgm_output_data["sym_gen"] = mock_pgm_array
 
-def test_output_trafos():
+    with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
+        # Act
+        converter._pp_sgens_output()
+
+        # Assert
+
+        # initialization
+        converter._get_pp_ids.assert_called_once_with("sgen", mock_pgm_array["X"])
+
+        # retrieval
+        mock_pgm_array.__getitem__.assert_any_call("id")
+        mock_pgm_array.__getitem__.assert_any_call("p")
+        mock_pgm_array.__getitem__.assert_any_call("q")
+
+        # assignment
+        mock_pp_df.return_value.__setitem__.assert_any_call("p_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("q_mvar", ANY)
+
+        # result
+        converter.pp_output_data.__setitem__.assert_called_once_with("res_sgen", mock_pp_df.return_value)
+
+
+def test_output_trafos(converter):
     pgm_output_attributes = [  # from node and to node are taken from pgm_input_transformers
         "id",
         "from_node",
@@ -176,8 +312,57 @@ def test_output_trafos():
         "loading_percent",
     ]
 
+    # Arrange
+    mock_pgm_array = MagicMock()
+    converter.pgm_input_data["transformer"] = mock_pgm_array
+    converter.pgm_output_data["transformer"] = mock_pgm_array
+    converter.pgm_nodes_lookup = pd.DataFrame(
+        {"u_pu": mock_pgm_array, "u_degree": mock_pgm_array}, index=mock_pgm_array
+    )
 
-def test_output_trafo3w():
+    with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
+        # Act
+        converter._pp_trafos_output()
+
+        # Assert
+
+        # initialization
+        converter._get_pp_ids.assert_called_once_with("trafo", mock_pgm_array["X"])
+
+        # retrieval
+        mock_pgm_array.__getitem__.assert_any_call("id")
+        mock_pgm_array.__getitem__.assert_any_call("from_node")
+        mock_pgm_array.__getitem__.assert_any_call("to_node")
+        mock_pgm_array.__getitem__.assert_any_call("p_from")
+        mock_pgm_array.__getitem__.assert_any_call("q_from")
+        mock_pgm_array.__getitem__.assert_any_call("p_to")
+        mock_pgm_array.__getitem__.assert_any_call("q_to")
+        mock_pgm_array.__getitem__.assert_any_call("i_from")
+        mock_pgm_array.__getitem__.assert_any_call("i_to")
+        # mock_pgm_array.__getitem__.assert_any_call("u_pu")
+        # mock_pgm_array.__getitem__.assert_any_call("u_degree")
+        mock_pgm_array.__getitem__.assert_any_call("loading")
+
+        # assignment
+        mock_pp_df.return_value.__setitem__.assert_any_call("p_hv_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("q_hv_mvar", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("p_lv_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("q_lv_mvar", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("pl_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("ql_mvar", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("i_hv_ka", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("i_lv_ka", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("vm_hv_pu", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("vm_lv_pu", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("va_hv_degree", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("va_lv_degree", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("loading_percent", ANY)
+
+        # result
+        converter.pp_output_data.__setitem__.assert_called_once_with("res_trafo", mock_pp_df.return_value)
+
+
+def test_output_trafo3w(converter):
     pgm_output_attributes = [  # "node_1", "node_2", "node_3" are taken from pgm_input_transformers3w
         "id",
         "node_1",
@@ -215,6 +400,64 @@ def test_output_trafo3w():
         "loading_percent",
     ]
 
+    # Arrange
+    mock_pgm_array = MagicMock()
+    converter.pgm_input_data["three_winding_transformer"] = mock_pgm_array
+    converter.pgm_output_data["three_winding_transformer"] = mock_pgm_array
+    converter.pgm_nodes_lookup = pd.DataFrame(
+        {"u_pu": mock_pgm_array, "u_degree": mock_pgm_array}, index=mock_pgm_array
+    )
+
+    with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
+        # Act
+        converter._pp_trafos3w_output()
+
+        # Assert
+
+        # initialization
+        converter._get_pp_ids.assert_called_once_with("trafo3w", mock_pgm_array["X"])
+
+        # retrieval
+        mock_pgm_array.__getitem__.assert_any_call("id")
+        mock_pgm_array.__getitem__.assert_any_call("node_1")
+        mock_pgm_array.__getitem__.assert_any_call("node_2")
+        mock_pgm_array.__getitem__.assert_any_call("node_3")
+        mock_pgm_array.__getitem__.assert_any_call("p_1")
+        mock_pgm_array.__getitem__.assert_any_call("q_1")
+        mock_pgm_array.__getitem__.assert_any_call("p_2")
+        mock_pgm_array.__getitem__.assert_any_call("q_2")
+        mock_pgm_array.__getitem__.assert_any_call("p_3")
+        mock_pgm_array.__getitem__.assert_any_call("q_3")
+        mock_pgm_array.__getitem__.assert_any_call("i_1")
+        mock_pgm_array.__getitem__.assert_any_call("i_2")
+        mock_pgm_array.__getitem__.assert_any_call("i_3")
+        # mock_pgm_array.__getitem__.assert_any_call("u_pu")
+        # mock_pgm_array.__getitem__.assert_any_call("u_degree")
+        mock_pgm_array.__getitem__.assert_any_call("loading")
+
+        # assignment
+        mock_pp_df.return_value.__setitem__.assert_any_call("p_hv_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("q_hv_mvar", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("p_mv_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("q_mv_mvar", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("p_lv_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("q_lv_mvar", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("pl_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("ql_mvar", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("i_hv_ka", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("i_mv_ka", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("i_lv_ka", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("vm_hv_pu", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("vm_mv_pu", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("vm_lv_pu", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("va_hv_degree", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("va_mv_degree", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("va_lv_degree", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("loading_percent", ANY)
+
+        # result
+        converter.pp_output_data.__setitem__.assert_called_once_with("res_trafo3w", mock_pp_df.return_value)
+
 
 def test_output_load():
     pgm_output_attributes = ["id", "p", "q"]
@@ -243,14 +486,72 @@ def test_output_load():
     pd.testing.assert_frame_equal(converter.pp_output_data["res_load"], expected)
 
 
-def test_output_asymmetric_load():
+def test_output_asymmetric_load(converter):
     pgm_output_attributes = ["id", "p", "q"]
     pp_output_attributes = ["p_a_mw", "q_a_mvar", "p_b_mw", "q_b_mvar", "p_c_mw", "q_c_mvar"]
 
+    # Arrange
+    mock_pgm_array = MagicMock()
+    converter.pgm_output_data["asym_load"] = mock_pgm_array
 
-def test_output_asymmetric_sgen():
+    with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
+        # Act
+        converter._pp_asym_loads_output()
+
+        # Assert
+
+        # initialization
+        converter._get_pp_ids.assert_called_once_with("asymmetric_load", mock_pgm_array["X"])
+
+        # retrieval
+        mock_pgm_array.__getitem__.assert_any_call("id")
+        mock_pgm_array.__getitem__.assert_any_call("p")
+        mock_pgm_array.__getitem__.assert_any_call("q")
+
+        # assignment
+        mock_pp_df.return_value.__setitem__.assert_any_call("p_a_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("q_a_mvar", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("p_b_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("q_b_mvar", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("p_c_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("q_c_mvar", ANY)
+
+        # result
+        converter.pp_output_data.__setitem__.assert_called_once_with("res_asymmetric_load", mock_pp_df.return_value)
+
+
+def test_output_asymmetric_sgen(converter):
     pgm_output_attributes = ["id", "p", "q"]
     pp_output_attributes = ["p_a_mw", "q_a_mvar", "p_b_mw", "q_b_mvar", "p_c_mw", "q_c_mvar"]
+
+    # Arrange
+    mock_pgm_array = MagicMock()
+    converter.pgm_output_data["asym_gen"] = mock_pgm_array
+
+    with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
+        # Act
+        converter._pp_asym_gens_output()
+
+        # Assert
+
+        # initialization
+        converter._get_pp_ids.assert_called_once_with("asymmetric_sgen", mock_pgm_array["X"])
+
+        # retrieval
+        mock_pgm_array.__getitem__.assert_any_call("id")
+        mock_pgm_array.__getitem__.assert_any_call("p")
+        mock_pgm_array.__getitem__.assert_any_call("q")
+
+        # assignment
+        mock_pp_df.return_value.__setitem__.assert_any_call("p_a_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("q_a_mvar", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("p_b_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("q_b_mvar", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("p_c_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("q_c_mvar", ANY)
+
+        # result
+        converter.pp_output_data.__setitem__.assert_called_once_with("res_asymmetric_sgen", mock_pp_df.return_value)
 
 
 def test_pp_buses_output__accumulate_power__zero():
