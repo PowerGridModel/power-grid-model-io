@@ -14,7 +14,12 @@ from power_grid_model_io.functions.phase_to_phase import (
     pvs_power_adjustment,
     reactive_power,
     reactive_power_to_susceptance,
-    relative_no_load_current, get_winding_1, get_clock_12, get_clock_13, get_winding_3, get_winding_2,
+    relative_no_load_current,
+    get_winding_1,
+    get_clock_12,
+    get_clock_13,
+    get_winding_3,
+    get_winding_2,
 )
 
 
@@ -188,7 +193,6 @@ def test_get_clock__exception(code):
         get_clock(code)
 
 
-
 @mark.parametrize(
     ("code", "winding_type"),
     [
@@ -236,7 +240,6 @@ def test_get_winding_1__no_neutral_grounding(code: str, winding_type: WindingTyp
 def test_get_winding_1__exception():
     with raises(ValueError):
         get_winding_1("XNy0d11")
-
 
 
 @mark.parametrize(
@@ -287,6 +290,7 @@ def test_get_winding_2__exception():
     with raises(ValueError):
         get_winding_2("YNx0d11")
 
+
 @mark.parametrize(
     ("code", "winding_type"),
     [
@@ -335,6 +339,7 @@ def test_get_winding_3__exception():
     with raises(ValueError):
         get_winding_3("XNy0d11")
 
+
 @mark.parametrize(
     ("code", "clock"),
     [
@@ -351,6 +356,7 @@ def test_get_clock_12(code: str, clock: int):
 def test_get_clock_12__exception(code):
     with raises(ValueError):
         get_clock_12(code)
+
 
 @mark.parametrize(
     ("code", "clock"),
