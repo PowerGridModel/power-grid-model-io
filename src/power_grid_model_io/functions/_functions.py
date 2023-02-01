@@ -7,11 +7,14 @@ These functions can be used in the mapping files to apply functions to tabular d
 """
 
 from typing import Any, Optional, TypeVar, cast
+import structlog
 
 import numpy as np
 from power_grid_model import WindingType
 
 T = TypeVar("T")
+
+_LOG = structlog.get_logger(__file__)
 
 WINDING_TYPES = {
     "Y": WindingType.wye,
@@ -92,4 +95,8 @@ def zeros_to_nan(value: float) -> float:
     """
     Return the value, or a default value if no value was supplied.
     """
-    return float("nan") if not has_value(value) or value == 0.0 else value
+    if not has_value(value) or value == 0.0:
+        _LOG.warning("0 replaced to nan")
+        return float("nan")
+    else:
+        return value

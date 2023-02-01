@@ -7,11 +7,14 @@ These functions can be used in the mapping files to apply functions to vision da
 
 import math
 from typing import Tuple
+import structlog
 
 from power_grid_model import WindingType
 
 from power_grid_model_io.functions import get_winding
 from power_grid_model_io.utils.regex import PVS_EFFICIENCY_TYPE_RE, TRAFO_CONNECTION_RE
+
+_LOG = structlog.get_logger(__file__)
 
 
 def relative_no_load_current(i_0: float, p_0: float, s_nom: float, u_nom: float) -> float:
@@ -127,4 +130,5 @@ def pvs_power_adjustment(p: float, efficiency_type: str) -> float:
             return p * 0.97
         if match.group(1) == "95":
             return p * 0.95
+        _LOG.warning("PV approximation applied for efficiency type", efficiency_type=efficiency_type)
     return p
