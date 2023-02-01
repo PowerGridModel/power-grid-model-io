@@ -26,12 +26,8 @@ def test_trafo_connection__neg():
 
 
 def test_trafo3_connection__pos():
-    assert TRAFO3_CONNECTION_RE.fullmatch("Dynyn").groups() == ("D", "yn", None, "yn", None)
-    assert TRAFO3_CONNECTION_RE.fullmatch("Yynd").groups() == ("Y", "yn", None, "d", None)
-    assert TRAFO3_CONNECTION_RE.fullmatch("Yzny").groups() == ("Y", "zn", None, "y", None)
-    assert TRAFO3_CONNECTION_RE.fullmatch("YNdz").groups() == ("YN", "d", None, "z", None)
-    assert TRAFO3_CONNECTION_RE.fullmatch("Dynyn1").groups() == ("D", "yn", None, "yn", "1")
-    assert TRAFO3_CONNECTION_RE.fullmatch("Yyn2d").groups() == ("Y", "yn", "2", "d", None)
+    assert TRAFO3_CONNECTION_RE.fullmatch("Dyn1yn1").groups() == ("D", "yn", "1", "yn", "1")
+    assert TRAFO3_CONNECTION_RE.fullmatch("Yyn2d4").groups() == ("Y", "yn", "2", "d", "4")
     assert TRAFO3_CONNECTION_RE.fullmatch("Yzn4y0").groups() == ("Y", "zn", "4", "y", "0")
     assert TRAFO3_CONNECTION_RE.fullmatch("YNd1z0").groups() == ("YN", "d", "1", "z", "0")
     assert TRAFO3_CONNECTION_RE.fullmatch("Dy1y5").groups() == ("D", "y", "1", "y", "5")

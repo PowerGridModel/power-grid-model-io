@@ -14,7 +14,7 @@ from power_grid_model_io.functions.phase_to_phase import (
     pvs_power_adjustment,
     reactive_power,
     reactive_power_to_susceptance,
-    relative_no_load_current,
+    relative_no_load_current, get_winding_1, get_clock_12, get_clock_13, get_winding_3, get_winding_2,
 )
 
 
@@ -186,6 +186,188 @@ def test_get_clock(code: str, clock: int):
 def test_get_clock__exception(code):
     with raises(ValueError):
         get_clock(code)
+
+
+
+@mark.parametrize(
+    ("code", "winding_type"),
+    [
+        ("Yd0y1", WindingType.wye),
+        ("Yz4yn2", WindingType.wye),
+        ("Yy2d3", WindingType.wye),
+        ("YNd8y4", WindingType.wye_n),
+        ("YNy6yn5", WindingType.wye_n),
+        ("YNy4d6", WindingType.wye_n),
+        ("Dy4d7", WindingType.delta),
+        ("Dyn4y8", WindingType.delta),
+        ("Dy1d9", WindingType.delta),
+        ("Zd0y2", WindingType.zigzag),
+        ("Zy4y3", WindingType.zigzag),
+        ("ZNd2y4", WindingType.zigzag_n),
+        ("ZNd0y5", WindingType.zigzag_n),
+    ],
+)
+def test_get_winding_1(code: str, winding_type: WindingType):
+    assert get_winding_1(code) == winding_type
+
+
+@mark.parametrize(
+    ("code", "winding_type"),
+    [
+        ("Yd0y1", WindingType.wye),
+        ("Yz4yn2", WindingType.wye),
+        ("Yy2d3", WindingType.wye),
+        ("YNd8y4", WindingType.wye),
+        ("YNy6yn5", WindingType.wye),
+        ("YNy4d6", WindingType.wye),
+        ("Dy4d7", WindingType.delta),
+        ("Dyn4y8", WindingType.delta),
+        ("Dy1d9", WindingType.delta),
+        ("Zd0y2", WindingType.zigzag),
+        ("Zy4y3", WindingType.zigzag),
+        ("ZNd2y4", WindingType.zigzag),
+        ("ZNd0y5", WindingType.zigzag),
+    ],
+)
+def test_get_winding_1__no_neutral_grounding(code: str, winding_type: WindingType):
+    assert get_winding_1(code, False) == winding_type
+
+
+def test_get_winding_1__exception():
+    with raises(ValueError):
+        get_winding_1("XNy0d11")
+
+
+
+@mark.parametrize(
+    ("code", "winding_type"),
+    [
+        ("Dy0y1", WindingType.wye),
+        ("Zy4yn2", WindingType.wye),
+        ("Yy2d3", WindingType.wye),
+        ("Dyn8y4", WindingType.wye_n),
+        ("YNyn6yn5", WindingType.wye_n),
+        ("YNyn4d6", WindingType.wye_n),
+        ("Dd4d7", WindingType.delta),
+        ("Dd4y8", WindingType.delta),
+        ("Dd1d9", WindingType.delta),
+        ("Dz0y2", WindingType.zigzag),
+        ("Yz4y3", WindingType.zigzag),
+        ("Dzn2y4", WindingType.zigzag_n),
+        ("Dzn0y5", WindingType.zigzag_n),
+    ],
+)
+def test_get_winding_2(code: str, winding_type: WindingType):
+    assert get_winding_2(code) == winding_type
+
+
+@mark.parametrize(
+    ("code", "winding_type"),
+    [
+        ("Dy0y1", WindingType.wye),
+        ("Zy4yn2", WindingType.wye),
+        ("Yy2d3", WindingType.wye),
+        ("Dyn8y4", WindingType.wye),
+        ("YNyn6yn5", WindingType.wye),
+        ("YNyn4d6", WindingType.wye),
+        ("Dd4d7", WindingType.delta),
+        ("Dd4y8", WindingType.delta),
+        ("Dd1d9", WindingType.delta),
+        ("Dz0y2", WindingType.zigzag),
+        ("Yz4y3", WindingType.zigzag),
+        ("Dzn2y4", WindingType.zigzag),
+        ("Dzn0y5", WindingType.zigzag),
+    ],
+)
+def test_get_winding_2__no_neutral_grounding(code: str, winding_type: WindingType):
+    assert get_winding_2(code, False) == winding_type
+
+
+def test_get_winding_2__exception():
+    with raises(ValueError):
+        get_winding_2("YNx0d11")
+
+@mark.parametrize(
+    ("code", "winding_type"),
+    [
+        ("Yd0y1", WindingType.wye),
+        ("Yz4y2", WindingType.wye),
+        ("Yy2y3", WindingType.wye),
+        ("YNd8yn4", WindingType.wye_n),
+        ("YNy6yn5", WindingType.wye_n),
+        ("YNy4yn6", WindingType.wye_n),
+        ("Dy4d7", WindingType.delta),
+        ("Dyn4d8", WindingType.delta),
+        ("Dy1d9", WindingType.delta),
+        ("Zd0z2", WindingType.zigzag),
+        ("Zy4z3", WindingType.zigzag),
+        ("ZNd2zn4", WindingType.zigzag_n),
+        ("ZNd0zn5", WindingType.zigzag_n),
+    ],
+)
+def test_get_winding_3(code: str, winding_type: WindingType):
+    assert get_winding_3(code) == winding_type
+
+
+@mark.parametrize(
+    ("code", "winding_type"),
+    [
+        ("Yd0y1", WindingType.wye),
+        ("Yz4y2", WindingType.wye),
+        ("Yy2y3", WindingType.wye),
+        ("YNd8yn4", WindingType.wye),
+        ("YNy6yn5", WindingType.wye),
+        ("YNy4yn6", WindingType.wye),
+        ("Dy4d7", WindingType.delta),
+        ("Dyn4d8", WindingType.delta),
+        ("Dy1d9", WindingType.delta),
+        ("Zd0z2", WindingType.zigzag),
+        ("Zy4z3", WindingType.zigzag),
+        ("ZNd2zn4", WindingType.zigzag),
+        ("ZNd0zn5", WindingType.zigzag),
+    ],
+)
+def test_get_winding_3__no_neutral_grounding(code: str, winding_type: WindingType):
+    assert get_winding_3(code, False) == winding_type
+
+
+def test_get_winding_3__exception():
+    with raises(ValueError):
+        get_winding_3("XNy0d11")
+
+@mark.parametrize(
+    ("code", "clock"),
+    [
+        ("YNd0y4", 0),
+        ("YNyn5d3", 5),
+        ("YNd12d1", 12),
+    ],
+)
+def test_get_clock_12(code: str, clock: int):
+    assert get_clock_12(code) == clock
+
+
+@mark.parametrize("code", ["YNd-1", "YNd13"])
+def test_get_clock_12__exception(code):
+    with raises(ValueError):
+        get_clock_12(code)
+
+@mark.parametrize(
+    ("code", "clock"),
+    [
+        ("YNd0y4", 4),
+        ("YNyn5d3", 3),
+        ("YNd12d1", 1),
+    ],
+)
+def test_get_clock_13(code: str, clock: int):
+    assert get_clock_13(code) == clock
+
+
+@mark.parametrize("code", ["YNd-1", "YNd13"])
+def test_get_clock_13__exception(code):
+    with raises(ValueError):
+        get_clock_13(code)
 
 
 @mark.parametrize(

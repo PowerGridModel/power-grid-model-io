@@ -181,9 +181,9 @@ def pvs_power_adjustment(p: float, efficiency_type: str) -> float:
     """
     match = PVS_EFFICIENCY_TYPE_RE.search(efficiency_type)
     if match is not None:
+        _LOG.warning("PV approximation applied for efficiency type", efficiency_type=efficiency_type)
         if match.group(1) == "97":
             return p * 0.97
         if match.group(1) == "95":
             return p * 0.95
-        _LOG.warning("PV approximation applied for efficiency type", efficiency_type=efficiency_type)
     return p
