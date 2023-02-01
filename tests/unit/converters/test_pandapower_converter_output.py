@@ -100,6 +100,8 @@ def test_output_bus(converter):
         # assignment
         mock_pp_df.return_value.__setitem__.assert_any_call("vm_pu", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("va_degree", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("p_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("q_mvar", ANY)
 
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_bus", mock_pp_df.return_value)
