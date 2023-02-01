@@ -872,6 +872,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_input_lines = self.pgm_input_data["line"]
         pgm_output_lines = self.pgm_output_data["line"]
 
+        if not np.array_equal(pgm_input_lines["id"], pgm_output_lines["id"]):
+            raise ValueError("The output line ids should correspond to the input line ids")
+
         pp_output_lines = pd.DataFrame(
             columns=[
                 "p_from_mw",

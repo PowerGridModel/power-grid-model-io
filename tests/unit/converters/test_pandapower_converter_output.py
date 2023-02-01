@@ -141,11 +141,9 @@ def test_output_line(converter):
 
     # Arrange
     mock_pgm_array = MagicMock()
-    converter.pgm_input_data["line"] = mock_pgm_array
+    converter.pgm_nodes_lookup = MagicMock()
     converter.pgm_output_data["line"] = mock_pgm_array
-    converter.pgm_nodes_lookup = pd.DataFrame(
-        {"u_pu": mock_pgm_array, "u_degree": mock_pgm_array}, index=mock_pgm_array
-    )
+    converter.pgm_input_data["line"] = MagicMock()
 
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
         # Act
@@ -154,20 +152,16 @@ def test_output_line(converter):
         # Assert
 
         # initialization
-        converter._get_pp_ids.assert_called_once_with("line", mock_pgm_array["X"])
+        converter._get_pp_ids.assert_called_once_with("line", mock_pgm_array["id"])
 
         # retrieval
         mock_pgm_array.__getitem__.assert_any_call("id")
-        mock_pgm_array.__getitem__.assert_any_call("from_node")
-        mock_pgm_array.__getitem__.assert_any_call("to_node")
         mock_pgm_array.__getitem__.assert_any_call("p_from")
         mock_pgm_array.__getitem__.assert_any_call("q_from")
         mock_pgm_array.__getitem__.assert_any_call("p_to")
         mock_pgm_array.__getitem__.assert_any_call("q_to")
         mock_pgm_array.__getitem__.assert_any_call("i_from")
         mock_pgm_array.__getitem__.assert_any_call("i_to")
-        # mock_pgm_array.__getitem__.assert_any_call("u_pu")
-        # mock_pgm_array.__getitem__.assert_any_call("u_degree")
         mock_pgm_array.__getitem__.assert_any_call("loading")
 
         # assignment
@@ -180,14 +174,60 @@ def test_output_line(converter):
         mock_pp_df.return_value.__setitem__.assert_any_call("i_from_ka", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("i_to_ka", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("i_ka", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("vm_from_pu", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("vm_to_pu", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("va_from_degree", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("va_to_degree", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("loading_percent", ANY)
 
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_line", mock_pp_df.return_value)
+
+
+def test_output_line__node_lookup():
+
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.idx_lookup[("line", None)] = pd.Series([132, 121], index=[32, 21])
+    converter.pgm_input_data["line"] = initialize_array("input", "line", 2)
+    converter.pgm_input_data["line"]["id"] = [21, 32]
+    converter.pgm_input_data["line"]["from_node"] = [2, 3]
+    converter.pgm_input_data["line"]["to_node"] = [1, 2]
+    converter.pgm_output_data["line"] = initialize_array("sym_output", "line", 2)
+    converter.pgm_output_data["line"]["id"] = [21, 32]
+    converter.pgm_nodes_lookup = pd.DataFrame({"u_pu": [1.1, 1.2, 1.3], "u_degree": [0.1, 0.2, 0.3]}, index=[1, 2, 3])
+
+    # Act
+    converter._pp_lines_output()
+
+    # Assert
+    pp_output_lines = converter.pp_output_data["res_line"]
+    pd.testing.assert_series_equal(
+        pp_output_lines["vm_from_pu"],
+        pd.Series([1.2, 1.3], name="vm_from_pu", index=[121, 132]),
+    )
+    pd.testing.assert_series_equal(
+        pp_output_lines["vm_to_pu"],
+        pd.Series([1.1, 1.2], name="vm_to_pu", index=[121, 132]),
+    )
+    pd.testing.assert_series_equal(
+        pp_output_lines["va_from_degree"],
+        pd.Series([0.2, 0.3], name="va_from_degree", index=[121, 132]),
+    )
+    pd.testing.assert_series_equal(
+        pp_output_lines["va_to_degree"],
+        pd.Series([0.1, 0.2], name="va_to_degree", index=[121, 132]),
+    )
+
+
+def test_output_line__node_lookup__exception(converter):
+
+    # Arrange
+    converter.pgm_nodes_lookup = MagicMock()
+    converter.pgm_output_data["line"] = initialize_array("input", "line", 3)
+    converter.pgm_input_data["line"] = initialize_array("sym_output", "line", 3)
+    converter.pgm_output_data["line"]["id"] = [1, 2, 3]
+    converter.pgm_input_data["line"]["id"] = [1, 3, 2]
+
+    # Act / Assert
+    with pytest.raises(ValueError, match="The output line ids should correspond to the input line ids"):
+        converter._pp_lines_output()
 
 
 def test_output_ext_grids(converter):
