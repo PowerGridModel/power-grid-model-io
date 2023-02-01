@@ -69,7 +69,7 @@ def test_output_bus():
     pgm_output_attributes = ["id", "u_pu", "u_angle", ""]  # Left blank because this part depends on what kind of
     # Branch the node is connected to. However, If the node_injection becomes finished then it will be easier to input
     # a specific attribute
-    pp_output_attributes = ["index", "vm_pu", "va_degree", "p_mw", "q_mvar"]
+    pp_output_attributes = ["vm_pu", "va_degree", "p_mw", "q_mvar"]
 
 
 def test_output_line():
@@ -88,7 +88,6 @@ def test_output_line():
         "loading",
     ]
     pp_output_attributes = [
-        "index",
         "p_from_mw",
         "q_from_mvar",
         "p_to_mw",
@@ -109,8 +108,8 @@ def test_output_line():
 def test_output_ext_grids(converter):
 
     # TODO: Do we really expect "node", "index" and "vm_pu"? (Bram)
-    pgm_output_attributes = ["id", "node", "p", "q"]
-    pp_output_attributes = ["index", "p_mw", "q_mvar", "vm_pu"]
+    pgm_output_attributes = ["id", "p", "q"]
+    pp_output_attributes = ["p_mw", "q_mvar"]
 
     # Arrange
     mock_pgm_array = MagicMock()
@@ -139,17 +138,17 @@ def test_output_ext_grids(converter):
 
 
 def test_output_shunts():
-    pgm_output_attributes = ["id", "node", "p", "q"]
-    pp_output_attributes = ["index", "p_mw", "q_mvar", "vm_pu"]
+    pgm_output_attributes = ["id", "node", "p", "q"]  # node is taken from pgm_input_shunts
+    pp_output_attributes = ["p_mw", "q_mvar", "vm_pu"]
 
 
 def test_output_sgen():
     pgm_output_attributes = ["id", "p", "q"]
-    pp_output_attributes = ["index", "p_mw", "q_mvar"]
+    pp_output_attributes = ["p_mw", "q_mvar"]
 
 
 def test_output_trafos():
-    pgm_output_attributes = [
+    pgm_output_attributes = [  # from node and to node are taken from pgm_input_transformers
         "id",
         "from_node",
         "to_node",
@@ -162,7 +161,6 @@ def test_output_trafos():
         "loading",
     ]
     pp_output_attributes = [
-        "index",
         "p_hv_mw",
         "q_hv_mvar",
         "p_lv_mw",
@@ -180,7 +178,7 @@ def test_output_trafos():
 
 
 def test_output_trafo3w():
-    pgm_output_attributes = [
+    pgm_output_attributes = [  # "node_1", "node_2", "node_3" are taken from pgm_input_transformers3w
         "id",
         "node_1",
         "node_2",
@@ -197,7 +195,6 @@ def test_output_trafo3w():
         "loading",
     ]
     pp_output_attributes = [
-        "index",
         "p_hv_mw",
         "q_hv_mvar",
         "p_mv_mw",
@@ -221,7 +218,7 @@ def test_output_trafo3w():
 
 def test_output_load():
     pgm_output_attributes = ["id", "p", "q"]
-    pp_output_attributes = ["index", "p_mw", "q_mvar"]
+    pp_output_attributes = ["p_mw", "q_mvar"]
 
     # Arrange
     converter = PandaPowerConverter()
@@ -248,12 +245,12 @@ def test_output_load():
 
 def test_output_asymmetric_load():
     pgm_output_attributes = ["id", "p", "q"]
-    pp_output_attributes = ["index", "p_a_mw", "q_a_mvar", "p_b_mw", "q_b_mvar", "p_c_mw", "q_c_mvar"]
+    pp_output_attributes = ["p_a_mw", "q_a_mvar", "p_b_mw", "q_b_mvar", "p_c_mw", "q_c_mvar"]
 
 
 def test_output_asymmetric_sgen():
     pgm_output_attributes = ["id", "p", "q"]
-    pp_output_attributes = ["index", "p_a_mw", "q_a_mvar", "p_b_mw", "q_b_mvar", "p_c_mw", "q_c_mvar"]
+    pp_output_attributes = ["p_a_mw", "q_a_mvar", "p_b_mw", "q_b_mvar", "p_c_mw", "q_c_mvar"]
 
 
 def test_pp_buses_output__accumulate_power__zero():

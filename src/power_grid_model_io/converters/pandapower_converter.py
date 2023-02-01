@@ -777,7 +777,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Bus component
         """
         # TODO: create unit tests for the function
-        assert "bus" not in self.pp_output_data
+        assert "res_bus" not in self.pp_output_data
+
+        if "node" not in self.pgm_output_data or self.pgm_output_data["node"].size == 0:
+            return
 
         pgm_nodes = self.pgm_output_data["node"]
 
@@ -786,8 +789,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             index=self._get_pp_ids("bus", pgm_nodes["id"]),
         )
 
-        pp_output_buses["vm_pu"] = self.pgm_nodes_lookup["u_pu"].values
-        pp_output_buses["va_degree"] = self.pgm_nodes_lookup["u_degree"].values
+        pp_output_buses["vm_pu"] = pgm_nodes["u_pu"]
+        pp_output_buses["va_degree"] = pgm_nodes["u_angle"] * (180.0 / np.pi)
 
         # p_to, p_from, q_to and q_from connected to the bus have to be summed up
         self._pp_buses_output__accumulate_power(pp_output_buses)
@@ -861,8 +864,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Line component
         """
         # TODO: create unit tests for the function
-        assert "line" not in self.pp_output_data
-        assert "line" in self.pgm_input_data
+        assert "res_line" not in self.pp_output_data
+
+        if "line" not in self.pgm_output_data or self.pgm_output_data["line"].size == 0:
+            return
 
         pgm_input_lines = self.pgm_input_data["line"]
         pgm_output_lines = self.pgm_output_data["line"]
@@ -914,8 +919,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the External Grid component
         """
-        # assert "ext_grid" not in self.pp_output_data # TODO: This should be res_ext_grid (Bram)
-        # assert "source" in self.pgm_input_data  # TODO: Why is this necessary? (Bram)
+        assert "res_ext_grid" not in self.pp_output_data
 
         if "source" not in self.pgm_output_data or self.pgm_output_data["source"].size == 0:
             return
@@ -938,8 +942,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Shunt component
         """
         # TODO: create unit tests for the function
-        assert "shunt" not in self.pp_output_data
-        assert "shunt" in self.pgm_input_data
+        assert "res_shunt" not in self.pp_output_data
+
+        if "shunt" not in self.pgm_output_data or self.pgm_output_data["shunt"].size == 0:
+            return
 
         pgm_input_shunts = self.pgm_input_data["shunt"]
 
@@ -965,8 +971,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Static Generator component
         """
         # TODO: create unit tests for the function
-        assert "sgen" not in self.pp_output_data
-        assert "sym_gen" in self.pgm_input_data
+        assert "res_sgen" not in self.pp_output_data
+
+        if "sym_gen" not in self.pgm_output_data or self.pgm_output_data["sym_gen"].size == 0:
+            return
 
         pgm_output_sym_gens = self.pgm_output_data["sym_gen"]
 
@@ -987,8 +995,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Transformer component
         """
         # TODO: create unit tests for the function
-        assert "trafo" not in self.pp_output_data
-        assert "transformer" in self.pgm_input_data
+        assert "res_trafo" not in self.pp_output_data
+
+        if "transformer" not in self.pgm_output_data or self.pgm_output_data["transformer"].size == 0:
+            return
 
         pgm_input_transformers = self.pgm_input_data["transformer"]
 
@@ -1040,8 +1050,13 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Three Winding Transformer component
         """
         # TODO: create unit tests for the function
-        assert "trafo3w" not in self.pp_output_data
-        assert "three_winding_transformer" in self.pgm_input_data
+        assert "res_trafo3w" not in self.pp_output_data
+
+        if (
+            "three_winding_transformer" not in self.pgm_output_data
+            or self.pgm_output_data["three_winding_transformer"].size == 0
+        ):
+            return
 
         pgm_input_transformers3w = self.pgm_input_data["three_winding_transformer"]
 
@@ -1107,6 +1122,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the Load component
         """
+        if "sym_load" not in self.pgm_output_data or self.pgm_output_data["sym_load"].size == 0:
+            return
 
         # Create a DataFrame wih all the pgm output loads and index it in the pgm id
         pgm_output_loads = self.pgm_output_data["sym_load"]
@@ -1143,8 +1160,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Asymmetrical Load component
         """
         # TODO: create unit tests for the function
-        assert "asymmetric_load" not in self.pp_output_data
-        assert "asym_load" in self.pgm_input_data
+        assert "res_asymmetric_load" not in self.pp_output_data
+
+        if "asym_load" not in self.pgm_output_data or self.pgm_output_data["asym_load"].size == 0:
+            return
 
         pgm_output_asym_loads = self.pgm_output_data["asym_load"]
 
@@ -1174,8 +1193,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Asymmetric Static Generator component
         """
         # TODO: create unit tests for the function
-        assert "asymmetric_sgen" not in self.pp_output_data
-        assert "asym_gen" in self.pgm_input_data
+        assert "res_asymmetric_sgen" not in self.pp_output_data
+
+        if "asym_gen" not in self.pgm_output_data or self.pgm_output_data["asym_gen"].size == 0:
+            return
 
         pgm_output_asym_gens = self.pgm_output_data["asym_gen"]
 
