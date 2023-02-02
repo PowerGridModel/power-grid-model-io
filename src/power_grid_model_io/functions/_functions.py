@@ -98,5 +98,4 @@ def zeros_to_nan(value: float) -> float:
     if not has_value(value) or value == 0.0:
         _LOG.warning("0 replaced to nan")
         return float("nan")
-    else:
-        return value
+    return value
