@@ -559,7 +559,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         assert "transformer" not in self.pgm_input_data
         self.pgm_input_data["transformer"] = pgm_transformers
 
-    def _create_pgm_input_three_winding_transformers(self):  # pylint: disable=too-many-statements
+    def _create_pgm_input_three_winding_transformers(self):  # pylint: disable=too-many-statements   # pragma: no cover
         """
         This function converts a Three Winding Transformer Dataframe of PandaPower to a power-grid-model
         Three Winding Transformer input array.
@@ -574,7 +574,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         # Check for unsupported pandapower features
         if "tap_dependent_impedance" in pp_trafo3w.columns and any(pp_trafo3w["tap_dependent_impedance"]):
-            raise RuntimeError("Tap dependent impedance is not supported in Power Grid Model")  # pragma: no cover
+            raise RuntimeError("Tap dependent impedance is not supported in Power Grid Model")
         if "tap_at_star_point" in pp_trafo3w.columns and any(pp_trafo3w["tap_at_star_point"]):
             raise RuntimeError("Tap at star point is not supported in Power Grid Model")
 
