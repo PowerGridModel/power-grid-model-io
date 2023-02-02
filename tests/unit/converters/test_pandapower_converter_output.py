@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from typing import Callable
+from typing import Callable, List
 from unittest.mock import ANY, MagicMock, patch
 
 import numpy as np
@@ -501,10 +501,7 @@ def test_output_trafo3w(converter):
         converter.pp_output_data.__setitem__.assert_called_once_with("res_trafo3w", mock_pp_df.return_value)
 
 
-def test_output_load():
-    pgm_output_attributes = ["id", "p", "q"]
-    pp_output_attributes = ["p_mw", "q_mvar"]
-
+def test_pp_load_result_accumulate():
     # Arrange
     converter = PandaPowerConverter()
     converter.pgm_output_data["sym_load"] = initialize_array("sym_output", "sym_load", 6)
@@ -520,12 +517,47 @@ def test_output_load():
         columns=["p_mw", "q_mvar"],
         index=[100, 101, 102],
     )
+    load_id_names = ["const_power", "const_current", "const_impedance"]
 
     # Act
-    converter._pp_loads_output()
+    converter._pp_load_result_accumulate(pp_component_name="load", load_id_names=load_id_names)
 
     # Assert
     pd.testing.assert_frame_equal(converter.pp_output_data["res_load"], expected)
+
+
+@pytest.mark.parametrize(
+    ("output_fn", "table", "load_id_names"),
+    [
+        (PandaPowerConverter._pp_loads_output, "load", ["const_power", "const_impedance", "const_current"]),
+        (PandaPowerConverter._pp_motor_output, "motor", ["motor_load"]),
+    ],
+)
+def test_output_load_types(output_fn: Callable[[PandaPowerConverter], None], table: str, load_id_names: List[str]):
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.pgm_output_data["sym_load"] = initialize_array("sym_output", "sym_load", 6)
+    converter._pp_load_result_accumulate = MagicMock()
+    # Act
+    output_fn(converter)
+
+    # Assert
+    converter._pp_load_result_accumulate.assert_called_once_with(pp_component_name=table, load_id_names=load_id_names)
+
+
+def test_output_load_ward():
+    # Arrange
+    converter = PandaPowerConverter()
+    load_id_names = ["ward_const_power_load", "ward_const_impedance_load"]
+
+    converter.pgm_output_data["sym_load"] = initialize_array("sym_output", "sym_load", 6)
+    converter.pp_output_data["res_ward"] = pd.DataFrame()
+    converter._pp_load_result_accumulate = MagicMock()
+    # Act
+    converter._pp_ward_output()
+
+    # Assert
+    converter._pp_load_result_accumulate.assert_called_once_with(pp_component_name="ward", load_id_names=load_id_names)
 
 
 def test_output_asymmetric_load(converter):

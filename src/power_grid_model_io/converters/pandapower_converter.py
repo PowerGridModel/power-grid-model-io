@@ -1219,9 +1219,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._pp_load_result_accumulate(
             pp_component_name="ward", load_id_names=["ward_const_power_load", "ward_const_impedance_load"]
         )
-        pgm_input_wards = self.pgm_input_data["ward"]
-        nodes = self.pgm_nodes_lookup.loc[pgm_input_wards["node"]]
-        self.pp_output_data["ward"]["vm_pu"] = nodes["u_pu"].values
+        # TODO Find a better way for mapping vm_pu from bus
+        self.pp_output_data["res_ward"]["vm_pu"] = np.nan
 
     def _pp_motor_output(self):
         self._pp_load_result_accumulate(pp_component_name="motor", load_id_names=["motor_load"])
@@ -1233,6 +1232,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the Load component
         """
+        res_key = "res_" + pp_component_name
+        assert res_key not in self.pp_output_data
+
+        if "sym_load" not in self.pgm_output_data or self.pgm_output_data["sym_load"].size == 0:
+            return
 
         # Create a DataFrame wih all the pgm output loads and index it in the pgm id
         pgm_output_loads = self.pgm_output_data["sym_load"]
@@ -1258,7 +1262,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         # Store the results, while assuring that we are not overwriting any data
         assert pp_component_name not in self.pp_output_data
-        self.pp_output_data["res_" + pp_component_name] = accumulated_loads
+        self.pp_output_data[res_key] = accumulated_loads
 
     def _get_pgm_ids(
         self, pp_table: str, pp_idx: Optional[Union[pd.Series, np.array]] = None, name: Optional[str] = None
