@@ -689,3 +689,30 @@ def test_pp_buses_output__accumulate_power():
     assert pp_buses["q_mvar"][102] * 1e6 == -0.2 - 0.4 + 0.1 - 0.02 + 0.01 - 0.002 + 0.001 - 0.00001 - 0.0002
     assert pp_buses["q_mvar"][103] * 1e6 == 0.2 + 0.02 + 0.002 - 0.00002 - 0.0004
     assert pp_buses["q_mvar"][104] * 1e6 == 0.4 - 0.00004
+
+
+def test_pp_buses_output__accumulate_power__output_empty():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.idx_lookup = {("bus", None): pd.Series([101, 102, 103], index=[0, 1, 2], dtype=np.int32)}
+    pp_buses = pd.DataFrame(np.empty((3, 2), np.float64), columns=["p_mw", "q_mvar"], index=[101, 102, 103])
+
+    converter.pgm_input_data = {
+        "link": initialize_array("input", "link", 2),
+    }
+    converter.pgm_output_data = {
+        "link": initialize_array("sym_output", "link", 0),
+    }
+    converter.pgm_input_data["link"]["from_node"] = [0, 1]
+    converter.pgm_input_data["link"]["to_node"] = [1, 2]
+
+    # Act
+    converter._pp_buses_output__accumulate_power(pp_buses)
+
+    # Assert
+    assert pp_buses["p_mw"][101] == 0
+    assert pp_buses["p_mw"][102] == 0
+    assert pp_buses["p_mw"][103] == 0
+    assert pp_buses["q_mvar"][101] == 0
+    assert pp_buses["q_mvar"][102] == 0
+    assert pp_buses["q_mvar"][103] == 0
