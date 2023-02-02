@@ -616,6 +616,21 @@ def test_pp_buses_output__accumulate_power__zero():
     assert pp_buses["q_mvar"][104] == 0.0
 
 
+def test_pp_buses_output__accumulate_power__component_absent():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.idx_lookup = {("bus", None): pd.Series([101, 102, 103, 104], index=[0, 1, 2, 3], dtype=np.int32)}
+    pp_buses = pd.DataFrame(np.empty((4, 2), np.float64), columns=["p_mw", "q_mvar"], index=[101, 102, 103, 104])
+    converter.pgm_input_data = {
+        "link": initialize_array("input", "link", 2),
+    }
+    converter.pgm_output_data = {
+        "line": initialize_array("sym_output", "line", 3),
+    }
+    with pytest.raises(KeyError, match="PGM input_data is needed to accumulate output for lines"):
+        converter._pp_buses_output__accumulate_power(pp_buses)
+
+
 def test_pp_buses_output__accumulate_power():
     # Arrange
     converter = PandaPowerConverter()
