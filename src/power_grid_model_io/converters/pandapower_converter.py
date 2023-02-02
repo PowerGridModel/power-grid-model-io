@@ -769,7 +769,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         else:
             self.pgm_input_data["sym_load"] = pgm_sym_loads_from_motor
 
-    def _pp_buses_output(self):  # pragma: no cover
+    def _pp_buses_output(self):
         """
         This function converts a power-grid-model Node output array to a Bus Dataframe of PandaPower.
 
@@ -777,7 +777,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Bus component
         """
         # TODO: create unit tests for the function
-        assert "bus" not in self.pp_output_data
+        assert "res_bus" not in self.pp_output_data
+
+        if "node" not in self.pgm_output_data or self.pgm_output_data["node"].size == 0:
+            return
 
         pgm_nodes = self.pgm_output_data["node"]
 
@@ -786,15 +789,15 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             index=self._get_pp_ids("bus", pgm_nodes["id"]),
         )
 
-        pp_output_buses["vm_pu"] = self.pgm_nodes_lookup["u_pu"].values
-        pp_output_buses["va_degree"] = self.pgm_nodes_lookup["u_degree"].values
+        pp_output_buses["vm_pu"] = pgm_nodes["u_pu"]
+        pp_output_buses["va_degree"] = pgm_nodes["u_angle"] * (180.0 / np.pi)
 
         # p_to, p_from, q_to and q_from connected to the bus have to be summed up
         self._pp_buses_output__accumulate_power(pp_output_buses)
 
         self.pp_output_data["res_bus"] = pp_output_buses
 
-    def _pp_buses_output__accumulate_power(self, pp_output_buses: pd.DataFrame):  # pragma: no cover
+    def _pp_buses_output__accumulate_power(self, pp_output_buses: pd.DataFrame):
         # TODO: create unit tests for the function
         """
         For each node, we accumulate the power for all connected branches and branch3s
@@ -853,7 +856,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_buses["p_mw"] /= 1e6
         pp_output_buses["q_mvar"] /= 1e6
 
-    def _pp_lines_output(self):  # pragma: no cover
+    def _pp_lines_output(self):
         """
         This function converts a power-grid-model Line output array to a Line Dataframe of PandaPower.
 
@@ -861,11 +864,16 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Line component
         """
         # TODO: create unit tests for the function
-        assert "line" not in self.pp_output_data
-        assert "line" in self.pgm_input_data
+        assert "res_line" not in self.pp_output_data
+
+        if "line" not in self.pgm_output_data or self.pgm_output_data["line"].size == 0:
+            return
 
         pgm_input_lines = self.pgm_input_data["line"]
         pgm_output_lines = self.pgm_output_data["line"]
+
+        if not np.array_equal(pgm_input_lines["id"], pgm_output_lines["id"]):
+            raise ValueError("The output line ids should correspond to the input line ids")
 
         pp_output_lines = pd.DataFrame(
             columns=[
@@ -907,16 +915,17 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_line"] = pp_output_lines
 
-    def _pp_ext_grids_output(self):  # pragma: no cover
+    def _pp_ext_grids_output(self):
         """
         This function converts a power-grid-model Source output array to an External Grid Dataframe of PandaPower.
 
         Returns:
             a PandaPower Dataframe for the External Grid component
         """
-        # TODO: create unit tests for the function
-        assert "ext_grid" not in self.pp_output_data
-        assert "source" in self.pgm_input_data
+        assert "res_ext_grid" not in self.pp_output_data
+
+        if "source" not in self.pgm_output_data or self.pgm_output_data["source"].size == 0:
+            return
 
         pgm_output_sources = self.pgm_output_data["source"]
 
@@ -928,7 +937,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_ext_grid"] = pp_output_ext_grids
 
-    def _pp_shunts_output(self):  # pragma: no cover
+    def _pp_shunts_output(self):
         """
         This function converts a power-grid-model Shunt output array to a Shunt Dataframe of PandaPower.
 
@@ -936,8 +945,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Shunt component
         """
         # TODO: create unit tests for the function
-        assert "shunt" not in self.pp_output_data
-        assert "shunt" in self.pgm_input_data
+        assert "res_shunt" not in self.pp_output_data
+
+        if "shunt" not in self.pgm_output_data or self.pgm_output_data["shunt"].size == 0:
+            return
 
         pgm_input_shunts = self.pgm_input_data["shunt"]
 
@@ -954,7 +965,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_shunt"] = pp_output_shunts
 
-    def _pp_sgens_output(self):  # pragma: no cover
+    def _pp_sgens_output(self):
         """
         This function converts a power-grid-model Symmetrical Generator output array to a Static Generator Dataframe of
         PandaPower.
@@ -963,8 +974,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Static Generator component
         """
         # TODO: create unit tests for the function
-        assert "sgen" not in self.pp_output_data
-        assert "sym_gen" in self.pgm_input_data
+        assert "res_sgen" not in self.pp_output_data
+
+        if "sym_gen" not in self.pgm_output_data or self.pgm_output_data["sym_gen"].size == 0:
+            return
 
         pgm_output_sym_gens = self.pgm_output_data["sym_gen"]
 
@@ -976,7 +989,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_sgen"] = pp_output_sgens
 
-    def _pp_trafos_output(self):  # pragma: no cover
+    def _pp_trafos_output(self):
         """
         This function converts a power-grid-model Transformer output array to a Transformer Dataframe of
         PandaPower.
@@ -985,8 +998,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Transformer component
         """
         # TODO: create unit tests for the function
-        assert "trafo" not in self.pp_output_data
-        assert "transformer" in self.pgm_input_data
+        assert "res_trafo" not in self.pp_output_data
+
+        if "transformer" not in self.pgm_output_data or self.pgm_output_data["transformer"].size == 0:
+            return
 
         pgm_input_transformers = self.pgm_input_data["transformer"]
 
@@ -1029,7 +1044,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_trafo"] = pp_output_trafos
 
-    def _pp_trafos3w_output(self):  # pragma: no cover
+    def _pp_trafos3w_output(self):
         """
         This function converts a power-grid-model Three Winding Transformer output array to a Three Winding Transformer
         Dataframe of PandaPower.
@@ -1038,8 +1053,13 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Three Winding Transformer component
         """
         # TODO: create unit tests for the function
-        assert "trafo3w" not in self.pp_output_data
-        assert "three_winding_transformer" in self.pgm_input_data
+        assert "res_trafo3w" not in self.pp_output_data
+
+        if (
+            "three_winding_transformer" not in self.pgm_output_data
+            or self.pgm_output_data["three_winding_transformer"].size == 0
+        ):
+            return
 
         pgm_input_transformers3w = self.pgm_input_data["three_winding_transformer"]
 
@@ -1098,16 +1118,18 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_trafo3w"] = pp_output_trafos3w
 
-    def _pp_loads_output(self):  # pragma: no cover
+    def _pp_loads_output(self):
         """
         This function converts a power-grid-model Symmetrical Load output array to a Load Dataframe of PandaPower.
 
         Returns:
             a PandaPower Dataframe for the Load component
         """
-        self._pp_load_result_accumulate(pp_component_name="load", load_id_names=["const_power", "const_impedance", "const_current"])
+        self._pp_load_result_accumulate(
+            pp_component_name="load", load_id_names=["const_power", "const_impedance", "const_current"]
+        )
 
-    def _pp_asym_loads_output(self):  # pragma: no cover
+    def _pp_asym_loads_output(self):
         """
         This function converts a power-grid-model Asymmetrical Load output array to an Asymmetrical Load Dataframe of
         PandaPower.
@@ -1116,8 +1138,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Asymmetrical Load component
         """
         # TODO: create unit tests for the function
-        assert "asymmetric_load" not in self.pp_output_data
-        assert "asym_load" in self.pgm_input_data
+        assert "res_asymmetric_load" not in self.pp_output_data
+
+        if "asym_load" not in self.pgm_output_data or self.pgm_output_data["asym_load"].size == 0:
+            return
 
         pgm_output_asym_loads = self.pgm_output_data["asym_load"]
 
@@ -1138,7 +1162,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_asymmetric_load"] = pp_asym_output_loads
 
-    def _pp_asym_gens_output(self):  # pragma: no cover
+    def _pp_asym_gens_output(self):
         """
         This function converts a power-grid-model Asymmetrical Generator output array to an Asymmetric Static Generator
         Dataframe of PandaPower.
@@ -1147,8 +1171,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Asymmetric Static Generator component
         """
         # TODO: create unit tests for the function
-        assert "asymmetric_sgen" not in self.pp_output_data
-        assert "asym_gen" in self.pgm_input_data
+        assert "res_asymmetric_sgen" not in self.pp_output_data
+
+        if "asym_gen" not in self.pgm_output_data or self.pgm_output_data["asym_gen"].size == 0:
+            return
 
         pgm_output_asym_gens = self.pgm_output_data["asym_gen"]
 
@@ -1190,7 +1216,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         return pgm_idx
 
     def _pp_ward_output(self):
-        self._pp_load_result_accumulate(pp_component_name="ward", load_id_names=["ward_const_power_load", "ward_const_impedance_load"])
+        self._pp_load_result_accumulate(
+            pp_component_name="ward", load_id_names=["ward_const_power_load", "ward_const_impedance_load"]
+        )
         pgm_input_wards = self.pgm_input_data["ward"]
         nodes = self.pgm_nodes_lookup.loc[pgm_input_wards["node"]]
         self.pp_output_data["ward"]["vm_pu"] = nodes["u_pu"].values
