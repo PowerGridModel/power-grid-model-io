@@ -1096,6 +1096,18 @@ def test_create_pgm_input_wards(mock_init_array: MagicMock, two_pp_objs, convert
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
+def test_create_pgm_input_wards__existing_loads(mock_init_array: MagicMock, two_pp_objs, converter):
+    # Arrange
+    converter.pp_input_data["ward"] = two_pp_objs
+    pgm_sym_load = MagicMock()
+    converter.pgm_input_data["sym_load"] = pgm_sym_load
+
+    # Act
+    converter._create_pgm_input_wards()
+    converter.pgm_input_data["sym_load"] = np.concatenate([pgm_sym_load, mock_init_array()])
+
+
+@patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_xward(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
     converter.pp_input_data["xward"] = two_pp_objs
@@ -1146,6 +1158,73 @@ def test_create_pgm_input_motors(mock_init_array: MagicMock, two_pp_objs, conver
 
     # result
     assert converter.pgm_input_data["sym_load"] == mock_init_array.return_value
+
+
+@patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
+def test_create_pgm_input_motors__existing_loads(mock_init_array: MagicMock, two_pp_objs, converter):
+    # Arrange
+    converter.pp_input_data["motor"] = two_pp_objs
+    pgm_sym_load = MagicMock()
+    converter.pgm_input_data["sym_load"] = pgm_sym_load
+    # Act
+    converter._create_pgm_input_motors()
+    converter.pgm_input_data["sym_load"] = np.concatenate([pgm_sym_load, mock_init_array()])
+
+
+@pytest.mark.parametrize(
+    "create_fn",
+    [
+        PandaPowerConverter._create_pgm_input_sources,
+        PandaPowerConverter._create_pgm_input_shunts,
+        PandaPowerConverter._create_pgm_input_lines,
+        PandaPowerConverter._create_pgm_input_sym_gens,
+        PandaPowerConverter._create_pgm_input_sym_loads,
+        PandaPowerConverter._create_pgm_input_asym_gens,
+        PandaPowerConverter._create_pgm_input_asym_loads,
+        PandaPowerConverter._create_pgm_input_impedances,
+        PandaPowerConverter._create_pgm_input_links,
+        PandaPowerConverter._create_pgm_input_motors,
+        PandaPowerConverter._create_pgm_input_nodes,
+        PandaPowerConverter._create_pgm_input_storages,
+        PandaPowerConverter._create_pgm_input_three_winding_transformers,
+        PandaPowerConverter._create_pgm_input_transformers,
+        PandaPowerConverter._create_pgm_input_wards,
+        PandaPowerConverter._create_pgm_input_xwards,
+        PandaPowerConverter._create_pgm_input_sources,
+        PandaPowerConverter._create_pgm_input_sources,
+    ],
+)
+def test_create_pp_input_object__empty(create_fn: Callable[[PandaPowerConverter], None]):
+    # Arrange: No table
+    converter = PandaPowerConverter()
+    converter.pp_input_data = pp.create_empty_network()
+
+    # Act / Assert
+    with patch("power_grid_model_io.converters.pandapower_converter.initialize_array") as mock_init_array:
+        create_fn(converter)
+        mock_init_array.assert_not_called()
+
+
+def test_generate_ids():
+    converter = PandaPowerConverter()
+    test_table = pd.DataFrame(
+        [[1, 2, 3], [4, 5, 6], [7, 8, 9]],
+        columns=["col1", "col2", "col3"],
+        index=[11, 12, 13],
+    )
+    converter.pp_input_data["test_table"] = test_table
+    converter.next_idx = 1
+    pgm_idx_actual = converter._generate_ids("test_table", test_table.index, name="ids_name")
+    pgm_idx_expected = np.array([1, 2, 3], dtype=np.int32)
+
+    assert converter.next_idx == 4
+    pd.testing.assert_series_equal(
+        converter.idx[("test_table", "ids_name")], pd.Series(pgm_idx_expected, index=test_table.index)
+    )
+    pd.testing.assert_series_equal(
+        converter.idx_lookup[("test_table", "ids_name")], pd.Series(test_table.index, index=pgm_idx_expected)
+    )
+    np.testing.assert_array_equal(pgm_idx_actual, pgm_idx_expected)
 
 
 def test_get_pgm_ids():
