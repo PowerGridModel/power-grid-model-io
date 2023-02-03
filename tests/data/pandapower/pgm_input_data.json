@@ -24,7 +24,7 @@
       {"id": 10, "node": 2, "status": 1, "type": 2, "p_specified": 650000.0, "q_specified": 62400.0, "id_reference": {"table": "load", "name": "const_current", "index": 101}},
       {"id": 18, "node": 4, "status": 1, "type": 0, "p_specified": 100000.0, "q_specified": 100000.0, "id_reference": {"table": "ward", "name": "ward_const_power_load", "index": 34}},
       {"id": 19, "node": 4, "status": 1, "type": 1, "p_specified": 100000.0, "q_specified": 100000.0, "id_reference": {"table": "ward", "name": "ward_const_impedance_load", "index": 34}},
-      {"id": 20, "node": 4, "status": 1, "type": 0, "p_specified": 71111.11, "q_specified": 34440, "id_reference": {"table": "motor", "name": "motor_load", "index": 12}}
+      {"id": 20, "node": 4, "status": 1, "type": 0, "p_specified": 71111.11, "q_specified": 34440.68, "id_reference": {"table": "motor", "name": "motor_load", "index": 12}}
     ],
   "shunt":
     [
@@ -49,10 +49,10 @@
     ],
   "asym_load":
     [
-      {"id": 16, "node": 4, "status": 1, "type": 0,"p_specified": [100000, 200000, 300000], "q_specified": [10000, 20000, 30000], "id_reference": {"table": "asymmetric_load", "index": 33}}
+      {"id": 16, "node": 4, "status": 1, "type": 0, "id_reference": {"table": "asymmetric_load", "index": 33}}
     ],
   "asym_gen":
     [
-      {"id": 17, "node": 4, "status": 1, "type": 0,"p_specified": [100000, 200000, 300000], "q_specified": [10000, 20000, 30000], "id_reference": {"table": "asymmetric_sgen", "index": 32}}
+      {"id": 17, "node": 4, "status": 1, "type": 0, "id_reference": {"table": "asymmetric_sgen", "index": 32}}
     ]
 }
