@@ -711,8 +711,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_loads_from_ward["node"][:n_wards] = self._get_pgm_ids("bus", bus)
         pgm_sym_loads_from_ward["status"][:n_wards] = in_service
         pgm_sym_loads_from_ward["type"][:n_wards] = LoadGenType.const_power
-        pgm_sym_loads_from_ward["p_specified"][:n_wards] = self._get_pp_attr("ward", "ps_mw")
-        pgm_sym_loads_from_ward["q_specified"][:n_wards] = self._get_pp_attr("ward", "qs_mvar")
+        pgm_sym_loads_from_ward["p_specified"][:n_wards] = self._get_pp_attr("ward", "ps_mw") * 1e6
+        pgm_sym_loads_from_ward["q_specified"][:n_wards] = self._get_pp_attr("ward", "qs_mvar") * 1e6
 
         pgm_sym_loads_from_ward["id"][-n_wards:] = self._generate_ids(
             "ward", pp_wards.index, name="ward_const_impedance_load"
@@ -720,8 +720,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_loads_from_ward["node"][-n_wards:] = self._get_pgm_ids("bus", bus)
         pgm_sym_loads_from_ward["status"][-n_wards:] = in_service
         pgm_sym_loads_from_ward["type"][-n_wards:] = LoadGenType.const_impedance
-        pgm_sym_loads_from_ward["p_specified"][-n_wards:] = self._get_pp_attr("ward", "pz_mw")
-        pgm_sym_loads_from_ward["q_specified"][-n_wards:] = self._get_pp_attr("ward", "qz_mvar")
+        pgm_sym_loads_from_ward["p_specified"][-n_wards:] = self._get_pp_attr("ward", "pz_mw") * 1e6
+        pgm_sym_loads_from_ward["q_specified"][-n_wards:] = self._get_pp_attr("ward", "qz_mvar") * 1e6
 
         #  If input data of loads has already been filled then extend it with data of motors. If it is empty and there
         #  is no data about loads,then assign motor data to it
@@ -1122,7 +1122,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_trafo3w"] = pp_output_trafos3w
 
-
     def _pp_asym_loads_output(self):
         """
         This function converts a power-grid-model Asymmetrical Load output array to an Asymmetrical Load Dataframe of
@@ -1199,8 +1198,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         load_id_names = ["const_power", "const_impedance", "const_current"]
         assert "res_load" not in self.pp_output_data
 
-        if "sym_load" not in self.pgm_output_data or self.pgm_output_data[
-            "sym_load"].size == 0 or ("load", load_id_names[0]) not in self.idx:
+        if (
+            "sym_load" not in self.pgm_output_data
+            or self.pgm_output_data["sym_load"].size == 0
+            or ("load", load_id_names[0]) not in self.idx
+        ):
             return
 
         self._pp_load_result_accumulate(
@@ -1211,13 +1213,14 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         load_id_names = ["ward_const_power_load", "ward_const_impedance_load"]
         assert "res_ward" not in self.pp_output_data
 
-        if "sym_load" not in self.pgm_output_data or self.pgm_output_data[
-            "sym_load"].size == 0 or ("ward", load_id_names[0]) not in self.idx:
+        if (
+            "sym_load" not in self.pgm_output_data
+            or self.pgm_output_data["sym_load"].size == 0
+            or ("ward", load_id_names[0]) not in self.idx
+        ):
             return
 
-        self._pp_load_result_accumulate(
-            pp_component_name="ward", load_id_names=load_id_names
-        )
+        self._pp_load_result_accumulate(pp_component_name="ward", load_id_names=load_id_names)
         # TODO Find a better way for mapping vm_pu from bus
         # self.pp_output_data["res_ward"]["vm_pu"] = np.nan
 
@@ -1226,7 +1229,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         assert "res_motor" not in self.pp_output_data
 
-        if "sym_load" not in self.pgm_output_data or self.pgm_output_data["sym_load"].size == 0 or ("motor", load_id_names[0]) not in self.idx:
+        if (
+            "sym_load" not in self.pgm_output_data
+            or self.pgm_output_data["sym_load"].size == 0
+            or ("motor", load_id_names[0]) not in self.idx
+        ):
             return
 
         self._pp_load_result_accumulate(pp_component_name="motor", load_id_names=load_id_names)
