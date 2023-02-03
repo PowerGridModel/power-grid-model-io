@@ -124,18 +124,18 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._create_pgm_input_lines()
         self._create_pgm_input_sources()
         self._create_pgm_input_sym_loads()
-        self._create_pgm_input_asym_loads()
         self._create_pgm_input_shunts()
         self._create_pgm_input_transformers()
         self._create_pgm_input_sym_gens()
-        self._create_pgm_input_asym_gens()
         self._create_pgm_input_three_winding_transformers()
         self._create_pgm_input_links()
+        self._create_pgm_input_asym_loads()
+        self._create_pgm_input_asym_gens()
+        self._create_pgm_input_wards()
+        self._create_pgm_input_motors()
         self._create_pgm_input_storages()
         self._create_pgm_input_impedances()
-        self._create_pgm_input_wards()
         self._create_pgm_input_xwards()
-        self._create_pgm_input_motors()
 
     def _fill_extra_info(self, extra_info: ExtraInfoLookup):
         for (pp_table, name), indices in self.idx_lookup.items():
@@ -390,7 +390,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_asym_gens["id"] = self._generate_ids("asymmetric_sgen", pp_asym_gens.index)
         pgm_asym_gens["node"] = self._get_pgm_ids("bus", self._get_pp_attr("asymmetric_sgen", "bus"))
         pgm_asym_gens["status"] = self._get_pp_attr("asymmetric_sgen", "in_service")
-        pgm_asym_gens["p_specified"] = (
+        pgm_asym_gens["p_specified"] = np.transpose(
             np.array(
                 (
                     self._get_pp_attr("asymmetric_sgen", "p_a_mw"),
@@ -400,11 +400,13 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             )
             * multiplier
         )
-        pgm_asym_gens["q_specified"] = np.array(
-            (
-                self._get_pp_attr("asymmetric_sgen", "q_a_mvar"),
-                self._get_pp_attr("asymmetric_sgen", "q_b_mvar"),
-                self._get_pp_attr("asymmetric_sgen", "q_c_mvar"),
+        pgm_asym_gens["q_specified"] = np.transpose(
+            np.array(
+                (
+                    self._get_pp_attr("asymmetric_sgen", "q_a_mvar"),
+                    self._get_pp_attr("asymmetric_sgen", "q_b_mvar"),
+                    self._get_pp_attr("asymmetric_sgen", "q_c_mvar"),
+                )
             )
             * multiplier
         )
@@ -485,7 +487,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_asym_loads["id"] = self._generate_ids("asymmetric_load", pp_asym_loads.index)
         pgm_asym_loads["node"] = self._get_pgm_ids("bus", self._get_pp_attr("asymmetric_load", "bus"))
         pgm_asym_loads["status"] = self._get_pp_attr("asymmetric_load", "in_service")
-        pgm_asym_loads["p_specified"] = (
+        pgm_asym_loads["p_specified"] = np.transpose(
             np.array(
                 [
                     self._get_pp_attr("asymmetric_load", "p_a_mw"),
@@ -495,7 +497,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             )
             * multiplier
         )
-        pgm_asym_loads["q_specified"] = (
+        pgm_asym_loads["q_specified"] = np.transpose(
             np.array(
                 [
                     self._get_pp_attr("asymmetric_load", "q_a_mvar"),
@@ -1138,20 +1140,13 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         pgm_output_asym_loads = self.pgm_output_data["asym_load"]
 
-        pp_asym_load_p = pgm_output_asym_loads["p"] * (1e-6 / 3)
-        pp_asym_load_q = pgm_output_asym_loads["q"] * (1e-6 / 3)
-
         pp_asym_output_loads = pd.DataFrame(
-            columns=["p_a_mw", "q_a_mvar", "p_b_mw", "q_b_mvar", "p_c_mw", "q_c_mvar"],
+            columns=["p_mw", "q_mvar"],
             index=self._get_pp_ids("asymmetric_load", pgm_output_asym_loads["id"]),
         )
 
-        pp_asym_output_loads["p_a_mw"] = pp_asym_load_p
-        pp_asym_output_loads["q_a_mvar"] = pp_asym_load_q
-        pp_asym_output_loads["p_b_mw"] = pp_asym_load_p
-        pp_asym_output_loads["q_b_mvar"] = pp_asym_load_q
-        pp_asym_output_loads["p_c_mw"] = pp_asym_load_p
-        pp_asym_output_loads["q_c_mvar"] = pp_asym_load_q
+        pp_asym_output_loads["p_mw"] = pgm_output_asym_loads["p"] * 1e-6
+        pp_asym_output_loads["q_mvar"] = pgm_output_asym_loads["q"] * 1e-6
 
         self.pp_output_data["res_asymmetric_load"] = pp_asym_output_loads
 
@@ -1171,20 +1166,13 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         pgm_output_asym_gens = self.pgm_output_data["asym_gen"]
 
-        pp_asym_gen_p = pgm_output_asym_gens["p"] * (1e-6 / 3)
-        pp_asym_gen_q = pgm_output_asym_gens["q"] * (1e-6 / 3)
-
         pp_output_asym_gens = pd.DataFrame(
-            columns=["p_a_mw", "q_a_mvar", "p_b_mw", "q_b_mvar", "p_c_mw", "q_c_mvar"],
+            columns=["p_mw", "q_mvar"],
             index=self._get_pp_ids("asymmetric_sgen", pgm_output_asym_gens["id"]),
         )
 
-        pp_output_asym_gens["p_a_mw"] = pp_asym_gen_p
-        pp_output_asym_gens["q_a_mvar"] = pp_asym_gen_q
-        pp_output_asym_gens["p_b_mw"] = pp_asym_gen_p
-        pp_output_asym_gens["q_b_mvar"] = pp_asym_gen_q
-        pp_output_asym_gens["p_c_mw"] = pp_asym_gen_p
-        pp_output_asym_gens["q_c_mvar"] = pp_asym_gen_q
+        pp_output_asym_gens["p_mw"] = pgm_output_asym_gens["p"] * 1e-6
+        pp_output_asym_gens["q_mvar"] = pgm_output_asym_gens["q"] * 1e-6
 
         self.pp_output_data["res_asymmetric_sgen"] = pp_output_asym_gens
 

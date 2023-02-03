@@ -475,12 +475,8 @@ def test_output_asymmetric_load(converter):
         mock_pgm_array.__getitem__.assert_any_call("q")
 
         # assignment
-        mock_pp_df.return_value.__setitem__.assert_any_call("p_a_mw", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("q_a_mvar", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("p_b_mw", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("q_b_mvar", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("p_c_mw", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("q_c_mvar", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("p_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("q_mvar", ANY)
 
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_asymmetric_load", mock_pp_df.return_value)
@@ -506,12 +502,8 @@ def test_output_asymmetric_sgen(converter):
         mock_pgm_array.__getitem__.assert_any_call("q")
 
         # assignment
-        mock_pp_df.return_value.__setitem__.assert_any_call("p_a_mw", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("q_a_mvar", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("p_b_mw", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("q_b_mvar", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("p_c_mw", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("q_c_mvar", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("p_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("q_mvar", ANY)
 
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_asymmetric_sgen", mock_pp_df.return_value)
