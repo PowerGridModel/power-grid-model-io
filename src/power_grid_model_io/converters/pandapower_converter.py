@@ -231,6 +231,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._pp_trafos_output()
         self._pp_sgens_output()
         self._pp_trafos3w_output()
+        self._pp_ward_output()
+        self._pp_motor_output()
+        self._pp_asym_gens_output()
+        self._pp_asym_loads_output()
 
     def _create_pgm_input_nodes(self):
         """
@@ -483,21 +487,21 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_asym_loads["status"] = self._get_pp_attr("asymmetric_load", "in_service")
         pgm_asym_loads["p_specified"] = (
             np.array(
-                (
+                [
                     self._get_pp_attr("asymmetric_load", "p_a_mw"),
                     self._get_pp_attr("asymmetric_load", "p_b_mw"),
                     self._get_pp_attr("asymmetric_load", "p_c_mw"),
-                )
+                ]
             )
             * multiplier
         )
         pgm_asym_loads["q_specified"] = (
             np.array(
-                (
+                [
                     self._get_pp_attr("asymmetric_load", "q_a_mvar"),
                     self._get_pp_attr("asymmetric_load", "q_b_mvar"),
                     self._get_pp_attr("asymmetric_load", "q_c_mvar"),
-                )
+                ]
             )
             * multiplier
         )
@@ -1118,16 +1122,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_trafo3w"] = pp_output_trafos3w
 
-    def _pp_loads_output(self):
-        """
-        This function converts a power-grid-model Symmetrical Load output array to a Load Dataframe of PandaPower.
-
-        Returns:
-            a PandaPower Dataframe for the Load component
-        """
-        self._pp_load_result_accumulate(
-            pp_component_name="load", load_id_names=["const_power", "const_impedance", "const_current"]
-        )
 
     def _pp_asym_loads_output(self):
         """
@@ -1195,35 +1189,47 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_asymmetric_sgen"] = pp_output_asym_gens
 
-    def _generate_ids(self, pp_table: str, pp_idx: pd.Index, name: Optional[str] = None) -> np.arange:
+    def _pp_loads_output(self):
         """
-        Generate numerical power-grid-model IDs for a PandaPower component
-
-        Args:
-            pp_table: Table name (e.g. "bus")
-            pp_idx: PandaPower component identifier
+        This function converts a power-grid-model Symmetrical Load output array to a Load Dataframe of PandaPower.
 
         Returns:
-            the generated IDs
+            a PandaPower Dataframe for the Load component
         """
-        key = (pp_table, name)
-        assert key not in self.idx_lookup
-        n_objects = len(pp_idx)
-        pgm_idx = np.arange(start=self.next_idx, stop=self.next_idx + n_objects, dtype=np.int32)
-        self.idx[key] = pd.Series(pgm_idx, index=pp_idx)
-        self.idx_lookup[key] = pd.Series(pp_idx, index=pgm_idx)
-        self.next_idx += n_objects
-        return pgm_idx
+        load_id_names = ["const_power", "const_impedance", "const_current"]
+        assert "res_load" not in self.pp_output_data
+
+        if "sym_load" not in self.pgm_output_data or self.pgm_output_data[
+            "sym_load"].size == 0 or ("load", load_id_names[0]) not in self.idx:
+            return
+
+        self._pp_load_result_accumulate(
+            pp_component_name="load", load_id_names=["const_power", "const_impedance", "const_current"]
+        )
 
     def _pp_ward_output(self):
+        load_id_names = ["ward_const_power_load", "ward_const_impedance_load"]
+        assert "res_ward" not in self.pp_output_data
+
+        if "sym_load" not in self.pgm_output_data or self.pgm_output_data[
+            "sym_load"].size == 0 or ("ward", load_id_names[0]) not in self.idx:
+            return
+
         self._pp_load_result_accumulate(
-            pp_component_name="ward", load_id_names=["ward_const_power_load", "ward_const_impedance_load"]
+            pp_component_name="ward", load_id_names=load_id_names
         )
         # TODO Find a better way for mapping vm_pu from bus
-        self.pp_output_data["res_ward"]["vm_pu"] = np.nan
+        # self.pp_output_data["res_ward"]["vm_pu"] = np.nan
 
     def _pp_motor_output(self):
-        self._pp_load_result_accumulate(pp_component_name="motor", load_id_names=["motor_load"])
+        load_id_names = ["motor_load"]
+
+        assert "res_motor" not in self.pp_output_data
+
+        if "sym_load" not in self.pgm_output_data or self.pgm_output_data["sym_load"].size == 0 or ("motor", load_id_names[0]) not in self.idx:
+            return
+
+        self._pp_load_result_accumulate(pp_component_name="motor", load_id_names=load_id_names)
 
     def _pp_load_result_accumulate(self, pp_component_name: str, load_id_names: List[str]):  # pragma: no cover
         """
@@ -1232,12 +1238,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the Load component
         """
-        res_key = "res_" + pp_component_name
-        assert res_key not in self.pp_output_data
-
-        if "sym_load" not in self.pgm_output_data or self.pgm_output_data["sym_load"].size == 0:
-            return
-
         # Create a DataFrame wih all the pgm output loads and index it in the pgm id
         pgm_output_loads = self.pgm_output_data["sym_load"]
         all_loads = pd.DataFrame(pgm_output_loads, index=pgm_output_loads["id"])
@@ -1262,7 +1262,27 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         # Store the results, while assuring that we are not overwriting any data
         assert pp_component_name not in self.pp_output_data
-        self.pp_output_data[res_key] = accumulated_loads
+        self.pp_output_data["res_" + pp_component_name] = accumulated_loads
+
+    def _generate_ids(self, pp_table: str, pp_idx: pd.Index, name: Optional[str] = None) -> np.arange:
+        """
+        Generate numerical power-grid-model IDs for a PandaPower component
+
+        Args:
+            pp_table: Table name (e.g. "bus")
+            pp_idx: PandaPower component identifier
+
+        Returns:
+            the generated IDs
+        """
+        key = (pp_table, name)
+        assert key not in self.idx_lookup
+        n_objects = len(pp_idx)
+        pgm_idx = np.arange(start=self.next_idx, stop=self.next_idx + n_objects, dtype=np.int32)
+        self.idx[key] = pd.Series(pgm_idx, index=pp_idx)
+        self.idx_lookup[key] = pd.Series(pp_idx, index=pgm_idx)
+        self.next_idx += n_objects
+        return pgm_idx
 
     def _get_pgm_ids(
         self, pp_table: str, pp_idx: Optional[Union[pd.Series, np.array]] = None, name: Optional[str] = None

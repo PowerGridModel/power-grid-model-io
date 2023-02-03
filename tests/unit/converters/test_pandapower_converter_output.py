@@ -29,15 +29,19 @@ def test_create_output_data():
     PandaPowerConverter._create_output_data(self=converter)  # type: ignore
 
     # Assert
-    assert len(converter.method_calls) == 8
+    assert len(converter.method_calls) == 12
     converter._pp_buses_output.assert_called_once_with()
     converter._pp_lines_output.assert_called_once_with()
     converter._pp_ext_grids_output.assert_called_once_with()
-    converter._pp_loads_output.assert_called_once_with()
     converter._pp_shunts_output.assert_called_once_with()
-    converter._pp_trafos_output.assert_called_once_with()
     converter._pp_sgens_output.assert_called_once_with()
+    converter._pp_trafos_output.assert_called_once_with()
     converter._pp_trafos3w_output.assert_called_once_with()
+    converter._pp_loads_output.assert_called_once_with()
+    converter._pp_asym_loads_output.assert_called_once_with()
+    converter._pp_asym_gens_output.assert_called_once_with()
+    converter._pp_motor_output.assert_called_once_with()
+    converter._pp_ward_output.assert_called_once_with()
 
 
 @pytest.mark.parametrize(
@@ -426,6 +430,7 @@ def test_output_load_types(output_fn: Callable[[PandaPowerConverter], None], tab
     # Arrange
     converter = PandaPowerConverter()
     converter.pgm_output_data["sym_load"] = initialize_array("sym_output", "sym_load", 6)
+    converter.idx[(table, load_id_names[0])] = pd.Series([0], index=[1])
     converter._pp_load_result_accumulate = MagicMock()
     # Act
     output_fn(converter)
@@ -440,8 +445,9 @@ def test_output_load_ward():
     load_id_names = ["ward_const_power_load", "ward_const_impedance_load"]
 
     converter.pgm_output_data["sym_load"] = initialize_array("sym_output", "sym_load", 6)
-    converter.pp_output_data["res_ward"] = pd.DataFrame()
+    converter.idx[("ward", load_id_names[0])] = pd.Series([0], index=[1])
     converter._pp_load_result_accumulate = MagicMock()
+
     # Act
     converter._pp_ward_output()
 
