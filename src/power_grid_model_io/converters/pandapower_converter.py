@@ -1226,7 +1226,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self._pp_load_result_accumulate(pp_component_name="motor", load_id_names=load_id_names)
 
-    def _pp_load_result_accumulate(self, pp_component_name: str, load_id_names: List[str]):  # pragma: no cover
+    def _pp_load_result_accumulate(self, pp_component_name: str, load_id_names: List[str]):
         """
         This function converts a power-grid-model Symmetrical Load output array to a respective Dataframe of PandaPower.
 

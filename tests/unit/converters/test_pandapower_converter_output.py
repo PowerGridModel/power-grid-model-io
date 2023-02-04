@@ -57,6 +57,8 @@ def test_create_output_data():
         (PandaPowerConverter._pp_loads_output, "sym_load"),
         (PandaPowerConverter._pp_asym_loads_output, "asym_load"),
         (PandaPowerConverter._pp_asym_gens_output, "asym_gen"),
+        (PandaPowerConverter._pp_ward_output, "ward"),
+        (PandaPowerConverter._pp_motor_output, "motor"),
     ],
 )
 def test_create_pp_output_object__empty(create_fn: Callable[[PandaPowerConverter], None], table: str):
