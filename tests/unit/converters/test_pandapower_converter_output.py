@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from typing import Callable
+from typing import Callable, List
 from unittest.mock import ANY, MagicMock, patch
 
 import numpy as np
@@ -29,15 +29,19 @@ def test_create_output_data():
     PandaPowerConverter._create_output_data(self=converter)  # type: ignore
 
     # Assert
-    assert len(converter.method_calls) == 8
+    assert len(converter.method_calls) == 12
     converter._pp_buses_output.assert_called_once_with()
     converter._pp_lines_output.assert_called_once_with()
     converter._pp_ext_grids_output.assert_called_once_with()
-    converter._pp_loads_output.assert_called_once_with()
     converter._pp_shunts_output.assert_called_once_with()
-    converter._pp_trafos_output.assert_called_once_with()
     converter._pp_sgens_output.assert_called_once_with()
+    converter._pp_trafos_output.assert_called_once_with()
     converter._pp_trafos3w_output.assert_called_once_with()
+    converter._pp_loads_output.assert_called_once_with()
+    converter._pp_asym_loads_output.assert_called_once_with()
+    converter._pp_asym_gens_output.assert_called_once_with()
+    converter._pp_motor_output.assert_called_once_with()
+    converter._pp_ward_output.assert_called_once_with()
 
 
 @pytest.mark.parametrize(
@@ -53,6 +57,8 @@ def test_create_output_data():
         (PandaPowerConverter._pp_loads_output, "sym_load"),
         (PandaPowerConverter._pp_asym_loads_output, "asym_load"),
         (PandaPowerConverter._pp_asym_gens_output, "asym_gen"),
+        (PandaPowerConverter._pp_ward_output, "ward"),
+        (PandaPowerConverter._pp_motor_output, "motor"),
     ],
 )
 def test_create_pp_output_object__empty(create_fn: Callable[[PandaPowerConverter], None], table: str):
@@ -74,11 +80,6 @@ def test_create_pp_output_object__empty(create_fn: Callable[[PandaPowerConverter
 
 
 def test_output_bus(converter):
-    pgm_output_attributes = ["id", "u_pu", "u_angle", ""]  # Left blank because this part depends on what kind of
-    # Branch the node is connected to. However, If the node_injection becomes finished then it will be easier to input
-    # a specific attribute
-    pp_output_attributes = ["vm_pu", "va_degree", "p_mw", "q_mvar"]
-
     # Arrange
     mock_pgm_array = MagicMock()
     converter.pgm_output_data["node"] = mock_pgm_array
@@ -108,37 +109,6 @@ def test_output_bus(converter):
 
 
 def test_output_line(converter):
-    # for pgm attributes I did not include any attributes that are taken from nodes in node_lookup
-    # However I included some attributes that were taken from pgm_input_lines such as: from_node, to_node
-    pgm_output_attributes = [
-        "id",
-        "from_node",
-        "to_node",
-        "p_from",
-        "q_from",
-        "p_to",
-        "q_to",
-        "i_from",
-        "i_to",
-        "loading",
-    ]
-    pp_output_attributes = [
-        "p_from_mw",
-        "q_from_mvar",
-        "p_to_mw",
-        "q_to_mvar",
-        "pl_mw",
-        "ql_mvar",
-        "i_from_ka",
-        "i_to_ka",
-        "i_ka",
-        "vm_from_pu",
-        "vm_to_pu",
-        "va_from_degree",
-        "va_to_degree",
-        "loading_percent",
-    ]
-
     # Arrange
     mock_pgm_array = MagicMock()
     converter.pgm_nodes_lookup = MagicMock()
@@ -181,7 +151,6 @@ def test_output_line(converter):
 
 
 def test_output_line__node_lookup():
-
     # Arrange
     converter = PandaPowerConverter()
     converter.idx_lookup[("line", None)] = pd.Series([132, 121], index=[32, 21])
@@ -217,7 +186,6 @@ def test_output_line__node_lookup():
 
 
 def test_output_line__node_lookup__exception(converter):
-
     # Arrange
     converter.pgm_nodes_lookup = MagicMock()
     converter.pgm_output_data["line"] = initialize_array("input", "line", 3)
@@ -231,9 +199,6 @@ def test_output_line__node_lookup__exception(converter):
 
 
 def test_output_ext_grids(converter):
-    pgm_output_attributes = ["id", "p", "q"]
-    pp_output_attributes = ["p_mw", "q_mvar"]
-
     # Arrange
     mock_pgm_array = MagicMock()
     converter.pgm_output_data["source"] = mock_pgm_array
@@ -261,9 +226,6 @@ def test_output_ext_grids(converter):
 
 
 def test_output_shunts(converter):
-    pgm_output_attributes = ["id", "node", "p", "q"]  # node is taken from pgm_input_shunts
-    pp_output_attributes = ["p_mw", "q_mvar", "vm_pu"]
-
     # Arrange
     mock_pgm_array = MagicMock()
     converter.pgm_input_data["shunt"] = mock_pgm_array
@@ -296,9 +258,6 @@ def test_output_shunts(converter):
 
 
 def test_output_sgen(converter):
-    pgm_output_attributes = ["id", "p", "q"]
-    pp_output_attributes = ["p_mw", "q_mvar"]
-
     # Arrange
     mock_pgm_array = MagicMock()
     converter.pgm_output_data["sym_gen"] = mock_pgm_array
@@ -326,34 +285,6 @@ def test_output_sgen(converter):
 
 
 def test_output_trafos(converter):
-    pgm_output_attributes = [  # from node and to node are taken from pgm_input_transformers
-        "id",
-        "from_node",
-        "to_node",
-        "p_from",
-        "q_from",
-        "p_to",
-        "q_to",
-        "i_from",
-        "i_to",
-        "loading",
-    ]
-    pp_output_attributes = [
-        "p_hv_mw",
-        "q_hv_mvar",
-        "p_lv_mw",
-        "q_lv_mvar",
-        "pl_mw",
-        "ql_mvar",
-        "i_hv_ka",
-        "i_lv_ka",
-        "vm_hv_pu",
-        "vm_lv_pu",
-        "va_hv_degree",
-        "va_lv_degree",
-        "loading_percent",
-    ]
-
     # Arrange
     mock_pgm_array = MagicMock()
     converter.pgm_input_data["transformer"] = mock_pgm_array
@@ -405,43 +336,6 @@ def test_output_trafos(converter):
 
 
 def test_output_trafo3w(converter):
-    pgm_output_attributes = [  # "node_1", "node_2", "node_3" are taken from pgm_input_transformers3w
-        "id",
-        "node_1",
-        "node_2",
-        "node_3",
-        "p_1",
-        "q_1",
-        "p_2",
-        "q_2",
-        "p_3",
-        "q_3",
-        "i_1",
-        "i_2",
-        "i_3",
-        "loading",
-    ]
-    pp_output_attributes = [
-        "p_hv_mw",
-        "q_hv_mvar",
-        "p_mv_mw",
-        "q_mv_mvar",
-        "p_lv_mw",
-        "q_lv_mvar",
-        "pl_mw",
-        "ql_mvar",
-        "i_hv_ka",
-        "i_mv_ka",
-        "i_lv_ka",
-        "vm_hv_pu",
-        "vm_mv_pu",
-        "vm_lv_pu",
-        "va_hv_degree",
-        "va_mv_degree",
-        "va_lv_degree",
-        "loading_percent",
-    ]
-
     # Arrange
     mock_pgm_array = MagicMock()
     converter.pgm_input_data["three_winding_transformer"] = mock_pgm_array
@@ -473,6 +367,7 @@ def test_output_trafo3w(converter):
         mock_pgm_array.__getitem__.assert_any_call("i_1")
         mock_pgm_array.__getitem__.assert_any_call("i_2")
         mock_pgm_array.__getitem__.assert_any_call("i_3")
+        # TODO find a better way for getting voltages at node
         # mock_pgm_array.__getitem__.assert_any_call("u_pu")
         # mock_pgm_array.__getitem__.assert_any_call("u_degree")
         mock_pgm_array.__getitem__.assert_any_call("loading")
@@ -501,10 +396,7 @@ def test_output_trafo3w(converter):
         converter.pp_output_data.__setitem__.assert_called_once_with("res_trafo3w", mock_pp_df.return_value)
 
 
-def test_output_load():
-    pgm_output_attributes = ["id", "p", "q"]
-    pp_output_attributes = ["p_mw", "q_mvar"]
-
+def test_pp_load_result_accumulate():
     # Arrange
     converter = PandaPowerConverter()
     converter.pgm_output_data["sym_load"] = initialize_array("sym_output", "sym_load", 6)
@@ -520,18 +412,52 @@ def test_output_load():
         columns=["p_mw", "q_mvar"],
         index=[100, 101, 102],
     )
+    load_id_names = ["const_power", "const_current", "const_impedance"]
 
     # Act
-    converter._pp_loads_output()
+    converter._pp_load_result_accumulate(pp_component_name="load", load_id_names=load_id_names)
 
     # Assert
     pd.testing.assert_frame_equal(converter.pp_output_data["res_load"], expected)
 
 
-def test_output_asymmetric_load(converter):
-    pgm_output_attributes = ["id", "p", "q"]
-    pp_output_attributes = ["p_a_mw", "q_a_mvar", "p_b_mw", "q_b_mvar", "p_c_mw", "q_c_mvar"]
+@pytest.mark.parametrize(
+    ("output_fn", "table", "load_id_names"),
+    [
+        (PandaPowerConverter._pp_loads_output, "load", ["const_power", "const_impedance", "const_current"]),
+        (PandaPowerConverter._pp_motor_output, "motor", ["motor_load"]),
+    ],
+)
+def test_output_load_types(output_fn: Callable[[PandaPowerConverter], None], table: str, load_id_names: List[str]):
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.pgm_output_data["sym_load"] = initialize_array("sym_output", "sym_load", 6)
+    converter.idx[(table, load_id_names[0])] = pd.Series([0], index=[1])
+    converter._pp_load_result_accumulate = MagicMock()
+    # Act
+    output_fn(converter)
 
+    # Assert
+    converter._pp_load_result_accumulate.assert_called_once_with(pp_component_name=table, load_id_names=load_id_names)
+
+
+def test_output_load_ward():
+    # Arrange
+    converter = PandaPowerConverter()
+    load_id_names = ["ward_const_power_load", "ward_const_impedance_load"]
+
+    converter.pgm_output_data["sym_load"] = initialize_array("sym_output", "sym_load", 6)
+    converter.idx[("ward", load_id_names[0])] = pd.Series([0], index=[1])
+    converter._pp_load_result_accumulate = MagicMock()
+
+    # Act
+    converter._pp_ward_output()
+
+    # Assert
+    converter._pp_load_result_accumulate.assert_called_once_with(pp_component_name="ward", load_id_names=load_id_names)
+
+
+def test_output_asymmetric_load(converter):
     # Arrange
     mock_pgm_array = MagicMock()
     converter.pgm_output_data["asym_load"] = mock_pgm_array
@@ -551,21 +477,14 @@ def test_output_asymmetric_load(converter):
         mock_pgm_array.__getitem__.assert_any_call("q")
 
         # assignment
-        mock_pp_df.return_value.__setitem__.assert_any_call("p_a_mw", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("q_a_mvar", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("p_b_mw", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("q_b_mvar", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("p_c_mw", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("q_c_mvar", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("p_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("q_mvar", ANY)
 
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_asymmetric_load", mock_pp_df.return_value)
 
 
 def test_output_asymmetric_sgen(converter):
-    pgm_output_attributes = ["id", "p", "q"]
-    pp_output_attributes = ["p_a_mw", "q_a_mvar", "p_b_mw", "q_b_mvar", "p_c_mw", "q_c_mvar"]
-
     # Arrange
     mock_pgm_array = MagicMock()
     converter.pgm_output_data["asym_gen"] = mock_pgm_array
@@ -585,12 +504,8 @@ def test_output_asymmetric_sgen(converter):
         mock_pgm_array.__getitem__.assert_any_call("q")
 
         # assignment
-        mock_pp_df.return_value.__setitem__.assert_any_call("p_a_mw", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("q_a_mvar", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("p_b_mw", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("q_b_mvar", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("p_c_mw", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("q_c_mvar", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("p_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("q_mvar", ANY)
 
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_asymmetric_sgen", mock_pp_df.return_value)

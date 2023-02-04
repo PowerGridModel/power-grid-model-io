@@ -57,6 +57,10 @@ def pp_net() -> pp.pandapowerNet:
     pp.create_switch(net, index=321, et="t", bus=101, element=101, closed=True)
     pp.create_shunt(net, index=1201, in_service=True, bus=104, p_mw=0.1, q_mvar=0.55, step=3)
     pp.create_sgen(net, index=31, bus=105, p_mw=1.21, q_mvar=0.81)
+    pp.create_asymmetric_sgen(net, index=32, bus=105, p_a_mw=0.1, p_b_mw=0.2, p_c_mw=3, q_a_mvar=0.01, q_b_mvar=0.01, q_c_mvar=0.01)
+    pp.create_asymmetric_load(net, index=33, bus=105, p_a_mw=0.1, p_b_mw=0.2, p_c_mw=3, q_a_mvar=0.01, q_b_mvar=0.01, q_c_mvar=0.01)
+    pp.create_ward(net, index=34, bus=105, ps_mw=0.1, qs_mvar=0.1, pz_mw=0.1, qz_mvar=0.1)
+    pp.create_motor(net, bus=105, index=12, pn_mech_mw=0.1, cos_phi=0.9, loading_percent=80, efficiency_percent=90, scaling=0.8)
     pp.create_transformer3w_from_parameters(
         net,
         index=102,

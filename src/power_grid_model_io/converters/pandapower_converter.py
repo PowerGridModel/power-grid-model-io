@@ -124,18 +124,18 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._create_pgm_input_lines()
         self._create_pgm_input_sources()
         self._create_pgm_input_sym_loads()
-        self._create_pgm_input_asym_loads()
         self._create_pgm_input_shunts()
         self._create_pgm_input_transformers()
         self._create_pgm_input_sym_gens()
-        self._create_pgm_input_asym_gens()
         self._create_pgm_input_three_winding_transformers()
         self._create_pgm_input_links()
+        self._create_pgm_input_asym_loads()
+        self._create_pgm_input_asym_gens()
+        self._create_pgm_input_wards()
+        self._create_pgm_input_motors()
         self._create_pgm_input_storages()
         self._create_pgm_input_impedances()
-        self._create_pgm_input_wards()
         self._create_pgm_input_xwards()
-        self._create_pgm_input_motors()
 
     def _fill_extra_info(self, extra_info: ExtraInfoLookup):
         for (pp_table, name), indices in self.idx_lookup.items():
@@ -231,6 +231,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._pp_trafos_output()
         self._pp_sgens_output()
         self._pp_trafos3w_output()
+        self._pp_ward_output()
+        self._pp_motor_output()
+        self._pp_asym_gens_output()
+        self._pp_asym_loads_output()
 
     def _create_pgm_input_nodes(self):
         """
@@ -386,7 +390,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_asym_gens["id"] = self._generate_ids("asymmetric_sgen", pp_asym_gens.index)
         pgm_asym_gens["node"] = self._get_pgm_ids("bus", self._get_pp_attr("asymmetric_sgen", "bus"))
         pgm_asym_gens["status"] = self._get_pp_attr("asymmetric_sgen", "in_service")
-        pgm_asym_gens["p_specified"] = (
+        pgm_asym_gens["p_specified"] = np.transpose(
             np.array(
                 (
                     self._get_pp_attr("asymmetric_sgen", "p_a_mw"),
@@ -396,11 +400,13 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             )
             * multiplier
         )
-        pgm_asym_gens["q_specified"] = np.array(
-            (
-                self._get_pp_attr("asymmetric_sgen", "q_a_mvar"),
-                self._get_pp_attr("asymmetric_sgen", "q_b_mvar"),
-                self._get_pp_attr("asymmetric_sgen", "q_c_mvar"),
+        pgm_asym_gens["q_specified"] = np.transpose(
+            np.array(
+                (
+                    self._get_pp_attr("asymmetric_sgen", "q_a_mvar"),
+                    self._get_pp_attr("asymmetric_sgen", "q_b_mvar"),
+                    self._get_pp_attr("asymmetric_sgen", "q_c_mvar"),
+                )
             )
             * multiplier
         )
@@ -481,23 +487,23 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_asym_loads["id"] = self._generate_ids("asymmetric_load", pp_asym_loads.index)
         pgm_asym_loads["node"] = self._get_pgm_ids("bus", self._get_pp_attr("asymmetric_load", "bus"))
         pgm_asym_loads["status"] = self._get_pp_attr("asymmetric_load", "in_service")
-        pgm_asym_loads["p_specified"] = (
+        pgm_asym_loads["p_specified"] = np.transpose(
             np.array(
-                (
+                [
                     self._get_pp_attr("asymmetric_load", "p_a_mw"),
                     self._get_pp_attr("asymmetric_load", "p_b_mw"),
                     self._get_pp_attr("asymmetric_load", "p_c_mw"),
-                )
+                ]
             )
             * multiplier
         )
-        pgm_asym_loads["q_specified"] = (
+        pgm_asym_loads["q_specified"] = np.transpose(
             np.array(
-                (
+                [
                     self._get_pp_attr("asymmetric_load", "q_a_mvar"),
                     self._get_pp_attr("asymmetric_load", "q_b_mvar"),
                     self._get_pp_attr("asymmetric_load", "q_c_mvar"),
-                )
+                ]
             )
             * multiplier
         )
@@ -574,7 +580,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         # Check for unsupported pandapower features
         if "tap_dependent_impedance" in pp_trafo3w.columns and any(pp_trafo3w["tap_dependent_impedance"]):
-            raise RuntimeError("Tap dependent impedance is not supported in Power Grid Model")   # pragma: no cover
+            raise RuntimeError("Tap dependent impedance is not supported in Power Grid Model")  # pragma: no cover
         if "tap_at_star_point" in pp_trafo3w.columns and any(pp_trafo3w["tap_at_star_point"]):
             raise RuntimeError("Tap at star point is not supported in Power Grid Model")
 
@@ -707,8 +713,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_loads_from_ward["node"][:n_wards] = self._get_pgm_ids("bus", bus)
         pgm_sym_loads_from_ward["status"][:n_wards] = in_service
         pgm_sym_loads_from_ward["type"][:n_wards] = LoadGenType.const_power
-        pgm_sym_loads_from_ward["p_specified"][:n_wards] = self._get_pp_attr("ward", "ps_mw")
-        pgm_sym_loads_from_ward["q_specified"][:n_wards] = self._get_pp_attr("ward", "qs_mvar")
+        pgm_sym_loads_from_ward["p_specified"][:n_wards] = self._get_pp_attr("ward", "ps_mw") * 1e6
+        pgm_sym_loads_from_ward["q_specified"][:n_wards] = self._get_pp_attr("ward", "qs_mvar") * 1e6
 
         pgm_sym_loads_from_ward["id"][-n_wards:] = self._generate_ids(
             "ward", pp_wards.index, name="ward_const_impedance_load"
@@ -716,8 +722,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_loads_from_ward["node"][-n_wards:] = self._get_pgm_ids("bus", bus)
         pgm_sym_loads_from_ward["status"][-n_wards:] = in_service
         pgm_sym_loads_from_ward["type"][-n_wards:] = LoadGenType.const_impedance
-        pgm_sym_loads_from_ward["p_specified"][-n_wards:] = self._get_pp_attr("ward", "pz_mw")
-        pgm_sym_loads_from_ward["q_specified"][-n_wards:] = self._get_pp_attr("ward", "qz_mvar")
+        pgm_sym_loads_from_ward["p_specified"][-n_wards:] = self._get_pp_attr("ward", "pz_mw") * 1e6
+        pgm_sym_loads_from_ward["q_specified"][-n_wards:] = self._get_pp_attr("ward", "qz_mvar") * 1e6
 
         #  If input data of loads has already been filled then extend it with data of motors. If it is empty and there
         #  is no data about loads,then assign motor data to it
@@ -1118,42 +1124,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_trafo3w"] = pp_output_trafos3w
 
-    def _pp_loads_output(self):
-        """
-        This function converts a power-grid-model Symmetrical Load output array to a Load Dataframe of PandaPower.
-
-        Returns:
-            a PandaPower Dataframe for the Load component
-        """
-        if "sym_load" not in self.pgm_output_data or self.pgm_output_data["sym_load"].size == 0:
-            return
-
-        # Create a DataFrame wih all the pgm output loads and index it in the pgm id
-        pgm_output_loads = self.pgm_output_data["sym_load"]
-        all_loads = pd.DataFrame(pgm_output_loads, index=pgm_output_loads["id"])
-
-        # Create an empty DataFrame with two columns p and q to accumulate all the loads per pp id
-        accumulated_loads = pd.DataFrame(columns=["p", "q"], dtype=np.float64)
-
-        # Loop over the load types;
-        #   find the pgm ids
-        #   select those loads
-        #   replace the index by the pp ids
-        #   add the p and q columns to the accumulator DataFrame
-        for load_type in ["const_power", "const_impedance", "const_current"]:
-            pgm_load_ids = self._get_pgm_ids("load", name=load_type)
-            selected_loads = all_loads.loc[pgm_load_ids]
-            selected_loads.index = pgm_load_ids.index  # The index contains the pp ids
-            accumulated_loads = accumulated_loads.add(selected_loads[["p", "q"]], fill_value=0.0)
-
-        # Multiply the values and rename the columns to match pandapower
-        accumulated_loads *= 1e-6
-        accumulated_loads.columns = ["p_mw", "q_mvar"]
-
-        # Store the results, while assuring that we are not overwriting any data
-        assert "res_load" not in self.pp_output_data
-        self.pp_output_data["res_load"] = accumulated_loads
-
     def _pp_asym_loads_output(self):
         """
         This function converts a power-grid-model Asymmetrical Load output array to an Asymmetrical Load Dataframe of
@@ -1170,20 +1140,13 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         pgm_output_asym_loads = self.pgm_output_data["asym_load"]
 
-        pp_asym_load_p = pgm_output_asym_loads["p"] * (1e-6 / 3)
-        pp_asym_load_q = pgm_output_asym_loads["q"] * (1e-6 / 3)
-
         pp_asym_output_loads = pd.DataFrame(
-            columns=["p_a_mw", "q_a_mvar", "p_b_mw", "q_b_mvar", "p_c_mw", "q_c_mvar"],
+            columns=["p_mw", "q_mvar"],
             index=self._get_pp_ids("asymmetric_load", pgm_output_asym_loads["id"]),
         )
 
-        pp_asym_output_loads["p_a_mw"] = pp_asym_load_p
-        pp_asym_output_loads["q_a_mvar"] = pp_asym_load_q
-        pp_asym_output_loads["p_b_mw"] = pp_asym_load_p
-        pp_asym_output_loads["q_b_mvar"] = pp_asym_load_q
-        pp_asym_output_loads["p_c_mw"] = pp_asym_load_p
-        pp_asym_output_loads["q_c_mvar"] = pp_asym_load_q
+        pp_asym_output_loads["p_mw"] = pgm_output_asym_loads["p"] * 1e-6
+        pp_asym_output_loads["q_mvar"] = pgm_output_asym_loads["q"] * 1e-6
 
         self.pp_output_data["res_asymmetric_load"] = pp_asym_output_loads
 
@@ -1203,22 +1166,98 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         pgm_output_asym_gens = self.pgm_output_data["asym_gen"]
 
-        pp_asym_gen_p = pgm_output_asym_gens["p"] * (1e-6 / 3)
-        pp_asym_gen_q = pgm_output_asym_gens["q"] * (1e-6 / 3)
-
         pp_output_asym_gens = pd.DataFrame(
-            columns=["p_a_mw", "q_a_mvar", "p_b_mw", "q_b_mvar", "p_c_mw", "q_c_mvar"],
+            columns=["p_mw", "q_mvar"],
             index=self._get_pp_ids("asymmetric_sgen", pgm_output_asym_gens["id"]),
         )
 
-        pp_output_asym_gens["p_a_mw"] = pp_asym_gen_p
-        pp_output_asym_gens["q_a_mvar"] = pp_asym_gen_q
-        pp_output_asym_gens["p_b_mw"] = pp_asym_gen_p
-        pp_output_asym_gens["q_b_mvar"] = pp_asym_gen_q
-        pp_output_asym_gens["p_c_mw"] = pp_asym_gen_p
-        pp_output_asym_gens["q_c_mvar"] = pp_asym_gen_q
+        pp_output_asym_gens["p_mw"] = pgm_output_asym_gens["p"] * 1e-6
+        pp_output_asym_gens["q_mvar"] = pgm_output_asym_gens["q"] * 1e-6
 
         self.pp_output_data["res_asymmetric_sgen"] = pp_output_asym_gens
+
+    def _pp_loads_output(self):
+        """
+        This function converts a power-grid-model Symmetrical Load output array to a Load Dataframe of PandaPower.
+
+        Returns:
+            a PandaPower Dataframe for the Load component
+        """
+        load_id_names = ["const_power", "const_impedance", "const_current"]
+        assert "res_load" not in self.pp_output_data
+
+        if (
+            "sym_load" not in self.pgm_output_data
+            or self.pgm_output_data["sym_load"].size == 0
+            or ("load", load_id_names[0]) not in self.idx
+        ):
+            return
+
+        self._pp_load_result_accumulate(
+            pp_component_name="load", load_id_names=["const_power", "const_impedance", "const_current"]
+        )
+
+    def _pp_ward_output(self):
+        load_id_names = ["ward_const_power_load", "ward_const_impedance_load"]
+        assert "res_ward" not in self.pp_output_data
+
+        if (
+            "sym_load" not in self.pgm_output_data
+            or self.pgm_output_data["sym_load"].size == 0
+            or ("ward", load_id_names[0]) not in self.idx
+        ):
+            return
+
+        self._pp_load_result_accumulate(pp_component_name="ward", load_id_names=load_id_names)
+        # TODO Find a better way for mapping vm_pu from bus
+        # self.pp_output_data["res_ward"]["vm_pu"] = np.nan
+
+    def _pp_motor_output(self):
+        load_id_names = ["motor_load"]
+
+        assert "res_motor" not in self.pp_output_data
+
+        if (
+            "sym_load" not in self.pgm_output_data
+            or self.pgm_output_data["sym_load"].size == 0
+            or ("motor", load_id_names[0]) not in self.idx
+        ):
+            return
+
+        self._pp_load_result_accumulate(pp_component_name="motor", load_id_names=load_id_names)
+
+    def _pp_load_result_accumulate(self, pp_component_name: str, load_id_names: List[str]):
+        """
+        This function converts a power-grid-model Symmetrical Load output array to a respective Dataframe of PandaPower.
+
+        Returns:
+            a PandaPower Dataframe for the Load component
+        """
+        # Create a DataFrame wih all the pgm output loads and index it in the pgm id
+        pgm_output_loads = self.pgm_output_data["sym_load"]
+        all_loads = pd.DataFrame(pgm_output_loads, index=pgm_output_loads["id"])
+
+        # Create an empty DataFrame with two columns p and q to accumulate all the loads per pp id
+        accumulated_loads = pd.DataFrame(columns=["p", "q"], dtype=np.float64)
+
+        # Loop over the load types;
+        #   find the pgm ids
+        #   select those loads
+        #   replace the index by the pp ids
+        #   add the p and q columns to the accumulator DataFrame
+        for load_type in load_id_names:
+            pgm_load_ids = self._get_pgm_ids(pp_component_name, name=load_type)
+            selected_loads = all_loads.loc[pgm_load_ids]
+            selected_loads.index = pgm_load_ids.index  # The index contains the pp ids
+            accumulated_loads = accumulated_loads.add(selected_loads[["p", "q"]], fill_value=0.0)
+
+        # Multiply the values and rename the columns to match pandapower
+        accumulated_loads *= 1e-6
+        accumulated_loads.columns = ["p_mw", "q_mvar"]
+
+        # Store the results, while assuring that we are not overwriting any data
+        assert pp_component_name not in self.pp_output_data
+        self.pp_output_data["res_" + pp_component_name] = accumulated_loads
 
     def _generate_ids(self, pp_table: str, pp_idx: pd.Index, name: Optional[str] = None) -> np.arange:
         """
