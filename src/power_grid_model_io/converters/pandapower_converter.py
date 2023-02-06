@@ -136,6 +136,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._create_pgm_input_storages()
         self._create_pgm_input_impedances()
         self._create_pgm_input_xwards()
+        self._create_pgm_input_generators()
+        self._create_pgm_input_dclines()
 
     def _fill_extra_info(self, extra_info: ExtraInfoLookup):
         for (pp_table, name), indices in self.idx_lookup.items():
@@ -725,10 +727,13 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_loads_from_ward["p_specified"][-n_wards:] = self._get_pp_attr("ward", "pz_mw") * 1e6
         pgm_sym_loads_from_ward["q_specified"][-n_wards:] = self._get_pp_attr("ward", "qz_mvar") * 1e6
 
-        #  If input data of loads has already been filled then extend it with data of motors. If it is empty and there
-        #  is no data about loads,then assign motor data to it
+        #  If input data of loads has already been filled then extend it with data of wards. If it is empty and there
+        #  is no data about loads,then assign ward data to it
         if "sym_load" in self.pgm_input_data:
-            self.pgm_input_data["sym_load"] = np.concatenate([self.pgm_input_data["sym_load"], pgm_sym_loads_from_ward])
+            symload_dtype = self.pgm_input_data["sym_load"].dtype
+            self.pgm_input_data["sym_load"] = np.concatenate(  # pylint: disable=unexpected-keyword-arg
+                [self.pgm_input_data["sym_load"], pgm_sym_loads_from_ward], dtype=symload_dtype
+            )
         else:
             self.pgm_input_data["sym_load"] = pgm_sym_loads_from_ward
 
@@ -769,11 +774,30 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         #  If input data of loads has already been filled then extend it with data of motors. If it is empty and there
         #  is no data about loads,then assign motor data to it
         if "sym_load" in self.pgm_input_data:
-            self.pgm_input_data["sym_load"] = np.concatenate(
-                [self.pgm_input_data["sym_load"], pgm_sym_loads_from_motor]
+            symload_dtype = self.pgm_input_data["sym_load"].dtype
+            self.pgm_input_data["sym_load"] = np.concatenate(  # pylint: disable=unexpected-keyword-arg
+                [self.pgm_input_data["sym_load"], pgm_sym_loads_from_motor], dtype=symload_dtype
             )
         else:
             self.pgm_input_data["sym_load"] = pgm_sym_loads_from_motor
+
+    def _create_pgm_input_dclines(self):
+        # TODO: create unit tests for the function
+        pp_dcline = self.pp_input_data["dcline"]
+
+        if pp_dcline.empty:
+            return
+
+        raise NotImplementedError("DC line is not implemented yet. power-grid-model does not support PV buses yet")
+
+    def _create_pgm_input_generators(self):
+        # TODO: create unit tests for the function
+        pp_gen = self.pp_input_data["gen"]
+
+        if pp_gen.empty:
+            return
+
+        raise NotImplementedError("Generators is not implemented yet. power-grid-model does not support PV buses yet")
 
     def _pp_buses_output(self):
         """
