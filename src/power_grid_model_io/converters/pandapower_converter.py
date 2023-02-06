@@ -731,9 +731,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         #  is no data about loads,then assign ward data to it
         if "sym_load" in self.pgm_input_data:
             symload_dtype = self.pgm_input_data["sym_load"].dtype
-            self.pgm_input_data["sym_load"] = np.concatenate(
+            self.pgm_input_data["sym_load"] = np.concatenate(  # pylint: disable=unexpected-keyword-arg
                 [self.pgm_input_data["sym_load"], pgm_sym_loads_from_ward], dtype=symload_dtype
-            )   # pylint: disable=unexpected-keyword-arg
+            )
         else:
             self.pgm_input_data["sym_load"] = pgm_sym_loads_from_ward
 
@@ -775,9 +775,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         #  is no data about loads,then assign motor data to it
         if "sym_load" in self.pgm_input_data:
             symload_dtype = self.pgm_input_data["sym_load"].dtype
-            self.pgm_input_data["sym_load"] = np.concatenate(
+            self.pgm_input_data["sym_load"] = np.concatenate(  # pylint: disable=unexpected-keyword-arg
                 [self.pgm_input_data["sym_load"], pgm_sym_loads_from_motor], dtype=symload_dtype
-            )   # pylint: disable=unexpected-keyword-arg
+            )
         else:
             self.pgm_input_data["sym_load"] = pgm_sym_loads_from_motor
 
