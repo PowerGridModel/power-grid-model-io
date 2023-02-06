@@ -17,7 +17,7 @@ Regular expressions to the winding_from and winding_to codes and optionally the 
 $               End of the string
 """
 
-TRAFO3_CONNECTION_RE = re.compile(r"^(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(\d|1[0-2])(y|yn|d|z|zn)(\d|1[0-2])$")
+TRAFO3_CONNECTION_RE = re.compile(r"^(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(\d|1[0-2])?(y|yn|d|z|zn)(\d|1[0-2])?$")
 r"""
 Regular expressions to the winding_1, winding_2 and winding_3 codes and optionally the clock number:
 ^               Start of the string
