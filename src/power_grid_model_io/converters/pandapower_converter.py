@@ -730,7 +730,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         #  If input data of loads has already been filled then extend it with data of motors. If it is empty and there
         #  is no data about loads,then assign motor data to it
         if "sym_load" in self.pgm_input_data:
-            self.pgm_input_data["sym_load"] = np.concatenate([self.pgm_input_data["sym_load"], pgm_sym_loads_from_ward])
+            self.pgm_input_data["sym_load"] = np.concatenate(
+                [self.pgm_input_data["sym_load"], pgm_sym_loads_from_ward], dtype=self.pgm_input_data["sym_load"].dtype
+            )
         else:
             self.pgm_input_data["sym_load"] = pgm_sym_loads_from_ward
 
@@ -772,7 +774,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         #  is no data about loads,then assign motor data to it
         if "sym_load" in self.pgm_input_data:
             self.pgm_input_data["sym_load"] = np.concatenate(
-                [self.pgm_input_data["sym_load"], pgm_sym_loads_from_motor]
+                [self.pgm_input_data["sym_load"], pgm_sym_loads_from_motor], dtype=self.pgm_input_data["sym_load"].dtype
             )
         else:
             self.pgm_input_data["sym_load"] = pgm_sym_loads_from_motor
