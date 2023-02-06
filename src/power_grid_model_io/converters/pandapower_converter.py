@@ -733,7 +733,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             symload_dtype = self.pgm_input_data["sym_load"].dtype
             self.pgm_input_data["sym_load"] = np.concatenate(
                 [self.pgm_input_data["sym_load"], pgm_sym_loads_from_ward], dtype=symload_dtype
-            )
+            )   # pylint: disable=unexpected-keyword-arg
         else:
             self.pgm_input_data["sym_load"] = pgm_sym_loads_from_ward
 
@@ -777,7 +777,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             symload_dtype = self.pgm_input_data["sym_load"].dtype
             self.pgm_input_data["sym_load"] = np.concatenate(
                 [self.pgm_input_data["sym_load"], pgm_sym_loads_from_motor], dtype=symload_dtype
-            )
+            )   # pylint: disable=unexpected-keyword-arg
         else:
             self.pgm_input_data["sym_load"] = pgm_sym_loads_from_motor
 
