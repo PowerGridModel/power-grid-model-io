@@ -15,5 +15,5 @@ from power_grid_model_io.functions._functions import (
     is_greater_than,
     value_or_default,
     value_or_zero,
-    zeros_to_nan,
+    both_zeros_to_nan,
 )

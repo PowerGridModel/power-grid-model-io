@@ -234,7 +234,6 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
         # For example: {"node": [{"id": 0, ...}, {"id": 1, ...}], "line": [{"id": 2, ...}]}
         return {
             component: [
-
                 merge_dicts(
                     {
                         attribute: obj[attribute].tolist()

@@ -17,7 +17,7 @@ from power_grid_model_io.functions import (
     is_greater_than,
     value_or_default,
     value_or_zero,
-    zeros_to_nan,
+    both_zeros_to_nan,
 )
 
 
@@ -148,14 +148,19 @@ def test_is_greater_than(left_side: float, right_side: List[float], expected: fl
 
 
 @mark.parametrize(
-    ("value", "expected"),
+    ("value", "other_value", "expected"),
     [
-        (float("nan"), float("nan")),
-        (0.0, float("nan")),
-        (1.0, 1.0),
-        (5.0, 5.0),
+        (float("nan"), float("nan"), float("nan")),
+        (float("nan"), 0.0, float("nan")),
+        (float("nan"), 5.0, float("nan")),
+        (0.0, float("nan"), float("nan")),
+        (0.0, 0.0, float("nan")),
+        (0.0, 9.0, 0.0),
+        (5.0, float("nan"), 5.0),
+        (6.0, 0.0, 6.0),
+        (7.0, 8.0, 7.0),
     ],
 )
-def test_zeros_to_nan(value: float, expected: float):
-    actual = zeros_to_nan(value)
+def test_both_zeros_to_nan(value: float, other_value: float, expected: float):
+    actual = both_zeros_to_nan(value, other_value)
     assert actual == approx(expected) or (np.isnan(actual) and np.isnan(expected))

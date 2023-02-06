@@ -91,11 +91,17 @@ def is_greater_than(left_side, right_side) -> bool:
     return left_side > right_side
 
 
-def zeros_to_nan(value: float) -> float:
+def both_zeros_to_nan(value: float, other_value: float) -> float:
     """
-    Return the value, or a default value if no value was supplied.
+    If both values are zero then return nan otherwise return same value.
+    Truth table (x = value, y = other_value)
+             0     value     nan
+    0       nan    value     nan
+    value   0      value     nan
+    nan     nan    value     nan
     """
-    if not has_value(value) or value == 0.0:
-        _LOG.warning("0 replaced to nan")
-        return float("nan")
+    if value == 0:
+        if other_value == 0 or not has_value(other_value):
+            _LOG.warning("0 replaced to nan")
+            return float("nan")
     return value
