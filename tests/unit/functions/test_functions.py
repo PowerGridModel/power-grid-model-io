@@ -1,12 +1,12 @@
 # SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
-from typing import List, Tuple, Union
+from typing import List
 from unittest.mock import MagicMock, patch
 
 import numpy as np
 from power_grid_model import WindingType
-from pytest import approx, mark, param
+from pytest import approx, mark
 
 from power_grid_model_io.functions import (
     complex_inverse_imaginary_part,

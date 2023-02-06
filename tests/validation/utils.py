@@ -5,7 +5,7 @@
 import json
 from functools import lru_cache
 from pathlib import Path
-from typing import Generator, List, Tuple
+from typing import Generator, List, Mapping, Tuple
 
 import numpy as np
 import pandas as pd
@@ -50,7 +50,7 @@ def component_objects(json_path: Path) -> Generator[Tuple[str, List[int]], None,
             yield component, obj_ids
 
 
-def component_attributes(json_path: Path, data_type: str = "input") -> Generator[Tuple[str, str], None, None]:
+def component_attributes(json_path: Path, data_type: str) -> Generator[Tuple[str, str], None, None]:
     """
     Read the json file (only the structure is used, i.e. the component names and attribute name)
 
@@ -74,6 +74,22 @@ def component_attributes(json_path: Path, data_type: str = "input") -> Generator
 
         # Yield the data for each attribute (in alphabetical order)
         for attribute in sorted(unique_attributes):
+            yield component, attribute
+
+
+def component_attributes_df(data: Mapping[str, pd.DataFrame]) -> Generator[Tuple[str, str], None, None]:
+    """
+    Extract the component and attribute names from the DataFrames
+
+    Args:
+        data: A dictionary of pandas DataFrames
+
+    Yields: A tuple (component, attribute) for each attribute available in the json file
+
+    """
+
+    for component, df in sorted(data.items(), key=lambda x: x[0]):
+        for attribute in sorted(df.columns):
             yield component, attribute
 
 
@@ -111,9 +127,9 @@ def select_values(actual: SingleDataset, expected: SingleDataset, component: str
     # Use only the actual_values for which we have expected values
     missing_idx = set(expected_values.index) - set(actual_values.index)
     if len(missing_idx) == 1:
-        raise KeyError(f"Expected {component} #{missing_idx.pop()}, but it is missing.")
+        raise KeyError(f"Expected {component} #{missing_idx.pop()}, but it is missing {actual_values.index.tolist()}.")
     elif len(missing_idx) > 1:
-        raise KeyError(f"Expected {component}s {missing_idx}, but they are missing.")
+        raise KeyError(f"Expected {component}s {missing_idx}, but they are missing {actual_values.index.tolist()}.")
 
     actual_values = actual_values[expected_values.index][mask]
     expected_values = expected_values[mask]
@@ -122,7 +138,7 @@ def select_values(actual: SingleDataset, expected: SingleDataset, component: str
     return actual_values, expected_values
 
 
-def extract_extra_info(data: SinglePythonDataset, data_type: str = "input") -> ExtraInfoLookup:
+def extract_extra_info(data: SinglePythonDataset, data_type: str) -> ExtraInfoLookup:
     """
     Reads the dataset and collect all arguments that aren't pgm attributes
 
@@ -142,7 +158,7 @@ def extract_extra_info(data: SinglePythonDataset, data_type: str = "input") -> E
     return extra_info
 
 
-def load_json_single_dataset(file_path: Path, data_type: str = "input") -> Tuple[SingleDataset, ExtraInfoLookup]:
+def load_json_single_dataset(file_path: Path, data_type: str) -> Tuple[SingleDataset, ExtraInfoLookup]:
     """
     Loads and parses a json file in the most basic way, without using power_grid_model_io functions.
 
@@ -156,5 +172,39 @@ def load_json_single_dataset(file_path: Path, data_type: str = "input") -> Tuple
     raw_data = load_json_file(file_path)
     assert isinstance(raw_data, dict)
     dataset = convert_python_single_dataset_to_single_dataset(data=raw_data, data_type=data_type, ignore_extra=True)
-    extra_info = extract_extra_info(raw_data)
+    extra_info = extract_extra_info(raw_data, data_type=data_type)
     return dataset, extra_info
+
+
+def compare_extra_info(actual: ExtraInfoLookup, expected: ExtraInfoLookup, component: str, obj_ids: List[int]):
+
+    # We'll collect all errors, instead of terminating at the first error
+    errors = []
+
+    # Check each object in this component
+    for obj_id in obj_ids:
+
+        # If there is no extra_info available in the validation data, just skip this object
+        if obj_id not in expected:
+            continue
+
+        # If the object doesn't exist in the actual data, that's an error
+        if obj_id not in actual:
+            errors.append(f"Expected {component} #{obj_id}, but it is missing.")
+            continue
+
+        # Now for each extra_info in the validation file, check if it matches the actual extra info
+        act = actual[obj_id]
+        for key, value in expected[obj_id].items():
+
+            # If the extra_info doesn't exist, that's an error
+            if key not in act:
+                errors.append(f"Expected extra info '{key}' for {component} #{obj_id}, but it is missing.")
+
+            # If the values don't match, that's an error
+            elif act[key] != value:
+                errors.append(
+                    f"Expected extra info '{key}' for {component} #{obj_id} to be {value}, " f"but it is {act[key]}."
+                )
+
+    return errors
