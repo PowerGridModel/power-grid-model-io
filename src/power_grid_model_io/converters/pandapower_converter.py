@@ -727,11 +727,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_loads_from_ward["p_specified"][-n_wards:] = self._get_pp_attr("ward", "pz_mw") * 1e6
         pgm_sym_loads_from_ward["q_specified"][-n_wards:] = self._get_pp_attr("ward", "qz_mvar") * 1e6
 
-        #  If input data of loads has already been filled then extend it with data of motors. If it is empty and there
-        #  is no data about loads,then assign motor data to it
+        #  If input data of loads has already been filled then extend it with data of wards. If it is empty and there
+        #  is no data about loads,then assign ward data to it
         if "sym_load" in self.pgm_input_data:
+            symload_dtype = self.pgm_input_data["sym_load"].dtype
             self.pgm_input_data["sym_load"] = np.concatenate(
-                [self.pgm_input_data["sym_load"], pgm_sym_loads_from_ward], dtype=self.pgm_input_data["sym_load"].dtype
+                [self.pgm_input_data["sym_load"], pgm_sym_loads_from_ward], dtype=symload_dtype
             )
         else:
             self.pgm_input_data["sym_load"] = pgm_sym_loads_from_ward
@@ -773,8 +774,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         #  If input data of loads has already been filled then extend it with data of motors. If it is empty and there
         #  is no data about loads,then assign motor data to it
         if "sym_load" in self.pgm_input_data:
+            symload_dtype = self.pgm_input_data["sym_load"].dtype
             self.pgm_input_data["sym_load"] = np.concatenate(
-                [self.pgm_input_data["sym_load"], pgm_sym_loads_from_motor], dtype=self.pgm_input_data["sym_load"].dtype
+                [self.pgm_input_data["sym_load"], pgm_sym_loads_from_motor], dtype=symload_dtype
             )
         else:
             self.pgm_input_data["sym_load"] = pgm_sym_loads_from_motor
