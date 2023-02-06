@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Union
 
 from power_grid_model.data_types import AttributeValue
 
-ExtraInfoType = Union[str, AttributeValue, str, List["ExtraInfoType"], Dict[str, "ExtraInfoType"]]
+ExtraInfoType = Union[str, AttributeValue, List["ExtraInfoType"], Dict[str, "ExtraInfoType"]]
 ExtraInfo = Dict[str, ExtraInfoType]
 """
 ExtraInfo is information about power grid model objects that are not part of the calculations. E.g. the original ID or

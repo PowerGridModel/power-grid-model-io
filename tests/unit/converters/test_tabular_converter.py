@@ -746,7 +746,7 @@ def test_parse_pandas_function__invalid(mock_parse_col_def: MagicMock, converter
         converter._parse_pandas_function(data=MagicMock(), table="foo", function="bar", col_def=[])
 
     # Act / Assert
-    with pytest.raises(ValueError, match=f"Invalid pandas function DataFrame.apply"):
+    with pytest.raises(ValueError, match="Invalid pandas function DataFrame.apply"):
         converter._parse_pandas_function(data=MagicMock(), table="foo", function="apply", col_def=[])
 
 
@@ -851,3 +851,41 @@ def test_apply_multiplier__no_attr_multiplier():
     converter._multipliers.get_multiplier.assert_called_once_with(table="foo", attr="bar")
     pd.testing.assert_series_equal(data, pd.Series([-2.0, 0.0, 2.0]))
     pd.testing.assert_series_equal(result, pd.Series([-2.0, 0.0, 2.0]))
+
+
+def test_get_id__private(converter: TabularConverter):
+    # Arrange / Act / Assert
+    assert converter._get_id(table="node", key={"a": 1, "b": 2}, name=None) == 0
+    assert converter._get_id(table="node", key={"a": 1, "b": 3}, name=None) == 1  # change in values
+    assert converter._get_id(table="node", key={"a": 1, "c": 2}, name=None) == 2  # change in index
+    assert converter._get_id(table="foo", key={"a": 1, "b": 2}, name=None) == 3  # change in table
+    assert converter._get_id(table="node", key={"a": 1, "b": 2}, name="bar") == 4  # change in name
+    assert converter._get_id(table="node", key={"a": 1, "b": 2}, name=None) == 0  # duplicate name / indices / values
+
+
+def test_get_id__public(converter: TabularConverter):
+    # Arrange
+    converter._get_id(table="node", key={"a": 1, "b": 2}, name=None)
+
+    # Act / Assert
+    assert converter.get_id(table="node", key={"a": 1, "b": 2}) == 0
+
+    with pytest.raises(KeyError):
+        converter.get_id(table="node", key={"a": 1, "b": 3})
+
+
+def test_lookup_id(converter: TabularConverter):
+    # Arrange
+    converter._get_id(table="node", key={"a": 1, "b": 2}, name=None)
+    converter._get_id(table="node", key={"a": 1, "b": 3}, name=None)  # change in values
+    converter._get_id(table="node", key={"a": 1, "c": 2}, name=None)  # change in index
+    converter._get_id(table="foo", key={"a": 1, "b": 2}, name=None)  # change in table
+    converter._get_id(table="node", key={"a": 1, "b": 2}, name="bar")  # change in name
+    converter._get_id(table="node", key={"a": 1, "b": 2}, name=None)  # duplicate name / indices / values
+
+    # Act / Assert
+    assert converter.lookup_id(pgm_id=0) == {"table": "node", "key": {"a": 1, "b": 2}}
+    assert converter.lookup_id(pgm_id=1) == {"table": "node", "key": {"a": 1, "b": 3}}
+    assert converter.lookup_id(pgm_id=2) == {"table": "node", "key": {"a": 1, "c": 2}}
+    assert converter.lookup_id(pgm_id=3) == {"table": "foo", "key": {"a": 1, "b": 2}}
+    assert converter.lookup_id(pgm_id=4) == {"table": "node", "name": "bar", "key": {"a": 1, "b": 2}}
