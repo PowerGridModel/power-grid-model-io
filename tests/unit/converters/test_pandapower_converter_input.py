@@ -272,7 +272,7 @@ def test_create_input_data():
     PandaPowerConverter._create_input_data(self=converter)  # type: ignore
 
     # Assert
-    assert len(converter.method_calls) == 16
+    assert len(converter.method_calls) == 18
     converter._create_pgm_input_nodes.assert_called_once_with()
     converter._create_pgm_input_lines.assert_called_once_with()
     converter._create_pgm_input_sources.assert_called_once_with()
@@ -289,6 +289,8 @@ def test_create_input_data():
     converter._create_pgm_input_wards.assert_called_once_with()
     converter._create_pgm_input_xwards.assert_called_once_with()
     converter._create_pgm_input_motors.assert_called_once_with()
+    converter._create_pgm_input_generators.assert_called_once_with()
+    converter._create_pgm_input_dclines.assert_called_once_with()
 
 
 @pytest.mark.parametrize(
@@ -1121,6 +1123,32 @@ def test_create_pgm_input_xward(mock_init_array: MagicMock, two_pp_objs, convert
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
+def test_create_pgm_input_generators(mock_init_array: MagicMock, two_pp_objs, converter):
+    # Arrange
+    converter.pp_input_data["gen"] = two_pp_objs
+
+    # Act / Assert
+    with pytest.raises(NotImplementedError, match=r"Generators.*not implemented"):
+        converter._create_pgm_input_generators()
+
+    # initialization
+    mock_init_array.assert_not_called()
+
+
+@patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
+def test_create_pgm_input_dclines(mock_init_array: MagicMock, two_pp_objs, converter):
+    # Arrange
+    converter.pp_input_data["dcline"] = two_pp_objs
+
+    # Act / Assert
+    with pytest.raises(NotImplementedError, match=r"DC line .*not implemented"):
+        converter._create_pgm_input_dclines()
+
+    # initialization
+    mock_init_array.assert_not_called()
+
+
+@patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_motors(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
     converter.pp_input_data["motor"] = two_pp_objs
@@ -1191,7 +1219,8 @@ def test_create_pgm_input_motors__existing_loads(mock_init_array: MagicMock, two
         PandaPowerConverter._create_pgm_input_wards,
         PandaPowerConverter._create_pgm_input_xwards,
         PandaPowerConverter._create_pgm_input_sources,
-        PandaPowerConverter._create_pgm_input_sources,
+        PandaPowerConverter._create_pgm_input_generators,
+        PandaPowerConverter._create_pgm_input_dclines,
     ],
 )
 def test_create_pp_input_object__empty(create_fn: Callable[[PandaPowerConverter], None]):
