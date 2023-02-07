@@ -672,13 +672,11 @@ grid:
       extra:
         - ID
         - Name
-
   Three winding transformers:
     three_winding_transformer:
       id:
         auto_id:
-          key:
-            - Number
+          key: Number
       node_1:
         auto_id:
           table: Nodes
@@ -804,6 +802,7 @@ units:
     pu: 1.0
     "%": 0.01
     "‰": 0.001
+
 substitutions:
   ".*Switch state":
     "off": 0
