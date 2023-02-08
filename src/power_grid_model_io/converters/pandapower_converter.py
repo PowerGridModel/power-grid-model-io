@@ -125,18 +125,20 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._create_pgm_input_lines()
         self._create_pgm_input_sources()
         self._create_pgm_input_sym_loads()
-        self._create_pgm_input_asym_loads()
         self._create_pgm_input_shunts()
         self._create_pgm_input_transformers()
         self._create_pgm_input_sym_gens()
-        self._create_pgm_input_asym_gens()
         self._create_pgm_input_three_winding_transformers()
         self._create_pgm_input_links()
+        self._create_pgm_input_asym_loads()
+        self._create_pgm_input_asym_gens()
+        self._create_pgm_input_wards()
+        self._create_pgm_input_motors()
         self._create_pgm_input_storages()
         self._create_pgm_input_impedances()
-        self._create_pgm_input_wards()
         self._create_pgm_input_xwards()
-        self._create_pgm_input_motors()
+        self._create_pgm_input_generators()
+        self._create_pgm_input_dclines()
 
     def _fill_extra_info(self, extra_info: ExtraInfoLookup):
         for (pp_table, name), indices in self.idx_lookup.items():
@@ -232,6 +234,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._pp_trafos_output()
         self._pp_sgens_output()
         self._pp_trafos3w_output()
+        self._pp_ward_output()
+        self._pp_motor_output()
+        self._pp_asym_gens_output()
+        self._pp_asym_loads_output()
 
     def _create_pgm_input_nodes(self):
         """
@@ -366,7 +372,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         assert "sym_gen" not in self.pgm_input_data
         self.pgm_input_data["sym_gen"] = pgm_sym_gens
 
-    def _create_pgm_input_asym_gens(self):  # pragma: no cover
+    def _create_pgm_input_asym_gens(self):
         """
         This function converts an Asymmetric Static Generator Dataframe of PandaPower to a power-grid-model
         Asymmetrical Generator input array.
@@ -387,7 +393,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_asym_gens["id"] = self._generate_ids("asymmetric_sgen", pp_asym_gens.index)
         pgm_asym_gens["node"] = self._get_pgm_ids("bus", self._get_pp_attr("asymmetric_sgen", "bus"))
         pgm_asym_gens["status"] = self._get_pp_attr("asymmetric_sgen", "in_service")
-        pgm_asym_gens["p_specified"] = (
+        pgm_asym_gens["p_specified"] = np.transpose(
             np.array(
                 (
                     self._get_pp_attr("asymmetric_sgen", "p_a_mw"),
@@ -397,11 +403,13 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             )
             * multiplier
         )
-        pgm_asym_gens["q_specified"] = np.array(
-            (
-                self._get_pp_attr("asymmetric_sgen", "q_a_mvar"),
-                self._get_pp_attr("asymmetric_sgen", "q_b_mvar"),
-                self._get_pp_attr("asymmetric_sgen", "q_c_mvar"),
+        pgm_asym_gens["q_specified"] = np.transpose(
+            np.array(
+                (
+                    self._get_pp_attr("asymmetric_sgen", "q_a_mvar"),
+                    self._get_pp_attr("asymmetric_sgen", "q_b_mvar"),
+                    self._get_pp_attr("asymmetric_sgen", "q_c_mvar"),
+                )
             )
             * multiplier
         )
@@ -462,7 +470,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         assert "sym_load" not in self.pgm_input_data
         self.pgm_input_data["sym_load"] = pgm_sym_loads
 
-    def _create_pgm_input_asym_loads(self):  # pragma: no cover
+    def _create_pgm_input_asym_loads(self):
         """
         This function converts an asymmetric_load Dataframe of PandaPower to a power-grid-model asym_load input array.
 
@@ -482,23 +490,23 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_asym_loads["id"] = self._generate_ids("asymmetric_load", pp_asym_loads.index)
         pgm_asym_loads["node"] = self._get_pgm_ids("bus", self._get_pp_attr("asymmetric_load", "bus"))
         pgm_asym_loads["status"] = self._get_pp_attr("asymmetric_load", "in_service")
-        pgm_asym_loads["p_specified"] = (
+        pgm_asym_loads["p_specified"] = np.transpose(
             np.array(
-                (
+                [
                     self._get_pp_attr("asymmetric_load", "p_a_mw"),
                     self._get_pp_attr("asymmetric_load", "p_b_mw"),
                     self._get_pp_attr("asymmetric_load", "p_c_mw"),
-                )
+                ]
             )
             * multiplier
         )
-        pgm_asym_loads["q_specified"] = (
+        pgm_asym_loads["q_specified"] = np.transpose(
             np.array(
-                (
+                [
                     self._get_pp_attr("asymmetric_load", "q_a_mvar"),
                     self._get_pp_attr("asymmetric_load", "q_b_mvar"),
                     self._get_pp_attr("asymmetric_load", "q_c_mvar"),
-                )
+                ]
             )
             * multiplier
         )
@@ -672,7 +680,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         assert "link" not in self.pgm_input_data
         self.pgm_input_data["link"] = pgm_links
 
-    def _create_pgm_input_storages(self):  # pragma: no cover
+    def _create_pgm_input_storages(self):
         # TODO: create unit tests for the function
         pp_storages = self.pp_input_data["storage"]
 
@@ -681,8 +689,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         multiplier = self._get_pp_attr("storage", "scaling") * 1e6
 
-        pgm_sym_loads_from_storage = initialize_array(data_type="input", component_type="sym_load",
-                                                    shape=len(pp_storages))
+        pgm_sym_loads_from_storage = initialize_array(
+            data_type="input", component_type="sym_load", shape=len(pp_storages)
+        )
         pgm_sym_loads_from_storage["id"] = self._generate_ids("storage", pp_storages.index, name="storage_load")
         pgm_sym_loads_from_storage["node"] = self._get_pgm_ids("bus", self._get_pp_attr("storage", "bus"))
         pgm_sym_loads_from_storage["status"] = self._get_pp_attr("storage", "in_service")
@@ -691,8 +700,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_loads_from_storage["q_specified"] = self._get_pp_attr("storage", "q_mvar") * multiplier
         self._merge_to_pgm_data(pgm_name="sym_load", pgm_data_to_add=pgm_sym_loads_from_storage)
 
-
-    def _create_pgm_input_impedances(self):  # pragma: no cover
+    def _create_pgm_input_impedances(self):
         # TODO: create unit tests for the function
         pp_impedances = self.pp_input_data["impedance"]
 
@@ -734,7 +742,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self._merge_to_pgm_data(pgm_name="line", pgm_data_to_add=pgm_impedance_lines)
 
-    def _create_pgm_input_wards(self):  # pragma: no cover
+    def _create_pgm_input_wards(self):
         # TODO: create unit tests for the function
         pp_wards = self.pp_input_data["ward"]
 
@@ -752,8 +760,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_loads_from_ward["node"][:n_wards] = self._get_pgm_ids("bus", bus)
         pgm_sym_loads_from_ward["status"][:n_wards] = in_service
         pgm_sym_loads_from_ward["type"][:n_wards] = LoadGenType.const_power
-        pgm_sym_loads_from_ward["p_specified"][:n_wards] = self._get_pp_attr("ward", "ps_mw")
-        pgm_sym_loads_from_ward["q_specified"][:n_wards] = self._get_pp_attr("ward", "qs_mvar")
+        pgm_sym_loads_from_ward["p_specified"][:n_wards] = self._get_pp_attr("ward", "ps_mw") * 1e6
+        pgm_sym_loads_from_ward["q_specified"][:n_wards] = self._get_pp_attr("ward", "qs_mvar") * 1e6
 
         pgm_sym_loads_from_ward["id"][-n_wards:] = self._generate_ids(
             "ward", pp_wards.index, name="ward_const_impedance_load"
@@ -761,8 +769,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_loads_from_ward["node"][-n_wards:] = self._get_pgm_ids("bus", bus)
         pgm_sym_loads_from_ward["status"][-n_wards:] = in_service
         pgm_sym_loads_from_ward["type"][-n_wards:] = LoadGenType.const_impedance
-        pgm_sym_loads_from_ward["p_specified"][-n_wards:] = self._get_pp_attr("ward", "pz_mw")
-        pgm_sym_loads_from_ward["q_specified"][-n_wards:] = self._get_pp_attr("ward", "qz_mvar")
+        pgm_sym_loads_from_ward["p_specified"][-n_wards:] = self._get_pp_attr("ward", "pz_mw") * 1e6
+        pgm_sym_loads_from_ward["q_specified"][-n_wards:] = self._get_pp_attr("ward", "qz_mvar") * 1e6
 
         self._merge_to_pgm_data(pgm_name="sym_load", pgm_data_to_add=pgm_sym_loads_from_ward)
 
@@ -812,7 +820,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._merge_to_pgm_data("sym_load", pgm_sym_loads_from_xward)
         self._merge_to_pgm_data("source", pgm_source_from_xward)
 
-    def _create_pgm_input_motors(self):  # pragma: no cover
+    def _create_pgm_input_motors(self):
         # TODO: create unit tests for the function
         pp_motors = self.pp_input_data["motor"]
 
@@ -849,11 +857,32 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             pgm_data_to_add: The array to be merged or added
         """
         if pgm_name in self.pgm_input_data:
-            self.pgm_input_data[pgm_name] = np.concatenate([self.pgm_input_data[pgm_name], pgm_data_to_add])
+            pgm_dtype = self.pgm_input_data[pgm_name].dtype
+            self.pgm_input_data[pgm_name] = np.concatenate(
+                [self.pgm_input_data[pgm_name], pgm_data_to_add], dtype=pgm_dtype
+            )
         else:
             self.pgm_input_data[pgm_name] = pgm_data_to_add
 
-    def _pp_buses_output(self):  # pragma: no cover
+    def _create_pgm_input_dclines(self):
+        # TODO: create unit tests for the function
+        pp_dcline = self.pp_input_data["dcline"]
+
+        if pp_dcline.empty:
+            return
+
+        raise NotImplementedError("DC line is not implemented yet. power-grid-model does not support PV buses yet")
+
+    def _create_pgm_input_generators(self):
+        # TODO: create unit tests for the function
+        pp_gen = self.pp_input_data["gen"]
+
+        if pp_gen.empty:
+            return
+
+        raise NotImplementedError("Generators is not implemented yet. power-grid-model does not support PV buses yet")
+
+    def _pp_buses_output(self):
         """
         This function converts a power-grid-model Node output array to a Bus Dataframe of PandaPower.
 
@@ -861,7 +890,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Bus component
         """
         # TODO: create unit tests for the function
-        assert "bus" not in self.pp_output_data
+        assert "res_bus" not in self.pp_output_data
+
+        if "node" not in self.pgm_output_data or self.pgm_output_data["node"].size == 0:
+            return
 
         pgm_nodes = self.pgm_output_data["node"]
 
@@ -870,15 +902,15 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             index=self._get_pp_ids("bus", pgm_nodes["id"]),
         )
 
-        pp_output_buses["vm_pu"] = self.pgm_nodes_lookup["u_pu"].values
-        pp_output_buses["va_degree"] = self.pgm_nodes_lookup["u_degree"].values
+        pp_output_buses["vm_pu"] = pgm_nodes["u_pu"]
+        pp_output_buses["va_degree"] = pgm_nodes["u_angle"] * (180.0 / np.pi)
 
         # p_to, p_from, q_to and q_from connected to the bus have to be summed up
         self._pp_buses_output__accumulate_power(pp_output_buses)
 
         self.pp_output_data["res_bus"] = pp_output_buses
 
-    def _pp_buses_output__accumulate_power(self, pp_output_buses: pd.DataFrame):  # pragma: no cover
+    def _pp_buses_output__accumulate_power(self, pp_output_buses: pd.DataFrame):
         # TODO: create unit tests for the function
         """
         For each node, we accumulate the power for all connected branches and branch3s
@@ -937,7 +969,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_buses["p_mw"] /= 1e6
         pp_output_buses["q_mvar"] /= 1e6
 
-    def _pp_lines_output(self):  # pragma: no cover
+    def _pp_lines_output(self):
         """
         This function converts a power-grid-model Line output array to a Line Dataframe of PandaPower.
 
@@ -945,11 +977,16 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Line component
         """
         # TODO: create unit tests for the function
-        assert "line" not in self.pp_output_data
-        assert "line" in self.pgm_input_data
+        assert "res_line" not in self.pp_output_data
+
+        if "line" not in self.pgm_output_data or self.pgm_output_data["line"].size == 0:
+            return
 
         pgm_input_lines = self.pgm_input_data["line"]
         pgm_output_lines = self.pgm_output_data["line"]
+
+        if not np.array_equal(pgm_input_lines["id"], pgm_output_lines["id"]):
+            raise ValueError("The output line ids should correspond to the input line ids")
 
         pp_output_lines = pd.DataFrame(
             columns=[
@@ -991,16 +1028,17 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_line"] = pp_output_lines
 
-    def _pp_ext_grids_output(self):  # pragma: no cover
+    def _pp_ext_grids_output(self):
         """
         This function converts a power-grid-model Source output array to an External Grid Dataframe of PandaPower.
 
         Returns:
             a PandaPower Dataframe for the External Grid component
         """
-        # TODO: create unit tests for the function
-        assert "ext_grid" not in self.pp_output_data
-        assert "source" in self.pgm_input_data
+        assert "res_ext_grid" not in self.pp_output_data
+
+        if "source" not in self.pgm_output_data or self.pgm_output_data["source"].size == 0:
+            return
 
         pgm_output_sources = self.pgm_output_data["source"]
 
@@ -1012,7 +1050,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_ext_grid"] = pp_output_ext_grids
 
-    def _pp_shunts_output(self):  # pragma: no cover
+    def _pp_shunts_output(self):
         """
         This function converts a power-grid-model Shunt output array to a Shunt Dataframe of PandaPower.
 
@@ -1020,8 +1058,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Shunt component
         """
         # TODO: create unit tests for the function
-        assert "shunt" not in self.pp_output_data
-        assert "shunt" in self.pgm_input_data
+        assert "res_shunt" not in self.pp_output_data
+
+        if "shunt" not in self.pgm_output_data or self.pgm_output_data["shunt"].size == 0:
+            return
 
         pgm_input_shunts = self.pgm_input_data["shunt"]
 
@@ -1038,7 +1078,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_shunt"] = pp_output_shunts
 
-    def _pp_sgens_output(self):  # pragma: no cover
+    def _pp_sgens_output(self):
         """
         This function converts a power-grid-model Symmetrical Generator output array to a Static Generator Dataframe of
         PandaPower.
@@ -1047,8 +1087,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Static Generator component
         """
         # TODO: create unit tests for the function
-        assert "sgen" not in self.pp_output_data
-        assert "sym_gen" in self.pgm_input_data
+        assert "res_sgen" not in self.pp_output_data
+
+        if "sym_gen" not in self.pgm_output_data or self.pgm_output_data["sym_gen"].size == 0:
+            return
 
         pgm_output_sym_gens = self.pgm_output_data["sym_gen"]
 
@@ -1060,7 +1102,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_sgen"] = pp_output_sgens
 
-    def _pp_trafos_output(self):  # pragma: no cover
+    def _pp_trafos_output(self):
         """
         This function converts a power-grid-model Transformer output array to a Transformer Dataframe of
         PandaPower.
@@ -1069,8 +1111,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Transformer component
         """
         # TODO: create unit tests for the function
-        assert "trafo" not in self.pp_output_data
-        assert "transformer" in self.pgm_input_data
+        assert "res_trafo" not in self.pp_output_data
+
+        if "transformer" not in self.pgm_output_data or self.pgm_output_data["transformer"].size == 0:
+            return
 
         pgm_input_transformers = self.pgm_input_data["transformer"]
 
@@ -1113,7 +1157,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_trafo"] = pp_output_trafos
 
-    def _pp_trafos3w_output(self):  # pragma: no cover
+    def _pp_trafos3w_output(self):
         """
         This function converts a power-grid-model Three Winding Transformer output array to a Three Winding Transformer
         Dataframe of PandaPower.
@@ -1122,8 +1166,13 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Three Winding Transformer component
         """
         # TODO: create unit tests for the function
-        assert "trafo3w" not in self.pp_output_data
-        assert "three_winding_transformer" in self.pgm_input_data
+        assert "res_trafo3w" not in self.pp_output_data
+
+        if (
+            "three_winding_transformer" not in self.pgm_output_data
+            or self.pgm_output_data["three_winding_transformer"].size == 0
+        ):
+            return
 
         pgm_input_transformers3w = self.pgm_input_data["three_winding_transformer"]
 
@@ -1182,14 +1231,115 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_trafo3w"] = pp_output_trafos3w
 
-    def _pp_loads_output(self):  # pragma: no cover
+    def _pp_asym_loads_output(self):
+        """
+        This function converts a power-grid-model Asymmetrical Load output array to an Asymmetrical Load Dataframe of
+        PandaPower.
+
+        Returns:
+            a PandaPower Dataframe for the Asymmetrical Load component
+        """
+        # TODO: create unit tests for the function
+        assert "res_asymmetric_load" not in self.pp_output_data
+
+        if "asym_load" not in self.pgm_output_data or self.pgm_output_data["asym_load"].size == 0:
+            return
+
+        pgm_output_asym_loads = self.pgm_output_data["asym_load"]
+
+        pp_asym_output_loads = pd.DataFrame(
+            columns=["p_mw", "q_mvar"],
+            index=self._get_pp_ids("asymmetric_load", pgm_output_asym_loads["id"]),
+        )
+
+        pp_asym_output_loads["p_mw"] = pgm_output_asym_loads["p"] * 1e-6
+        pp_asym_output_loads["q_mvar"] = pgm_output_asym_loads["q"] * 1e-6
+
+        self.pp_output_data["res_asymmetric_load"] = pp_asym_output_loads
+
+    def _pp_asym_gens_output(self):
+        """
+        This function converts a power-grid-model Asymmetrical Generator output array to an Asymmetric Static Generator
+        Dataframe of PandaPower.
+
+        Returns:
+            a PandaPower Dataframe for the Asymmetric Static Generator component
+        """
+        # TODO: create unit tests for the function
+        assert "res_asymmetric_sgen" not in self.pp_output_data
+
+        if "asym_gen" not in self.pgm_output_data or self.pgm_output_data["asym_gen"].size == 0:
+            return
+
+        pgm_output_asym_gens = self.pgm_output_data["asym_gen"]
+
+        pp_output_asym_gens = pd.DataFrame(
+            columns=["p_mw", "q_mvar"],
+            index=self._get_pp_ids("asymmetric_sgen", pgm_output_asym_gens["id"]),
+        )
+
+        pp_output_asym_gens["p_mw"] = pgm_output_asym_gens["p"] * 1e-6
+        pp_output_asym_gens["q_mvar"] = pgm_output_asym_gens["q"] * 1e-6
+
+        self.pp_output_data["res_asymmetric_sgen"] = pp_output_asym_gens
+
+    def _pp_loads_output(self):
         """
         This function converts a power-grid-model Symmetrical Load output array to a Load Dataframe of PandaPower.
 
         Returns:
             a PandaPower Dataframe for the Load component
         """
+        load_id_names = ["const_power", "const_impedance", "const_current"]
+        assert "res_load" not in self.pp_output_data
 
+        if (
+            "sym_load" not in self.pgm_output_data
+            or self.pgm_output_data["sym_load"].size == 0
+            or ("load", load_id_names[0]) not in self.idx
+        ):
+            return
+
+        self._pp_load_result_accumulate(
+            pp_component_name="load", load_id_names=["const_power", "const_impedance", "const_current"]
+        )
+
+    def _pp_ward_output(self):
+        load_id_names = ["ward_const_power_load", "ward_const_impedance_load"]
+        assert "res_ward" not in self.pp_output_data
+
+        if (
+            "sym_load" not in self.pgm_output_data
+            or self.pgm_output_data["sym_load"].size == 0
+            or ("ward", load_id_names[0]) not in self.idx
+        ):
+            return
+
+        self._pp_load_result_accumulate(pp_component_name="ward", load_id_names=load_id_names)
+        # TODO Find a better way for mapping vm_pu from bus
+        # self.pp_output_data["res_ward"]["vm_pu"] = np.nan
+
+    def _pp_motor_output(self):
+        load_id_names = ["motor_load"]
+
+        assert "res_motor" not in self.pp_output_data
+
+        if (
+            "sym_load" not in self.pgm_output_data
+            or self.pgm_output_data["sym_load"].size == 0
+            or ("motor", load_id_names[0]) not in self.idx
+        ):
+            return
+
+        self._pp_load_result_accumulate(pp_component_name="motor", load_id_names=load_id_names)
+
+    def _pp_load_result_accumulate(self, pp_component_name: str, load_id_names: List[str]):
+        """
+        This function converts a power-grid-model Symmetrical Load output array to a respective Dataframe of PandaPower.
+
+        Returns:
+            a PandaPower Dataframe for the Load component
+        """
         # Create a DataFrame wih all the pgm output loads and index it in the pgm id
         pgm_output_loads = self.pgm_output_data["sym_load"]
         all_loads = pd.DataFrame(pgm_output_loads, index=pgm_output_loads["id"])
@@ -1202,8 +1352,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         #   select those loads
         #   replace the index by the pp ids
         #   add the p and q columns to the accumulator DataFrame
-        for load_type in ["const_power", "const_impedance", "const_current"]:
-            pgm_load_ids = self._get_pgm_ids("load", name=load_type)
+        for load_type in load_id_names:
+            pgm_load_ids = self._get_pgm_ids(pp_component_name, name=load_type)
             selected_loads = all_loads.loc[pgm_load_ids]
             selected_loads.index = pgm_load_ids.index  # The index contains the pp ids
             accumulated_loads = accumulated_loads.add(selected_loads[["p", "q"]], fill_value=0.0)
@@ -1213,74 +1363,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         accumulated_loads.columns = ["p_mw", "q_mvar"]
 
         # Store the results, while assuring that we are not overwriting any data
-        assert "res_load" not in self.pp_output_data
-        self.pp_output_data["res_load"] = accumulated_loads
+        assert pp_component_name not in self.pp_output_data
+        self.pp_output_data["res_" + pp_component_name] = accumulated_loads
 
-    def _pp_asym_loads_output(self):  # pragma: no cover
-        """
-        This function converts a power-grid-model Asymmetrical Load output array to an Asymmetrical Load Dataframe of
-        PandaPower.
-
-        Returns:
-            a PandaPower Dataframe for the Asymmetrical Load component
-        """
-        # TODO: create unit tests for the function
-        assert "asymmetric_load" not in self.pp_output_data
-        assert "asym_load" in self.pgm_input_data
-
-        pgm_output_asym_loads = self.pgm_output_data["asym_load"]
-
-        pp_asym_load_p = pgm_output_asym_loads["p"] * (1e-6 / 3)
-        pp_asym_load_q = pgm_output_asym_loads["q"] * (1e-6 / 3)
-
-        pp_asym_output_loads = pd.DataFrame(
-            columns=["p_a_mw", "q_a_mvar", "p_b_mw", "q_b_mvar", "p_c_mw", "q_c_mvar"],
-            index=self._get_pp_ids("asymmetric_load", pgm_output_asym_loads["id"]),
-        )
-
-        pp_asym_output_loads["p_a_mw"] = pp_asym_load_p
-        pp_asym_output_loads["q_a_mvar"] = pp_asym_load_q
-        pp_asym_output_loads["p_b_mw"] = pp_asym_load_p
-        pp_asym_output_loads["q_b_mvar"] = pp_asym_load_q
-        pp_asym_output_loads["p_c_mw"] = pp_asym_load_p
-        pp_asym_output_loads["q_c_mvar"] = pp_asym_load_q
-
-        self.pp_output_data["res_asymmetric_load"] = pp_asym_output_loads
-
-    def _pp_asym_gens_output(self):  # pragma: no cover
-        """
-        This function converts a power-grid-model Asymmetrical Generator output array to an Asymmetric Static Generator
-        Dataframe of PandaPower.
-
-        Returns:
-            a PandaPower Dataframe for the Asymmetric Static Generator component
-        """
-        # TODO: create unit tests for the function
-        assert "asymmetric_sgen" not in self.pp_output_data
-        assert "asym_gen" in self.pgm_input_data
-
-        pgm_output_asym_gens = self.pgm_output_data["asym_gen"]
-
-        pp_asym_gen_p = pgm_output_asym_gens["p"] * (1e-6 / 3)
-        pp_asym_gen_q = pgm_output_asym_gens["q"] * (1e-6 / 3)
-
-        pp_output_asym_gens = pd.DataFrame(
-            columns=["p_a_mw", "q_a_mvar", "p_b_mw", "q_b_mvar", "p_c_mw", "q_c_mvar"],
-            index=self._get_pp_ids("asymmetric_sgen", pgm_output_asym_gens["id"]),
-        )
-
-        pp_output_asym_gens["p_a_mw"] = pp_asym_gen_p
-        pp_output_asym_gens["q_a_mvar"] = pp_asym_gen_q
-        pp_output_asym_gens["p_b_mw"] = pp_asym_gen_p
-        pp_output_asym_gens["q_b_mvar"] = pp_asym_gen_q
-        pp_output_asym_gens["p_c_mw"] = pp_asym_gen_p
-        pp_output_asym_gens["q_c_mvar"] = pp_asym_gen_q
-
-        self.pp_output_data["res_asymmetric_sgen"] = pp_output_asym_gens
-
-    def _generate_ids(
-        self, pp_table: str, pp_idx: pd.Index, name: Optional[str] = None
-    ) -> np.arange:  # pragma: no cover
+    def _generate_ids(self, pp_table: str, pp_idx: pd.Index, name: Optional[str] = None) -> np.arange:
         """
         Generate numerical power-grid-model IDs for a PandaPower component
 
