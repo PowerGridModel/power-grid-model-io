@@ -1564,7 +1564,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 raise ValueError(f"Invalid transformer connection string: '{vector_group}'")
             winding_1 = get_winding(match.group(1)).value
             winding_2 = get_winding(match.group(2)).value
-            winding_3 = get_winding(match.group(3)).value
+            winding_3 = get_winding(match.group(4)).value
             return pd.Series([winding_1, winding_2, winding_3])
 
         @lru_cache

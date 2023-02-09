@@ -38,6 +38,10 @@
       {"id": 18, "node": 2, "id_reference": {"table": "Wind turbines", "key": {"Node.Number": 3, "Subnumber": 3}}, "Name": "wind1"},
       {"id": 23, "node": 2, "id_reference": {"table": "Pvs", "key": {"Node.Number": 3, "Subnumber": 1}}, "Name": "pv1"}
     ],
+  "three_winding_transformer":
+    [
+      {"id": 24, "node_1": 1, "node_2": 2, "node_3": 4, "status_1": 1, "status_2": 1, "status_3": 1, "u1": 11000.0, "u2": 400.0, "u3": 400.0 , "sn_1": 30000000.0, "sn_2": 40000000.0, "sn_3": 35000000.0, "uk_12": 0.01, "uk_13": 0.02, "uk_23": 0.03, "pk_12": 10000.0, "pk_13": 20000.0, "pk_23": 30000.0,  "i0": 0.00171428, "p0": 60000.0, "winding_1": 2, "winding_2": 1, "winding_3": 1, "clock_12": 5, "clock_13": 7, "tap_pos": 2, "tap_side": 2, "tap_min": -7, "tap_max": 8, "tap_nom": 2, "tap_size": 10.0, "id_reference": {"table": "Three winding transformers", "key": {"Number": 1}}}
+    ],
   "source":
     [
       {"id": 16, "node": 0, "id_reference": {"table": "Sources", "key": {"Node.Number": 1, "Subnumber": 1}}, "Name": "source1"}

@@ -17,6 +17,7 @@ from power_grid_model_io.functions import (
     is_greater_than,
     value_or_default,
     value_or_zero,
+    both_zeros_to_nan,
 )
 
 
@@ -144,3 +145,22 @@ def test_degrees_to_clock(degrees: float, expected: int):
 def test_is_greater_than(left_side: float, right_side: List[float], expected: float):
     actual = is_greater_than(left_side, right_side)
     assert actual == expected
+
+
+@mark.parametrize(
+    ("value", "other_value", "expected"),
+    [
+        (float("nan"), float("nan"), float("nan")),
+        (float("nan"), 0.0, float("nan")),
+        (float("nan"), 5.0, float("nan")),
+        (0.0, float("nan"), float("nan")),
+        (0.0, 0.0, float("nan")),
+        (0.0, 9.0, 0.0),
+        (5.0, float("nan"), 5.0),
+        (6.0, 0.0, 6.0),
+        (7.0, 8.0, 7.0),
+    ],
+)
+def test_both_zeros_to_nan(value: float, other_value: float, expected: float):
+    actual = both_zeros_to_nan(value, other_value)
+    assert actual == approx(expected) or (np.isnan(actual) and np.isnan(expected))

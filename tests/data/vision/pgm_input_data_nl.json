@@ -38,6 +38,10 @@
       {"id": 18, "node": 2, "id_reference": {"table": "Windturbines", "key": {"Knooppunt.Nummer": 3, "Subnummer": 3}}, "Naam": "wind1"},
       {"id": 23, "node": 2, "id_reference": {"table": "Pv's", "key": {"Knooppunt.Nummer": 3, "Subnummer": 1}}, "Naam": "pv1"}
     ],
+  "three_winding_transformer":
+    [
+      {"id": 24, "node_1": 1, "node_2": 2, "node_3":  4, "id_reference": {"table": "Driewikkelingstransformatoren", "key": {"Nummer": 1}}}
+    ],
   "source":
     [
       {"id": 16, "node": 0, "id_reference": {"table": "Netvoedingen", "key": {"Knooppunt.Nummer": 1, "Subnummer": 1}}, "Naam": "source1"}
