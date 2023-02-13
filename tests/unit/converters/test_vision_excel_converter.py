@@ -32,7 +32,30 @@ def converter() -> VisionExcelConverter:
     return converter
 
 
-@pytest.mark.parametrize("language", ["en"])
+@pytest.fixture
+def converter_nl() -> VisionExcelConverter:
+    # Arrange
+    converter = VisionExcelConverter(language="nl")
+    converter._get_id("Knooppunten", {"Nummer": 1}, None)  # node: 0
+    converter._get_id("Kabels", {"Nummer": 1}, None)  # branch: 1
+    converter._get_id("Verbindingen", {"Number": 1}, None)  # branch: 2
+    converter._get_id("Smoorspoelen", {"Number": 1}, None)  # branch: 3
+    converter._get_id("Special transformers", {"Number": 1}, None)  # branch: 4
+    converter._get_id("Transformer loads", {"Node.Number": 1, "Subnumber": 2}, "transformer")  # virtual: 5
+    converter._get_id("Transformer loads", {"Node.Number": 1, "Subnumber": 2}, "internal_node")  # virtual:  6
+    converter._get_id("Transformer loads", {"Node.Number": 1, "Subnumber": 2}, "load")  # virtual:  7
+    converter._get_id("Transformer loads", {"Node.Number": 1, "Subnumber": 2}, "generation")  # virtual:  8
+    converter._get_id("Transformer loads", {"Node.Number": 1, "Subnumber": 2}, "pv_generation")  # virtual:  9
+    converter._get_id("Sources", {"Node.Number": 1, "Subnumber": 2}, None)  # appliance: 10
+    converter._get_id("Synchronous generators", {"Node.Number": 1, "Subnumber": 2}, None)  # appliance: 11
+    converter._get_id("Wind turbines", {"Node.Number": 1, "Subnumber": 2}, None)  # appliance: 12
+    converter._get_id("Loads", {"Node.Number": 1, "Subnumber": 2}, None)  # appliance: 13
+    converter._get_id("Zigzag transformers", {"Node.Number": 1, "Subnumber": 2}, None)  # appliance: 14
+    converter._get_id("Pvs", {"Node.Number": 1, "Subnumber": 2}, None)  # appliance: 15
+    return converter
+
+
+@pytest.mark.parametrize("language", ["en", "nl"])
 def test_mapping_files_exist(language: str):
     vf = Path(str(DEFAULT_MAPPING_FILE).format(language=language))
     assert vf.exists()
@@ -62,6 +85,14 @@ def test_get_node_id(converter: VisionExcelConverter):
 
     with pytest.raises(KeyError):
         converter.get_node_id(number=2)
+
+
+def test_get_node_id_nl(converter_nl: VisionExcelConverter):
+    # Act / Assert
+    assert converter_nl.get_node_id(number=1) == 0
+
+    with pytest.raises(KeyError):
+        converter_nl.get_node_id(number=2)
 
 
 def test_get_branch_id(converter: VisionExcelConverter):

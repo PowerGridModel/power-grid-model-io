@@ -12,7 +12,127 @@ from power_grid_model_io.converters.tabular_converter import TabularConverter
 from power_grid_model_io.data_stores.vision_excel_file_store import VisionExcelFileStore
 
 DEFAULT_MAPPING_FILE = Path(__file__).parent.parent / "config" / "excel" / "vision_{language:s}.yaml"
+MAPPING_KEY_DICTIONARY = {
+    # Table names
+    "Nodes": {
+        "en": "Nodes",
+        "nl": "Knooppunten",
+    },
+    "Cables": {
+        "en": "Cables",
+        "nl": "Kabels",
+    },
+    "Lines": {
+        "en": "Lines",
+        "nl": "Verbindingen",
+    },
+    "Links": { # needs to be in translation table, even though translated value is the same
+        "en": "Links",
+        "nl": "Links",
+    },
+    "Reactance coils": {
+        "en": "Reactance coils",
+        "nl": "Smoorspoelen",
+    },
+    "Transfdrmers": {
+        "en": "Transfdrmers",
+        "nl": "Transformatoren",
+    },
+    "Special transformers": {
+        "en": "Special transformers",
+        "nl": "Speciale transformatoren",
+    },
+    "Transformer loads": {
+        "en": "Transformer loads",
+        "nl": "Transformatorbelastingen",
+    },
+    "Sources": {
+        "en": "Sources",
+        "nl": "Netvoedingen",
+    },
+    "Synchronous generators": {
+        "en": "Synchronous generators",
+        "nl": "Synchrone generatoren",
+    },
+    "Wind turbines": {
+        "en": "Wind turbines",
+        "nl": "Windturbines",
+    },
+    "Loads": {
+        "en": "Loads",
+        "nl": "Belastingen",
+    },
+    "Zigzag transformers": {
+        "en": "Zigzag transformers",
+        "nl": "Nulpuntstransformatoren",
+    },
+    "Capacitors": {
+        "en": "Capacitors",
+        "nl": "Condensatoren",
+    },
+    "Reactors": {
+        "en": "Reactors",
+        "nl": "Spoelen",
+    },
+    "Pvs": {
+        "en": "Pvs",
+        "nl": "Pv's",
+    },
+    "Three winding transformers": {
+        "en": "Three winding transformers",
+        "nl": "Driewikkelingstransformatoren",
+    },
 
+    # (Sub) Field names
+    "Number": {
+        "en": "Number",
+        "nl": "Nummer",
+    },
+    "Node.Number": {
+        "en": "Node.Number",
+        "nl": "Knooppunt.Nummer",
+    },
+    "From.Number": {
+        "en": "From.Number",
+        "nl": "Van.Nummer",
+    },
+    "To.Number": {
+        "en": "To.Number",
+        "nl": "Naar.Nummer",
+    },
+    "Subnumber": {
+        "en": "Subnumber",
+        "nl": "Subnummer",
+    },
+    
+    "transformer": {
+        "en": "transformer",
+        "nl": "transformer",
+    },
+    "internal_node": {
+        "en": "internal_node",
+        "nl": "internal_node",
+    },
+    "load": {
+        "en": "load",
+        "nl": "load",
+    },
+    "generation": {
+        "en": "generation",
+        "nl": "generation",
+    },
+    "pv_generation": {
+        "en": "pv_generation",
+        "nl": "pv_generation",
+    },
+
+    # For consideration:
+    #   from_status: From.Switch state, to_status: To.Switch state
+    #   i_0, p_0, conn_str, neutral_grounding, tapside, tap*
+    #   (r|x)_grounding_(from|to)
+
+}
+# keyword -> MAPPING_KEY_DICTIONARY[keyword][language]
 
 class VisionExcelConverter(TabularConverter):
     """
@@ -24,28 +144,52 @@ class VisionExcelConverter(TabularConverter):
         if not mapping_file.exists():
             raise FileNotFoundError(f"No Vision Excel mapping available for language '{language}'")
         source = VisionExcelFileStore(file_path=Path(source_file)) if source_file else None
+        self.language = language
         super().__init__(mapping_file=mapping_file, source=source)
 
     def get_node_id(self, number: int) -> int:
         """
         Get the automatically assigned id of a node
         """
-        return self.get_id(table="Nodes", key={"Number": number})
+        language = self.language or "en"
+        return self.get_id(
+            table=MAPPING_KEY_DICTIONARY["Nodes"][language],
+            key={MAPPING_KEY_DICTIONARY["Number"][language]: number}
+        )
 
     def get_branch_id(self, table: str, number: int) -> int:
         """
         Get the automatically assigned id of a branch (line, transformer, etc.)
         """
-        return self.get_id(table=table, key={"Number": number})
+        language = self.language or "en"
+        return self.get_id(
+            table=MAPPING_KEY_DICTIONARY[table][language],
+            key={MAPPING_KEY_DICTIONARY["Number"][language]: number}
+        )
 
     def get_appliance_id(self, table: str, node_number: int, sub_number: int) -> int:
         """
         Get the automatically assigned id of an appliance (source, load, etc.)
         """
-        return self.get_id(table=table, key={"Node.Number": node_number, "Subnumber": sub_number})
+        language = self.language or "en"
+        return self.get_id(
+            table=MAPPING_KEY_DICTIONARY[table][language],
+            key={
+                MAPPING_KEY_DICTIONARY["Node.Number"][language]: node_number,
+                MAPPING_KEY_DICTIONARY["Subnumber"][language]: sub_number,
+            }
+        )
 
     def get_virtual_id(self, table: str, obj_name: str, node_number: int, sub_number: int) -> int:
         """
-        Get the automatically assigned id of a vitual object (e.g. the internal node of a 'TansformerLoad')
+        Get the automatically assigned id of a virtual object (e.g. the internal node of a 'TransformerLoad')
         """
-        return self.get_id(table=table, name=obj_name, key={"Node.Number": node_number, "Subnumber": sub_number})
+        language = self.language or "en"
+        return self.get_id(
+            table=MAPPING_KEY_DICTIONARY[table][language],
+            name=MAPPING_KEY_DICTIONARY[obj_name][language],
+            key={
+                MAPPING_KEY_DICTIONARY["Node.Number"][language]: node_number,
+                MAPPING_KEY_DICTIONARY["Subnumber"][language]: sub_number,
+            }
+        )
