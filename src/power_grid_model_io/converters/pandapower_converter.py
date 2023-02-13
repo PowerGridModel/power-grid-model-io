@@ -10,7 +10,7 @@ from typing import Dict, List, Mapping, MutableMapping, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from power_grid_model import Branch3Side, BranchSide, LoadGenType, initialize_array, power_grid_meta_data
+from power_grid_model import Branch3Side, BranchSide, LoadGenType, WindingType, initialize_array, power_grid_meta_data
 from power_grid_model.data_types import Dataset, SingleDataset
 
 from power_grid_model_io.converters.base_converter import BaseConverter
@@ -535,7 +535,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         parallel = self._get_pp_attr("trafo", "parallel", 1)
         sn_mva = self._get_pp_attr("trafo", "sn_mva")
         switch_states = self.get_switch_states("trafo")
-        winding_types = self.get_trafo_winding_types()
+        # TODO Fix vector group
+        # winding_types = self.get_trafo_winding_types()
 
         tap_side = self._get_pp_attr("trafo", "tap_side")
         tap_nom = self._get_pp_attr("trafo", "tap_neutral", np.nan)
@@ -554,9 +555,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_transformers["pk"] = self._get_pp_attr("trafo", "vkr_percent") * sn_mva * parallel * (1e6 * 1e-2)
         pgm_transformers["i0"] = self._get_pp_attr("trafo", "i0_percent") * 1e-2
         pgm_transformers["p0"] = self._get_pp_attr("trafo", "pfe_kw") * parallel * 1e3
-        pgm_transformers["winding_from"] = winding_types["winding_from"]
-        pgm_transformers["winding_to"] = winding_types["winding_to"]
         pgm_transformers["clock"] = np.round(self._get_pp_attr("trafo", "shift_degree", 0.0) / 30) % 12
+        # TODO Fix vector group conversion
+        pgm_transformers["winding_from"] = np.where(pgm_transformers["clock"] % 2, WindingType.delta, WindingType.wye_n)
+        pgm_transformers["winding_to"] = WindingType.wye_n
         pgm_transformers["tap_pos"] = np.where(np.equal(tap_side, None), tap_nom, tap_pos)
         pgm_transformers["tap_side"] = self._get_transformer_tap_side(tap_side)
         pgm_transformers["tap_min"] = self._get_pp_attr("trafo", "tap_min", np.nan)
@@ -592,7 +594,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         in_service = self._get_pp_attr("trafo3w", "in_service", True)
 
         switch_states = self.get_trafo3w_switch_states(pp_trafo3w)
-        winding_type = self.get_trafo3w_winding_types()
+        # TODO FIx vector group
+        # winding_type = self.get_trafo3w_winding_types()
 
         tap_side = self._get_pp_attr("trafo3w", "tap_side")
         tap_nom = self._get_pp_attr("trafo3w", "tap_neutral", np.nan)
@@ -633,11 +636,16 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         pgm_3wtransformers["i0"] = self._get_pp_attr("trafo3w", "i0_percent") * 1e-2
         pgm_3wtransformers["p0"] = self._get_pp_attr("trafo3w", "pfe_kw") * 1e3
-        pgm_3wtransformers["winding_1"] = winding_type["winding_1"]
-        pgm_3wtransformers["winding_2"] = winding_type["winding_2"]
-        pgm_3wtransformers["winding_3"] = winding_type["winding_3"]
         pgm_3wtransformers["clock_12"] = np.round(self._get_pp_attr("trafo3w", "shift_mv_degree", 0.0) / 30.0) % 12
         pgm_3wtransformers["clock_13"] = np.round(self._get_pp_attr("trafo3w", "shift_lv_degree", 0.0) / 30.0) % 12
+        # TODO Fix vector group conversion
+        pgm_3wtransformers["winding_1"] = WindingType.wye_n
+        pgm_3wtransformers["winding_2"] = np.where(
+            pgm_3wtransformers["clock_12"] % 2, WindingType.delta, WindingType.wye_n
+        )
+        pgm_3wtransformers["winding_3"] = np.where(
+            pgm_3wtransformers["clock_13"] % 2, WindingType.delta, WindingType.wye_n
+        )
         pgm_3wtransformers["tap_pos"] = np.where(np.equal(tap_side, None), tap_nom, tap_pos)
         pgm_3wtransformers["tap_side"] = self._get_3wtransformer_tap_side(tap_side)
         pgm_3wtransformers["tap_min"] = self._get_pp_attr("trafo3w", "tap_min", np.nan)
