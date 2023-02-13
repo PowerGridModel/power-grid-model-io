@@ -38,20 +38,20 @@ def converter_nl() -> VisionExcelConverter:
     converter = VisionExcelConverter(language="nl")
     converter._get_id("Knooppunten", {"Nummer": 1}, None)  # node: 0
     converter._get_id("Kabels", {"Nummer": 1}, None)  # branch: 1
-    converter._get_id("Verbindingen", {"Number": 1}, None)  # branch: 2
-    converter._get_id("Smoorspoelen", {"Number": 1}, None)  # branch: 3
-    converter._get_id("Special transformers", {"Number": 1}, None)  # branch: 4
-    converter._get_id("Transformer loads", {"Node.Number": 1, "Subnumber": 2}, "transformer")  # virtual: 5
-    converter._get_id("Transformer loads", {"Node.Number": 1, "Subnumber": 2}, "internal_node")  # virtual:  6
-    converter._get_id("Transformer loads", {"Node.Number": 1, "Subnumber": 2}, "load")  # virtual:  7
-    converter._get_id("Transformer loads", {"Node.Number": 1, "Subnumber": 2}, "generation")  # virtual:  8
-    converter._get_id("Transformer loads", {"Node.Number": 1, "Subnumber": 2}, "pv_generation")  # virtual:  9
-    converter._get_id("Sources", {"Node.Number": 1, "Subnumber": 2}, None)  # appliance: 10
-    converter._get_id("Synchronous generators", {"Node.Number": 1, "Subnumber": 2}, None)  # appliance: 11
-    converter._get_id("Wind turbines", {"Node.Number": 1, "Subnumber": 2}, None)  # appliance: 12
-    converter._get_id("Loads", {"Node.Number": 1, "Subnumber": 2}, None)  # appliance: 13
-    converter._get_id("Zigzag transformers", {"Node.Number": 1, "Subnumber": 2}, None)  # appliance: 14
-    converter._get_id("Pvs", {"Node.Number": 1, "Subnumber": 2}, None)  # appliance: 15
+    converter._get_id("Links", {"Nummer": 1}, None)  # branch: 2
+    converter._get_id("Smoorspoelen", {"Nummer": 1}, None)  # branch: 3
+    converter._get_id("Speciale transformatoren", {"Nummer": 1}, None)  # branch: 4
+    converter._get_id("Transformatorbelastingen", {"Knooppunt.Nummer": 1, "Subnummer": 2}, "transformer")  # virtual: 5
+    converter._get_id("Transformatorbelastingen", {"Knooppunt.Nummer": 1, "Subnummer": 2}, "internal_node")  # virtual:  6
+    converter._get_id("Transformatorbelastingen", {"Knooppunt.Nummer": 1, "Subnummer": 2}, "load")  # virtual:  7
+    converter._get_id("Transformatorbelastingen", {"Knooppunt.Nummer": 1, "Subnummer": 2}, "generation")  # virtual:  8
+    converter._get_id("Transformatorbelastingen", {"Knooppunt.Nummer": 1, "Subnummer": 2}, "pv_generation")  # virtual:  9
+    converter._get_id("Netvoedingen", {"Knooppunt.Nummer": 1, "Subnummer": 2}, None)  # appliance: 10
+    converter._get_id("Synchrone generatoren", {"Knooppunt.Nummer": 1, "Subnummer": 2}, None)  # appliance: 11
+    converter._get_id("Windturbines", {"Knooppunt.Nummer": 1, "Subnummer": 2}, None)  # appliance: 12
+    converter._get_id("Belastingen", {"Knooppunt.Nummer": 1, "Subnummer": 2}, None)  # appliance: 13
+    converter._get_id("Nulpuntstransformatoren", {"Knooppunt.Nummer": 1, "Subnummer": 2}, None)  # appliance: 14
+    converter._get_id("Pv's", {"Knooppunt.Nummer": 1, "Subnummer": 2}, None)  # appliance: 15
     return converter
 
 
@@ -109,6 +109,14 @@ def test_get_branch_id(converter: VisionExcelConverter):
         converter.get_branch_id(table="Cables", number=2)
 
 
+def test_get_cables_id_nl(converter_nl: VisionExcelConverter):
+    # The 'Kabels' in an "nl" converter should be addressed by the English name "Cables" in business logic
+    assert converter_nl.get_branch_id(table="Cables", number=1) == 1
+
+    with pytest.raises(KeyError):
+        converter_nl.get_branch_id(table="Cables", number=2)
+
+
 def test_get_virtual_id(converter: VisionExcelConverter):
     # Act / Assert
     assert converter.get_virtual_id(table="Transformer loads", obj_name="transformer", node_number=1, sub_number=2) == 5
@@ -151,3 +159,8 @@ def test_get_appliance_id(converter: VisionExcelConverter):
 
     with pytest.raises(KeyError):
         converter.get_appliance_id(table="Sources", node_number=1, sub_number=3)
+
+
+def test_get_appliance_id_nl(converter_nl: VisionExcelConverter):
+    # The "nl" version of Pvs is Pv's, which contains an apostrophe that could cause problems
+    assert converter_nl.get_appliance_id(table="Pvs", node_number=1, sub_number=2) == 15

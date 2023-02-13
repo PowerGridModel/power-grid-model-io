@@ -12,7 +12,7 @@ from power_grid_model_io.converters.tabular_converter import TabularConverter
 from power_grid_model_io.data_stores.vision_excel_file_store import VisionExcelFileStore
 
 DEFAULT_MAPPING_FILE = Path(__file__).parent.parent / "config" / "excel" / "vision_{language:s}.yaml"
-MAPPING_KEY_DICTIONARY = {
+DEFAULT_MAPPING_KEYS = {
     # Table names
     "Nodes": {
         "en": "Nodes",
@@ -34,8 +34,8 @@ MAPPING_KEY_DICTIONARY = {
         "en": "Reactance coils",
         "nl": "Smoorspoelen",
     },
-    "Transfdrmers": {
-        "en": "Transfdrmers",
+    "Transformers": {
+        "en": "Transformers",
         "nl": "Transformatoren",
     },
     "Special transformers": {
@@ -104,7 +104,7 @@ MAPPING_KEY_DICTIONARY = {
         "en": "Subnumber",
         "nl": "Subnummer",
     },
-    
+
     "transformer": {
         "en": "transformer",
         "nl": "transformer",
@@ -132,7 +132,7 @@ MAPPING_KEY_DICTIONARY = {
     #   (r|x)_grounding_(from|to)
 
 }
-# keyword -> MAPPING_KEY_DICTIONARY[keyword][language]
+# keyword -> DEFAULT_MAPPING_KEYS[keyword][language]
 
 class VisionExcelConverter(TabularConverter):
     """
@@ -150,11 +150,12 @@ class VisionExcelConverter(TabularConverter):
     def get_node_id(self, number: int) -> int:
         """
         Get the automatically assigned id of a node
+        If the language is set to e.g. "nl", Nodes.Number is mapped to Knooppunten.Nummer
         """
         language = self.language or "en"
         return self.get_id(
-            table=MAPPING_KEY_DICTIONARY["Nodes"][language],
-            key={MAPPING_KEY_DICTIONARY["Number"][language]: number}
+            table=DEFAULT_MAPPING_KEYS["Nodes"][language],
+            key={DEFAULT_MAPPING_KEYS["Number"][language]: number}
         )
 
     def get_branch_id(self, table: str, number: int) -> int:
@@ -163,8 +164,8 @@ class VisionExcelConverter(TabularConverter):
         """
         language = self.language or "en"
         return self.get_id(
-            table=MAPPING_KEY_DICTIONARY[table][language],
-            key={MAPPING_KEY_DICTIONARY["Number"][language]: number}
+            table=DEFAULT_MAPPING_KEYS[table][language],
+            key={DEFAULT_MAPPING_KEYS["Number"][language]: number}
         )
 
     def get_appliance_id(self, table: str, node_number: int, sub_number: int) -> int:
@@ -173,10 +174,10 @@ class VisionExcelConverter(TabularConverter):
         """
         language = self.language or "en"
         return self.get_id(
-            table=MAPPING_KEY_DICTIONARY[table][language],
+            table=DEFAULT_MAPPING_KEYS[table][language],
             key={
-                MAPPING_KEY_DICTIONARY["Node.Number"][language]: node_number,
-                MAPPING_KEY_DICTIONARY["Subnumber"][language]: sub_number,
+                DEFAULT_MAPPING_KEYS["Node.Number"][language]: node_number,
+                DEFAULT_MAPPING_KEYS["Subnumber"][language]: sub_number,
             }
         )
 
@@ -186,10 +187,10 @@ class VisionExcelConverter(TabularConverter):
         """
         language = self.language or "en"
         return self.get_id(
-            table=MAPPING_KEY_DICTIONARY[table][language],
-            name=MAPPING_KEY_DICTIONARY[obj_name][language],
+            table=DEFAULT_MAPPING_KEYS[table][language],
+            name=DEFAULT_MAPPING_KEYS[obj_name][language],
             key={
-                MAPPING_KEY_DICTIONARY["Node.Number"][language]: node_number,
-                MAPPING_KEY_DICTIONARY["Subnumber"][language]: sub_number,
+                DEFAULT_MAPPING_KEYS["Node.Number"][language]: node_number,
+                DEFAULT_MAPPING_KEYS["Subnumber"][language]: sub_number,
             }
         )
