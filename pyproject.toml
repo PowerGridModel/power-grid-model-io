@@ -41,7 +41,7 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
-    "pandapower",
+    "pandapower>2.11.1",
     "pre-commit",
     "pylint",
     "pytest",
