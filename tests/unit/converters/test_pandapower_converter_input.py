@@ -696,7 +696,7 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
 )
 @patch(
     "power_grid_model_io.converters.pandapower_converter.PandaPowerConverter.get_trafo_winding_types",
-    new=MagicMock(return_value=pd.DataFrame({"winding_from": [0], "winding_to": [0]})),
+    new=MagicMock(return_value=pd.DataFrame({"winding_from": [0, 0, 0], "winding_to": [0, 0, 0]})),
 )
 @patch(
     "power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._generate_ids",
@@ -913,7 +913,9 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
 )
 @patch(
     "power_grid_model_io.converters.pandapower_converter.PandaPowerConverter.get_trafo3w_winding_types",
-    new=MagicMock(return_value=pd.DataFrame({"winding_1": [0], "winding_2": [0], "winding_3": [0]})),
+    new=MagicMock(
+        return_value=pd.DataFrame({"winding_1": [0, 0, 0, 0], "winding_2": [0, 0, 0, 0], "winding_3": [0, 0, 0, 0]})
+    ),
 )
 @patch(
     "power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._generate_ids",
