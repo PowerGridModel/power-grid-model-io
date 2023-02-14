@@ -4,6 +4,7 @@
 
 import sys
 from copy import copy, deepcopy
+from itertools import chain
 from typing import Any, Dict, List, Optional, Tuple, Union
 from unittest.mock import MagicMock
 
@@ -68,6 +69,7 @@ class MockFn:
     __slots__ = ["fn", "args", "kwargs", "postfix"]
 
     __array_struct__ = np.array([]).__array_struct__
+    __array_prepare__ = np.array([]).__array_prepare__
 
     def __init__(self, fn: str, *args, **kwargs):
         self.fn = fn
@@ -210,6 +212,12 @@ class MockFn:
     def __getitem__(self, item):
         mock_fn = copy(self)
         mock_fn.postfix += f"[{idx_to_str(item)}]"
+        return mock_fn
+
+    def __call__(self, *args, **kwargs):
+        mock_fn = copy(self)
+        arguments = ", ".join(chain(map(repr, args), map(lambda k, v: f"{k}={repr(v)}", kwargs.items())))
+        mock_fn.postfix += f"({arguments})"
         return mock_fn
 
 
