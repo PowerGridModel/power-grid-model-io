@@ -538,9 +538,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # TODO Fix vector group
         # winding_types = self.get_trafo_winding_types()
 
-        tap_side = self._get_pp_attr("trafo", "tap_side")
+        tap_side = self._get_pp_attr("trafo", "tap_side", np.nan)
         tap_nom = self._get_pp_attr("trafo", "tap_neutral", np.nan)
         tap_pos = self._get_pp_attr("trafo", "tap_pos", np.nan)
+        no_taps = np.isnan(tap_side) * np.isnan(tap_pos) * np.isnan(tap_nom)
 
         pgm_transformers = initialize_array(data_type="input", component_type="transformer", shape=len(pp_trafo))
         pgm_transformers["id"] = self._generate_ids("trafo", pp_trafo.index)
@@ -559,11 +560,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # TODO Fix vector group conversion
         pgm_transformers["winding_from"] = np.where(pgm_transformers["clock"] % 2, WindingType.delta, WindingType.wye_n)
         pgm_transformers["winding_to"] = WindingType.wye_n
-        pgm_transformers["tap_pos"] = np.where(np.equal(tap_side, None), tap_nom, tap_pos)
-        pgm_transformers["tap_side"] = self._get_transformer_tap_side(tap_side)
-        pgm_transformers["tap_min"] = self._get_pp_attr("trafo", "tap_min", np.nan)
-        pgm_transformers["tap_max"] = self._get_pp_attr("trafo", "tap_max", np.nan)
-        pgm_transformers["tap_nom"] = tap_nom
+        pgm_transformers["tap_nom"] = np.where(no_taps, 0, tap_pos)
+        pgm_transformers["tap_pos"] = np.where(no_taps, tap_nom, tap_pos)
+        pgm_transformers["tap_side"] = np.where(no_taps, "lv", self._get_transformer_tap_side(tap_side))
+        pgm_transformers["tap_min"] = self._get_pp_attr("trafo", "tap_min", 0)
+        pgm_transformers["tap_max"] = self._get_pp_attr("trafo", "tap_max", 0)
         pgm_transformers["tap_size"] = self._get_tap_size(pp_trafo)
 
         assert "transformer" not in self.pgm_input_data
@@ -597,8 +598,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # TODO FIx vector group
         # winding_type = self.get_trafo3w_winding_types()
 
-        tap_side = self._get_pp_attr("trafo3w", "tap_side")
-        tap_nom = self._get_pp_attr("trafo3w", "tap_neutral", np.nan)
+        tap_side = self._get_pp_attr("trafo3w", "tap_side", "lv")
+        tap_nom = self._get_pp_attr("trafo3w", "tap_neutral", 0)
         tap_pos = self._get_pp_attr("trafo3w", "tap_pos", np.nan)
 
         pgm_3wtransformers = initialize_array(
@@ -646,10 +647,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_3wtransformers["winding_3"] = np.where(
             pgm_3wtransformers["clock_13"] % 2, WindingType.delta, WindingType.wye_n
         )
-        pgm_3wtransformers["tap_pos"] = np.where(np.equal(tap_side, None), tap_nom, tap_pos)
+        pgm_3wtransformers["tap_pos"] = np.where(np.equal(tap_pos, np.nan), tap_nom, tap_pos)
         pgm_3wtransformers["tap_side"] = self._get_3wtransformer_tap_side(tap_side)
-        pgm_3wtransformers["tap_min"] = self._get_pp_attr("trafo3w", "tap_min", np.nan)
-        pgm_3wtransformers["tap_max"] = self._get_pp_attr("trafo3w", "tap_max", np.nan)
+        pgm_3wtransformers["tap_min"] = self._get_pp_attr("trafo3w", "tap_min", 0)
+        pgm_3wtransformers["tap_max"] = self._get_pp_attr("trafo3w", "tap_max", 0)
         pgm_3wtransformers["tap_nom"] = tap_nom
         pgm_3wtransformers["tap_size"] = self._get_3wtransformer_tap_size(pp_trafo3w)
 
@@ -1059,8 +1060,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 "i_hv_ka",
                 "i_lv_ka",
                 "vm_hv_pu",
-                "vm_lv_pu",
                 "va_hv_degree",
+                "vm_lv_pu",
                 "va_lv_degree",
                 "loading_percent",
             ],
@@ -1587,7 +1588,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         trafo3w.columns = ["winding_1", "winding_2", "winding_3"]
         return trafo3w
 
-    def _get_pp_attr(self, table: str, attribute: str, default: Optional[Union[float, bool]] = None) -> np.ndarray:
+    def _get_pp_attr(self, table: str, attribute: str, default: Optional[Union[float, bool, str]] = None) -> np.ndarray:
         """
         Returns the selected PandaPower attribute from the selected PandaPower table.
 
