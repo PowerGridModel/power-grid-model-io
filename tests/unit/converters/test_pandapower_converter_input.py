@@ -733,7 +733,7 @@ def test_create_pgm_input_transformers__tap_side():
     assert result[2]["tap_side"] == BranchSide.from_side.value
     assert result[0]["tap_pos"] == 34.0 != result[0]["tap_nom"]
     assert result[1]["tap_pos"] == 34.0 != result[1]["tap_nom"]
-    assert result[2]["tap_pos"] == 12.0 == result[2]["tap_nom"]
+    assert result[2]["tap_pos"] == result[2]["tap_nom"]
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -859,10 +859,10 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
     converter._get_pp_attr.assert_any_call("trafo3w", "i0_percent")
     converter._get_pp_attr.assert_any_call("trafo3w", "shift_mv_degree", 0.0)
     converter._get_pp_attr.assert_any_call("trafo3w", "shift_lv_degree", 0.0)
-    converter._get_pp_attr.assert_any_call("trafo3w", "tap_side")
+    converter._get_pp_attr.assert_any_call("trafo3w", "tap_side", np.nan)
     converter._get_pp_attr.assert_any_call("trafo3w", "tap_neutral", np.nan)
-    converter._get_pp_attr.assert_any_call("trafo3w", "tap_min", np.nan)
-    converter._get_pp_attr.assert_any_call("trafo3w", "tap_max", np.nan)
+    converter._get_pp_attr.assert_any_call("trafo3w", "tap_min", 0)
+    converter._get_pp_attr.assert_any_call("trafo3w", "tap_max", 0)
     converter._get_pp_attr.assert_any_call("trafo3w", "tap_pos", np.nan)
     converter._get_pp_attr.assert_any_call("trafo3w", "in_service", True)
     assert len(converter._get_pp_attr.call_args_list) == 25
@@ -955,7 +955,7 @@ def test_create_pgm_input_transformers3w__tap_side():
     assert result[0]["tap_pos"] == 34.0 != result[0]["tap_nom"]
     assert result[1]["tap_pos"] == 34.0 != result[1]["tap_nom"]
     assert result[2]["tap_pos"] == 34.0 != result[2]["tap_nom"]
-    assert result[3]["tap_pos"] == 12.0 == result[3]["tap_nom"]
+    assert result[3]["tap_pos"] == result[3]["tap_nom"]
 
 
 def test_create_pgm_input_three_winding_transformers__tap_at_star_point():
