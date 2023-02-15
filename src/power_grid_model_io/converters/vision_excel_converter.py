@@ -134,17 +134,18 @@ DEFAULT_MAPPING_KEYS = {
 }
 # keyword -> DEFAULT_MAPPING_KEYS[keyword][language]
 
+
 class VisionExcelConverter(TabularConverter):
     """
     Vision Excel Converter: Load data from a Vision Excel export file and use a mapping file to convert the data to PGM
     """
 
     def __init__(self, source_file: Optional[Union[Path, str]] = None, language: str = "en"):
-        mapping_file = Path(str(DEFAULT_MAPPING_FILE).format(language=language))
+        mapping_file = Path(str(DEFAULT_MAPPING_FILE).format(language=str(language)))
         if not mapping_file.exists():
-            raise FileNotFoundError(f"No Vision Excel mapping available for language '{language}'")
+            raise FileNotFoundError(f"No Vision Excel mapping available for language '{str(language)}'")
         source = VisionExcelFileStore(file_path=Path(source_file)) if source_file else None
-        self.language = language
+        self.language = str(language)
         super().__init__(mapping_file=mapping_file, source=source)
 
     def get_node_id(self, number: int) -> int:

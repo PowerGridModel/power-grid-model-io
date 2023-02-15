@@ -61,16 +61,30 @@ def test_mapping_files_exist(language: str):
     assert vf.exists()
 
 
-def test_initialization():
+def test_mapping_file_none_input_raises_file_not_found_error():
+    with pytest.raises(FileNotFoundError, match="No Vision Excel mapping available for language 'None'"):
+        VisionExcelConverter(language=None)
+
+
+def test_mapping_file_numeric_input_raises_file_not_found_error():
+    with pytest.raises(FileNotFoundError, match="No Vision Excel mapping available for language '1'"):
+        VisionExcelConverter(language=1)
+
+
+def test_mapping_file_not_exists_raises_file_not_found_error():
     with pytest.raises(FileNotFoundError, match="No Vision Excel mapping available for language 'abcde'"):
         VisionExcelConverter(language="abcde")
 
+
+def test_initialization_calls_set_mapping_file():
     with patch(
         "power_grid_model_io.converters.tabular_converter.TabularConverter.set_mapping_file"
     ) as mock_set_mapping_file:
         VisionExcelConverter()
         mock_set_mapping_file.assert_called_once()
 
+
+def test_initialization_calls_mock_file_store_with_source_file_argument():
     with patch("power_grid_model_io.converters.vision_excel_converter.VisionExcelFileStore") as MockFileStore:
         VisionExcelConverter()
         MockFileStore.assert_not_called()
@@ -80,7 +94,8 @@ def test_initialization():
 
 
 def test_get_node_id(converter: VisionExcelConverter):
-    # Act / Assert
+    # Arrange / Act : the converter fixture
+    # Assert
     assert converter.get_node_id(number=1) == 0
 
     with pytest.raises(KeyError):
@@ -88,7 +103,8 @@ def test_get_node_id(converter: VisionExcelConverter):
 
 
 def test_get_node_id_nl(converter_nl: VisionExcelConverter):
-    # Act / Assert
+    # Arrange / Act : the converter_nl fixture
+    # Assert
     assert converter_nl.get_node_id(number=1) == 0
 
     with pytest.raises(KeyError):
@@ -96,7 +112,8 @@ def test_get_node_id_nl(converter_nl: VisionExcelConverter):
 
 
 def test_get_branch_id(converter: VisionExcelConverter):
-    # Act / Assert
+    # Arrange / Act : the converter fixture
+    # Assert
     assert converter.get_branch_id(table="Cables", number=1) == 1
     assert converter.get_branch_id(table="Links", number=1) == 2
     assert converter.get_branch_id(table="Reactance coils", number=1) == 3
@@ -110,6 +127,8 @@ def test_get_branch_id(converter: VisionExcelConverter):
 
 
 def test_get_cables_id_nl(converter_nl: VisionExcelConverter):
+    # Arrange / Act : the converter_nl fixture
+    # Assert
     # The 'Kabels' in an "nl" converter should be addressed by the English name "Cables" in business logic
     assert converter_nl.get_branch_id(table="Cables", number=1) == 1
 
@@ -118,7 +137,8 @@ def test_get_cables_id_nl(converter_nl: VisionExcelConverter):
 
 
 def test_get_virtual_id(converter: VisionExcelConverter):
-    # Act / Assert
+    # Arrange / Act : the converter fixture
+    # Assert
     assert converter.get_virtual_id(table="Transformer loads", obj_name="transformer", node_number=1, sub_number=2) == 5
     assert (
         converter.get_virtual_id(table="Transformer loads", obj_name="internal_node", node_number=1, sub_number=2) == 6
@@ -143,7 +163,8 @@ def test_get_virtual_id(converter: VisionExcelConverter):
 
 
 def test_get_appliance_id(converter: VisionExcelConverter):
-    # Act / Assert
+    # Arrange / Act : the converter fixture
+    # Assert
     assert converter.get_appliance_id(table="Sources", node_number=1, sub_number=2) == 10
     assert converter.get_appliance_id(table="Synchronous generators", node_number=1, sub_number=2) == 11
     assert converter.get_appliance_id(table="Wind turbines", node_number=1, sub_number=2) == 12
@@ -162,5 +183,7 @@ def test_get_appliance_id(converter: VisionExcelConverter):
 
 
 def test_get_appliance_id_nl(converter_nl: VisionExcelConverter):
+    # Assert:
     # The "nl" version of Pvs is Pv's, which contains an apostrophe that could cause problems
+    # The other items are covered with the test_get_appliance_id test case
     assert converter_nl.get_appliance_id(table="Pvs", node_number=1, sub_number=2) == 15
