@@ -540,15 +540,18 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         tap_nom = self._get_pp_attr("trafo", "tap_neutral", np.nan)
         tap_pos = self._get_pp_attr("trafo", "tap_pos", np.nan)
         # Do not use taps when mandatory tap data is not available
-        no_taps = np.equal(tap_side, None) + np.isnan(tap_pos) + np.isnan(tap_nom)
+        no_taps = np.equal(tap_side, None) | np.isnan(tap_pos) | np.isnan(tap_nom)
+        tap_nom[no_taps] = 0
+        tap_pos[no_taps] = 0
+        tap_side[no_taps] = "hv"
 
         winding_types = self.get_trafo_winding_types()
         clocks = np.round(self._get_pp_attr("trafo", "shift_degree", 0.0) / 30) % 12
         # Default vector group for odd clocks = DYn and for even clocks = YNyn
-        w_from_nan = np.isnan(winding_types["winding_from"])
-        w_to_nan = np.isnan(winding_types["winding_to"])
-        no_vector_groups = w_from_nan + w_to_nan
-        no_vector_groups_dyn = no_vector_groups + (clocks % 2).astype(bool)
+        no_vector_groups = np.isnan(winding_types["winding_from"]) | np.isnan(winding_types["winding_to"])
+        no_vector_groups_dyn = no_vector_groups & (clocks % 2)
+        winding_types[no_vector_groups] = WindingType.wye_n
+        winding_types["winding_from"][no_vector_groups_dyn] = WindingType.delta
 
         pgm_transformers = initialize_array(data_type="input", component_type="transformer", shape=len(pp_trafo))
         pgm_transformers["id"] = self._generate_ids("trafo", pp_trafo.index)
@@ -564,15 +567,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_transformers["i0"] = self._get_pp_attr("trafo", "i0_percent") * 1e-2
         pgm_transformers["p0"] = self._get_pp_attr("trafo", "pfe_kw") * parallel * 1e3
         pgm_transformers["clock"] = clocks
-        pgm_transformers["winding_from"] = np.where(
-            no_vector_groups,
-            np.where(no_vector_groups_dyn, WindingType.delta, WindingType.wye_n),
-            winding_types["winding_from"],
-        )
-        pgm_transformers["winding_to"] = np.where(no_vector_groups, WindingType.wye_n, winding_types["winding_to"])
-        pgm_transformers["tap_nom"] = np.where(no_taps, 0, tap_nom)
-        pgm_transformers["tap_pos"] = np.where(no_taps, 0, tap_pos)
-        pgm_transformers["tap_side"] = np.where(no_taps, BranchSide.from_side, self._get_transformer_tap_side(tap_side))
+        pgm_transformers["winding_from"] = winding_types["winding_from"]
+        pgm_transformers["winding_to"] = winding_types["winding_to"]
+        pgm_transformers["tap_nom"] = tap_nom
+        pgm_transformers["tap_pos"] = tap_pos
+        pgm_transformers["tap_side"] = self._get_transformer_tap_side(tap_side)
         pgm_transformers["tap_min"] = self._get_pp_attr("trafo", "tap_min", 0)
         pgm_transformers["tap_max"] = self._get_pp_attr("trafo", "tap_max", 0)
         pgm_transformers["tap_size"] = self._get_tap_size(pp_trafo)
@@ -580,7 +579,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         assert "transformer" not in self.pgm_input_data
         self.pgm_input_data["transformer"] = pgm_transformers
 
-    def _create_pgm_input_three_winding_transformers(self):  # pylint: disable=too-many-statements
+    def _create_pgm_input_three_winding_transformers(self):
+        # pylint: disable=too-many-statements, disable-msg=too-many-locals
         """
         This function converts a Three Winding Transformer Dataframe of PandaPower to a power-grid-model
         Three Winding Transformer input array.
@@ -610,18 +610,25 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         tap_nom = self._get_pp_attr("trafo3w", "tap_neutral", np.nan)
         tap_pos = self._get_pp_attr("trafo3w", "tap_pos", np.nan)
         # Do not use taps when mandatory tap data is not available
-        no_taps = np.equal(tap_side, None) + np.isnan(tap_pos) + np.isnan(tap_nom)
+        no_taps = np.equal(tap_side, None) | np.isnan(tap_pos) | np.isnan(tap_nom)
+        tap_nom[no_taps] = 0
+        tap_pos[no_taps] = 0
+        tap_side[no_taps] = "hv"
 
         winding_types = self.get_trafo3w_winding_types()
         clocks_12 = np.round(self._get_pp_attr("trafo3w", "shift_mv_degree", 0.0) / 30.0) % 12
         clocks_13 = np.round(self._get_pp_attr("trafo3w", "shift_lv_degree", 0.0) / 30.0) % 12
-        # Default vector group for odd clocks_12 = Yndx, for odd clocks_13 = Ynxd and for both even clocks = YN(yn,yn)
-        w_1_nan = np.isnan(winding_types["winding_1"])
-        w_2_nan = np.isnan(winding_types["winding_2"])
-        w_3_nan = np.isnan(winding_types["winding_3"])
-        no_vector_groups = w_1_nan + w_2_nan + w_3_nan
-        no_vector_groups_YNd2 = no_vector_groups + (clocks_12 % 2).astype(bool)
-        no_vector_groups_YNd3 = no_vector_groups + (clocks_13 % 2).astype(bool)
+        # Default vector group for odd clocks_12 = Yndx, for odd clocks_13 = Ynxd and for even clocks = YNxyn or YNynx
+        no_vector_groups = (
+            np.isnan(winding_types["winding_1"])
+            | np.isnan(winding_types["winding_2"])
+            | np.isnan(winding_types["winding_3"])
+        )
+        no_vector_groups_ynd2 = no_vector_groups & (clocks_12 % 2)
+        no_vector_groups_ynd3 = no_vector_groups & (clocks_13 % 2)
+        winding_types[no_vector_groups] = WindingType.wye_n
+        winding_types["winding_2"][no_vector_groups_ynd2] = WindingType.delta
+        winding_types["winding_3"][no_vector_groups_ynd3] = WindingType.delta
 
         pgm_3wtransformers = initialize_array(
             data_type="input", component_type="three_winding_transformer", shape=len(pp_trafo3w)
@@ -660,23 +667,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_3wtransformers["p0"] = self._get_pp_attr("trafo3w", "pfe_kw") * 1e3
         pgm_3wtransformers["clock_12"] = clocks_12
         pgm_3wtransformers["clock_13"] = clocks_13
-        # TODO Fix vector group conversion
-        pgm_3wtransformers["winding_1"] = np.where(no_vector_groups, WindingType.wye_n, winding_types["winding_1"])
-        pgm_3wtransformers["winding_2"] = np.where(
-            no_vector_groups,
-            np.where(no_vector_groups_YNd2, WindingType.delta, WindingType.wye_n),
-            winding_types["winding_2"],
-        )
-        pgm_3wtransformers["winding_3"] = np.where(
-            no_vector_groups,
-            np.where(no_vector_groups_YNd3, WindingType.delta, WindingType.wye_n),
-            winding_types["winding_3"],
-        )
-        pgm_3wtransformers["tap_nom"] = np.where(no_taps, 0, tap_nom)
-        pgm_3wtransformers["tap_pos"] = np.where(no_taps, 0, tap_pos)
-        pgm_3wtransformers["tap_side"] = np.where(
-            no_taps, Branch3Side.side_1, self._get_3wtransformer_tap_side(tap_side)
-        )
+        pgm_3wtransformers["winding_1"] = winding_types["winding_1"]
+        pgm_3wtransformers["winding_2"] = winding_types["winding_2"]
+        pgm_3wtransformers["winding_3"] = winding_types["winding_3"]
+        pgm_3wtransformers["tap_nom"] = tap_nom
+        pgm_3wtransformers["tap_pos"] = tap_pos
+        pgm_3wtransformers["tap_side"] = self._get_3wtransformer_tap_side(tap_side)
         pgm_3wtransformers["tap_min"] = self._get_pp_attr("trafo3w", "tap_min", 0)
         pgm_3wtransformers["tap_max"] = self._get_pp_attr("trafo3w", "tap_max", 0)
         pgm_3wtransformers["tap_size"] = self._get_3wtransformer_tap_size(pp_trafo3w)

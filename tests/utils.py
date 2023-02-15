@@ -220,6 +220,10 @@ class MockFn:
         mock_fn.postfix += f"({arguments})"
         return mock_fn
 
+    def __setitem__(self, item, val):
+        mock_fn = copy(self)
+        mock_fn.postfix += f"[{idx_to_str(item)}]={val}"
+
 
 class MockVal(MockFn):
     def __init__(self, value: Any):
