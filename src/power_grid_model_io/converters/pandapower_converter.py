@@ -533,7 +533,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         sn_mva = self._get_pp_attr("trafo", "sn_mva")
         switch_states = self.get_switch_states("trafo")
 
-        tap_side = self._get_pp_attr("trafo", "tap_side", np.nan)
+        tap_side = self._get_pp_attr("trafo", "tap_side", None)
         tap_nom = self._get_pp_attr("trafo", "tap_neutral", np.nan)
         tap_pos = self._get_pp_attr("trafo", "tap_pos", np.nan)
         # Do not use taps when mandatory tap data is not available
@@ -603,7 +603,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         switch_states = self.get_trafo3w_switch_states(pp_trafo3w)
 
-        tap_side = self._get_pp_attr("trafo3w", "tap_side", np.nan)
+        tap_side = self._get_pp_attr("trafo3w", "tap_side", None)
         tap_nom = self._get_pp_attr("trafo3w", "tap_neutral", np.nan)
         tap_pos = self._get_pp_attr("trafo3w", "tap_pos", np.nan)
         # Do not use taps when mandatory tap data is not available
