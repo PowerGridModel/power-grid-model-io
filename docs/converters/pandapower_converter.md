@@ -10,6 +10,13 @@ Pandapower converter can convert the pandapower `net` to power-grid-model input 
 It also converts the power flow output of power-grid-model into the `res_*` Dataframes in the pandapower `net`.
 The converter can be used in a similar way as described in [Converters](converter.md).
 
+## Defaults
+
+If any of the essential tap attributes: `tap_pos`, `tap_nom`, `tap_side` are not available then the tap feature for transformers are disabled by setting `tap_nom=tap_pos=0` via conversion.
+If a `vector_group` is not available for transformer then a default is set in conversion as `YNyn` for even clocks and `DYn` for odd clocks.
+Similarly for three winding transformer, `YNynyn` is set for even clocks of `shift_mv_degree` and `shift_lv_degree`.
+If the clocks are odd, then the vector group is converted as `YNynd`, `YNdyn` or `YNdd`.
+
 ## Modelling differences
 
 The user must be aware of following unsupported features or differences in conversion. 
