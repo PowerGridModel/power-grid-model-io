@@ -6,7 +6,7 @@
 Panda Power Converter
 """
 from functools import lru_cache
-from typing import Dict, List, Mapping, MutableMapping, Optional, Tuple, Union
+from typing import Dict, List, MutableMapping, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -18,7 +18,6 @@ from power_grid_model_io.data_types import ExtraInfoLookup
 from power_grid_model_io.functions import get_winding
 from power_grid_model_io.utils.regex import NODE_REF_RE, TRAFO3_CONNECTION_RE, TRAFO_CONNECTION_RE
 
-StdTypes = Mapping[str, Mapping[str, Mapping[str, Union[float, int, str]]]]
 PandaPowerData = MutableMapping[str, pd.DataFrame]
 
 
@@ -28,18 +27,16 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
     Panda Power Converter
     """
 
-    __slots__ = ("_std_types", "pp_input_data", "pgm_input_data", "idx", "idx_lookup", "next_idx", "system_frequency")
+    __slots__ = ("pp_input_data", "pgm_input_data", "idx", "idx_lookup", "next_idx", "system_frequency")
 
-    def __init__(self, std_types: Optional[StdTypes] = None, system_frequency: float = 50.0, base_power: float = 1.0e6):
+    def __init__(self, system_frequency: float = 50.0, base_power: float = 1.0e6):
         """
-        Prepare some member variables and optionally load "std_types"
+        Prepare some member variables
 
         Args:
-            std_types: standard type database of possible Line, Transformer and Three Winding Transformer types
             system_frequency: fundamental frequency of the alternating current and voltage in the Network measured in Hz
         """
         super().__init__(source=None, destination=None)
-        self._std_types: StdTypes = std_types if std_types is not None else {}
         self.system_frequency: float = system_frequency
         self.base_power: float = base_power
         self.pp_input_data: PandaPowerData = {}
@@ -774,7 +771,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self._merge_to_pgm_data(pgm_name="sym_load", pgm_data_to_add=pgm_sym_loads_from_ward)
 
-    def _create_pgm_input_xwards(self):  # pragma: no cover
+    def _create_pgm_input_xwards(self):
         # TODO: create unit tests for the function
         pp_xwards = self.pp_input_data["xward"]
 
@@ -1603,8 +1600,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
     def get_trafo_winding_types(self) -> pd.DataFrame:
         """
-        This function extracts Transformers' "winding_type" attribute through "vector_group" attribute or
-        through "std_type" attribute.
+        This function extracts Transformers' "winding_type" attribute through "vector_group" attribut.
 
         Returns:
             the "from" and "to" winding types of a transformer
@@ -1619,22 +1615,14 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             winding_to = get_winding(match.group(2)).value
             return pd.Series([winding_from, winding_to])
 
-        @lru_cache
-        def std_type_to_winding_types(std_type: str) -> pd.Series:
-            return vector_group_to_winding_types(self._std_types["trafo"][std_type]["vector_group"])
-
         trafo = self.pp_input_data["trafo"]
-        if "vector_group" in trafo:
-            trafo = trafo["vector_group"].apply(vector_group_to_winding_types)
-        else:
-            trafo = trafo["std_type"].apply(std_type_to_winding_types)
+        trafo = trafo["vector_group"].apply(vector_group_to_winding_types)
         trafo.columns = ["winding_from", "winding_to"]
         return trafo
 
     def get_trafo3w_winding_types(self) -> pd.DataFrame:
         """
-        This function extracts Three Winding Transformers' "winding_type" attribute through "vector_group" attribute or
-        through "std_type" attribute.
+        This function extracts Three Winding Transformers' "winding_type" attribute through "vector_group" attribute.
 
         Returns:
             the three winding types of Three Winding Transformers
@@ -1647,18 +1635,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 raise ValueError(f"Invalid transformer connection string: '{vector_group}'")
             winding_1 = get_winding(match.group(1)).value
             winding_2 = get_winding(match.group(2)).value
-            winding_3 = get_winding(match.group(3)).value
+            winding_3 = get_winding(match.group(4)).value
             return pd.Series([winding_1, winding_2, winding_3])
 
-        @lru_cache
-        def std_type_to_winding_types(std_type: str) -> pd.Series:
-            return vector_group_to_winding_types(self._std_types["trafo3w"][std_type]["vector_group"])
-
         trafo3w = self.pp_input_data["trafo3w"]
-        if "vector_group" in trafo3w:
-            trafo3w = trafo3w["vector_group"].apply(vector_group_to_winding_types)
-        else:
-            trafo3w = trafo3w["std_type"].apply(std_type_to_winding_types)
+        trafo3w = trafo3w["vector_group"].apply(vector_group_to_winding_types)
         trafo3w.columns = ["winding_1", "winding_2", "winding_3"]
         return trafo3w
 
@@ -1675,29 +1656,21 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
         pp_component_data = self.pp_input_data[table]
 
-        # If the attribute exists, return the values
-        if attribute in pp_component_data:
-            return pp_component_data[attribute].values
+        # If the attribute does not exists, return the default value
+        # (assume that broadcasting is handled by the caller / numpy)
+        if attribute not in pp_component_data:
+            if default is None:
+                raise KeyError(f"No '{attribute}' value for '{table}'.")
+            return np.array([default])
 
-        # Try to find the std_type value for this attribute
-        if self._std_types is not None and table in self._std_types and "std_type" in pp_component_data:
-            std_types = self._std_types[table]
+        attr_data = pp_component_data[attribute]
 
-            @lru_cache
-            def get_std_value(std_type_name: str):
-                std_type = std_types[std_type_name]
-                if attribute in std_type:
-                    return std_type[attribute]
-                if default is not None:
-                    return default
-                raise KeyError(f"No '{attribute}' value for '{table}' with std_type '{std_type_name}'.")
+        # If any of the attribute values are missing, and a default is supplied, fill the nans with the default value
+        nan_values = np.equal(attr_data, None) if attr_data.dtype is np.dtype("O") else np.isnan(attr_data)
+        if any(nan_values):
+            attr_data = attr_data.fillna(value=default, inplace=False)
 
-            return pp_component_data["std_type"].apply(get_std_value).values
-
-        # Return the default value (assume that broadcasting is handled by the caller / numpy)
-        if default is None:
-            raise KeyError(f"No '{attribute}' value for '{table}'.")
-        return np.array([default])
+        return attr_data.to_numpy()
 
     def get_id(self, pp_table: str, pp_idx: int, name: Optional[str] = None) -> int:
         """
