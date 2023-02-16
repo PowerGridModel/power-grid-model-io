@@ -1532,13 +1532,8 @@ def test_get_trafo_winding_types__vector_group(mock_get_winding: MagicMock):
     mock_get_winding.side_effect = [WindingType.delta, WindingType.wye_n, WindingType.wye_n, WindingType.delta]
     expected = pd.DataFrame([(2, 1), (1, 2), (2, 1)], columns=["winding_from", "winding_to"])
 
-    converter_empty = PandaPowerConverter()
-    converter_empty.pp_input_data = {"trafo": pd.DataFrame([1, 2, 3], columns=["id"])}
-    expected_empty = pd.DataFrame(np.full((3, 2), np.nan), columns=["winding_from", "winding_to"])
-
     # Act
     actual = converter.get_trafo_winding_types()
-    actual_empty = converter_empty.get_trafo_winding_types()
 
     # Assert
     pd.testing.assert_frame_equal(actual, expected)
@@ -1548,7 +1543,18 @@ def test_get_trafo_winding_types__vector_group(mock_get_winding: MagicMock):
     assert mock_get_winding.call_args_list[2] == call("YN")
     assert mock_get_winding.call_args_list[3] == call("d")
 
-    pd.testing.assert_frame_equal(actual_empty, expected_empty)
+
+def test_get_trafo_winding_types__vector_group_missing():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.pp_input_data = {"trafo": pd.DataFrame([1, 2, 3], columns=["id"])}
+    expected = pd.DataFrame(np.full((3, 2), np.nan), columns=["winding_from", "winding_to"])
+
+    # Act
+    actual = converter.get_trafo_winding_types()
+
+    # Assert
+    pd.testing.assert_frame_equal(actual, expected)
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.get_winding")
@@ -1572,13 +1578,8 @@ def test_get_trafo3w_winding_types__vector_group(mock_get_winding: MagicMock):
 
     expected = pd.DataFrame([[2, 1, 3], [1, 2, 0], [2, 1, 0]], columns=["winding_1", "winding_2", "winding_3"])
 
-    converter_empty = PandaPowerConverter()
-    converter_empty.pp_input_data = {"trafo3w": pd.DataFrame([1, 2, 3], columns=["id"])}
-    expected_empty = pd.DataFrame(np.full((3, 3), np.nan), columns=["winding_1", "winding_2", "winding_3"])
-
     # Act
     actual = converter.get_trafo3w_winding_types()
-    actual_empty = converter_empty.get_trafo3w_winding_types()
 
     # Assert
     pd.testing.assert_frame_equal(actual, expected)
@@ -1593,7 +1594,18 @@ def test_get_trafo3w_winding_types__vector_group(mock_get_winding: MagicMock):
     assert mock_get_winding.call_args_list[7] == call("yn")
     assert mock_get_winding.call_args_list[8] == call("y")
 
-    pd.testing.assert_frame_equal(actual_empty, expected_empty)
+
+def test_get_trafo3w_winding_types__vector_group_missing():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.pp_input_data = {"trafo3w": pd.DataFrame([1, 2, 3], columns=["id"])}
+    expected = pd.DataFrame(np.full((3, 3), np.nan), columns=["winding_1", "winding_2", "winding_3"])
+
+    # Act
+    actual = converter.get_trafo3w_winding_types()
+
+    # Assert
+    pd.testing.assert_frame_equal(actual, expected)
 
 
 def test_get_winding_types__value_error():
