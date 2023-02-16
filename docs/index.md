@@ -4,10 +4,6 @@ SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynam
 SPDX-License-Identifier: MPL-2.0
 -->
 
-```{warning}
-The documentation is under heavy development
-```
-
 # Power Grid Model IO
 
 ```{image} images/pgm-logo-color.svg

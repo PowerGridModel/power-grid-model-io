@@ -71,3 +71,6 @@ intersphinx_mapping = {"power-grid-model": ("https://power-grid-model.readthedoc
 # -- Temporary config -----------
 # Disable notebook executions in examples directory
 nb_execution_excludepatterns = ["examples/*.ipynb"]
+
+# -- Add google html -----------------------------------
+html_extra_path = ["google6d726d2d56f95e32.html"]

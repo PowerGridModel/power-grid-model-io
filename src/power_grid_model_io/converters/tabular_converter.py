@@ -311,7 +311,6 @@ class TabularConverter(BaseConverter[TabularData]):
         """
         merged = {}
         for component_name, data_set in data.items():
-
             # If there is only one array, use it as is
             if len(data_set) == 1:
                 merged[component_name] = data_set[0]

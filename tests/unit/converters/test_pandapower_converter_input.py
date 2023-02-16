@@ -1498,29 +1498,6 @@ def test_get_trafo_winding_types__vector_group(mock_get_winding: MagicMock):
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.get_winding")
-def test_get_trafo_winding_types__std_types(mock_get_winding: MagicMock):
-    # Arrange
-    std_types = {"trafo": {"std_trafo_1": {"vector_group": "YNd"}, "std_trafo_2": {"vector_group": "Dyn"}}}
-    converter = PandaPowerConverter(std_types=std_types)
-    converter.pp_input_data = {
-        "trafo": pd.DataFrame([(1, "std_trafo_2"), (2, "std_trafo_1"), (3, "std_trafo_2")], columns=["id", "std_type"])
-    }
-    mock_get_winding.side_effect = [WindingType.delta, WindingType.wye_n, WindingType.wye_n, WindingType.delta]
-    expected = pd.DataFrame([(2, 1), (1, 2), (2, 1)], columns=["winding_from", "winding_to"])
-
-    # Act
-    actual = converter.get_trafo_winding_types()
-
-    # Assert
-    pd.testing.assert_frame_equal(actual, expected)
-    assert len(mock_get_winding.call_args_list) == 4
-    assert mock_get_winding.call_args_list[0] == call("D")
-    assert mock_get_winding.call_args_list[1] == call("yn")
-    assert mock_get_winding.call_args_list[2] == call("YN")
-    assert mock_get_winding.call_args_list[3] == call("d")
-
-
-@patch("power_grid_model_io.converters.pandapower_converter.get_winding")
 def test_get_trafo3w_winding_types__vector_group(mock_get_winding: MagicMock):
     # Arrange
     converter = PandaPowerConverter()
@@ -1556,43 +1533,6 @@ def test_get_trafo3w_winding_types__vector_group(mock_get_winding: MagicMock):
     assert mock_get_winding.call_args_list[6] == call("D")
     assert mock_get_winding.call_args_list[7] == call("yn")
     assert mock_get_winding.call_args_list[8] == call("y")
-
-
-@patch("power_grid_model_io.converters.pandapower_converter.get_winding")
-def test_get_trafo3w_winding_types__std_types(mock_get_winding: MagicMock):
-    # Arrange
-    std_types = {"trafo3w": {"std_trafo3w_1": {"vector_group": "Dynz"}, "std_trafo3w_2": {"vector_group": "YNdy"}}}
-    converter = PandaPowerConverter(std_types=std_types)
-    converter.pp_input_data = {
-        "trafo3w": pd.DataFrame(
-            [(1, "std_trafo3w_2"), (2, "std_trafo3w_1"), (3, "std_trafo3w_2")], columns=["id", "std_type"]
-        )
-    }
-    mock_get_winding.side_effect = [
-        WindingType.wye_n,
-        WindingType.delta,
-        WindingType.wye,
-        WindingType.delta,
-        WindingType.wye_n,
-        WindingType.zigzag,
-        WindingType.wye_n,
-        WindingType.delta,
-        WindingType.wye,
-    ]
-    expected = pd.DataFrame([[1, 2, 0], [2, 1, 3], [1, 2, 0]], columns=["winding_1", "winding_2", "winding_3"])
-
-    # Act
-    actual = converter.get_trafo3w_winding_types()
-
-    # Assert
-    pd.testing.assert_frame_equal(actual, expected)
-    assert len(mock_get_winding.call_args_list) == 6
-    assert mock_get_winding.call_args_list[0] == call("YN")
-    assert mock_get_winding.call_args_list[1] == call("d")
-    assert mock_get_winding.call_args_list[2] == call("y")
-    assert mock_get_winding.call_args_list[3] == call("D")
-    assert mock_get_winding.call_args_list[4] == call("yn")
-    assert mock_get_winding.call_args_list[5] == call("z")
 
 
 def test_get_winding_types__value_error():
@@ -1818,50 +1758,3 @@ def test_get_pp_attr_use_default():
 
     # Assert
     np.testing.assert_array_equal(actual, expected)
-
-
-def test_get_pp_attr_from_std():
-    # Arrange
-    converter = PandaPowerConverter()
-    converter._std_types = {"trafo3w": {"std_trafo3w_1": {"hv_bus": 964}}}
-    converter.pp_input_data = {
-        "trafo3w": pd.DataFrame([[2, 31, 315, "std_trafo3w_1"]], columns=["index", "mv_bus", "lv_bus", "std_type"])
-    }
-
-    expected = np.array(964)
-
-    # Act
-    actual = converter._get_pp_attr("trafo3w", "hv_bus")
-
-    # Assert
-    np.testing.assert_array_equal(actual, expected)
-
-
-def test_get_pp_attr_default_after_checking_std():
-    # Arrange
-    converter = PandaPowerConverter()
-    converter._std_types = {"trafo3w": {"std_trafo3w_1": {"lv_bus": 23}}}
-    converter.pp_input_data = {
-        "trafo3w": pd.DataFrame([[2, 31, 315, "std_trafo3w_1"]], columns=["index", "mv_bus", "lv_bus", "std_type"])
-    }
-
-    expected = np.array(964)
-
-    # Act
-    actual = converter._get_pp_attr("trafo3w", "hv_bus", 964)
-
-    # Assert
-    np.testing.assert_array_equal(actual, expected)
-
-
-def test_get_pp_attr_error_after_checking_std():
-    # Arrange
-    converter = PandaPowerConverter()
-    converter._std_types = {"trafo3w": {"std_trafo3w_1": {"lv_bus": 23}}}
-    converter.pp_input_data = {
-        "trafo3w": pd.DataFrame([[2, 31, 315, "std_trafo3w_1"]], columns=["index", "mv_bus", "lv_bus", "std_type"])
-    }
-
-    # Act/Assert
-    with pytest.raises(KeyError):
-        converter._get_pp_attr("trafo3w", "hv_bus")

@@ -96,7 +96,6 @@ class JsonFileStore(BaseDataStore[StructuredData]):
                 json.dump(data, file_pointer, indent=self._indent, cls=JsonEncoder)
 
     def _validate(self, data: StructuredData) -> None:
-
         # The data should be either a dictionary, or a (possibly empty) list of dictionaries
         if not isinstance(data, (dict, list)):
             raise TypeError(f"Invalid data type for {type(self).__name__}: {type(data).__name__}")
