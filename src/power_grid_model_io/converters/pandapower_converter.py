@@ -1280,7 +1280,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         assert pp_component_name not in self.pp_output_data
         self.pp_output_data["res_" + pp_component_name] = accumulated_loads
 
-    def _generate_ids(self, pp_table: str, pp_idx: pd.Index, name: Optional[str] = None) -> np.arange:
+    def _generate_ids(self, pp_table: str, pp_idx: pd.Index, name: Optional[str] = None) -> np.ndarray:
         """
         Generate numerical power-grid-model IDs for a PandaPower component
 
@@ -1301,7 +1301,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         return pgm_idx
 
     def _get_pgm_ids(
-        self, pp_table: str, pp_idx: Optional[Union[pd.Series, np.array]] = None, name: Optional[str] = None
+        self, pp_table: str, pp_idx: Optional[Union[pd.Series, np.ndarray]] = None, name: Optional[str] = None
     ) -> pd.Series:
         """
         Get numerical power-grid-model IDs for a PandaPower component
@@ -1573,7 +1573,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
         pp_component_data = self.pp_input_data[table]
 
-        # If the attribute does not exists, return the default value
+        # If the attribute does not exist, return the default value
         # (assume that broadcasting is handled by the caller / numpy)
         if attribute not in pp_component_data:
             if default is None:
@@ -1583,7 +1583,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         attr_data = pp_component_data[attribute]
 
         # If any of the attribute values are missing, and a default is supplied, fill the nans with the default value
-        nan_values = np.equal(attr_data, None) if attr_data.dtype is np.dtype("O") else np.isnan(attr_data)
+        nan_values = np.equal(attr_data, None) if attr_data.dtype is np.dtype("O") else np.isnan(attr_data)  # type: ignore
         if any(nan_values):
             attr_data = attr_data.fillna(value=default, inplace=False)
 
