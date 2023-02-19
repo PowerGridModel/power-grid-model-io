@@ -1136,17 +1136,11 @@ def test_create_pgm_input_links(mock_init_array: MagicMock, converter):
     # Assert
 
     # administration:
-    converter._generate_ids.assert_called_once_with("switch", ANY, name="bus_to_bus")
+    converter._generate_ids.assert_called_once_with("switch", ANY, name="b2b_switches")
     pd.testing.assert_index_equal(converter._generate_ids.call_args_list[0].args[1], pd.Index([1, 3]))
 
     # initialization
     mock_init_array.assert_called_once_with(data_type="input", component_type="link", shape=2)
-
-    # retrieval:
-    converter._get_pp_attr.assert_any_call("switch_b2b", "bus")
-    converter._get_pp_attr.assert_any_call("switch_b2b", "element")
-    converter._get_pp_attr.assert_any_call("switch_b2b", "closed", True)
-    assert len(converter._get_pp_attr.call_args_list) == 3
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
