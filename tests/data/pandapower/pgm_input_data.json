@@ -45,7 +45,7 @@
     ],
   "link":
     [
-      {"id": 15, "from_node": 0, "to_node": 5, "from_status": 1, "to_status": 1, "id_reference": {"table": "switch", "name": "bus_to_bus","index": 3021}}
+      {"id": 15, "from_node": 0, "to_node": 5, "from_status": 1, "to_status": 1, "id_reference": {"table": "switch", "name": "b2b_switches","index": 3021}}
     ],
   "asym_load":
     [

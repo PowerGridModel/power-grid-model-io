@@ -1347,7 +1347,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         all_i_df = pd.concat(
             [
                 join_currents(table, bus_name, i_name)
-                if not rest_switches_absent[table] else pd.DataFrame(columns=["bus", "element", "et","i_ka"])
+                if not rest_switches_absent[table]
+                else pd.DataFrame(columns=["bus", "element", "et", "i_ka"])
                 for table, attr_names in switch_attrs.items()
                 for bus_name, i_name in attr_names.items()
             ]
