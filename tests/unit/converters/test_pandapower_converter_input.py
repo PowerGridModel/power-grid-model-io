@@ -1207,6 +1207,7 @@ def test_create_pgm_input_storage(mock_init_array: MagicMock, two_pp_objs, conve
 def test_create_pgm_input_impedance(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
     converter.pp_input_data["impedance"] = two_pp_objs
+    converter.pp_input_data["bus"] = two_pp_objs
 
     # Act / Assert
     converter._create_pgm_input_impedances()
@@ -1222,24 +1223,28 @@ def test_create_pgm_input_impedance(mock_init_array: MagicMock, two_pp_objs, con
     converter._get_pp_attr.assert_any_call("impedance", "rtf_pu")
     converter._get_pp_attr.assert_any_call("impedance", "xtf_pu")
     converter._get_pp_attr.assert_any_call("impedance", "sn_mva")
-    converter._get_pp_attr.assert_any_call("impedance", "in_service")
+    converter._get_pp_attr.assert_any_call("impedance", "in_service", True)
     assert len(converter._get_pp_attr.call_args_list) == 8
 
     # assignment
     pgm: MagicMock = mock_init_array.return_value.__setitem__
-    pgm.assert_any_call("id", _generate_ids("line", two_pp_objs.index))
+    pgm.assert_any_call("id", _generate_ids("impedance", two_pp_objs.index))
     pgm.assert_any_call("from_node", _get_pgm_ids("bus", _get_pp_attr("impedance", "from_bus")))
-    pgm.assert_any_call("from_status", _get_pp_attr("line", "in_service", True))
+    pgm.assert_any_call("from_status", _get_pp_attr("impedance", "in_service", True))
     pgm.assert_any_call("to_node", _get_pgm_ids("bus", _get_pp_attr("impedance", "to_bus")))
-    pgm.assert_any_call("to_status", _get_pp_attr("line", "in_service", True))
+    pgm.assert_any_call("to_status", _get_pp_attr("impedance", "in_service", True))
     pgm.assert_any_call("r1", ANY)
     pgm.assert_any_call("x1", ANY)
     pgm.assert_any_call("c1", 0)
     pgm.assert_any_call("tan1", 0)
     pgm.assert_any_call("i_n", ANY)
-    assert len(pgm.call_args_list) == 10
+    pgm.assert_any_call("r0", ANY)
+    pgm.assert_any_call("x0", ANY)
+    pgm.assert_any_call("c0", 0)
+    assert len(pgm.call_args_list) == 14
+
     # result
-    assert converter.pgm_input_data["line"] == pgm
+    converter._merge_to_pgm_data.assert_called_once_with(pgm_name="line", pgm_data_to_add=mock_init_array.return_value)
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -1416,15 +1421,6 @@ def test_create_pgm_input_motors__existing_loads():
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
     pp.create_load(pp_net, 0, 0)
-    args = [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-    ]
     pp.create_motor(pp_net, 0, 0, 0)
 
     converter.pp_input_data = pp_net

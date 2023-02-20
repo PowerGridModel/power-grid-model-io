@@ -738,22 +738,22 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         rft = self._get_pp_attr("impedance", "rft_pu")
         xft = self._get_pp_attr("impedance", "xft_pu")
-        rtf = self._get_pp_attr("impedance", "rft_pu")
-        xtf = self._get_pp_attr("impedance", "xft_pu")
+        rtf = self._get_pp_attr("impedance", "rtf_pu")
+        xtf = self._get_pp_attr("impedance", "xtf_pu")
         if not (np.array_equal(rft, rtf) and np.array_equal(xft, xtf)):
             raise NotImplementedError("Different from and to impedance is not implemented yet!")
 
         impedance_mva = self._get_pp_attr("impedance", "sn_mva")
         from_buses = self._get_pp_attr("impedance", "from_bus")
-        to_buses = self._get_pp_attr("line", "to_bus")
-        vn_kv_at_from_buses = self.pp_input_data["bus"].loc[from_buses, "vn_kv"]
+        to_buses = self._get_pp_attr("impedance", "to_bus")
+        vn_kv_at_from_buses = self.pp_input_data["bus"]["vn_kv"][from_buses]
         z_base = vn_kv_at_from_buses * vn_kv_at_from_buses / impedance_mva
         r1 = rft / z_base
         x1 = xft / z_base
 
         in_service = self._get_pp_attr("impedance", "in_service", True)
         pgm_impedance_lines = initialize_array(data_type="input", component_type="line", shape=len(pp_impedances))
-        pgm_impedance_lines["id"] = self._generate_ids("line", pp_impedances.index, name="impedance")
+        pgm_impedance_lines["id"] = self._generate_ids("impedance", pp_impedances.index)
         pgm_impedance_lines["from_node"] = self._get_pgm_ids("bus", from_buses)
         pgm_impedance_lines["from_status"] = in_service
         pgm_impedance_lines["to_node"] = self._get_pgm_ids("bus", to_buses)
