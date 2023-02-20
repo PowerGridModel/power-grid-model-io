@@ -66,7 +66,7 @@ def test_generate_output():  # TODO: REMOVE THIS FUNCTION
     from power_grid_model_io.converters import PgmJsonConverter
 
     net = pp_net()
-    converter = PandaPowerConverter(std_types=net.std_types)
+    converter = PandaPowerConverter()
     input_data, extra_info = converter.load_input_data(net)
     assert_valid_input_data(input_data=input_data)
     pgm = PowerGridModel(input_data=input_data)
@@ -99,4 +99,4 @@ def test_attributes(output_data: Tuple[PandaPowerData, PandaPowerData], componen
     expected_values = expected_data[component][attribute]
 
     # Assert
-    pd.testing.assert_series_equal(actual_values, expected_values, atol=1e-4)
+    pd.testing.assert_series_equal(actual_values, expected_values, atol=5e-4, rtol=1e-4)

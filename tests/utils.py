@@ -4,6 +4,7 @@
 
 import sys
 from copy import copy, deepcopy
+from itertools import chain
 from typing import Any, Dict, List, Optional, Tuple, Union
 from unittest.mock import MagicMock
 
@@ -67,6 +68,9 @@ def idx_to_str(idx: Union[str, int, slice, Tuple[Union[int, slice], ...]]) -> st
 class MockFn:
     __slots__ = ["fn", "args", "kwargs", "postfix"]
 
+    __array_struct__ = np.array([]).__array_struct__
+    __array_prepare__ = np.array([]).__array_prepare__
+
     def __init__(self, fn: str, *args, **kwargs):
         self.fn = fn
         self.args = list(args)
@@ -102,7 +106,9 @@ class MockFn:
         return obj
 
     def is_operator(self) -> bool:
-        return isinstance(self.fn, str) and self.fn in {"+", "-", "*", "/", "&"} and not (self.kwargs or self.postfix)
+        return (
+            isinstance(self.fn, str) and self.fn in {"+", "-", "*", "/", "&", "%"} and not (self.kwargs or self.postfix)
+        )
 
     def is_commutative(self) -> bool:
         return isinstance(self.fn, str) and self.fn in {"+", "*", "&", "|"} and not (self.kwargs or self.postfix)
@@ -112,8 +118,14 @@ class MockFn:
         mock_fn.postfix = self.postfix
         return mock_fn
 
+    def __neg__(self):
+        return MockFn("-", self)
+
     def __add__(self, other):
         return MockFn._apply_operator("+", self, other)
+
+    def __radd__(self, other):
+        return MockFn._apply_operator("+", other, self)
 
     def __and__(self, other):
         return MockFn._apply_operator("&", self, other)
@@ -124,15 +136,38 @@ class MockFn:
     def __truediv__(self, other):
         return MockFn._apply_operator("/", self, other)
 
+    def __rtruediv__(self, other):
+        return MockFn._apply_operator("/", other, self)
+
     def __sub__(self, other):
         return MockFn._apply_operator("-", self, other)
+
+    def __rsub__(self, other):
+        return MockFn._apply_operator("-", other, self)
 
     def __mul__(self, other):
         return MockFn._apply_operator("*", self, other)
 
+    def __rmul__(self, other):
+        return MockFn._apply_operator("*", other, self)
+
+    def __mod__(self, other):
+        return MockFn._apply_operator("%", self, other)
+
+    def __round__(self):
+        return MockFn("round", self)
+
     def __eq__(self, other):
         if not isinstance(other, MockFn):
             return False
+
+        def isnan(
+            x: Any,
+        ):
+            try:
+                return np.isnan(x)
+            except TypeError:
+                return False
 
         def eq(left, right) -> bool:
             if isinstance(left, pd.DataFrame):
@@ -143,6 +178,8 @@ class MockFn:
                     return False
             if isinstance(left, NDFrame):
                 return (left == right).all()
+            if isnan(left) and isnan(right):
+                return True
             return left == right
 
         if not eq(self.fn, other.fn):
@@ -177,6 +214,16 @@ class MockFn:
         mock_fn.postfix += f"[{idx_to_str(item)}]"
         return mock_fn
 
+    def __call__(self, *args, **kwargs):
+        mock_fn = copy(self)
+        arguments = ", ".join(chain(map(repr, args), map(lambda k, v: f"{k}={repr(v)}", kwargs.items())))
+        mock_fn.postfix += f"({arguments})"
+        return mock_fn
+
+    def __setitem__(self, item, val):
+        mock_fn = copy(self)
+        mock_fn.postfix += f"[{idx_to_str(item)}]={val}"
+
 
 class MockVal(MockFn):
     def __init__(self, value: Any):
@@ -192,12 +239,13 @@ class MockVal(MockFn):
 
 
 class MockDf:
-    __slots__ = ["empty", "index", "shape"]
+    __slots__ = ["columns", "empty", "index", "shape"]
 
     def __init__(self, shape: Union[int, Tuple[int, ...]]):
         self.shape = shape
         self.empty = shape == 0 or (isinstance(shape, tuple) and (len(shape) == 0 or shape[0] == 0))
-        self.index = MagicMock()
+        self.index = MagicMock(name="DataFrame.index")
+        self.columns = MagicMock(name="DataFrame.columns")
 
     def __len__(self):
         if isinstance(self.shape, int):

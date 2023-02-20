@@ -15,6 +15,7 @@ from power_grid_model.data_types import SingleDataset
 from power_grid_model_io.converters.tabular_converter import TabularConverter
 from power_grid_model_io.data_types import ExtraInfoLookup, TabularData
 from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes
+from power_grid_model_io.mappings.unit_mapping import UnitMapping
 
 MAPPING_FILE = Path(__file__).parents[2] / "data" / "config" / "mapping.yaml"
 
@@ -58,8 +59,8 @@ def tabular_data():
 def tabular_data_no_units_no_substitutions():
     nodes = pd.DataFrame(data=[[1, 10.5e3], [2, 400.0]], columns=["id_number", "u_nom"])
     lines = pd.DataFrame(data=[[1, 2], [3, 1]], columns=["id_number", "from_node_side"])
-    tabular_data_no_units_no_substitutions = TabularData(nodes=nodes, lines=lines)
-    return tabular_data_no_units_no_substitutions
+    tabular_data = TabularData(nodes=nodes, lines=lines)
+    return tabular_data
 
 
 def test_set_mapping_file(converter: TabularConverter):
@@ -228,6 +229,19 @@ def test_handle_extra_info(converter: TabularConverter, tabular_data_no_units_no
         0: {"some_value": "some_key", "u_nom": 10500.0},
         1: {"u_nom": 400.0},
     }
+
+
+def test_handle_extra_info__units(converter: TabularConverter, tabular_data: TabularData):
+    # Arrange
+    uuids = np.array([0, 1])
+    extra_info: ExtraInfoLookup = {}
+    tabular_data._units = UnitMapping({"V": {"kV": 1000.0}})
+
+    # Act
+    converter._handle_extra_info(data=tabular_data, table="nodes", col_def="u_nom", uuids=uuids, extra_info=extra_info)
+
+    # Assert
+    assert extra_info == {0: {"u_nom": 10500.0}, 1: {"u_nom": 400.0}}
 
 
 def test_merge_pgm_data(converter: TabularConverter):
@@ -676,6 +690,7 @@ def test_parse_auto_id__invalid_key_definition(
     [
         ("multiply", (1 * 1, 2 * 10, 3 * 100)),
         ("prod", (1 * 1, 2 * 10, 3 * 100)),
+        ("divide", (1 / 1, 2 / 10, 3 / 100)),
         ("sum", (1 + 1, 2 + 10, 3 + 100)),
         ("min", (1, 2, 3)),
         ("max", (1, 10, 100)),
@@ -731,7 +746,7 @@ def test_parse_pandas_function__invalid(mock_parse_col_def: MagicMock, converter
         converter._parse_pandas_function(data=MagicMock(), table="foo", function="bar", col_def=[])
 
     # Act / Assert
-    with pytest.raises(ValueError, match=f"Invalid pandas function DataFrame.apply"):
+    with pytest.raises(ValueError, match="Invalid pandas function DataFrame.apply"):
         converter._parse_pandas_function(data=MagicMock(), table="foo", function="apply", col_def=[])
 
 

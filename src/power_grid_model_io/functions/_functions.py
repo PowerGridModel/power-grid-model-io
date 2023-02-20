@@ -7,11 +7,14 @@ These functions can be used in the mapping files to apply functions to tabular d
 """
 
 from typing import Any, Optional, TypeVar, cast
+import structlog
 
 import numpy as np
 from power_grid_model import WindingType
 
 T = TypeVar("T")
+
+_LOG = structlog.get_logger(__file__)
 
 WINDING_TYPES = {
     "Y": WindingType.wye,
@@ -86,3 +89,19 @@ def is_greater_than(left_side, right_side) -> bool:
     Return true if the first argument is greater than the second
     """
     return left_side > right_side
+
+
+def both_zeros_to_nan(value: float, other_value: float) -> float:
+    """
+    If both values are zero then return nan otherwise return same value.
+    Truth table (x = value, y = other_value)
+             0     value     nan
+    0       nan    value     nan
+    value   0      value     nan
+    nan     nan    value     nan
+    """
+    if value == 0:
+        if other_value == 0 or not has_value(other_value):
+            _LOG.warning("0 replaced to nan")
+            return float("nan")
+    return value

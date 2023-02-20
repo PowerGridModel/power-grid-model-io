@@ -27,7 +27,7 @@ def load_and_convert_pp_data() -> Tuple[SingleDataset, ExtraInfoLookup]:
     Load and convert the pandapower validation network
     """
     net = pp_net()
-    pp_converter = PandaPowerConverter(std_types=net.std_types)
+    pp_converter = PandaPowerConverter()
     data, extra_info = pp_converter.load_input_data(net)
     return data, extra_info
 
