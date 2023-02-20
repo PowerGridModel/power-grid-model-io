@@ -813,12 +813,13 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         n_xwards = len(pp_xwards)
         in_service = self._get_pp_attr("xward", "in_service", True)
         bus = self._get_pp_attr("xward", "bus")
+        node = self._get_pgm_ids("bus", bus)
 
         pgm_sym_loads_from_xward = initialize_array(data_type="input", component_type="sym_load", shape=n_xwards * 2)
         pgm_sym_loads_from_xward["id"][:n_xwards] = self._generate_ids(
             "ward", pp_xwards.index, name="xward_const_power_load"
         )
-        pgm_sym_loads_from_xward["node"][:n_xwards] = self._get_pgm_ids("bus", bus)
+        pgm_sym_loads_from_xward["node"][:n_xwards] = node
         pgm_sym_loads_from_xward["status"][:n_xwards] = in_service
         pgm_sym_loads_from_xward["type"][:n_xwards] = LoadGenType.const_power
         pgm_sym_loads_from_xward["p_specified"][:n_xwards] = self._get_pp_attr("xward", "ps_mw")
@@ -827,22 +828,22 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_loads_from_xward["id"][-n_xwards:] = self._generate_ids(
             "xward", pp_xwards.index, name="xward_const_impedance_load"
         )
-        pgm_sym_loads_from_xward["node"][-n_xwards:] = self._get_pgm_ids("bus", bus)
+        pgm_sym_loads_from_xward["node"][-n_xwards:] = node
         pgm_sym_loads_from_xward["status"][-n_xwards:] = in_service
         pgm_sym_loads_from_xward["type"][-n_xwards:] = LoadGenType.const_impedance
         pgm_sym_loads_from_xward["p_specified"][-n_xwards:] = self._get_pp_attr("xward", "pz_mw")
         pgm_sym_loads_from_xward["q_specified"][-n_xwards:] = self._get_pp_attr("xward", "qz_mvar")
 
         rx_ratio = self._get_pp_attr("xward", "r_ohm") / self._get_pp_attr("xward", "x_ohm")
-        buses = self._get_pp_attr("xward", "bus")
-        vn_kv_at_bus = self.pp_input_data["bus"].loc[buses, "vn_kv"]
+        vn_kv_at_bus = self.pp_input_data["bus"]["vn_kv"][bus]
         sk = (vn_kv_at_bus / self.base_power) * 1e6
 
-        pgm_source_from_xward = initialize_array(datatype="input", component_type="source", shape=n_xwards)
+        pgm_source_from_xward = initialize_array(data_type="input", component_type="source", shape=n_xwards)
         pgm_source_from_xward["id"] = self._generate_ids("ext_grid", pp_xwards.index, name="xward_sources")
-        pgm_source_from_xward["node"] = self._get_pgm_ids("bus", self._get_pp_attr("xward", "bus"))
-        pgm_source_from_xward["status"] = self._get_pp_attr("xward", "in_service", True)
+        pgm_source_from_xward["node"] = node
+        pgm_source_from_xward["status"] = in_service
         pgm_source_from_xward["u_ref"] = self._get_pp_attr("xward", "vm_pu", 1.0)
+        pgm_source_from_xward["u_ref_angle"] = 0
         pgm_source_from_xward["rx_ratio"] = rx_ratio
         pgm_source_from_xward["sk"] = sk
 
