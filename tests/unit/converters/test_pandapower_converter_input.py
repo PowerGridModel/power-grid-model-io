@@ -648,10 +648,10 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
     converter._get_pp_attr.assert_any_call("trafo", "pfe_kw")
     converter._get_pp_attr.assert_any_call("trafo", "i0_percent")
     converter._get_pp_attr.assert_any_call("trafo", "shift_degree", 0.0)
-    converter._get_pp_attr.assert_any_call("trafo", "tap_side")
+    converter._get_pp_attr.assert_any_call("trafo", "tap_side", None)
     converter._get_pp_attr.assert_any_call("trafo", "tap_neutral", np.nan)
-    converter._get_pp_attr.assert_any_call("trafo", "tap_min", np.nan)
-    converter._get_pp_attr.assert_any_call("trafo", "tap_max", np.nan)
+    converter._get_pp_attr.assert_any_call("trafo", "tap_min", 0)
+    converter._get_pp_attr.assert_any_call("trafo", "tap_max", 0)
     converter._get_pp_attr.assert_any_call("trafo", "tap_pos", np.nan)
     converter._get_pp_attr.assert_any_call("trafo", "parallel", 1)
     converter._get_pp_attr.assert_any_call("trafo", "in_service", True)
@@ -678,8 +678,8 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
     pgm.assert_any_call("pk", ANY)
     pgm.assert_any_call("i0", ANY)
     pgm.assert_any_call("p0", ANY)
-    pgm.assert_any_call("winding_from", get_trafo_winding_types()["winding_from"])
-    pgm.assert_any_call("winding_to", get_trafo_winding_types()["winding_to"])
+    pgm.assert_any_call("winding_from", ANY)
+    pgm.assert_any_call("winding_to", ANY)
     pgm.assert_any_call("clock", ANY)
     pgm.assert_any_call("tap_side", ANY)
     pgm.assert_any_call("tap_pos", ANY)
@@ -700,7 +700,14 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
 )
 @patch(
     "power_grid_model_io.converters.pandapower_converter.PandaPowerConverter.get_trafo_winding_types",
-    new=MagicMock(return_value=pd.DataFrame({"winding_from": [0], "winding_to": [0]})),
+    new=MagicMock(
+        return_value=pd.DataFrame(
+            {
+                "winding_from": [0, 0, 0, 0, 0, WindingType.delta, WindingType.wye_n, 0, 0],
+                "winding_to": [0, 0, 0, 0, 0, WindingType.wye_n, WindingType.wye_n, 0, 0],
+            }
+        )
+    ),
 )
 @patch(
     "power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._generate_ids",
@@ -710,19 +717,21 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
     "power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._get_pgm_ids",
     new=MagicMock(return_value=pd.Series([0])),
 )
-def test_create_pgm_input_transformers__tap_side():
+def test_create_pgm_input_transformers__default():
     # Arrange
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
-    pp.create_transformer_from_parameters(
-        pp_net, 0, 0, 0, 0, 0, 0, 0, 0, 0, tap_neutral=12.0, tap_pos=34.0, tap_side="hv"
-    )
-    pp.create_transformer_from_parameters(
-        pp_net, 0, 0, 0, 0, 0, 0, 0, 0, 0, tap_neutral=12.0, tap_pos=34.0, tap_side="lv"
-    )
-    pp.create_transformer_from_parameters(
-        pp_net, 0, 0, 0, 0, 0, 0, 0, 0, 0, tap_neutral=12.0, tap_pos=34.0, tap_side=None
-    )
+    args = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    pp.create_transformer_from_parameters(pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_side="hv")
+    pp.create_transformer_from_parameters(pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_side="lv")
+    pp.create_transformer_from_parameters(pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_side=None)
+    tap_pos_trafo = pp.create_transformer_from_parameters(pp_net, *args, tap_neutral=12.0, tap_side="hv")
+    pp_net["trafo"]["tap_pos"][tap_pos_trafo] = np.nan
+    pp.create_transformer_from_parameters(pp_net, *args, tap_neutral=np.nan, tap_pos=34.0, tap_side="hv")
+    pp.create_transformer_from_parameters(pp_net, *args, vector_group=None, shift_degree=30)
+    pp.create_transformer_from_parameters(pp_net, *args, vector_group=None, shift_degree=60)
+    pp.create_transformer_from_parameters(pp_net, *args, vector_group=None, shift_degree=59)
+    pp.create_transformer_from_parameters(pp_net, *args, vector_group=None, shift_degree=61)
 
     converter = PandaPowerConverter()
     converter.pp_input_data = {k: v for k, v in pp_net.items() if isinstance(v, pd.DataFrame)}
@@ -735,9 +744,21 @@ def test_create_pgm_input_transformers__tap_side():
     assert result[0]["tap_side"] == BranchSide.from_side.value
     assert result[1]["tap_side"] == BranchSide.to_side.value
     assert result[2]["tap_side"] == BranchSide.from_side.value
+    assert result[3]["tap_side"] == BranchSide.from_side.value
+    assert result[4]["tap_side"] == BranchSide.from_side.value
     assert result[0]["tap_pos"] == 34.0 != result[0]["tap_nom"]
     assert result[1]["tap_pos"] == 34.0 != result[1]["tap_nom"]
-    assert result[2]["tap_pos"] == 12.0 == result[2]["tap_nom"]
+    assert result[2]["tap_pos"] == 0.0 == result[2]["tap_nom"]
+    assert result[3]["tap_pos"] == 0.0 == result[3]["tap_nom"]
+    assert result[4]["tap_pos"] == 0.0 == result[4]["tap_nom"]
+
+    assert result[5]["winding_from"] == WindingType.delta
+    assert result[5]["winding_to"] == WindingType.wye_n
+    assert result[6]["winding_from"] == WindingType.wye_n
+    assert result[6]["winding_to"] == WindingType.wye_n
+
+    assert result[7]["clock"] == 2
+    assert result[8]["clock"] == 2
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -863,10 +884,10 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
     converter._get_pp_attr.assert_any_call("trafo3w", "i0_percent")
     converter._get_pp_attr.assert_any_call("trafo3w", "shift_mv_degree", 0.0)
     converter._get_pp_attr.assert_any_call("trafo3w", "shift_lv_degree", 0.0)
-    converter._get_pp_attr.assert_any_call("trafo3w", "tap_side")
+    converter._get_pp_attr.assert_any_call("trafo3w", "tap_side", None)
     converter._get_pp_attr.assert_any_call("trafo3w", "tap_neutral", np.nan)
-    converter._get_pp_attr.assert_any_call("trafo3w", "tap_min", np.nan)
-    converter._get_pp_attr.assert_any_call("trafo3w", "tap_max", np.nan)
+    converter._get_pp_attr.assert_any_call("trafo3w", "tap_min", 0)
+    converter._get_pp_attr.assert_any_call("trafo3w", "tap_max", 0)
     converter._get_pp_attr.assert_any_call("trafo3w", "tap_pos", np.nan)
     converter._get_pp_attr.assert_any_call("trafo3w", "in_service", True)
     assert len(converter._get_pp_attr.call_args_list) == 25
@@ -917,7 +938,54 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
 )
 @patch(
     "power_grid_model_io.converters.pandapower_converter.PandaPowerConverter.get_trafo3w_winding_types",
-    new=MagicMock(return_value=pd.DataFrame({"winding_1": [0], "winding_2": [0], "winding_3": [0]})),
+    new=MagicMock(
+        return_value=pd.DataFrame(
+            {
+                "winding_1": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    WindingType.wye_n,
+                    WindingType.wye_n,
+                    WindingType.wye_n,
+                    WindingType.wye_n,
+                    0,
+                    0,
+                ],
+                "winding_2": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    WindingType.delta,
+                    WindingType.wye_n,
+                    WindingType.wye_n,
+                    WindingType.delta,
+                    0,
+                    0,
+                ],
+                "winding_3": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    WindingType.delta,
+                    WindingType.wye_n,
+                    WindingType.delta,
+                    WindingType.wye_n,
+                    0,
+                    0,
+                ],
+            }
+        )
+    ),
 )
 @patch(
     "power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._generate_ids",
@@ -927,21 +995,59 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
     "power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._get_pgm_ids",
     new=MagicMock(return_value=pd.Series([0])),
 )
-def test_create_pgm_input_transformers3w__tap_side():
+def test_create_pgm_input_transformers3w__default():
     # Arrange
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
+    args = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    pp.create_transformer3w_from_parameters(pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_side="hv")
+    pp.create_transformer3w_from_parameters(pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_side="mv")
+    pp.create_transformer3w_from_parameters(pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_side="lv")
+    pp.create_transformer3w_from_parameters(pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_side=None)
+    pp.create_transformer3w_from_parameters(pp_net, *args, tap_neutral=np.nan, tap_pos=34.0, tap_side="hv")
+    nan_trafo = pp.create_transformer3w_from_parameters(pp_net, *args, tap_neutral=12.0, tap_pos=np.nan, tap_side="hv")
+    pp_net["trafo3w"]["tap_pos"][nan_trafo] = np.nan
     pp.create_transformer3w_from_parameters(
-        pp_net, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, tap_neutral=12.0, tap_pos=34.0, tap_side="hv"
+        pp_net,
+        *args,
+        vector_group=None,
+        shift_mv_degree=30,
+        shift_lv_degree=30,
     )
     pp.create_transformer3w_from_parameters(
-        pp_net, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, tap_neutral=12.0, tap_pos=34.0, tap_side="mv"
+        pp_net,
+        *args,
+        vector_group=None,
+        shift_mv_degree=60,
+        shift_lv_degree=60,
     )
     pp.create_transformer3w_from_parameters(
-        pp_net, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, tap_neutral=12.0, tap_pos=34.0, tap_side="lv"
+        pp_net,
+        *args,
+        vector_group=None,
+        shift_mv_degree=60,
+        shift_lv_degree=30,
     )
     pp.create_transformer3w_from_parameters(
-        pp_net, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, tap_neutral=12.0, tap_pos=34.0, tap_side=None
+        pp_net,
+        *args,
+        vector_group=None,
+        shift_mv_degree=30,
+        shift_lv_degree=60,
+    )
+    pp.create_transformer3w_from_parameters(
+        pp_net,
+        *args,
+        vector_group=None,
+        shift_mv_degree=58,
+        shift_lv_degree=62,
+    )
+    pp.create_transformer3w_from_parameters(
+        pp_net,
+        *args,
+        vector_group=None,
+        shift_mv_degree=29,
+        shift_lv_degree=31,
     )
 
     converter = PandaPowerConverter()
@@ -956,10 +1062,34 @@ def test_create_pgm_input_transformers3w__tap_side():
     assert result[1]["tap_side"] == Branch3Side.side_2.value
     assert result[2]["tap_side"] == Branch3Side.side_3.value
     assert result[3]["tap_side"] == Branch3Side.side_1.value
+    assert result[4]["tap_side"] == Branch3Side.side_1.value
+    assert result[5]["tap_side"] == Branch3Side.side_1.value
     assert result[0]["tap_pos"] == 34.0 != result[0]["tap_nom"]
     assert result[1]["tap_pos"] == 34.0 != result[1]["tap_nom"]
     assert result[2]["tap_pos"] == 34.0 != result[2]["tap_nom"]
-    assert result[3]["tap_pos"] == 12.0 == result[3]["tap_nom"]
+    assert result[3]["tap_pos"] == 0 == result[3]["tap_nom"]
+    assert result[4]["tap_pos"] == 0 == result[4]["tap_nom"]
+    assert result[5]["tap_pos"] == 0 == result[5]["tap_nom"]
+
+    # Default yndd for odd clocks
+    assert result[6]["winding_1"] == WindingType.wye_n
+    assert result[6]["winding_2"] == WindingType.delta
+    assert result[6]["winding_3"] == WindingType.delta
+    # Default ynynyn for even clocks
+    assert result[7]["winding_1"] == WindingType.wye_n
+    assert result[7]["winding_2"] == WindingType.wye_n
+    assert result[7]["winding_3"] == WindingType.wye_n
+    # Default ynynd for clock_12 even clock_13 odd
+    assert result[8]["winding_1"] == WindingType.wye_n
+    assert result[8]["winding_2"] == WindingType.wye_n
+    assert result[8]["winding_3"] == WindingType.delta
+    # Default yndyn for clock_12 odd clock_13 even
+    assert result[9]["winding_1"] == WindingType.wye_n
+    assert result[9]["winding_2"] == WindingType.delta
+    assert result[9]["winding_3"] == WindingType.wye_n
+
+    assert result[10]["clock_12"] == result[10]["clock_13"] == 2
+    assert result[11]["clock_13"] == result[11]["clock_13"] == 1
 
 
 def test_create_pgm_input_three_winding_transformers__tap_at_star_point():
@@ -1497,6 +1627,19 @@ def test_get_trafo_winding_types__vector_group(mock_get_winding: MagicMock):
     assert mock_get_winding.call_args_list[3] == call("d")
 
 
+def test_get_trafo_winding_types__vector_group_missing():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.pp_input_data = {"trafo": pd.DataFrame([1, 2, 3], columns=["id"])}
+    expected = pd.DataFrame(np.full((3, 2), np.nan), columns=["winding_from", "winding_to"])
+
+    # Act
+    actual = converter.get_trafo_winding_types()
+
+    # Assert
+    pd.testing.assert_frame_equal(actual, expected)
+
+
 @patch("power_grid_model_io.converters.pandapower_converter.get_winding")
 def test_get_trafo3w_winding_types__vector_group(mock_get_winding: MagicMock):
     # Arrange
@@ -1533,6 +1676,19 @@ def test_get_trafo3w_winding_types__vector_group(mock_get_winding: MagicMock):
     assert mock_get_winding.call_args_list[6] == call("D")
     assert mock_get_winding.call_args_list[7] == call("yn")
     assert mock_get_winding.call_args_list[8] == call("y")
+
+
+def test_get_trafo3w_winding_types__vector_group_missing():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.pp_input_data = {"trafo3w": pd.DataFrame([1, 2, 3], columns=["id"])}
+    expected = pd.DataFrame(np.full((3, 3), np.nan), columns=["winding_1", "winding_2", "winding_3"])
+
+    # Act
+    actual = converter.get_trafo3w_winding_types()
+
+    # Assert
+    pd.testing.assert_frame_equal(actual, expected)
 
 
 def test_get_winding_types__value_error():
