@@ -23,7 +23,7 @@ def pp_net() -> pp.pandapowerNet:
     pp.create_bus(net, index=104, vn_kv=30.1)
     pp.create_bus(net, index=105, vn_kv=60)
     pp.create_bus(net, index=106, vn_kv=110)
-    pp.create_ext_grid(net, index=1, in_service=True, bus=101, vm_pu=1, s_sc_max_mva=1e10, rx_max=0, va_degree=0)
+    pp.create_ext_grid(net, index=1, in_service=True, bus=101, vm_pu=1, s_sc_max_mva=1e10, rx_max=0, va_degree=0, r0x0_max=0)
     pp.create_transformer_from_parameters(
         net,
         index=101,

@@ -383,7 +383,10 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     converter._get_pp_attr.assert_any_call("line", "g_us_per_km", 0)
     converter._get_pp_attr.assert_any_call("line", "max_i_ka")
     converter._get_pp_attr.assert_any_call("line", "df", 1)
-    assert len(converter._get_pp_attr.call_args_list) == 11
+    converter._get_pp_attr.assert_any_call("line", "r0_ohm_per_km", np.nan)
+    converter._get_pp_attr.assert_any_call("line", "x0_ohm_per_km", np.nan)
+    converter._get_pp_attr.assert_any_call("line", "c0_nf_per_km", np.nan)
+    assert len(converter._get_pp_attr.call_args_list) == 14
 
     # assignment
     pgm: MagicMock = mock_init_array.return_value.__setitem__
@@ -416,7 +419,11 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
         "i_n",
         _get_pp_attr("line", "max_i_ka") * 1e3 * _get_pp_attr("line", "df", 1) * _get_pp_attr("line", "parallel", 1),
     )
-    assert len(pgm.call_args_list) == 10
+    pgm.assert_any_call("r0", ANY)
+    pgm.assert_any_call("x0", ANY)
+    pgm.assert_any_call("c0", ANY)
+    pgm.assert_any_call("tan0", ANY)
+    assert len(pgm.call_args_list) == 14
 
     # result
     assert converter.pgm_input_data["line"] == mock_init_array.return_value
@@ -445,7 +452,8 @@ def test_create_pgm_input_sources(mock_init_array: MagicMock, two_pp_objs, conve
     converter._get_pp_attr.assert_any_call("ext_grid", "s_sc_max_mva", np.nan)
     converter._get_pp_attr.assert_any_call("ext_grid", "rx_max", np.nan)
     converter._get_pp_attr.assert_any_call("ext_grid", "in_service", True)
-    assert len(converter._get_pp_attr.call_args_list) == 6
+    converter._get_pp_attr.assert_any_call("ext_grid", "r0x0_max", np.nan)
+    assert len(converter._get_pp_attr.call_args_list) == 7
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
@@ -492,8 +500,8 @@ def test_create_pgm_input_sym_loads(mock_init_array: MagicMock, two_pp_objs, con
     converter._get_pp_attr.assert_any_call("load", "const_i_percent", 0)
     converter._get_pp_attr.assert_any_call("load", "scaling", 1)
     converter._get_pp_attr.assert_any_call("load", "in_service", True)
-    # converter._get_pp_attr.assert_any_call("load", "type") # TODO add after asym conversion
-    assert len(converter._get_pp_attr.call_args_list) == 7
+    converter._get_pp_attr.assert_any_call("load", "type")
+    assert len(converter._get_pp_attr.call_args_list) == 8
 
     # assignment:
     for attr in pgm_attr:
@@ -531,7 +539,8 @@ def test_create_pgm_input_asym_loads(mock_init_array: MagicMock, two_pp_objs, co
     converter._get_pp_attr.assert_any_call("asymmetric_load", "q_c_mvar")
     converter._get_pp_attr.assert_any_call("asymmetric_load", "scaling")
     converter._get_pp_attr.assert_any_call("asymmetric_load", "in_service")
-    assert len(converter._get_pp_attr.call_args_list) == 9
+    converter._get_pp_attr.assert_any_call("asymmetric_load", "type")
+    assert len(converter._get_pp_attr.call_args_list) == 10
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
@@ -605,8 +614,10 @@ def test_create_pgm_input_shunts(mock_init_array: MagicMock, two_pp_objs, conver
         / _get_pp_attr("shunt", "vn_kv")
         / _get_pp_attr("shunt", "vn_kv"),
     )
+    pgm.assert_any_call("g0", ANY)
+    pgm.assert_any_call("b0", ANY)
 
-    assert len(pgm.call_args_list) == 5
+    assert len(pgm.call_args_list) == 7
 
     # result
     assert converter.pgm_input_data["shunt"] == mock_init_array.return_value

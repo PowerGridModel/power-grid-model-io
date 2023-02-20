@@ -307,15 +307,18 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_ext_grid.empty:
             return
 
+        rx_max = self._get_pp_attr("ext_grid", "rx_max", np.nan)
+        r0x0_max = self._get_pp_attr("ext_grid", "r0x0_max", np.nan)
+
         pgm_sources = initialize_array(data_type="input", component_type="source", shape=len(pp_ext_grid))
         pgm_sources["id"] = self._generate_ids("ext_grid", pp_ext_grid.index)
         pgm_sources["node"] = self._get_pgm_ids("bus", self._get_pp_attr("ext_grid", "bus"))
         pgm_sources["status"] = self._get_pp_attr("ext_grid", "in_service", True)
         pgm_sources["u_ref"] = self._get_pp_attr("ext_grid", "vm_pu", 1.0)
-        pgm_sources["rx_ratio"] = self._get_pp_attr("ext_grid", "rx_max", np.nan)
+        pgm_sources["rx_ratio"] = rx_max
         pgm_sources["u_ref_angle"] = self._get_pp_attr("ext_grid", "va_degree", 0.0) * (np.pi / 180)
         pgm_sources["sk"] = self._get_pp_attr("ext_grid", "s_sc_max_mva", np.nan) * 1e6
-        if self._get_pp_attr("ext_grid", "rx_max", np.nan) != self._get_pp_attr("ext_grid", "r0x0_ratio", np.nan):
+        if not np.array_equal(rx_max, r0x0_max):
             raise NotImplementedError("r0x0_max is not equal to rx_max, this feature is not supported.")
 
         assert "source" not in self.pgm_input_data
@@ -337,15 +340,17 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         vn_kv_2 = vn_kv * vn_kv
 
         step = self._get_pp_attr("shunt", "step", 1)
+        g1 = self._get_pp_attr("shunt", "p_mw") * step / vn_kv_2
+        b1 = -self._get_pp_attr("shunt", "q_mvar") * step / vn_kv_2
 
         pgm_shunts = initialize_array(data_type="input", component_type="shunt", shape=len(pp_shunts))
         pgm_shunts["id"] = self._generate_ids("shunt", pp_shunts.index)
         pgm_shunts["node"] = self._get_pgm_ids("bus", self._get_pp_attr("shunt", "bus"))
         pgm_shunts["status"] = self._get_pp_attr("shunt", "in_service", 1)
-        pgm_shunts["g1"] = self._get_pp_attr("shunt", "p_mw") * step / vn_kv_2
-        pgm_shunts["b1"] = -self._get_pp_attr("shunt", "q_mvar") * step / vn_kv_2
-        pgm_shunts["g0"] = 0
-        pgm_shunts["b0"] = 0
+        pgm_shunts["g1"] = g1
+        pgm_shunts["b1"] = b1
+        pgm_shunts["g0"] = g1
+        pgm_shunts["b0"] = b1
 
         assert "shunt" not in self.pgm_input_data
         self.pgm_input_data["shunt"] = pgm_shunts
