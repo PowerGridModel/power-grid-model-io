@@ -1627,8 +1627,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             return pd.Series([winding_from, winding_to])
 
         trafo = self.pp_input_data["trafo"]
+        col_names = ["winding_from", "winding_to"]
+        if "vector_group" not in trafo:
+            return pd.DataFrame(np.full(shape=(len(trafo), 2), fill_value=np.nan), columns=col_names)
         trafo = trafo["vector_group"].apply(vector_group_to_winding_types)
-        trafo.columns = ["winding_from", "winding_to"]
+        trafo.columns = col_names
         return trafo
 
     def get_trafo3w_winding_types(self) -> pd.DataFrame:
@@ -1650,8 +1653,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             return pd.Series([winding_1, winding_2, winding_3])
 
         trafo3w = self.pp_input_data["trafo3w"]
+        col_names = ["winding_1", "winding_2", "winding_3"]
+        if "vector_group" not in trafo3w:
+            return pd.DataFrame(np.full(shape=(len(trafo3w), 3), fill_value=np.nan), columns=col_names)
         trafo3w = trafo3w["vector_group"].apply(vector_group_to_winding_types)
-        trafo3w.columns = ["winding_1", "winding_2", "winding_3"]
+        trafo3w.columns = col_names
         return trafo3w
 
     def _get_pp_attr(self, table: str, attribute: str, default: Optional[Union[float, bool, str]] = None) -> np.ndarray:
