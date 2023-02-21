@@ -7,9 +7,9 @@ These functions can be used in the mapping files to apply functions to tabular d
 """
 
 from typing import Any, Optional, TypeVar, cast
-import structlog
 
 import numpy as np
+import structlog
 from power_grid_model import WindingType
 
 T = TypeVar("T")
