@@ -511,7 +511,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         assert "asym_load" not in self.pgm_input_data
         self.pgm_input_data["asym_load"] = pgm_asym_loads
 
-    def _create_pgm_input_transformers(self):
+    def _create_pgm_input_transformers(self):   # pylint: disable-msg=too-many-locals
         """
         This function converts a Transformer Dataframe of PandaPower to a power-grid-model
         Transformer input array.
