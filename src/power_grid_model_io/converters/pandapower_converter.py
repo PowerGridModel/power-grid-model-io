@@ -1697,6 +1697,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Args:
             pp_table: Table name (e.g. "bus")
             pp_idx: PandaPower component identifier
+            name: Optional component name (e.g. "internal_node")
 
         Returns:
             The associated id

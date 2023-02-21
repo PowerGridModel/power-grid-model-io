@@ -435,7 +435,8 @@ def test_output_load_types(output_fn: Callable[[PandaPowerConverter], None], tab
     converter = PandaPowerConverter()
     converter.pgm_output_data["sym_load"] = initialize_array("sym_output", "sym_load", 6)
     converter.idx[(table, load_id_names[0])] = pd.Series([0], index=[1])
-    converter._pp_load_result_accumulate = MagicMock()
+    converter._pp_load_result_accumulate = MagicMock()  # type: ignore
+
     # Act
     output_fn(converter)
 
