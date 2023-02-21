@@ -547,6 +547,22 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if "tap_dependent_impedance" in pp_trafo.columns and any(pp_trafo["tap_dependent_impedance"]):
             raise RuntimeError("Tap dependent impedance is not supported in Power Grid Model")
 
+        # Asym parameters. For PGM, manual zero sequence params are not supported yet.
+        zero_params = ["vk0_percent", "vkr0_percent", "mag0_percent", "mag0_rx", "si0_hv_partial"]
+        if set(zero_params).intersection(set(pp_trafo.columns)):
+            mag_y = pp_trafo["i0_percent"] / 100
+            mag_g = pp_trafo["pfe_kw"] / (pp_trafo["sn_mva"] * 1000)
+            rx_0 = mag_g / np.sqrt(mag_y * mag_y - mag_g * mag_g)
+            cond1 = pd.Series.equals(pp_trafo["vk_percent"], pp_trafo["vk0_percent"])
+            cond2 = pd.Series.equals(pp_trafo["vkr_percent"], pp_trafo["vkr0_percent"])
+            cond3 = pd.Series.equals(mag_y, pp_trafo["vk0_percent"] / pp_trafo["mag0_percent"])
+            cond4 = pd.Series.equals(rx_0, pp_trafo["mag0_rx"])
+            si0_nans = np.isnan(pp_trafo["si0_hv_partial"])
+            cond5 = np.all(si0_nans)
+            if not (cond1 and cond2 and cond3 and cond4 and cond5):
+                raise NotImplementedError("Different asymmetric parameters are not supported for trafo in PGM")
+
+
         in_service = self._get_pp_attr("trafo", "in_service", True)
         parallel = self._get_pp_attr("trafo", "parallel", 1)
         sn_mva = self._get_pp_attr("trafo", "sn_mva")
@@ -614,6 +630,22 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             raise RuntimeError("Tap dependent impedance is not supported in Power Grid Model")  # pragma: no cover
         if "tap_at_star_point" in pp_trafo3w.columns and any(pp_trafo3w["tap_at_star_point"]):
             raise RuntimeError("Tap at star point is not supported in Power Grid Model")
+
+        # Asym parameters. For PGM, manual zero sequence params are not supported yet.
+        zero_params = ["vk0_percent", "vkr0_percent", "mag0_percent", "mag0_rx", "si0_hv_partial"]
+        if set(zero_params).intersection(set(pp_trafo3w.columns)):
+            mag_y = pp_trafo3w["i0_percent"] / 100
+            mag_g = pp_trafo3w["pfe_kw"] / (pp_trafo3w["sn_mva"] * 1000)
+            rx_0 = mag_g / np.sqrt(mag_y * mag_y - mag_g * mag_g)
+            cond1 = pd.Series.equals(pp_trafo3w["vk_percent"], pp_trafo3w["vk0_percent"])
+            cond2 = pd.Series.equals(pp_trafo3w["vkr_percent"], pp_trafo3w["vkr0_percent"])
+            cond3 = pd.Series.equals(mag_y, pp_trafo3w["vk0_percent"] / pp_trafo3w["mag0_percent"])
+            cond4 = pd.Series.equals(rx_0, pp_trafo3w["mag0_rx"])
+            si0_nans = np.isnan(pp_trafo3w["si0_hv_partial"])
+            cond5 = np.all(si0_nans)
+            if not (cond1 and cond2 and cond3 and cond4 and cond5):
+                raise NotImplementedError("Different asymmetric parameters are not supported for trafo in PGM")
+
 
         sn_hv_mva = self._get_pp_attr("trafo3w", "sn_hv_mva")
         sn_mv_mva = self._get_pp_attr("trafo3w", "sn_mv_mva")

@@ -663,13 +663,13 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
     converter._get_pp_attr.assert_any_call("trafo", "parallel", 1)
     converter._get_pp_attr.assert_any_call("trafo", "in_service", True)
     # converter._get_pp_attr.assert_any_call("trafo", "df")  #TODO add df in output conversions
-    # converter._get_pp_attr.assert_any_call("trafo", "vk0_percent")  # TODO add checks after asym implementation
-    # converter._get_pp_attr.assert_any_call("trafo", "vkr0_percent")  #
-    # converter._get_pp_attr.assert_any_call("trafo", "mag0_percent")  #
-    # converter._get_pp_attr.assert_any_call("trafo", "mag0_rx")  #
-    # converter._get_pp_attr.assert_any_call("trafo", "si0_hv_partial")  #
+    converter._get_pp_attr.assert_any_call("trafo", "vk0_percent")
+    converter._get_pp_attr.assert_any_call("trafo", "vkr0_percent")
+    converter._get_pp_attr.assert_any_call("trafo", "mag0_percent")
+    converter._get_pp_attr.assert_any_call("trafo", "mag0_rx")
+    converter._get_pp_attr.assert_any_call("trafo", "si0_hv_partial")
 
-    assert len(converter._get_pp_attr.call_args_list) == 17
+    assert len(converter._get_pp_attr.call_args_list) == 22
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
