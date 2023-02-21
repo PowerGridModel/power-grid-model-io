@@ -8,6 +8,11 @@ from pytest import approx, mark, param, raises
 
 from power_grid_model_io.functions.phase_to_phase import (
     get_clock,
+    get_clock_12,
+    get_clock_13,
+    get_winding_1,
+    get_winding_2,
+    get_winding_3,
     get_winding_from,
     get_winding_to,
     power_wind_speed,
@@ -15,11 +20,6 @@ from power_grid_model_io.functions.phase_to_phase import (
     reactive_power,
     reactive_power_to_susceptance,
     relative_no_load_current,
-    get_winding_1,
-    get_clock_12,
-    get_clock_13,
-    get_winding_3,
-    get_winding_2,
 )
 
 
