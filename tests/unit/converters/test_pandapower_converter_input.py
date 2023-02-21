@@ -699,8 +699,8 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
     new=MagicMock(
         return_value=pd.DataFrame(
             {
-                "winding_from": [0, 0, 0, 0, 0, WindingType.delta, WindingType.wye_n, 0, 0],
-                "winding_to": [0, 0, 0, 0, 0, WindingType.wye_n, WindingType.wye_n, 0, 0],
+                "winding_from": [0, 0, 0, 0, 0, 0, WindingType.delta, WindingType.wye_n, 0, 0],
+                "winding_to": [0, 0, 0, 0, 0, 0, WindingType.wye_n, WindingType.wye_n, 0, 0],
             }
         )
     ),
@@ -718,12 +718,21 @@ def test_create_pgm_input_transformers__default():
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
     args = [0, 0, 0, 0, 0, 0, 0, 0, 0]
-    pp.create_transformer_from_parameters(pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_side="hv")
-    pp.create_transformer_from_parameters(pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_side="lv")
-    pp.create_transformer_from_parameters(pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_side=None)
-    tap_pos_trafo = pp.create_transformer_from_parameters(pp_net, *args, tap_neutral=12.0, tap_side="hv")
+    pp.create_transformer_from_parameters(
+        pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_step_percent=1, tap_side="hv"
+    )
+    pp.create_transformer_from_parameters(
+        pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_step_percent=1, tap_side="lv"
+    )
+    pp.create_transformer_from_parameters(
+        pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_step_percent=1, tap_side=None
+    )
+    tap_pos_trafo = pp.create_transformer_from_parameters(pp_net, *args, tap_neutral=12.0, tap_size=1, tap_side="hv")
     pp_net["trafo"]["tap_pos"][tap_pos_trafo] = np.nan
     pp.create_transformer_from_parameters(pp_net, *args, tap_neutral=np.nan, tap_pos=34.0, tap_side="hv")
+    pp.create_transformer_from_parameters(
+        pp_net, *args, tap_neutral=12, tap_step_percent=np.nan, tap_pos=34.0, tap_side="hv"
+    )
     pp.create_transformer_from_parameters(pp_net, *args, vector_group=None, shift_degree=30)
     pp.create_transformer_from_parameters(pp_net, *args, vector_group=None, shift_degree=60)
     pp.create_transformer_from_parameters(pp_net, *args, vector_group=None, shift_degree=59)
@@ -747,14 +756,15 @@ def test_create_pgm_input_transformers__default():
     assert result[2]["tap_pos"] == 0.0 == result[2]["tap_nom"]
     assert result[3]["tap_pos"] == 0.0 == result[3]["tap_nom"]
     assert result[4]["tap_pos"] == 0.0 == result[4]["tap_nom"]
+    assert result[5]["tap_size"] == 0.0
 
-    assert result[5]["winding_from"] == WindingType.delta
-    assert result[5]["winding_to"] == WindingType.wye_n
-    assert result[6]["winding_from"] == WindingType.wye_n
+    assert result[6]["winding_from"] == WindingType.delta
     assert result[6]["winding_to"] == WindingType.wye_n
+    assert result[7]["winding_from"] == WindingType.wye_n
+    assert result[7]["winding_to"] == WindingType.wye_n
 
-    assert result[7]["clock"] == 2
     assert result[8]["clock"] == 2
+    assert result[9]["clock"] == 2
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -944,6 +954,7 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
                     0,
                     0,
                     0,
+                    0,
                     WindingType.wye_n,
                     WindingType.wye_n,
                     WindingType.wye_n,
@@ -958,6 +969,7 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
                     0,
                     0,
                     0,
+                    0,
                     WindingType.delta,
                     WindingType.wye_n,
                     WindingType.wye_n,
@@ -966,6 +978,7 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
                     0,
                 ],
                 "winding_3": [
+                    0,
                     0,
                     0,
                     0,
@@ -996,13 +1009,28 @@ def test_create_pgm_input_transformers3w__default():
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
     args = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    pp.create_transformer3w_from_parameters(pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_side="hv")
-    pp.create_transformer3w_from_parameters(pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_side="mv")
-    pp.create_transformer3w_from_parameters(pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_side="lv")
-    pp.create_transformer3w_from_parameters(pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_side=None)
-    pp.create_transformer3w_from_parameters(pp_net, *args, tap_neutral=np.nan, tap_pos=34.0, tap_side="hv")
-    nan_trafo = pp.create_transformer3w_from_parameters(pp_net, *args, tap_neutral=12.0, tap_pos=np.nan, tap_side="hv")
+    pp.create_transformer3w_from_parameters(
+        pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_step_percent=1, tap_side="hv"
+    )
+    pp.create_transformer3w_from_parameters(
+        pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_step_percent=1, tap_side="mv"
+    )
+    pp.create_transformer3w_from_parameters(
+        pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_step_percent=1, tap_side="lv"
+    )
+    pp.create_transformer3w_from_parameters(
+        pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_step_percent=1, tap_side=None
+    )
+    pp.create_transformer3w_from_parameters(
+        pp_net, *args, tap_neutral=np.nan, tap_pos=34.0, tap_step_percent=1, tap_side="hv"
+    )
+    nan_trafo = pp.create_transformer3w_from_parameters(
+        pp_net, *args, tap_neutral=12.0, tap_step_percent=1, tap_pos=np.nan, tap_side="hv"
+    )
     pp_net["trafo3w"]["tap_pos"][nan_trafo] = np.nan
+    pp.create_transformer3w_from_parameters(
+        pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_step_percent=np.nan, tap_side="hv"
+    )
     pp.create_transformer3w_from_parameters(
         pp_net,
         *args,
@@ -1066,26 +1094,27 @@ def test_create_pgm_input_transformers3w__default():
     assert result[3]["tap_pos"] == 0 == result[3]["tap_nom"]
     assert result[4]["tap_pos"] == 0 == result[4]["tap_nom"]
     assert result[5]["tap_pos"] == 0 == result[5]["tap_nom"]
+    assert result[6]["tap_size"] == 0
 
     # Default yndd for odd clocks
-    assert result[6]["winding_1"] == WindingType.wye_n
-    assert result[6]["winding_2"] == WindingType.delta
-    assert result[6]["winding_3"] == WindingType.delta
-    # Default ynynyn for even clocks
     assert result[7]["winding_1"] == WindingType.wye_n
-    assert result[7]["winding_2"] == WindingType.wye_n
-    assert result[7]["winding_3"] == WindingType.wye_n
-    # Default ynynd for clock_12 even clock_13 odd
+    assert result[7]["winding_2"] == WindingType.delta
+    assert result[7]["winding_3"] == WindingType.delta
+    # Default ynynyn for even clocks
     assert result[8]["winding_1"] == WindingType.wye_n
     assert result[8]["winding_2"] == WindingType.wye_n
-    assert result[8]["winding_3"] == WindingType.delta
-    # Default yndyn for clock_12 odd clock_13 even
+    assert result[8]["winding_3"] == WindingType.wye_n
+    # Default ynynd for clock_12 even clock_13 odd
     assert result[9]["winding_1"] == WindingType.wye_n
-    assert result[9]["winding_2"] == WindingType.delta
-    assert result[9]["winding_3"] == WindingType.wye_n
+    assert result[9]["winding_2"] == WindingType.wye_n
+    assert result[9]["winding_3"] == WindingType.delta
+    # Default yndyn for clock_12 odd clock_13 even
+    assert result[10]["winding_1"] == WindingType.wye_n
+    assert result[10]["winding_2"] == WindingType.delta
+    assert result[10]["winding_3"] == WindingType.wye_n
 
-    assert result[10]["clock_12"] == result[10]["clock_13"] == 2
-    assert result[11]["clock_13"] == result[11]["clock_13"] == 1
+    assert result[11]["clock_12"] == result[11]["clock_13"] == 2
+    assert result[12]["clock_12"] == result[12]["clock_13"] == 1
 
 
 def test_create_pgm_input_three_winding_transformers__tap_at_star_point():
