@@ -7,12 +7,12 @@ These functions can be used in the mapping files to apply functions to vision da
 
 import math
 from typing import Tuple
-import structlog
 
+import structlog
 from power_grid_model import WindingType
 
 from power_grid_model_io.functions import get_winding
-from power_grid_model_io.utils.regex import PVS_EFFICIENCY_TYPE_RE, TRAFO_CONNECTION_RE, TRAFO3_CONNECTION_RE
+from power_grid_model_io.utils.regex import PVS_EFFICIENCY_TYPE_RE, TRAFO3_CONNECTION_RE, TRAFO_CONNECTION_RE
 
 _LOG = structlog.get_logger(__file__)
 

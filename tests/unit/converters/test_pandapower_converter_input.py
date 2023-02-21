@@ -545,7 +545,7 @@ def test_create_pgm_input_asym_loads(mock_init_array: MagicMock, two_pp_objs, co
     assert converter.pgm_input_data["asym_load"] == mock_init_array.return_value
 
 
-def test_create_pgm_input_transformers__tap_dependent_impedance():
+def test_create_pgm_input_transformers__tap_dependent_impedance() -> None:
     # Arrange
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
@@ -713,7 +713,7 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
     "power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._get_pgm_ids",
     new=MagicMock(return_value=pd.Series([0])),
 )
-def test_create_pgm_input_transformers__default():
+def test_create_pgm_input_transformers__default() -> None:
     # Arrange
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
@@ -1004,7 +1004,7 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
     "power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._get_pgm_ids",
     new=MagicMock(return_value=pd.Series([0])),
 )
-def test_create_pgm_input_transformers3w__default():
+def test_create_pgm_input_transformers3w__default() -> None:
     # Arrange
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
@@ -1117,7 +1117,7 @@ def test_create_pgm_input_transformers3w__default():
     assert result[12]["clock_12"] == result[12]["clock_13"] == 1
 
 
-def test_create_pgm_input_three_winding_transformers__tap_at_star_point():
+def test_create_pgm_input_three_winding_transformers__tap_at_star_point() -> None:
     # Arrange
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
@@ -1133,7 +1133,7 @@ def test_create_pgm_input_three_winding_transformers__tap_at_star_point():
 
 
 @pytest.mark.xfail(reason="https://github.com/e2nIEE/pandapower/issues/1831")
-def test_create_pgm_input_three_winding_transformers__tap_dependent_impedance():
+def test_create_pgm_input_three_winding_transformers__tap_dependent_impedance() -> None:
     # Arrange
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
@@ -1256,7 +1256,7 @@ def test_create_pgm_input_wards(mock_init_array: MagicMock, two_pp_objs, convert
     assert converter.pgm_input_data["sym_load"] == pgm
 
 
-def test_create_pgm_input_wards__existing_loads():
+def test_create_pgm_input_wards__existing_loads() -> None:
     converter = PandaPowerConverter()
     # Arrange
 
@@ -1355,22 +1355,13 @@ def test_create_pgm_input_motors(mock_init_array: MagicMock, two_pp_objs, conver
     assert converter.pgm_input_data["sym_load"] == mock_init_array.return_value
 
 
-def test_create_pgm_input_motors__existing_loads():
+def test_create_pgm_input_motors__existing_loads() -> None:
     converter = PandaPowerConverter()
     # Arrange
 
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
     pp.create_load(pp_net, 0, 0)
-    args = [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-    ]
     pp.create_motor(pp_net, 0, 0, 0)
 
     converter.pp_input_data = pp_net
