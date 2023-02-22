@@ -511,7 +511,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         assert "asym_load" not in self.pgm_input_data
         self.pgm_input_data["asym_load"] = pgm_asym_loads
 
-    def _create_pgm_input_transformers(self):
+    def _create_pgm_input_transformers(self):   # pylint: disable-msg=too-many-locals
         """
         This function converts a Transformer Dataframe of PandaPower to a power-grid-model
         Transformer input array.
@@ -536,10 +536,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         tap_side = self._get_pp_attr("trafo", "tap_side", None)
         tap_nom = self._get_pp_attr("trafo", "tap_neutral", np.nan)
         tap_pos = self._get_pp_attr("trafo", "tap_pos", np.nan)
+        tap_size = self._get_tap_size(pp_trafo)
         # Do not use taps when mandatory tap data is not available
-        no_taps = np.equal(tap_side, None) | np.isnan(tap_pos) | np.isnan(tap_nom)
+        no_taps = np.equal(tap_side, None) | np.isnan(tap_pos) | np.isnan(tap_nom) | np.isnan(tap_size)
         tap_nom[no_taps] = 0
         tap_pos[no_taps] = 0
+        tap_size[no_taps] = 0
         tap_side[no_taps] = "hv"
 
         winding_types = self.get_trafo_winding_types()
@@ -571,7 +573,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_transformers["tap_side"] = self._get_transformer_tap_side(tap_side)
         pgm_transformers["tap_min"] = self._get_pp_attr("trafo", "tap_min", 0)
         pgm_transformers["tap_max"] = self._get_pp_attr("trafo", "tap_max", 0)
-        pgm_transformers["tap_size"] = self._get_tap_size(pp_trafo)
+        pgm_transformers["tap_size"] = tap_size
 
         assert "transformer" not in self.pgm_input_data
         self.pgm_input_data["transformer"] = pgm_transformers
@@ -606,10 +608,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         tap_side = self._get_pp_attr("trafo3w", "tap_side", None)
         tap_nom = self._get_pp_attr("trafo3w", "tap_neutral", np.nan)
         tap_pos = self._get_pp_attr("trafo3w", "tap_pos", np.nan)
+        tap_size = self._get_3wtransformer_tap_size(pp_trafo3w)
         # Do not use taps when mandatory tap data is not available
-        no_taps = np.equal(tap_side, None) | np.isnan(tap_pos) | np.isnan(tap_nom)
+        no_taps = np.equal(tap_side, None) | np.isnan(tap_pos) | np.isnan(tap_nom) | np.isnan(tap_size)
         tap_nom[no_taps] = 0
         tap_pos[no_taps] = 0
+        tap_size[no_taps] = 0
         tap_side[no_taps] = "hv"
 
         winding_types = self.get_trafo3w_winding_types()
@@ -672,7 +676,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_3wtransformers["tap_side"] = self._get_3wtransformer_tap_side(tap_side)
         pgm_3wtransformers["tap_min"] = self._get_pp_attr("trafo3w", "tap_min", 0)
         pgm_3wtransformers["tap_max"] = self._get_pp_attr("trafo3w", "tap_max", 0)
-        pgm_3wtransformers["tap_size"] = self._get_3wtransformer_tap_size(pp_trafo3w)
+        pgm_3wtransformers["tap_size"] = tap_size
 
         assert "three_winding_transformer" not in self.pgm_input_data
         self.pgm_input_data["three_winding_transformer"] = pgm_3wtransformers
