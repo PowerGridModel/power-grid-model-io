@@ -29,7 +29,7 @@ def test_create_output_data():
     PandaPowerConverter._create_output_data(self=converter)  # type: ignore
 
     # Assert
-    assert len(converter.method_calls) == 12
+    assert len(converter.method_calls) == 13
     converter._pp_buses_output.assert_called_once_with()
     converter._pp_lines_output.assert_called_once_with()
     converter._pp_ext_grids_output.assert_called_once_with()
@@ -42,6 +42,7 @@ def test_create_output_data():
     converter._pp_asym_gens_output.assert_called_once_with()
     converter._pp_motor_output.assert_called_once_with()
     converter._pp_ward_output.assert_called_once_with()
+    converter._pp_switches_output.assert_called_once_with()
 
 
 @pytest.mark.parametrize(
@@ -59,6 +60,7 @@ def test_create_output_data():
         (PandaPowerConverter._pp_asym_gens_output, "asym_gen"),
         (PandaPowerConverter._pp_ward_output, "ward"),
         (PandaPowerConverter._pp_motor_output, "motor"),
+        (PandaPowerConverter._pp_switches_output, "link"),
     ],
 )
 def test_create_pp_output_object__empty(create_fn: Callable[[PandaPowerConverter], None], table: str):
@@ -632,3 +634,48 @@ def test_pp_buses_output__accumulate_power__output_empty():
     assert pp_buses["q_mvar"][101] == 0
     assert pp_buses["q_mvar"][102] == 0
     assert pp_buses["q_mvar"][103] == 0
+
+
+def test_pp_switch_output():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.pp_input_data = {
+        "trafo": pd.DataFrame({"hv_bus": [1], "lv_bus": [2]}, index=[10]),
+        "trafo3w": pd.DataFrame({"hv_bus": [1], "mv_bus": [4], "lv_bus": [5]}, index=[10]),
+        "line": pd.DataFrame({"from_bus": [3], "to_bus": [6]}, index=[11]),
+        "switch": pd.DataFrame(
+            {
+                "bus": [1, 2, 1, 4, 5, 3, 6, 7, 8],
+                "element": [10, 10, 10, 10, 10, 11, 11, 77, 88],
+                "et": ["t", "t", "t3", "t3", "t3", "l", "l", "b", "b"],
+                "closed": [True, True, True, True, True, True, True, True, True],
+            },
+            index=[40, 41, 42, 43, 44, 45, 46, 47, 48],
+        ),
+    }
+    converter.pp_output_data = {
+        "res_trafo": pd.DataFrame({"i_hv_ka": [11.1], "i_lv_ka": [11.2]}, index=[10]),
+        "res_trafo3w": pd.DataFrame({"i_hv_ka": [12.1], "i_mv_ka": [12.2], "i_lv_ka": [12.3]}, index=[10]),
+        "res_line": pd.DataFrame({"i_from_ka": [13.1], "i_to_ka": [13.2]}, index=[11]),
+    }
+    converter.pgm_output_data = {"link": initialize_array("sym_output", "link", 2)}
+    converter.pgm_output_data["link"]["id"] = [101, 102]
+    converter.pgm_output_data["link"]["i_from"] = [14100, 14200]
+    converter.pgm_output_data["link"]["i_to"] = [15.1, 15.2]
+
+    converter.idx_lookup = {("switch", "b2b_switches"): pd.Series([47, 48], index=[101, 102], dtype=np.int32)}
+
+    expected = pd.DataFrame(
+        {
+            "i_ka": [11.1, 11.2, 12.1, 12.2, 12.3, 13.1, 13.2, 14.1, 14.2],
+            "loading_percent": [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
+        },
+        index=[40, 41, 42, 43, 44, 45, 46, 47, 48],
+    )
+
+    # Act
+    converter._pp_switches_output()
+    actual = converter.pp_output_data["res_switch"]
+
+    # Assert
+    pd.testing.assert_frame_equal(actual, expected, check_dtype=False)

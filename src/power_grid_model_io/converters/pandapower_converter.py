@@ -191,7 +191,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         dtype = np.int32
         nan = np.iinfo(dtype).min
         for component, data in self.pgm_output_data.items():
-            input_cols = power_grid_meta_data["input"][component]["dtype"].names
+            input_cols = power_grid_meta_data["input"][component].dtype.names
             node_cols = [col for col in input_cols if NODE_REF_RE.fullmatch(col)]
             if not node_cols:
                 continue
@@ -234,6 +234,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._pp_motor_output()
         self._pp_asym_gens_output()
         self._pp_asym_loads_output()
+        # Switches derive results from branches pp_output_data and pgm_output_data of links. Hence, placed in the end.
+        self._pp_switches_output()
 
     def _create_pgm_input_nodes(self):
         """
@@ -511,7 +513,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         assert "asym_load" not in self.pgm_input_data
         self.pgm_input_data["asym_load"] = pgm_asym_loads
 
-    def _create_pgm_input_transformers(self):   # pylint: disable-msg=too-many-locals
+    def _create_pgm_input_transformers(self):  # pylint: disable-msg=too-many-locals
         """
         This function converts a Transformer Dataframe of PandaPower to a power-grid-model
         Transformer input array.
@@ -697,17 +699,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # This should take all the switches which are b2b
         pp_switches = pp_switches[pp_switches["et"] == "b"]
 
-        # TODO: Don't update the pp input data... (Bram)
-        self.pp_input_data["switch_b2b"] = pp_switches
-
-        closed = self._get_pp_attr("switch_b2b", "closed", True)
-
         pgm_links = initialize_array(data_type="input", component_type="link", shape=len(pp_switches))
-        pgm_links["id"] = self._generate_ids("switch", pp_switches.index, name="bus_to_bus")
-        pgm_links["from_node"] = self._get_pgm_ids("bus", self._get_pp_attr("switch_b2b", "bus"))
-        pgm_links["to_node"] = self._get_pgm_ids("bus", self._get_pp_attr("switch_b2b", "element"))
-        pgm_links["from_status"] = closed
-        pgm_links["to_status"] = closed
+        pgm_links["id"] = self._generate_ids("switch", pp_switches.index, name="b2b_switches")
+        pgm_links["from_node"] = self._get_pgm_ids("bus", pp_switches["bus"])
+        pgm_links["to_node"] = self._get_pgm_ids("bus", pp_switches["element"])
+        pgm_links["from_status"] = pp_switches["closed"]
+        pgm_links["to_status"] = pp_switches["closed"]
 
         assert "link" not in self.pgm_input_data
         self.pgm_input_data["link"] = pgm_links
@@ -1315,6 +1312,72 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # Store the results, while assuring that we are not overwriting any data
         assert pp_component_name not in self.pp_output_data
         self.pp_output_data["res_" + pp_component_name] = accumulated_loads
+
+    def _pp_switches_output(self):
+        """
+        This function converts a power-grid-model links, lines, transformers, transformers3w output array
+        to res_switch Dataframe of PandaPower.
+        Switch results are only possible at round conversions. ie, input switch data is available
+        """
+        switch_data_unavailable = "switch" not in self.pp_input_data
+        links_absent = "link" not in self.pgm_output_data or self.pgm_output_data["link"].size == 0
+        rest_switches_absent = {
+            pp_comp: ("res_" + pp_comp not in self.pp_output_data) for pp_comp in ["line", "trafo", "trafo3w"]
+        }
+        if (all(rest_switches_absent.values()) and links_absent) or switch_data_unavailable:
+            return
+
+        def join_currents(table: str, bus_name: str, i_name: str) -> pd.DataFrame:
+            # Create a dataframe of element: input table index, bus: input branch bus, current: output current
+            single_df = self.pp_input_data[table][[bus_name]]
+            single_df = single_df.join(self.pp_output_data["res_" + table][i_name])
+            single_df.columns = ["bus", "i_ka"]
+            single_df["element"] = single_df.index
+            single_df["et"] = table_to_et[table]
+            return single_df
+
+        switch_attrs = {
+            "trafo": {"hv_bus": "i_hv_ka", "lv_bus": "i_lv_ka"},
+            "trafo3w": {"hv_bus": "i_hv_ka", "mv_bus": "i_mv_ka", "lv_bus": "i_lv_ka"},
+            "line": {"from_bus": "i_from_ka", "to_bus": "i_to_ka"},
+        }
+        table_to_et = {"trafo": "t", "trafo3w": "t3", "line": "l"}
+
+        # Prepare output dataframe, save index for later
+        pp_switches_output = self.pp_input_data["switch"]
+        pp_switches_output_index = pp_switches_output.index
+
+        # Combine all branch bus, current and et in one dataframe
+        all_i_df = pd.concat(
+            [
+                join_currents(table, bus_name, i_name)
+                if not rest_switches_absent[table]
+                else pd.DataFrame(columns=["bus", "element", "et", "i_ka"])
+                for table, attr_names in switch_attrs.items()
+                for bus_name, i_name in attr_names.items()
+            ]
+        )
+        # Merge on input data to get current and drop other columns
+        pp_switches_output = pd.merge(
+            pp_switches_output,
+            all_i_df,
+            how="left",
+            left_on=["bus", "element", "et"],
+            right_on=["bus", "element", "et"],
+        )
+        pp_switches_output = pp_switches_output[["i_ka"]]
+        pp_switches_output.set_index(pp_switches_output_index, inplace=True)
+        pp_switches_output["loading_percent"] = np.nan
+
+        # For et=b, ie bus to bus switches, links are created. get result from them
+        if not links_absent:
+            links = self.pgm_output_data["link"]
+            # For links, i_from = i_to = i_ka / 1e3
+            link_ids = self._get_pp_ids("switch", links["id"], "b2b_switches")
+            pp_switches_output["i_ka"][link_ids] = links["i_from"] * 1e-3
+
+        assert "res_switch" not in self.pp_output_data
+        self.pp_output_data["res_switch"] = pp_switches_output
 
     def _generate_ids(self, pp_table: str, pp_idx: pd.Index, name: Optional[str] = None) -> np.arange:
         """

@@ -94,7 +94,7 @@ def test_parse_data(converter: TabularConverter, tabular_data: TabularData):
     assert (pgm_input_data["sym_load"]["id"] == [4, 5, 6, 7]).all()
     assert (pgm_input_data["sym_load"]["node"] == [0, 1, 0, 1]).all()
     assert (pgm_input_data["sym_load"]["status"] == [1, 0, 1, 0]).all()
-    assert pgm_input_data["sym_load"].dtype == power_grid_meta_data["input"]["sym_load"]["dtype"]
+    assert pgm_input_data["sym_load"].dtype == power_grid_meta_data["input"]["sym_load"].dtype
 
 
 def test_convert_table_to_component(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):

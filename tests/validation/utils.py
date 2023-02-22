@@ -66,9 +66,8 @@ def component_attributes(json_path: Path, data_type: str) -> Generator[Tuple[str
 
     # Loop over all components in the validation file (in alphabetical order)
     for component, objects in sorted(data.items(), key=lambda x: x[0]):
-
         # Create a set of attribute names for each object, then take the union of all those sets
-        pgm_attr = set(power_grid_meta_data[data_type][component]["dtype"].names)
+        pgm_attr = set(power_grid_meta_data[data_type][component].dtype.names)
         obj_keys = (set(obj.keys()) & pgm_attr for obj in objects)
         unique_attributes = set().union(*obj_keys)
 
@@ -150,7 +149,7 @@ def extract_extra_info(data: SinglePythonDataset, data_type: str) -> ExtraInfoLo
     """
     extra_info: ExtraInfoLookup = {}
     for component, objects in data.items():
-        pgm_attr = set(power_grid_meta_data[data_type][component]["dtype"].names)
+        pgm_attr = set(power_grid_meta_data[data_type][component].dtype.names)
         for obj in objects:
             obj_extra_info = {attr: val for attr, val in obj.items() if attr not in pgm_attr}
             if obj_extra_info:
@@ -177,13 +176,11 @@ def load_json_single_dataset(file_path: Path, data_type: str) -> Tuple[SingleDat
 
 
 def compare_extra_info(actual: ExtraInfoLookup, expected: ExtraInfoLookup, component: str, obj_ids: List[int]):
-
     # We'll collect all errors, instead of terminating at the first error
     errors = []
 
     # Check each object in this component
     for obj_id in obj_ids:
-
         # If there is no extra_info available in the validation data, just skip this object
         if obj_id not in expected:
             continue
@@ -196,7 +193,6 @@ def compare_extra_info(actual: ExtraInfoLookup, expected: ExtraInfoLookup, compo
         # Now for each extra_info in the validation file, check if it matches the actual extra info
         act = actual[obj_id]
         for key, value in expected[obj_id].items():
-
             # If the extra_info doesn't exist, that's an error
             if key not in act:
                 errors.append(f"Expected extra info '{key}' for {component} #{obj_id}, but it is missing.")

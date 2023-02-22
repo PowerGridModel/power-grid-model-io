@@ -129,7 +129,6 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
             # As each object is a separate dictionary, and the attributes may differ per object, we need to check
             # all attributes. Non-existing attributes are stored as extra_info, or ignored.
             for attribute, value in obj.items():
-
                 if attribute in array.dtype.names:
                     # Assign the value or raise an error if the value cannot be stored in the specific numpy array
                     # data format for this attribute.

@@ -152,13 +152,11 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         return data
 
     def _check_duplicate_values(self, sheet_name: str, data: pd.DataFrame) -> Dict[int, Union[str, Tuple[str, ...]]]:
-
         grouped = self._group_columns_by_index(data=data)
 
         to_rename: Dict[int, Union[str, Tuple[str, ...]]] = {}
 
         for col_name, col_idxs in grouped.items():
-
             # No duplicate column names
             if len(col_idxs) == 1:
                 continue
