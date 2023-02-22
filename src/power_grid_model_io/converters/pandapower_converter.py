@@ -191,7 +191,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         dtype = np.int32
         nan = np.iinfo(dtype).min
         for component, data in self.pgm_output_data.items():
-            input_cols = power_grid_meta_data["input"][component]["dtype"].names
+            input_cols = power_grid_meta_data["input"][component].dtype.names
             node_cols = [col for col in input_cols if NODE_REF_RE.fullmatch(col)]
             if not node_cols:
                 continue
@@ -513,7 +513,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         assert "asym_load" not in self.pgm_input_data
         self.pgm_input_data["asym_load"] = pgm_asym_loads
 
-    def _create_pgm_input_transformers(self):   # pylint: disable-msg=too-many-locals
+    def _create_pgm_input_transformers(self):  # pylint: disable-msg=too-many-locals
         """
         This function converts a Transformer Dataframe of PandaPower to a power-grid-model
         Transformer input array.
