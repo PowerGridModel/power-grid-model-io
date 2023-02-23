@@ -271,6 +271,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         length_km = self._get_pp_attr("line", "length_km")
         parallel = self._get_pp_attr("line", "parallel", 1)
         c_nf_per_km = self._get_pp_attr("line", "c_nf_per_km")
+        c0_nf_per_km = self._get_pp_attr("line", "c0_nf_per_km", np.nan)
         multiplier = length_km / parallel
 
         pgm_lines = initialize_array(data_type="input", component_type="line", shape=len(pp_lines))
@@ -287,11 +288,14 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             self._get_pp_attr("line", "g_us_per_km", 0) / c_nf_per_km / (2 * np.pi * self.system_frequency * 1e-3)
         )
         pgm_lines["i_n"] = (self._get_pp_attr("line", "max_i_ka") * 1e3) * self._get_pp_attr("line", "df", 1) * parallel
-        pgm_lines["r0"] = self._get_pp_attr("line", "r0_ohm_per_km", np.nan)
-        pgm_lines["x0"] = self._get_pp_attr("line", "x0_ohm_per_km", np.nan)
-        pgm_lines["c0"] = self._get_pp_attr("line", "c0_nf_per_km", np.nan)
-        pgm_lines["tan0"] = 0
-
+        pgm_lines["r0"] = self._get_pp_attr("line", "r0_ohm_per_km", np.nan) * multiplier
+        pgm_lines["x0"] = self._get_pp_attr("line", "x0_ohm_per_km", np.nan) * multiplier
+        pgm_lines["c0"] = c0_nf_per_km * length_km * parallel * 1e-9
+        pgm_lines["tan0"] = (
+            self._get_pp_attr("line", "g0_us_per_km", np.nan)
+            / c0_nf_per_km
+            / (2 * np.pi * self.system_frequency * 1e-3)
+        )
         assert "line" not in self.pgm_input_data
         self.pgm_input_data["line"] = pgm_lines
 
@@ -309,6 +313,15 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         rx_max = self._get_pp_attr("ext_grid", "rx_max", np.nan)
         r0x0_max = self._get_pp_attr("ext_grid", "r0x0_max", np.nan)
+        x0x_max = self._get_pp_attr("ext_grid", "x0x_max", np.nan)
+
+        # Source Asym parameter check
+        r0x0_cond = np.isnan(r0x0_max).all() or np.array_equal(rx_max, r0x0_max)
+        x0x_cond = np.isnan(x0x_max).all() or all(x0x_max == 1)
+        if not (r0x0_cond and x0x_cond):
+            raise NotImplementedError(
+                "Only equal positive and zero sequence parameters are supported for external grid in PGM"
+            )
 
         pgm_sources = initialize_array(data_type="input", component_type="source", shape=len(pp_ext_grid))
         pgm_sources["id"] = self._generate_ids("ext_grid", pp_ext_grid.index)
@@ -318,8 +331,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sources["rx_ratio"] = rx_max
         pgm_sources["u_ref_angle"] = self._get_pp_attr("ext_grid", "va_degree", 0.0) * (np.pi / 180)
         pgm_sources["sk"] = self._get_pp_attr("ext_grid", "s_sc_max_mva", np.nan) * 1e6
-        if not np.array_equal(rx_max, r0x0_max):
-            raise NotImplementedError("r0x0_max is not equal to rx_max, this feature is not supported.")
 
         assert "source" not in self.pgm_input_data
         self.pgm_input_data["source"] = pgm_sources
@@ -547,44 +558,49 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if "tap_dependent_impedance" in pp_trafo.columns and any(pp_trafo["tap_dependent_impedance"]):
             raise RuntimeError("Tap dependent impedance is not supported in Power Grid Model")
 
-        # Asym parameters. For PGM, manual zero sequence params are not supported yet.
-        zero_params = ["vk0_percent", "vkr0_percent", "mag0_percent", "mag0_rx", "si0_hv_partial"]
-        if set(zero_params).intersection(set(pp_trafo.columns)):
-            mag_y = pp_trafo["i0_percent"] / 100
-            mag_g = pp_trafo["pfe_kw"] / (pp_trafo["sn_mva"] * 1000)
-            rx_0 = mag_g / np.sqrt(mag_y * mag_y - mag_g * mag_g)
-            cond1 = pd.Series.equals(pp_trafo["vk_percent"], pp_trafo["vk0_percent"])
-            cond2 = pd.Series.equals(pp_trafo["vkr_percent"], pp_trafo["vkr0_percent"])
-            cond3 = pd.Series.equals(mag_y, pp_trafo["vk0_percent"] / pp_trafo["mag0_percent"])
-            cond4 = pd.Series.equals(rx_0, pp_trafo["mag0_rx"])
-            si0_nans = np.isnan(pp_trafo["si0_hv_partial"])
-            cond5 = np.all(si0_nans)
-            if not (cond1 and cond2 and cond3 and cond4 and cond5):
-                raise NotImplementedError("Different asymmetric parameters are not supported for trafo in PGM")
-
-
+        # Attribute retrieval
+        i0 = self._get_pp_attr("trafo", "i0_percent")
+        pfe = self._get_pp_attr("trafo", "pfe_kw")
+        vk_percent = self._get_pp_attr("trafo", "vk_percent")
+        vkr_percent = self._get_pp_attr("trafo", "vkr_percent")
         in_service = self._get_pp_attr("trafo", "in_service", True)
         parallel = self._get_pp_attr("trafo", "parallel", 1)
         sn_mva = self._get_pp_attr("trafo", "sn_mva")
         switch_states = self.get_switch_states("trafo")
-
         tap_side = self._get_pp_attr("trafo", "tap_side", None)
         tap_nom = self._get_pp_attr("trafo", "tap_neutral", np.nan)
         tap_pos = self._get_pp_attr("trafo", "tap_pos", np.nan)
+        winding_types = self.get_trafo_winding_types()
+        clocks = np.round(self._get_pp_attr("trafo", "shift_degree", 0.0) / 30) % 12
+
+        # Asym parameters retrival and check. For PGM, manual zero sequence params are not supported yet.
+        vk0_percent = self._get_pp_attr("trafo", "vk0_percent", np.nan)
+        vkr0_percent = self._get_pp_attr("trafo", "vkr0_percent", np.nan)
+        mag_g = pfe / (sn_mva * 1000)
+        rx_mag = mag_g / np.sqrt(i0 * i0 * 1e-4 - mag_g * mag_g)
+        mag0_percent = self._get_pp_attr("trafo", "mag0_percent", np.nan)
+        mag0_rx = self._get_pp_attr("trafo", "mag0_rx", np.nan)
+        vk0_cond = np.array_equal(vkr_percent, vk0_percent) or np.isnan(vk0_percent).all()
+        vkr0_cond = np.array_equal(vkr_percent, vkr0_percent) or np.isnan(vkr0_percent).all()
+        mag0_cond = np.array_equal(i0 * 1e-2, vk0_percent / mag0_percent) or np.isnan(mag0_percent).all()
+        mag0_rx_cond = np.array_equal(rx_mag, mag0_rx) or np.isnan(mag0_rx).all()
+        si0_cond = np.isnan(self._get_pp_attr("trafo", "si0_hv_partial", np.nan)).all()
+        if not (vk0_cond and vkr0_cond and mag0_cond and mag0_rx_cond and si0_cond):
+            raise NotImplementedError("Only equal positive and zero sequence parameters are supported for trafo in PGM")
+
         # Do not use taps when mandatory tap data is not available
         no_taps = np.equal(tap_side, None) | np.isnan(tap_pos) | np.isnan(tap_nom)
         tap_nom[no_taps] = 0
         tap_pos[no_taps] = 0
         tap_side[no_taps] = "hv"
 
-        winding_types = self.get_trafo_winding_types()
-        clocks = np.round(self._get_pp_attr("trafo", "shift_degree", 0.0) / 30) % 12
         # Default vector group for odd clocks = DYn and for even clocks = YNyn
         no_vector_groups = np.isnan(winding_types["winding_from"]) | np.isnan(winding_types["winding_to"])
         no_vector_groups_dyn = no_vector_groups & (clocks % 2)
         winding_types[no_vector_groups] = WindingType.wye_n
         winding_types["winding_from"][no_vector_groups_dyn] = WindingType.delta
 
+        # Create PGM array
         pgm_transformers = initialize_array(data_type="input", component_type="transformer", shape=len(pp_trafo))
         pgm_transformers["id"] = self._generate_ids("trafo", pp_trafo.index)
         pgm_transformers["from_node"] = self._get_pgm_ids("bus", self._get_pp_attr("trafo", "hv_bus"))
@@ -594,10 +610,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_transformers["u1"] = self._get_pp_attr("trafo", "vn_hv_kv") * 1e3
         pgm_transformers["u2"] = self._get_pp_attr("trafo", "vn_lv_kv") * 1e3
         pgm_transformers["sn"] = sn_mva * parallel * 1e6
-        pgm_transformers["uk"] = self._get_pp_attr("trafo", "vk_percent") * 1e-2
-        pgm_transformers["pk"] = self._get_pp_attr("trafo", "vkr_percent") * sn_mva * parallel * (1e6 * 1e-2)
-        pgm_transformers["i0"] = self._get_pp_attr("trafo", "i0_percent") * 1e-2
-        pgm_transformers["p0"] = self._get_pp_attr("trafo", "pfe_kw") * parallel * 1e3
+        pgm_transformers["uk"] = vk_percent * 1e-2
+        pgm_transformers["pk"] = vkr_percent * sn_mva * parallel * (1e6 * 1e-2)
+        pgm_transformers["i0"] = i0 * 1e-2
+        pgm_transformers["p0"] = pfe * parallel * 1e3
         pgm_transformers["clock"] = clocks
         pgm_transformers["winding_from"] = winding_types["winding_from"]
         pgm_transformers["winding_to"] = winding_types["winding_to"]
@@ -631,41 +647,49 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if "tap_at_star_point" in pp_trafo3w.columns and any(pp_trafo3w["tap_at_star_point"]):
             raise RuntimeError("Tap at star point is not supported in Power Grid Model")
 
-        # Asym parameters. For PGM, manual zero sequence params are not supported yet.
-        zero_params = ["vk0_percent", "vkr0_percent", "mag0_percent", "mag0_rx", "si0_hv_partial"]
-        if set(zero_params).intersection(set(pp_trafo3w.columns)):
-            mag_y = pp_trafo3w["i0_percent"] / 100
-            mag_g = pp_trafo3w["pfe_kw"] / (pp_trafo3w["sn_mva"] * 1000)
-            rx_0 = mag_g / np.sqrt(mag_y * mag_y - mag_g * mag_g)
-            cond1 = pd.Series.equals(pp_trafo3w["vk_percent"], pp_trafo3w["vk0_percent"])
-            cond2 = pd.Series.equals(pp_trafo3w["vkr_percent"], pp_trafo3w["vkr0_percent"])
-            cond3 = pd.Series.equals(mag_y, pp_trafo3w["vk0_percent"] / pp_trafo3w["mag0_percent"])
-            cond4 = pd.Series.equals(rx_0, pp_trafo3w["mag0_rx"])
-            si0_nans = np.isnan(pp_trafo3w["si0_hv_partial"])
-            cond5 = np.all(si0_nans)
-            if not (cond1 and cond2 and cond3 and cond4 and cond5):
-                raise NotImplementedError("Different asymmetric parameters are not supported for trafo in PGM")
-
-
+        # Attributes retrieval
         sn_hv_mva = self._get_pp_attr("trafo3w", "sn_hv_mva")
         sn_mv_mva = self._get_pp_attr("trafo3w", "sn_mv_mva")
         sn_lv_mva = self._get_pp_attr("trafo3w", "sn_lv_mva")
         in_service = self._get_pp_attr("trafo3w", "in_service", True)
-
         switch_states = self.get_trafo3w_switch_states(pp_trafo3w)
-
         tap_side = self._get_pp_attr("trafo3w", "tap_side", None)
         tap_nom = self._get_pp_attr("trafo3w", "tap_neutral", np.nan)
         tap_pos = self._get_pp_attr("trafo3w", "tap_pos", np.nan)
+        vk_hv_percent = self._get_pp_attr("trafo3w", "vk_hv_percent")
+        vkr_hv_percent = self._get_pp_attr("trafo3w", "vkr_hv_percent")
+        vk_mv_percent = self._get_pp_attr("trafo3w", "vk_mv_percent")
+        vkr_mv_percent = self._get_pp_attr("trafo3w", "vkr_mv_percent")
+        vk_lv_percent = self._get_pp_attr("trafo3w", "vk_lv_percent")
+        vkr_lv_percent = self._get_pp_attr("trafo3w", "vkr_lv_percent")
+        winding_types = self.get_trafo3w_winding_types()
+        clocks_12 = np.round(self._get_pp_attr("trafo3w", "shift_mv_degree", 0.0) / 30.0) % 12
+        clocks_13 = np.round(self._get_pp_attr("trafo3w", "shift_lv_degree", 0.0) / 30.0) % 12
+        vk0_hv_percent = self._get_pp_attr("trafo3w", "vk0_hv_percent", np.nan)
+        vkr0_hv_percent = self._get_pp_attr("trafo3w", "vkr0_hv_percent", np.nan)
+        vk0_mv_percent = self._get_pp_attr("trafo3w", "vk0_mv_percent", np.nan)
+        vkr0_mv_percent = self._get_pp_attr("trafo3w", "vkr0_mv_percent", np.nan)
+        vk0_lv_percent = self._get_pp_attr("trafo3w", "vk0_lv_percent", np.nan)
+        vkr0_lv_percent = self._get_pp_attr("trafo3w", "vkr0_lv_percent", np.nan)
+
+        # Asym parameters. For PGM, manual zero sequence params are not supported yet.
+        cond1_hv = np.array_equal(vk_hv_percent, vk0_hv_percent) or np.isnan(vk0_hv_percent).all()
+        cond2_hv = np.array_equal(vkr_hv_percent, vkr0_hv_percent) or np.isnan(vkr0_hv_percent).all()
+        cond1_mv = np.array_equal(vk_mv_percent, vk0_mv_percent) or np.isnan(vk0_mv_percent).all()
+        cond2_mv = np.array_equal(vkr_mv_percent, vkr0_mv_percent) or np.isnan(vkr0_mv_percent).all()
+        cond1_lv = np.array_equal(vk_lv_percent, vk0_lv_percent) or np.isnan(vk0_lv_percent).all()
+        cond2_lv = np.array_equal(vkr_lv_percent, vkr0_lv_percent) or np.isnan(vkr0_lv_percent).all()
+        if not (cond1_hv and cond2_hv and cond1_mv and cond2_mv and cond1_lv and cond2_lv):
+            raise NotImplementedError(
+                "Only equal positive and zero sequence parameters are supported for trafo3w in PGM"
+            )
+
         # Do not use taps when mandatory tap data is not available
         no_taps = np.equal(tap_side, None) | np.isnan(tap_pos) | np.isnan(tap_nom)
         tap_nom[no_taps] = 0
         tap_pos[no_taps] = 0
         tap_side[no_taps] = "hv"
 
-        winding_types = self.get_trafo3w_winding_types()
-        clocks_12 = np.round(self._get_pp_attr("trafo3w", "shift_mv_degree", 0.0) / 30.0) % 12
-        clocks_13 = np.round(self._get_pp_attr("trafo3w", "shift_lv_degree", 0.0) / 30.0) % 12
         # Default vector group for odd clocks_12 = Yndx, for odd clocks_13 = Ynxd and for even clocks = YNxyn or YNynx
         no_vector_groups = (
             np.isnan(winding_types["winding_1"])
@@ -695,21 +719,13 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_3wtransformers["sn_1"] = sn_hv_mva * 1e6
         pgm_3wtransformers["sn_2"] = sn_mv_mva * 1e6
         pgm_3wtransformers["sn_3"] = sn_lv_mva * 1e6
-        pgm_3wtransformers["uk_12"] = self._get_pp_attr("trafo3w", "vk_hv_percent") * 1e-2
-        pgm_3wtransformers["uk_13"] = self._get_pp_attr("trafo3w", "vk_lv_percent") * 1e-2
-        pgm_3wtransformers["uk_23"] = self._get_pp_attr("trafo3w", "vk_mv_percent") * 1e-2
+        pgm_3wtransformers["uk_12"] = vk_hv_percent * 1e-2
+        pgm_3wtransformers["uk_13"] = vk_lv_percent * 1e-2
+        pgm_3wtransformers["uk_23"] = vk_mv_percent * 1e-2
 
-        pgm_3wtransformers["pk_12"] = (
-            self._get_pp_attr("trafo3w", "vkr_hv_percent") * np.minimum(sn_hv_mva, sn_mv_mva) * (1e-2 * 1e6)
-        )
-
-        pgm_3wtransformers["pk_13"] = (
-            self._get_pp_attr("trafo3w", "vkr_lv_percent") * np.minimum(sn_hv_mva, sn_lv_mva) * (1e-2 * 1e6)
-        )
-
-        pgm_3wtransformers["pk_23"] = (
-            self._get_pp_attr("trafo3w", "vkr_mv_percent") * np.minimum(sn_mv_mva, sn_lv_mva) * (1e-2 * 1e6)
-        )
+        pgm_3wtransformers["pk_12"] = vkr_hv_percent * np.minimum(sn_hv_mva, sn_mv_mva) * (1e-2 * 1e6)
+        pgm_3wtransformers["pk_13"] = vkr_lv_percent * np.minimum(sn_hv_mva, sn_lv_mva) * (1e-2 * 1e6)
+        pgm_3wtransformers["pk_23"] = vkr_mv_percent * np.minimum(sn_mv_mva, sn_lv_mva) * (1e-2 * 1e6)
 
         pgm_3wtransformers["i0"] = self._get_pp_attr("trafo3w", "i0_percent") * 1e-2
         pgm_3wtransformers["p0"] = self._get_pp_attr("trafo3w", "pfe_kw") * 1e3
