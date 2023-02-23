@@ -353,17 +353,17 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         vn_kv_2 = vn_kv * vn_kv
 
         step = self._get_pp_attr("shunt", "step", 1)
-        g1 = self._get_pp_attr("shunt", "p_mw") * step / vn_kv_2
-        b1 = -self._get_pp_attr("shunt", "q_mvar") * step / vn_kv_2
+        g1_shunt = self._get_pp_attr("shunt", "p_mw") * step / vn_kv_2
+        b1_shunt = -self._get_pp_attr("shunt", "q_mvar") * step / vn_kv_2
 
         pgm_shunts = initialize_array(data_type="input", component_type="shunt", shape=len(pp_shunts))
         pgm_shunts["id"] = self._generate_ids("shunt", pp_shunts.index)
         pgm_shunts["node"] = self._get_pgm_ids("bus", self._get_pp_attr("shunt", "bus"))
         pgm_shunts["status"] = self._get_pp_attr("shunt", "in_service", 1)
-        pgm_shunts["g1"] = g1
-        pgm_shunts["b1"] = b1
-        pgm_shunts["g0"] = g1
-        pgm_shunts["b0"] = b1
+        pgm_shunts["g1"] = g1_shunt
+        pgm_shunts["b1"] = b1_shunt
+        pgm_shunts["g0"] = g1_shunt
+        pgm_shunts["b0"] = b1_shunt
 
         assert "shunt" not in self.pgm_input_data
         self.pgm_input_data["shunt"] = pgm_shunts
@@ -543,7 +543,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         assert "asym_load" not in self.pgm_input_data
         self.pgm_input_data["asym_load"] = pgm_asym_loads
 
-    def _create_pgm_input_transformers(self):  # pylint: disable-msg=too-many-locals
+    def _create_pgm_input_transformers(self):  # pylint: disable=too-many-statements, disable-msg=too-many-locals
         """
         This function converts a Transformer Dataframe of PandaPower to a power-grid-model
         Transformer input array.
@@ -561,7 +561,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             raise RuntimeError("Tap dependent impedance is not supported in Power Grid Model")
 
         # Attribute retrieval
-        i0 = self._get_pp_attr("trafo", "i0_percent")
+        i_no_load = self._get_pp_attr("trafo", "i0_percent")
         pfe = self._get_pp_attr("trafo", "pfe_kw")
         vk_percent = self._get_pp_attr("trafo", "vk_percent")
         vkr_percent = self._get_pp_attr("trafo", "vkr_percent")
@@ -581,12 +581,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         vk0_percent = self._get_pp_attr("trafo", "vk0_percent", np.nan)
         vkr0_percent = self._get_pp_attr("trafo", "vkr0_percent", np.nan)
         mag_g = pfe / (sn_mva * 1000)
-        rx_mag = mag_g / np.sqrt(i0 * i0 * 1e-4 - mag_g * mag_g)
+        rx_mag = mag_g / np.sqrt(i_no_load * i_no_load * 1e-4 - mag_g * mag_g)
         mag0_percent = self._get_pp_attr("trafo", "mag0_percent", np.nan)
         mag0_rx = self._get_pp_attr("trafo", "mag0_rx", np.nan)
         vk0_cond = np.array_equal(vkr_percent, vk0_percent) or np.isnan(vk0_percent).all()
         vkr0_cond = np.array_equal(vkr_percent, vkr0_percent) or np.isnan(vkr0_percent).all()
-        mag0_cond = np.array_equal(i0 * 1e-2, vk0_percent / mag0_percent) or np.isnan(mag0_percent).all()
+        mag0_cond = np.array_equal(i_no_load * 1e-2, vk0_percent / mag0_percent) or np.isnan(mag0_percent).all()
         mag0_rx_cond = np.array_equal(rx_mag, mag0_rx) or np.isnan(mag0_rx).all()
         si0_cond = np.isnan(self._get_pp_attr("trafo", "si0_hv_partial", np.nan)).all()
         if not (vk0_cond and vkr0_cond and mag0_cond and mag0_rx_cond and si0_cond):
@@ -617,7 +617,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_transformers["sn"] = sn_mva * parallel * 1e6
         pgm_transformers["uk"] = vk_percent * 1e-2
         pgm_transformers["pk"] = vkr_percent * sn_mva * parallel * (1e6 * 1e-2)
-        pgm_transformers["i0"] = i0 * 1e-2
+        pgm_transformers["i0"] = i_no_load * 1e-2
         pgm_transformers["p0"] = pfe * parallel * 1e3
         pgm_transformers["clock"] = clocks
         pgm_transformers["winding_from"] = winding_types["winding_from"]
