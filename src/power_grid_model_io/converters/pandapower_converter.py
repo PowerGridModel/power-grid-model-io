@@ -455,7 +455,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             return
 
         if self._get_pp_attr("load", "type").any() == "delta":
-            raise NotImplementedError("Delta loads are not implemented, only wye loads are supported.")
+            raise NotImplementedError("Delta loads are not implemented, only wye loads are supported in PGM.")
 
         scaling = self._get_pp_attr("load", "scaling", 1.0)
         in_service = self._get_pp_attr("load", "in_service", True)
@@ -509,7 +509,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             return
 
         if self._get_pp_attr("asymmetric_load", "type").any() == "delta":
-            raise NotImplementedError("Delta loads are not implemented, only wye loads are supported.")
+            raise NotImplementedError("Delta loads are not implemented, only wye loads are supported in PGM.")
 
         scaling = self._get_pp_attr("asymmetric_load", "scaling")
         multiplier = 1e6 * scaling

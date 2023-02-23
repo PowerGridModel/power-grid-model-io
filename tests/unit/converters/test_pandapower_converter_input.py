@@ -573,6 +573,38 @@ def test_create_pgm_input_asym_loads(mock_init_array: MagicMock, two_pp_objs, co
     assert converter.pgm_input_data["asym_load"] == mock_init_array.return_value
 
 
+def test_create_pgm_input_sym_loads__asym() -> None:
+    # Arrange
+    pp_net: pp.pandapowerNet = pp.create_empty_network()
+    pp.create_bus(net=pp_net, vn_kv=0.0)
+    pp.create_load(pp_net, 0, 0, type="delta")
+
+    converter = PandaPowerConverter()
+    converter.pp_input_data = {k: v for k, v in pp_net.items() if isinstance(v, pd.DataFrame)}
+
+    # Act/Assert
+    with pytest.raises(
+        NotImplementedError, match="Delta loads are not implemented, only wye loads are supported in PGM."
+    ):
+        converter._create_pgm_input_sym_loads()
+
+
+def test_create_pgm_input_asym_loads__asym() -> None:
+    # Arrange
+    pp_net: pp.pandapowerNet = pp.create_empty_network()
+    pp.create_bus(net=pp_net, vn_kv=0.0)
+    pp.create_asymmetric_load(pp_net, 0, type="delta")
+
+    converter = PandaPowerConverter()
+    converter.pp_input_data = {k: v for k, v in pp_net.items() if isinstance(v, pd.DataFrame)}
+
+    # Act/Assert
+    with pytest.raises(
+        NotImplementedError, match="Delta loads are not implemented, only wye loads are supported in PGM."
+    ):
+        converter._create_pgm_input_asym_loads()
+
+
 def test_create_pgm_input_transformers__tap_dependent_impedance() -> None:
     # Arrange
     pp_net: pp.pandapowerNet = pp.create_empty_network()
