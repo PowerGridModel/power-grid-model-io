@@ -35,7 +35,7 @@ def test_abstract_methods():
         BaseConverter()
 
 
-def test_load_input_data__dict(converter: DummyConverter):
+def test_load_input_data(converter: DummyConverter):
     # Arrange
     def add_extra_info(data, data_type, extra_info):
         extra_info[1] = "Foo"
@@ -52,6 +52,18 @@ def test_load_input_data__dict(converter: DummyConverter):
     )
     assert data == {"foo": 1}
     assert extra_info == {1: "Foo"}
+
+
+def test_load_input_data__no_extra_info(converter: DummyConverter):
+    # Arrange
+    mock_data = MagicMock()
+
+    # Act
+    data, extra_info = converter.load_input_data(data=mock_data, make_extra_info=False)
+
+    # Assert
+    converter._parse_data.assert_called_once_with(data=mock_data, data_type="input", extra_info=None)  # type: ignore
+    assert extra_info == {}
 
 
 def test_load_input_data__list(converter: DummyConverter):
