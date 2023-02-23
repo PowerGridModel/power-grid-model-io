@@ -97,7 +97,6 @@ class TabularData:
         return self._apply_value_substitution(column_data=column_data, table=table_name, field=column_name)
 
     def _apply_value_substitution(self, column_data: pd.Series, table: str, field: str) -> pd.Series:
-
         if self._substitution is None:  # No substitution defined, at all
             return column_data
 

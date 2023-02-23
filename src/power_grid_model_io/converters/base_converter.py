@@ -29,23 +29,26 @@ class BaseConverter(Generic[T], ABC):
         self._destination = destination
         self._auto_id = AutoID()
 
-    def load_input_data(self, data: Optional[T] = None) -> Tuple[SingleDataset, ExtraInfoLookup]:
+    def load_input_data(
+        self, data: Optional[T] = None, make_extra_info: bool = True
+    ) -> Tuple[SingleDataset, ExtraInfoLookup]:
         """Load input data and extra info
 
         Note: You shouldn't have to overwrite this method. Check _parse_data() instead.
 
         Args:
-          data: Optional[T]:  (Default value = None)
-
+          data: Optionally supply data in source format. If no data is supplied, it is loaded from self._source
+          make_extra_info: For efficiency reasons, one can disable the creation of extra_info.
         Returns:
 
         """
+
         data = self._load_data(data)
         extra_info: ExtraInfoLookup = {}
-        data = self._parse_data(data=data, data_type="input", extra_info=extra_info)
-        if isinstance(data, list):
+        parsed_data = self._parse_data(data=data, data_type="input", extra_info=extra_info if make_extra_info else None)
+        if isinstance(parsed_data, list):
             raise TypeError("Input data can not be batch data")
-        return data, extra_info
+        return parsed_data, extra_info
 
     def load_update_data(self, data: Optional[T] = None) -> Dataset:
         """Load update data
