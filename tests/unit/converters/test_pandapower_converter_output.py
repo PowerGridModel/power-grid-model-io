@@ -61,6 +61,14 @@ def test_create_output_data():
         (PandaPowerConverter._pp_ward_output, "ward"),
         (PandaPowerConverter._pp_motor_output, "motor"),
         (PandaPowerConverter._pp_switches_output, "link"),
+        (PandaPowerConverter._pp_buses_output_3ph, "node"),
+        (PandaPowerConverter._pp_lines_output_3ph, "line"),
+        (PandaPowerConverter._pp_ext_grids_output_3ph, "source"),
+        (PandaPowerConverter._pp_sgens_output_3ph, "sym_gen"),
+        (PandaPowerConverter._pp_trafos_output_3ph, "transformer"),
+        (PandaPowerConverter._pp_loads_output_3ph, "sym_load"),
+        (PandaPowerConverter._pp_asym_loads_output_3ph, "asym_load"),
+        (PandaPowerConverter._pp_asym_gens_output_3ph, "asym_gen"),
     ],
 )
 def test_create_pp_output_object__empty(create_fn: Callable[[PandaPowerConverter], None], table: str):
