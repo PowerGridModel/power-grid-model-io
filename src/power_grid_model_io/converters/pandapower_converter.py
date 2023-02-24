@@ -237,6 +237,31 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # Switches derive results from branches pp_output_data and pgm_output_data of links. Hence, placed in the end.
         self._pp_switches_output()
 
+    def _create_output_data_3ph(self):
+        """
+        Performs the conversion from power-grid-model to PandaPower by calling individual conversion functions.
+        Furthermore, creates a global node lookup table, which stores nodes' voltage magnitude per unit and the voltage
+        angle in degrees
+        """
+        # Many pp components store the voltage magnitude per unit and the voltage angle in degrees,
+        # so let's create a global lookup table (indexed on the pgm ids)
+        self.pgm_nodes_lookup = pd.DataFrame(
+            {
+                "u_pu": self.pgm_output_data["node"]["u_pu"],
+                "u_degree": self.pgm_output_data["node"]["u_angle"] * (180.0 / np.pi),
+            },
+            index=self.pgm_output_data["node"]["id"],
+        )
+
+        self._pp_buses_output_3ph()
+        self._pp_lines_output_3ph()
+        self._pp_ext_grids_output_3ph()
+        self._pp_loads_output_3ph()
+        self._pp_trafos_output_3ph()
+        self._pp_sgens_output_3ph()
+        self._pp_asym_gens_output_3ph()
+        self._pp_asym_loads_output_3ph()
+
     def _create_pgm_input_nodes(self):
         """
         This function converts a Bus Dataframe of PandaPower to a power-grid-model Node input array.

@@ -45,6 +45,25 @@ def test_create_output_data():
     converter._pp_switches_output.assert_called_once_with()
 
 
+def test_create_output_data_3ph():
+    # Arrange
+    converter = MagicMock()
+
+    # Act
+    PandaPowerConverter._create_output_data_3ph(self=converter)  # type: ignore
+
+    # Assert
+    assert len(converter.method_calls) == 8
+    converter._pp_buses_output_3ph.assert_called_once_with()
+    converter._pp_lines_output_3ph.assert_called_once_with()
+    converter._pp_ext_grids_output_3ph.assert_called_once_with()
+    converter._pp_sgens_output_3ph.assert_called_once_with()
+    converter._pp_trafos_output_3ph.assert_called_once_with()
+    converter._pp_loads_output_3ph.assert_called_once_with()
+    converter._pp_asym_loads_output_3ph.assert_called_once_with()
+    converter._pp_asym_gens_output_3ph.assert_called_once_with()
+
+
 @pytest.mark.parametrize(
     ("create_fn", "table"),
     [
