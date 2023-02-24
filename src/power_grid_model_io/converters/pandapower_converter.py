@@ -10,7 +10,7 @@ from typing import Dict, List, MutableMapping, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from power_grid_model import Branch3Side, BranchSide, LoadGenType, WindingType, initialize_array, power_grid_meta_data
+from power_grid_model import Branch3Side, BranchSide, LoadGenType, WindingType, initialize_array
 from power_grid_model.data_types import Dataset, SingleDataset
 
 from power_grid_model_io.converters.base_converter import BaseConverter
@@ -191,7 +191,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         dtype = np.int32
         nan = np.iinfo(dtype).min
         for component, data in self.pgm_output_data.items():
-            input_cols = power_grid_meta_data["input"][component].dtype.names
+            input_cols = initialize_array("input", component, 1).dtype.names
             node_cols = [col for col in input_cols if NODE_REF_RE.fullmatch(col)]
             if not node_cols:
                 continue

@@ -7,7 +7,7 @@ from unittest.mock import mock_open, patch
 
 import numpy as np
 import pandas as pd
-from power_grid_model import power_grid_meta_data
+from power_grid_model import initialize_array
 
 from .utils import component_attributes, extract_extra_info, select_values
 
@@ -25,7 +25,7 @@ def test_component_attributes():
 
 def test_select_values():
     # Arrange
-    input_node_dtype = power_grid_meta_data["input"]["node"].dtype
+    input_node_dtype = initialize_array("input", "node", 1).dtype
     actual = {"node": np.array([(2, 2.0), (4, np.nan), (3, 3.0), (1, 1.0)], dtype=input_node_dtype)}
     expected = {"node": np.array([(4, 4.0), (1, np.nan), (3, 3.0)], dtype=input_node_dtype)}
 

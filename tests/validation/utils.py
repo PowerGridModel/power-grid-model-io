@@ -9,7 +9,7 @@ from typing import Generator, List, Mapping, Tuple
 
 import numpy as np
 import pandas as pd
-from power_grid_model import power_grid_meta_data
+from power_grid_model import initialize_array
 from power_grid_model.data_types import SingleDataset, SinglePythonDataset
 from power_grid_model.utils import convert_python_single_dataset_to_single_dataset
 
@@ -67,7 +67,7 @@ def component_attributes(json_path: Path, data_type: str) -> Generator[Tuple[str
     # Loop over all components in the validation file (in alphabetical order)
     for component, objects in sorted(data.items(), key=lambda x: x[0]):
         # Create a set of attribute names for each object, then take the union of all those sets
-        pgm_attr = set(power_grid_meta_data[data_type][component].dtype.names)
+        pgm_attr = set(initialize_array(data_type, component, 1).dtype.names)
         obj_keys = (set(obj.keys()) & pgm_attr for obj in objects)
         unique_attributes = set().union(*obj_keys)
 
@@ -149,7 +149,7 @@ def extract_extra_info(data: SinglePythonDataset, data_type: str) -> ExtraInfoLo
     """
     extra_info: ExtraInfoLookup = {}
     for component, objects in data.items():
-        pgm_attr = set(power_grid_meta_data[data_type][component].dtype.names)
+        pgm_attr = set(initialize_array(data_type, component, 1).dtype.names)
         for obj in objects:
             obj_extra_info = {attr: val for attr, val in obj.items() if attr not in pgm_attr}
             if obj_extra_info:
