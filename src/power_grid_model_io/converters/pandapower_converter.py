@@ -605,17 +605,27 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # Asym parameters retrival and check. For PGM, manual zero sequence params are not supported yet.
         vk0_percent = self._get_pp_attr("trafo", "vk0_percent", np.nan)
         vkr0_percent = self._get_pp_attr("trafo", "vkr0_percent", np.nan)
-        mag_g = pfe / (sn_mva * 1000)
-        rx_mag = mag_g / np.sqrt(i_no_load * i_no_load * 1e-4 - mag_g * mag_g)
         mag0_percent = self._get_pp_attr("trafo", "mag0_percent", np.nan)
         mag0_rx = self._get_pp_attr("trafo", "mag0_rx", np.nan)
-        vk0_cond = np.array_equal(vkr_percent, vk0_percent) or np.isnan(vk0_percent).all()
-        vkr0_cond = np.array_equal(vkr_percent, vkr0_percent) or np.isnan(vkr0_percent).all()
-        mag0_cond = np.array_equal(i_no_load * 1e-2, vk0_percent / mag0_percent) or np.isnan(mag0_percent).all()
-        mag0_rx_cond = np.array_equal(rx_mag, mag0_rx) or np.isnan(mag0_rx).all()
-        si0_cond = np.isnan(self._get_pp_attr("trafo", "si0_hv_partial", np.nan)).all()
-        if not (vk0_cond and vkr0_cond and mag0_cond and mag0_rx_cond and si0_cond):
-            raise NotImplementedError("Only equal positive and zero sequence parameters are supported for trafo in PGM")
+        # Calculate rx ratio of magnetising branch
+        mag_g = pfe / (sn_mva * 1000)
+        rx_mag = mag_g / np.sqrt(i_no_load * i_no_load * 1e-4 - mag_g * mag_g)
+        # positive and zero sequence magnetising impedance must be equal.
+        # mag0_percent = z0mag / z0.
+        checks = {
+            "vk0_percent": np.array_equal(vkr_percent, vk0_percent) or np.isnan(vk0_percent).all(),
+            "vkr0_percent": np.array_equal(vkr_percent, vkr0_percent) or np.isnan(vkr0_percent).all(),
+            "mag0_percent": np.array_equal(i_no_load * 1e-2, 1e4 / (vk0_percent * mag0_percent))
+            or np.isnan(mag0_percent).all(),
+            "mag0_rx": np.array_equal(rx_mag, mag0_rx) or np.isnan(mag0_rx).all(),
+            "si0_hv_partial": np.isnan(self._get_pp_attr("trafo", "si0_hv_partial", np.nan)).all(),
+        }
+        if not all(checks.values()):
+            failed = ", ".join([key for key, value in checks.items() if not value])
+            raise NotImplementedError(
+                "Only equal positive and zero sequence parameters are supported for trafo in PGM. "
+                f"Check {failed} parameter(s)"
+            )
 
         # Do not use taps when mandatory tap data is not available
         no_taps = np.equal(tap_side, None) | np.isnan(tap_pos) | np.isnan(tap_nom) | np.isnan(tap_size)
@@ -704,15 +714,19 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         vkr0_lv_percent = self._get_pp_attr("trafo3w", "vkr0_lv_percent", np.nan)
 
         # Asym parameters. For PGM, manual zero sequence params are not supported yet.
-        cond1_hv = np.array_equal(vk_hv_percent, vk0_hv_percent) or np.isnan(vk0_hv_percent).all()
-        cond2_hv = np.array_equal(vkr_hv_percent, vkr0_hv_percent) or np.isnan(vkr0_hv_percent).all()
-        cond1_mv = np.array_equal(vk_mv_percent, vk0_mv_percent) or np.isnan(vk0_mv_percent).all()
-        cond2_mv = np.array_equal(vkr_mv_percent, vkr0_mv_percent) or np.isnan(vkr0_mv_percent).all()
-        cond1_lv = np.array_equal(vk_lv_percent, vk0_lv_percent) or np.isnan(vk0_lv_percent).all()
-        cond2_lv = np.array_equal(vkr_lv_percent, vkr0_lv_percent) or np.isnan(vkr0_lv_percent).all()
-        if not (cond1_hv and cond2_hv and cond1_mv and cond2_mv and cond1_lv and cond2_lv):
+        checks = {
+            "vk0_hv_percent": np.array_equal(vk_hv_percent, vk0_hv_percent) or np.isnan(vk0_hv_percent).all(),
+            "vkr0_hv_percent": np.array_equal(vkr_hv_percent, vkr0_hv_percent) or np.isnan(vkr0_hv_percent).all(),
+            "vk0_mv_percent": np.array_equal(vk_mv_percent, vk0_mv_percent) or np.isnan(vk0_mv_percent).all(),
+            "vkr0_mv_percent": np.array_equal(vkr_mv_percent, vkr0_mv_percent) or np.isnan(vkr0_mv_percent).all(),
+            "vk0_lv_percent": np.array_equal(vk_lv_percent, vk0_lv_percent) or np.isnan(vk0_lv_percent).all(),
+            "vkr0_lv_percent": np.array_equal(vkr_lv_percent, vkr0_lv_percent) or np.isnan(vkr0_lv_percent).all(),
+        }
+        if not all(checks.values()):
+            failed = ", ".join([key for key, value in checks.items() if not value])
             raise NotImplementedError(
-                "Only equal positive and zero sequence parameters are supported for trafo3w in PGM"
+                "Only equal positive and zero sequence parameters are supported for trafo3w in PGM. "
+                f"Check {failed} parameter(s)"
             )
 
         # Do not use taps when mandatory tap data is not available

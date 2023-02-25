@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
 #
 # SPDX-License-Identifier: MPL-2.0
-
+import re
 from typing import Callable
 from unittest.mock import ANY, MagicMock, call, patch
 
@@ -897,7 +897,10 @@ def test_create_pgm_input_transformers__asym(kwargs):
     converter.pp_input_data = {k: v for k, v in pp_net.items() if isinstance(v, pd.DataFrame)}
 
     with pytest.raises(
-        NotImplementedError, match="Only equal positive and zero sequence parameters are supported for trafo in PGM"
+        NotImplementedError,
+        match=re.escape(
+            f"Only equal positive and zero sequence parameters are supported for trafo in PGM. Check {list(kwargs.keys())[0]} parameter(s)"
+        ),
     ):
         converter._create_pgm_input_transformers()
 
@@ -1259,7 +1262,10 @@ def test_create_pgm_input_transformers3w__asym(kwargs):
 
     # Act
     with pytest.raises(
-        NotImplementedError, match="Only equal positive and zero sequence parameters are supported for trafo3w in PGM"
+        NotImplementedError,
+        match=re.escape(
+            f"Only equal positive and zero sequence parameters are supported for trafo3w in PGM. Check {list(kwargs.keys())[0]} parameter(s)"
+        ),
     ):
         converter._create_pgm_input_three_winding_transformers()
 
