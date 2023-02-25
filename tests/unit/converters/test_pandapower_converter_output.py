@@ -790,6 +790,7 @@ def test_output_line_3ph(converter):
     mock_pgm_array = MagicMock()
     converter.pgm_nodes_lookup = MagicMock()
     converter.pgm_output_data["line"] = mock_pgm_array
+    converter.pgm_output_data["node"] = mock_pgm_array
     converter.pgm_input_data["line"] = MagicMock()
 
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:

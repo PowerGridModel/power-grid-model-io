@@ -243,16 +243,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Furthermore, creates a global node lookup table, which stores nodes' voltage magnitude per unit and the voltage
         angle in degrees
         """
-        # Many pp components store the voltage magnitude per unit and the voltage angle in degrees,
-        # so let's create a global lookup table (indexed on the pgm ids)
-        self.pgm_nodes_lookup = pd.DataFrame(
-            {
-                "u_pu": self.pgm_output_data["node"]["u_pu"],
-                "u_degree": self.pgm_output_data["node"]["u_angle"] * (180.0 / np.pi),
-            },
-            index=self.pgm_output_data["node"]["id"],
-        )
-
         self._pp_buses_output_3ph()
         self._pp_lines_output_3ph()
         self._pp_ext_grids_output_3ph()
@@ -1571,16 +1561,23 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the Line component
         """
-        if "line" not in self.pgm_output_data or self.pgm_output_data["line"].size == 0:
+        if any((comp not in self.pgm_output_data or self.pgm_output_data[comp].size == 0) for comp in ["node", "line"]):
             return
 
         pgm_input_lines = self.pgm_input_data["line"]
         pgm_output_lines = self.pgm_output_data["line"]
+        pgm_output_nodes = self.pgm_output_data["node"]
 
-        u_complex = self.pgm_nodes_lookup["u_pu"] * np.exp(1j * self.pgm_nodes_lookup["u_angle"])
+        u_complex = pd.DataFrame(
+            {
+                "ua": pgm_output_nodes["u"][0] * np.exp(1j * pgm_output_nodes["u_angle"][0]),
+                "ub": pgm_output_nodes["u"][1] * np.exp(1j * pgm_output_nodes["u_angle"][1]),
+                "uc": pgm_output_nodes["u"][2] * np.exp(1j * pgm_output_nodes["u_angle"][2]),
+            }
+        )
         from_nodes = pgm_output_lines["from_node"]
         to_nodes = pgm_output_lines["to_node"]
-        i_from = pgm_output_lines["p_from"] + 1j * pgm_output_lines["q_from"] / u_complex[from_nodes]
+        i_from = (pgm_output_lines["p_from"] + 1j * pgm_output_lines["q_from"]) / u_complex[from_nodes]
         i_to = (pgm_output_lines["p_to"] + 1j * pgm_output_lines["q_to"]) / u_complex[to_nodes]
 
         pp_output_lines_3ph = pd.DataFrame(
