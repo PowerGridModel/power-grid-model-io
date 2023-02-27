@@ -386,7 +386,7 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     converter._get_pp_attr.assert_any_call("line", "r0_ohm_per_km", np.nan)
     converter._get_pp_attr.assert_any_call("line", "x0_ohm_per_km", np.nan)
     converter._get_pp_attr.assert_any_call("line", "c0_nf_per_km", np.nan)
-    converter._get_pp_attr.assert_any_call("line", "g0_us_per_km", np.nan)
+    converter._get_pp_attr.assert_any_call("line", "g0_us_per_km", 0)
     assert len(converter._get_pp_attr.call_args_list) == 15
 
     # assignment
