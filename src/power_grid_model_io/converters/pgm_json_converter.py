@@ -144,7 +144,9 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
                     extra_info[obj["id"]][attribute] = value
         return array
 
-    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup]) -> StructuredData:
+    def _serialize_data(
+        self, data: Dataset, data_type: Optional[str], extra_info: Optional[ExtraInfoLookup]
+    ) -> StructuredData:
         """This function converts a power-grid-model dataset to a structured dataset. First, the function checks if the
         dataset is a single dataset or batch dataset. If it is a batch, the batch data is converted to a list of
         batches, then each batch is converted individually.

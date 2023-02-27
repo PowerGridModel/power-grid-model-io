@@ -16,7 +16,7 @@ class DummyConverter(BaseConverter[Dict[str, List[Dict[str, int]]]]):
         # No need to implement _parse_data() for testing purposes
         pass
 
-    def _serialize_data(self, data, extra_info=None):
+    def _serialize_data(self, data, data_type=None, extra_info=None):
         # No need to implement _serialize_data() for testing purposes
         pass
 
@@ -122,7 +122,7 @@ def test_convert_data(converter: DummyConverter):
     converter.convert(data={"foo": np.array([1])})
 
     # Assert
-    converter._serialize_data.assert_called_once_with(data={"foo": np.array([1])}, extra_info=None)  # type: ignore
+    converter._serialize_data.assert_called_once_with(data={"foo": np.array([1])}, data_type=None, extra_info=None)  # type: ignore
 
 
 def test_save_data(converter: DummyConverter):

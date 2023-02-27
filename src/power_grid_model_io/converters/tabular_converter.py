@@ -322,7 +322,9 @@ class TabularConverter(BaseConverter[TabularData]):
 
         return merged
 
-    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup]) -> TabularData:
+    def _serialize_data(
+        self, data: Dataset, data_type: Optional[str], extra_info: Optional[ExtraInfoLookup]
+    ) -> TabularData:
         if extra_info is not None:
             raise NotImplementedError("Extra info can not (yet) be stored for tabular data")
         if isinstance(data, list):

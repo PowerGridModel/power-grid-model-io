@@ -27,7 +27,7 @@ def load_and_convert_pgm_data() -> PandaPowerData:
     """
     data, extra_info = load_json_single_dataset(PGM_OUTPUT_FILE, data_type="sym_output")
     converter = PandaPowerConverter()
-    return converter.convert(data=data, extra_info=extra_info)
+    return converter.convert(data=data, data_type="sym_output", extra_info=extra_info)
 
 
 @lru_cache

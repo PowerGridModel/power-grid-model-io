@@ -84,12 +84,15 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         return self.pgm_input_data
 
-    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup]) -> PandaPowerData:
+    def _serialize_data(
+        self, data: Dataset, data_type: Optional[str], extra_info: Optional[ExtraInfoLookup]
+    ) -> PandaPowerData:
         """
         Set up for conversion from power-grid-model to PandaPower
 
         Args:
             data: a structured array of power-grid-model data.
+            data_type: type of output data ("sym_output" / "asym_output")
             extra_info: an optional dictionary where extra component info (that can't be specified in
             power-grid-model data) can be specified
 
@@ -109,7 +112,15 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             self._extra_info_to_pgm_input_data(extra_info)
 
         # Convert
-        self._create_output_data()
+        if data_type == "sym_output":
+            self._create_output_data()
+        elif data_type == "asym_output":
+            self._create_output_data_3ph()
+        else:
+            raise ValueError(
+                f"Data type: '{data_type}' is not implemented. \n"
+                "Use either convert_sym_output or convert_asym_output instead of .convert()."
+            )
 
         return self.pp_output_data
 
