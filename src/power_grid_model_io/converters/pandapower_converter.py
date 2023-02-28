@@ -29,7 +29,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
     __slots__ = ("pp_input_data", "pgm_input_data", "idx", "idx_lookup", "next_idx", "system_frequency")
 
-    def __init__(self, system_frequency: float = 50.0):
+    def __init__(self, system_frequency: float = 50.0, base_power: float = 1.0e6):
         """
         Prepare some member variables
 
@@ -38,6 +38,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
         super().__init__(source=None, destination=None)
         self.system_frequency: float = system_frequency
+        self.base_power: float = base_power
         self.pp_input_data: PandaPowerData = {}
         self.pgm_input_data: SingleDataset = {}
         self.pp_output_data: PandaPowerData = {}
@@ -711,21 +712,65 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
     def _create_pgm_input_storages(self):
         # TODO: create unit tests for the function
-        pp_storage = self.pp_input_data["storage"]
+        pp_storages = self.pp_input_data["storage"]
 
-        if pp_storage.empty:
+        if pp_storages.empty:
             return
 
-        raise NotImplementedError("Storage is not implemented yet!")
+        multiplier = self._get_pp_attr("storage", "scaling") * 1e6
+
+        pgm_sym_loads_from_storage = initialize_array(
+            data_type="input", component_type="sym_load", shape=len(pp_storages)
+        )
+        pgm_sym_loads_from_storage["id"] = self._generate_ids("storage", pp_storages.index, name="storage_load")
+        pgm_sym_loads_from_storage["node"] = self._get_pgm_ids("bus", self._get_pp_attr("storage", "bus"))
+        pgm_sym_loads_from_storage["status"] = self._get_pp_attr("storage", "in_service")
+        pgm_sym_loads_from_storage["type"] = LoadGenType.const_power
+        pgm_sym_loads_from_storage["p_specified"] = self._get_pp_attr("storage", "p_mw") * multiplier
+        pgm_sym_loads_from_storage["q_specified"] = self._get_pp_attr("storage", "q_mvar") * multiplier
+        self._merge_to_pgm_data(pgm_name="sym_load", pgm_data_to_add=pgm_sym_loads_from_storage)
 
     def _create_pgm_input_impedances(self):
         # TODO: create unit tests for the function
-        pp_impedance = self.pp_input_data["impedance"]
+        pp_impedances = self.pp_input_data["impedance"]
 
-        if pp_impedance.empty:
+        if pp_impedances.empty:
             return
 
-        raise NotImplementedError("Impedance is not implemented yet!")
+        rft = self._get_pp_attr("impedance", "rft_pu")
+        xft = self._get_pp_attr("impedance", "xft_pu")
+        rtf = self._get_pp_attr("impedance", "rtf_pu")
+        xtf = self._get_pp_attr("impedance", "xtf_pu")
+        if not (np.array_equal(rft, rtf) and np.array_equal(xft, xtf)):
+            raise NotImplementedError("Different from and to impedance is not implemented yet!")
+
+        impedance_mva = self._get_pp_attr("impedance", "sn_mva")
+        from_buses = self._get_pp_attr("impedance", "from_bus")
+        to_buses = self._get_pp_attr("impedance", "to_bus")
+        vn_kv_at_from_buses = self.pp_input_data["bus"]["vn_kv"][from_buses]
+        z_base = vn_kv_at_from_buses * vn_kv_at_from_buses / impedance_mva
+        r1 = rft / z_base
+        x1 = xft / z_base
+
+        in_service = self._get_pp_attr("impedance", "in_service", True)
+        pgm_impedance_lines = initialize_array(data_type="input", component_type="line", shape=len(pp_impedances))
+        pgm_impedance_lines["id"] = self._generate_ids("impedance", pp_impedances.index)
+        pgm_impedance_lines["from_node"] = self._get_pgm_ids("bus", from_buses)
+        pgm_impedance_lines["from_status"] = in_service
+        pgm_impedance_lines["to_node"] = self._get_pgm_ids("bus", to_buses)
+        pgm_impedance_lines["to_status"] = in_service
+        pgm_impedance_lines["r1"] = r1
+        pgm_impedance_lines["x1"] = x1
+        pgm_impedance_lines["c1"] = 0
+        pgm_impedance_lines["tan1"] = 0
+        pgm_impedance_lines["r0"] = r1
+        pgm_impedance_lines["x0"] = x1
+        pgm_impedance_lines["c0"] = 0
+        pgm_impedance_lines["tan0"] = 0
+        # Rated current is not required
+        pgm_impedance_lines["i_n"] = 1e15
+
+        self._merge_to_pgm_data(pgm_name="line", pgm_data_to_add=pgm_impedance_lines)
 
     def _create_pgm_input_wards(self):
         # TODO: create unit tests for the function
@@ -757,15 +802,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_loads_from_ward["p_specified"][-n_wards:] = self._get_pp_attr("ward", "pz_mw") * 1e6
         pgm_sym_loads_from_ward["q_specified"][-n_wards:] = self._get_pp_attr("ward", "qz_mvar") * 1e6
 
-        #  If input data of loads has already been filled then extend it with data of wards. If it is empty and there
-        #  is no data about loads,then assign ward data to it
-        if "sym_load" in self.pgm_input_data:
-            symload_dtype = self.pgm_input_data["sym_load"].dtype
-            self.pgm_input_data["sym_load"] = np.concatenate(  # pylint: disable=unexpected-keyword-arg
-                [self.pgm_input_data["sym_load"], pgm_sym_loads_from_ward], dtype=symload_dtype
-            )
-        else:
-            self.pgm_input_data["sym_load"] = pgm_sym_loads_from_ward
+        self._merge_to_pgm_data(pgm_name="sym_load", pgm_data_to_add=pgm_sym_loads_from_ward)
 
     def _create_pgm_input_xwards(self):
         # TODO: create unit tests for the function
@@ -774,7 +811,45 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_xwards.empty:
             return
 
-        raise NotImplementedError("Extended Ward is not implemented yet!")
+        n_xwards = len(pp_xwards)
+        in_service = self._get_pp_attr("xward", "in_service", True)
+        bus = self._get_pp_attr("xward", "bus")
+        node = self._get_pgm_ids("bus", bus)
+
+        pgm_sym_loads_from_xward = initialize_array(data_type="input", component_type="sym_load", shape=n_xwards * 2)
+        pgm_sym_loads_from_xward["id"][:n_xwards] = self._generate_ids(
+            "ward", pp_xwards.index, name="xward_const_power_load"
+        )
+        pgm_sym_loads_from_xward["node"][:n_xwards] = node
+        pgm_sym_loads_from_xward["status"][:n_xwards] = in_service
+        pgm_sym_loads_from_xward["type"][:n_xwards] = LoadGenType.const_power
+        pgm_sym_loads_from_xward["p_specified"][:n_xwards] = self._get_pp_attr("xward", "ps_mw")
+        pgm_sym_loads_from_xward["q_specified"][:n_xwards] = self._get_pp_attr("xward", "qs_mvar")
+
+        pgm_sym_loads_from_xward["id"][-n_xwards:] = self._generate_ids(
+            "xward", pp_xwards.index, name="xward_const_impedance_load"
+        )
+        pgm_sym_loads_from_xward["node"][-n_xwards:] = node
+        pgm_sym_loads_from_xward["status"][-n_xwards:] = in_service
+        pgm_sym_loads_from_xward["type"][-n_xwards:] = LoadGenType.const_impedance
+        pgm_sym_loads_from_xward["p_specified"][-n_xwards:] = self._get_pp_attr("xward", "pz_mw")
+        pgm_sym_loads_from_xward["q_specified"][-n_xwards:] = self._get_pp_attr("xward", "qz_mvar")
+
+        rx_ratio = self._get_pp_attr("xward", "r_ohm") / self._get_pp_attr("xward", "x_ohm")
+        vn_kv_at_bus = self.pp_input_data["bus"]["vn_kv"][bus]
+        sk = (vn_kv_at_bus / self.base_power) * 1e6
+
+        pgm_source_from_xward = initialize_array(data_type="input", component_type="source", shape=n_xwards)
+        pgm_source_from_xward["id"] = self._generate_ids("ext_grid", pp_xwards.index, name="xward_sources")
+        pgm_source_from_xward["node"] = node
+        pgm_source_from_xward["status"] = in_service
+        pgm_source_from_xward["u_ref"] = self._get_pp_attr("xward", "vm_pu", 1.0)
+        pgm_source_from_xward["u_ref_angle"] = 0
+        pgm_source_from_xward["rx_ratio"] = rx_ratio
+        pgm_source_from_xward["sk"] = sk
+
+        self._merge_to_pgm_data("sym_load", pgm_sym_loads_from_xward)
+        self._merge_to_pgm_data("source", pgm_source_from_xward)
 
     def _create_pgm_input_motors(self):
         # TODO: create unit tests for the function
@@ -801,15 +876,24 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             np.power(p_spec / self._get_pp_attr("motor", "cos_phi"), 2) - p_spec**2
         )
 
-        #  If input data of loads has already been filled then extend it with data of motors. If it is empty and there
-        #  is no data about loads,then assign motor data to it
-        if "sym_load" in self.pgm_input_data:
-            symload_dtype = self.pgm_input_data["sym_load"].dtype
-            self.pgm_input_data["sym_load"] = np.concatenate(  # pylint: disable=unexpected-keyword-arg
-                [self.pgm_input_data["sym_load"], pgm_sym_loads_from_motor], dtype=symload_dtype
+        self._merge_to_pgm_data(pgm_name="sym_load", pgm_data_to_add=pgm_sym_loads_from_motor)
+
+    def _merge_to_pgm_data(self, pgm_name: str, pgm_data_to_add: np.ndarray):
+        """
+        If input data of loads has already been filled then extend it with data of pgm component. If it is empty and there
+        is no data in it,then assign relevant data to it
+
+        Args:
+            pgm_name: component name in power-grid-model eg node, source, etc
+            pgm_data_to_add: The array to be merged or added
+        """
+        if pgm_name in self.pgm_input_data:
+            pgm_dtype = self.pgm_input_data[pgm_name].dtype
+            self.pgm_input_data[pgm_name] = np.concatenate(
+                [self.pgm_input_data[pgm_name], pgm_data_to_add], dtype=pgm_dtype
             )
         else:
-            self.pgm_input_data["sym_load"] = pgm_sym_loads_from_motor
+            self.pgm_input_data[pgm_name] = pgm_data_to_add
 
     def _create_pgm_input_dclines(self):
         # TODO: create unit tests for the function
