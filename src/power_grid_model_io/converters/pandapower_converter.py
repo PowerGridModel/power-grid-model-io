@@ -1534,11 +1534,68 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_buses_3ph["unbalance_percent"] = np.abs(u_sequence[:, 0]) / np.abs(u_sequence[:, 1]) * 100
 
         # p_to, p_from, q_to and q_from connected to the bus have to be summed up
-        #  self._pp_buses_output_3ph_accumulate_power(pp_output_buses_3ph)
-        # TODO: construct a function that could accumulate power of busses for 3ph calculations
+        self._pp_buses_output_3ph__accumulate_power(pp_output_buses_3ph)
 
         assert "res_bus_3ph" not in self.pp_output_data
         self.pp_output_data["res_bus_3ph"] = pp_output_buses_3ph
+
+    def _pp_buses_output_3ph__accumulate_power(self, pp_output_buses_3ph: pd.DataFrame):
+        """
+        For each node, we accumulate the power for all connected branches and branches for asymmetric output
+
+        Args:
+            pp_output_buses: a Pandapower output dataframe of Bus component
+
+        Returns:
+            accumulated power for each bus
+        """
+        power_columns = ["p_a_mw", "p_b_mw", "p_c_mw", "q_a_mvar", "q_b_mvar", "q_c_mvar"]
+        # Let's define all the components and sides where nodes can be connected
+        component_sides = {
+            "line": [("from_node", "p_from", "q_from"), ("to_node", "p_to", "q_to")],
+            "link": [("from_node", "p_from", "q_from"), ("to_node", "p_to", "q_to")],
+            "transformer": [("from_node", "p_from", "q_from"), ("to_node", "p_to", "q_to")],
+        }
+
+        # Set the initial powers to zero
+        pp_output_buses_3ph[power_columns] = 0.0
+
+        # Now loop over all components, skipping the components that don't exist or don't contain data
+        for component, sides in component_sides.items():
+            if component not in self.pgm_output_data or self.pgm_output_data[component].size == 0:
+                continue
+
+            if component not in self.pgm_input_data:
+                raise KeyError(f"PGM input_data is needed to accumulate output for {component}s.")
+
+            for node_col, p_col, q_col in sides:
+                # Select the columns that we are going to use
+                component_data = pd.DataFrame(
+                    zip(
+                        self.pgm_input_data[component][node_col],
+                        self.pgm_output_data[component][p_col][:, 0],
+                        self.pgm_output_data[component][p_col][:, 1],
+                        self.pgm_output_data[component][p_col][:, 2],
+                        self.pgm_output_data[component][q_col][:, 0],
+                        self.pgm_output_data[component][q_col][:, 1],
+                        self.pgm_output_data[component][q_col][:, 2],
+                    ),
+                    columns=[node_col] + power_columns,
+                )
+
+                # Accumulate the powers and index by panda power bus index
+                accumulated_data = component_data.groupby(node_col).sum()
+                accumulated_data.index = self._get_pp_ids("bus", pd.Series(accumulated_data.index))
+
+                # We might not have power data for each pp bus, so select only the indexes for which data is available
+                idx = pp_output_buses_3ph.index.intersection(accumulated_data.index)
+
+                # Now add the active and reactive powers to the pp busses
+                # Note that the units are incorrect; for efficiency, unit conversions will be applied at the end.
+                pp_output_buses_3ph.loc[idx, power_columns] -= accumulated_data[power_columns]
+
+        # Finally apply the unit conversion (W -> MW and VAR -> MVAR)
+        pp_output_buses_3ph[power_columns] /= 1e6
 
     def _pp_lines_output_3ph(self):
         """
