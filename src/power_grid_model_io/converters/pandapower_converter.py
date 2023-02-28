@@ -137,20 +137,38 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._create_pgm_input_dclines()
 
     def _fill_extra_info(self, extra_info: ExtraInfoLookup):
+
         for (pp_table, name), indices in self.idx_lookup.items():
             for pgm_id, pp_idx in zip(indices.index, indices):
                 if name:
                     extra_info[pgm_id] = {"id_reference": {"table": pp_table, "name": name, "index": pp_idx}}
                 else:
                     extra_info[pgm_id] = {"id_reference": {"table": pp_table, "index": pp_idx}}
+
         for component_data in self.pgm_input_data.values():
             for attr_name in component_data.dtype.names:
                 if NODE_REF_RE.fullmatch(attr_name):
                     for pgm_id, node_id in component_data[["id", attr_name]]:
                         if pgm_id not in extra_info:
-                            extra_info[pgm_id] = {attr_name: node_id}
-                        else:
-                            extra_info[pgm_id][attr_name] = node_id
+                            extra_info[pgm_id] = {}
+                        if "pgm_input" not in extra_info[pgm_id]:
+                            extra_info[pgm_id]["pgm_input"] = {}
+                        extra_info[pgm_id]["pgm_input"][attr_name] = node_id
+
+        pp_input = {"trafo": {"df"}}
+        for pp_table, pp_attr in pp_input.items():
+            if pp_table in self.pp_input_data:
+                pp_attr = pp_attr & set(self.pp_input_data[pp_table].columns.names)
+                if not pp_attr:
+                    continue
+                pgm_ids = self._get_pgm_ids(pp_table=pp_table)
+                for pgm_id, pp_element in zip(pgm_ids, self.pp_input_data[pp_table]):
+                    if pgm_id not in extra_info:
+                        extra_info[pgm_id] = {}
+                    if "pp_input" not in extra_info[pgm_id]:
+                        extra_info[pgm_id]["pp_input"] = {}
+                    for attr in pp_attr:
+                        extra_info[pgm_id]["pp_input"][attr] = pp_element[attr]
 
     def _extra_info_to_idx_lookup(self, extra_info: ExtraInfoLookup):
         """
@@ -202,9 +220,27 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 dtype={"names": ["id"] + node_cols, "formats": [dtype] * num_cols},
             )
             for i, pgm_id in enumerate(data["id"]):
-                extra = extra_info[pgm_id]
+                extra = extra_info[pgm_id].get("pgm_input", {})
                 ref[i] = (pgm_id,) + tuple(extra[col] for col in node_cols)
             self.pgm_input_data[component] = ref
+
+    def _extra_info_to_pp_input_data(self, extra_info: ExtraInfoLookup):
+        """
+        Converts extra component info into node_lookup
+
+        Args:
+            extra_info: a dictionary where the node reference ids are stored
+        """
+        assert not self.pp_input_data
+        assert self.pgm_output_data
+
+        if "transformer" not in self.pgm_output_data:
+            return
+
+        pgm_ids = self.pgm_output_data["transformer"]["id"]
+        pp_ids = self._get_pp_ids(pp_table="trafo", pgm_idx=pgm_ids)
+        df = (extra_info.get(pgm_id, {}).get("pp_input", {}).get("df", np.nan) for pgm_id in pp_ids)
+        self.pp_input_data = {"trafo": pd.DataFrame(df, columns=["df"], index=pp_ids)}
 
     def _create_output_data(self):
         """

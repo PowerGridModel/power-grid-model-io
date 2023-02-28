@@ -157,11 +157,20 @@ def test_fill_extra_info():
     assert extra_info[0] == {"id_reference": {"table": "bus", "index": 101}}
     assert extra_info[1] == {"id_reference": {"table": "bus", "index": 102}}
     assert extra_info[2] == {"id_reference": {"table": "bus", "index": 103}}
-    assert extra_info[3] == {"id_reference": {"table": "load", "name": "const_current", "index": 201}, "node": 0}
-    assert extra_info[4] == {"id_reference": {"table": "load", "name": "const_current", "index": 202}, "node": 1}
-    assert extra_info[5] == {"id_reference": {"table": "load", "name": "const_current", "index": 203}, "node": 2}
-    assert extra_info[6] == {"from_node": 0, "to_node": 1}
-    assert extra_info[7] == {"from_node": 1, "to_node": 2}
+    assert extra_info[3] == {
+        "id_reference": {"table": "load", "name": "const_current", "index": 201},
+        "pgm_input": {"node": 0},
+    }
+    assert extra_info[4] == {
+        "id_reference": {"table": "load", "name": "const_current", "index": 202},
+        "pgm_input": {"node": 1},
+    }
+    assert extra_info[5] == {
+        "id_reference": {"table": "load", "name": "const_current", "index": 203},
+        "pgm_input": {"node": 2},
+    }
+    assert extra_info[6] == {"pgm_input": {"from_node": 0, "to_node": 1}}
+    assert extra_info[7] == {"pgm_input": {"from_node": 1, "to_node": 2}}
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._extra_info_to_idx_lookup")
@@ -249,8 +258,8 @@ def test_extra_info_to_pgm_input_data():
     converter.pgm_output_data["node"]["id"] = [1, 2, 3]
     converter.pgm_output_data["line"]["id"] = [12, 23]
     extra_info = {
-        12: {"from_node": 1, "to_node": 2},
-        23: {"from_node": 2, "to_node": 3},
+        12: {"pgm_input": {"from_node": 1, "to_node": 2}},
+        23: {"pgm_input": {"from_node": 2, "to_node": 3}},
     }
 
     # Act
