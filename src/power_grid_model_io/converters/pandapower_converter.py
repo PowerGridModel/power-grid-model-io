@@ -118,8 +118,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             self._create_output_data_3ph()
         else:
             raise ValueError(
-                f"Data type: '{data_type}' is not implemented. \n"
-                "Use either convert_sym_output or convert_asym_output instead of .convert()."
+                f"Data type: '{data_type}' is not implemented. "
+                "Use either data_type='sym_output' or data_type='asym_output'"
             )
 
         return self.pp_output_data

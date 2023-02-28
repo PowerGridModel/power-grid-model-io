@@ -223,8 +223,7 @@ def test__serialize_data__other():
     # Act
     with pytest.raises(
         ValueError,
-        match="Data type: 'None' is not implemented. \n"
-        "Use either convert_sym_output or convert_asym_output instead of .convert().",
+        match="Data type: 'None' is not implemented. Use either data_type='sym_output' or data_type='asym_output'",
     ):
         converter._serialize_data(data={"line": np.array([])}, data_type=None, extra_info=None)
 
