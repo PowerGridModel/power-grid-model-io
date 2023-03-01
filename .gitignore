@@ -18,8 +18,8 @@ __pycache__/
 cov_html/
 
 # Virtual environment
-venv/
-.venv/
+venv*/
+.venv*/
 
 # Data:
 data/
