@@ -266,9 +266,9 @@ def test_serialize_data(converter: TabularConverter, pgm_node_empty: SingleDatas
     pgm_node_empty["node"]["id"] = [1, 2]
     pgm_node_empty["node"]["u_rated"] = [3.0, 4.0]
     tabular_data = converter._serialize_data(data=pgm_node_empty, extra_info=None)
-    assert len(tabular_data._data) == 1
-    assert (tabular_data._data["node"]["id"] == np.array([1, 2])).all()
-    assert (tabular_data._data["node"]["u_rated"] == np.array([3.0, 4.0])).all()
+    assert len(tabular_data) == 1
+    assert (tabular_data["node"]["id"] == np.array([1, 2])).all()
+    assert (tabular_data["node"]["u_rated"] == np.array([3.0, 4.0])).all()
 
 
 def test_parse_col_def(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
