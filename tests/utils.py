@@ -256,3 +256,15 @@ class MockDf:
 
     def __getitem__(self, item: str):
         return MockVal(pd.Series(name=item, dtype=np.float64))
+
+
+class MockExcelFile:
+    def __init__(self, data: Dict[str, pd.DataFrame]):
+        self.data = data
+
+    @property
+    def sheet_names(self) -> List[str]:
+        return list(self.data.keys())
+
+    def parse(self, sheet_name: str, **_kwargs) -> pd.DataFrame:
+        return self.data[sheet_name]
