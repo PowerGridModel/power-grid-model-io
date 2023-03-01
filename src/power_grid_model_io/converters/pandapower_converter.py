@@ -10,6 +10,7 @@ from typing import Dict, List, MutableMapping, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+import structlog
 from power_grid_model import Branch3Side, BranchSide, LoadGenType, WindingType, initialize_array, power_grid_meta_data
 from power_grid_model.data_types import Dataset, SingleDataset
 
@@ -19,6 +20,8 @@ from power_grid_model_io.functions import get_winding
 from power_grid_model_io.utils.regex import NODE_REF_RE, TRAFO3_CONNECTION_RE, TRAFO_CONNECTION_RE
 
 PandaPowerData = MutableMapping[str, pd.DataFrame]
+
+logger = structlog.get_logger(__file__)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -331,12 +334,13 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         x0x_max = self._get_pp_attr("ext_grid", "x0x_max", np.nan)
 
         # Source Asym parameter check
-        r0x0_cond = np.isnan(r0x0_max).all() or np.array_equal(rx_max, r0x0_max)
-        x0x_cond = np.isnan(x0x_max).all() or all(x0x_max == 1)
-        if not (r0x0_cond and x0x_cond):
-            raise NotImplementedError(
-                "Only equal positive and zero sequence parameters are supported for external grid in PGM"
-            )
+        checks = {
+            "rx_max": np.isnan(r0x0_max).all() or np.array_equal(rx_max, r0x0_max),
+            "x0x_cond": np.isnan(x0x_max).all() or all(x0x_max == 1),
+        }
+        if not all(checks.values()):
+            failed_checks = ", ".join([key for key, value in checks.items() if not value])
+            logger.warning(f"Zero sequence parameters given in external grid shall be ignored:{failed_checks}")
 
         pgm_sources = initialize_array(data_type="input", component_type="source", shape=len(pp_ext_grid))
         pgm_sources["id"] = self._generate_ids("ext_grid", pp_ext_grid.index)
@@ -609,11 +613,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             "si0_hv_partial": np.isnan(self._get_pp_attr("trafo", "si0_hv_partial", np.nan)).all(),
         }
         if not all(checks.values()):
-            failed = ", ".join([key for key, value in checks.items() if not value])
-            raise NotImplementedError(
-                "Only equal positive and zero sequence parameters are supported for trafo in PGM. "
-                f"Check {failed} parameter(s)"
-            )
+            failed_checks = ", ".join([key for key, value in checks.items() if not value])
+            logger.warning(f"Zero sequence parameters given in trafo shall be ignored:{failed_checks}")
 
         # Do not use taps when mandatory tap data is not available
         no_taps = np.equal(tap_side, None) | np.isnan(tap_pos) | np.isnan(tap_nom) | np.isnan(tap_size)
@@ -711,11 +712,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             "vkr0_lv_percent": np.array_equal(vkr_lv_percent, vkr0_lv_percent) or np.isnan(vkr0_lv_percent).all(),
         }
         if not all(checks.values()):
-            failed = ", ".join([key for key, value in checks.items() if not value])
-            raise NotImplementedError(
-                "Only equal positive and zero sequence parameters are supported for trafo3w in PGM. "
-                f"Check {failed} parameter(s)"
-            )
+            failed_checks = ", ".join([key for key, value in checks.items() if not value])
+            logger.warning(f"Zero sequence parameters given in trafo3w are ignored: {failed_checks}")
 
         # Do not use taps when mandatory tap data is not available
         no_taps = np.equal(tap_side, None) | np.isnan(tap_pos) | np.isnan(tap_nom) | np.isnan(tap_size)
