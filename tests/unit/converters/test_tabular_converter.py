@@ -259,13 +259,13 @@ def test_merge_pgm_data(converter: TabularConverter):
 
 def test_serialize_data(converter: TabularConverter, pgm_node_empty: SingleDataset):
     with pytest.raises(NotImplementedError, match=r"Extra info can not \(yet\) be stored for tabular data"):
-        converter._serialize_data(data=pgm_node_empty, data_type=None, extra_info={})
+        converter._serialize_data(data=pgm_node_empty, extra_info={})
     with pytest.raises(NotImplementedError, match=r"Batch data can not \(yet\) be stored for tabular data"):
-        converter._serialize_data(data=[], data_type=None, extra_info=None)  # type: ignore
+        converter._serialize_data(data=[], extra_info=None)  # type: ignore
 
     pgm_node_empty["node"]["id"] = [1, 2]
     pgm_node_empty["node"]["u_rated"] = [3.0, 4.0]
-    tabular_data = converter._serialize_data(data=pgm_node_empty, data_type=None, extra_info=None)
+    tabular_data = converter._serialize_data(data=pgm_node_empty, extra_info=None)
     assert len(tabular_data._data) == 1
     assert (tabular_data._data["node"]["id"] == np.array([1, 2])).all()
     assert (tabular_data._data["node"]["u_rated"] == np.array([3.0, 4.0])).all()

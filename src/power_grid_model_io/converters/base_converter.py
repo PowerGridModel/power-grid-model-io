@@ -92,29 +92,29 @@ class BaseConverter(Generic[T], ABC):
         data = self._load_data(data)
         return self._parse_data(data=data, data_type="asym_output", extra_info=None)
 
-    def convert(
-        self, data: Dataset, data_type: Optional[str] = None, extra_info: Optional[ExtraInfoLookup] = None
-    ) -> T:
+    def convert(self, data: Dataset, extra_info: Optional[ExtraInfoLookup] = None, **kwargs: Optional[str]) -> T:
         """Convert input/update/(a)sym_output data and optionally extra info.
 
         Note: You shouldn't have to overwrite this method. Check _serialize_data() instead.
 
         Args:
           data: Dataset:
-          data_type: Optional[str]:  (Default value = None) Output data type "sym_output" or "asym_output"
           extra_info: Optional[ExtraInfoLookup]:  (Default value = None)
+
+        Keyword Args:
+          data_type: Optional[str]:   (Default value = None) Output data type "sym_output" or "asym_output"
 
         Returns:
 
         """
-        return self._serialize_data(data=data, data_type=data_type, extra_info=extra_info)
+        return self._serialize_data(data=data, extra_info=extra_info, **kwargs)
 
     def save(
         self,
         data: Dataset,
-        data_type: Optional[str] = None,
         extra_info: Optional[ExtraInfoLookup] = None,
         destination: Optional[BaseDataStore[T]] = None,
+        **kwargs: Optional[str],
     ) -> None:
         """Save input/update/(a)sym_output data and optionally extra info.
 
@@ -122,14 +122,16 @@ class BaseConverter(Generic[T], ABC):
 
         Args:
           data: Dataset:
-          data_type: Optional[str]:   (Default value = None) Output data type "sym_output" or "asym_output"
           extra_info: Optional[ExtraInfoLookup]:  (Default value = None)
           destination: Optional[BaseDataStore[T]]:  (Default value = None)
+
+        Keyword Args:
+          data_type: Optional[str]:   (Default value = None) Output data type "sym_output" or "asym_output"
 
         Returns:
 
         """
-        data_converted = self.convert(data=data, data_type=data_type, extra_info=extra_info)
+        data_converted = self.convert(data=data, extra_info=extra_info, **kwargs)
         if destination is not None:
             destination.save(data=data_converted)
         elif self._destination is not None:
@@ -149,5 +151,5 @@ class BaseConverter(Generic[T], ABC):
         pass
 
     @abstractmethod  # pragma: nocover
-    def _serialize_data(self, data: Dataset, data_type: Optional[str], extra_info: Optional[ExtraInfoLookup]) -> T:
+    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup], **kwargs: Optional[str]) -> T:
         pass

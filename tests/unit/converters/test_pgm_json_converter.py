@@ -113,10 +113,10 @@ def test_parse_component(converter: PgmJsonConverter, structured_input_data):
 
 
 def test_serialize_data(converter: PgmJsonConverter, pgm_input_data: SingleDataset, pgm_batch_data: BatchDataset):
-    structured_single_data = converter._serialize_data(data=pgm_input_data, data_type=None, extra_info=None)
+    structured_single_data = converter._serialize_data(data=pgm_input_data, extra_info=None)
     assert structured_single_data == {"node": [{"id": 1}, {"id": 2}]}
     with capture_logs() as cap_log:
-        structured_batch_data = converter._serialize_data(data=pgm_batch_data, data_type=None, extra_info={})
+        structured_batch_data = converter._serialize_data(data=pgm_batch_data, extra_info={})
     assert structured_batch_data == [{"line": [{}, {}]}, {"line": [{}, {}]}, {"line": [{}, {}]}]
     assert_log_match(cap_log[0], "warning", "Extra info is not supported for batch data export")
 

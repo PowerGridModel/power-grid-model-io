@@ -172,6 +172,7 @@ def test__serialize_data__sym(
 ):
     # Arrange
     converter = PandaPowerConverter()
+    kwargs = {"data_type": "sym_output"}
 
     def create_output_data():
         converter.pp_output_data = {"res_line": pd.DataFrame(np.array([]))}
@@ -179,7 +180,7 @@ def test__serialize_data__sym(
     create_output_data_mock.side_effect = create_output_data
 
     # Act
-    result = converter._serialize_data(data={"line": np.array([])}, data_type="sym_output", extra_info=None)
+    result = converter._serialize_data(data={"line": np.array([])}, extra_info=None, **kwargs)
 
     # Assert
     create_output_data_mock.assert_called_once_with()
@@ -198,6 +199,7 @@ def test__serialize_data__asym(
 ):
     # Arrange
     converter = PandaPowerConverter()
+    kwargs = {"data_type": "asym_output"}
 
     def create_output_data_3ph():
         converter.pp_output_data = {"res_line_3ph": pd.DataFrame(np.array([]))}
@@ -205,7 +207,7 @@ def test__serialize_data__asym(
     create_output_data_3ph_mock.side_effect = create_output_data_3ph
 
     # Act
-    result = converter._serialize_data(data={"line": np.array([])}, data_type="asym_output", extra_info=None)
+    result = converter._serialize_data(data={"line": np.array([])}, extra_info=None, **kwargs)
 
     # Assert
     create_output_data_3ph_mock.assert_called_once_with()
@@ -216,16 +218,28 @@ def test__serialize_data__asym(
     assert len(result) == 1 and "res_line_3ph" in result
 
 
-def test__serialize_data__other():
+def test__serialize_data__invalid_data_type():
     # Arrange
     converter = PandaPowerConverter()
 
     # Act
     with pytest.raises(
         ValueError,
-        match="Data type: 'None' is not implemented. Use either data_type='sym_output' or data_type='asym_output'",
+        match="Data type: 'None' is not implemented. eg. use data_type='sym_output' or data_type='asym_output'",
     ):
         converter._serialize_data(data={"line": np.array([])}, data_type=None, extra_info=None)
+
+
+def test__serialize_data__data_type_missing():
+    # Arrange
+    converter = PandaPowerConverter()
+
+    # Act
+    with pytest.raises(
+        TypeError,
+        match="No data_type provided. eg. use data_type='sym_output' or data_type='asym_output'",
+    ):
+        converter._serialize_data(data={"line": np.array([])}, extra_info=None)
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._extra_info_to_idx_lookup")
