@@ -167,11 +167,12 @@ def test_fill_extra_info():
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._extra_info_to_idx_lookup")
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._extra_info_to_pgm_input_data")
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._create_output_data")
-def test__serialize_data(
+def test__serialize_data__sym(
     create_output_data_mock: MagicMock, extra_info_pgm_input_data: MagicMock, extra_info_to_idx_lookup: MagicMock
 ):
     # Arrange
     converter = PandaPowerConverter()
+    line_sym_output_array = initialize_array("sym_output", "line", 1)
 
     def create_output_data():
         converter.pp_output_data = {"res_line": pd.DataFrame(np.array([]))}
@@ -179,7 +180,7 @@ def test__serialize_data(
     create_output_data_mock.side_effect = create_output_data
 
     # Act
-    result = converter._serialize_data(data={"line": np.array([])}, extra_info=None)
+    result = converter._serialize_data(data={"line": line_sym_output_array}, extra_info=None)
 
     # Assert
     create_output_data_mock.assert_called_once_with()
@@ -188,6 +189,45 @@ def test__serialize_data(
     assert len(converter.pp_output_data) == 1 and "res_line" in converter.pp_output_data
     assert len(converter.pgm_output_data) == 1 and "line" in converter.pgm_output_data
     assert len(result) == 1 and "res_line" in result
+
+
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._extra_info_to_idx_lookup")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._extra_info_to_pgm_input_data")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._create_output_data_3ph")
+def test__serialize_data__asym(
+    create_output_data_3ph_mock: MagicMock, extra_info_pgm_input_data: MagicMock, extra_info_to_idx_lookup: MagicMock
+):
+    # Arrange
+    converter = PandaPowerConverter()
+    line_asym_output_array = initialize_array("asym_output", "line", 1)
+
+    def create_output_data_3ph():
+        converter.pp_output_data = {"res_line_3ph": pd.DataFrame(np.array([]))}
+
+    create_output_data_3ph_mock.side_effect = create_output_data_3ph
+
+    # Act
+    result = converter._serialize_data(data={"line": line_asym_output_array}, extra_info=None)
+
+    # Assert
+    create_output_data_3ph_mock.assert_called_once_with()
+    extra_info_to_idx_lookup.assert_not_called()
+    extra_info_pgm_input_data.assert_not_called()
+    assert len(converter.pp_output_data) == 1 and "res_line_3ph" in converter.pp_output_data
+    assert len(converter.pgm_output_data) == 1 and "line" in converter.pgm_output_data
+    assert len(result) == 1 and "res_line_3ph" in result
+
+
+def test__serialize_data__invalid_output():
+    # Arrange
+    converter = PandaPowerConverter()
+
+    # Act
+    with pytest.raises(
+        TypeError,
+        match="Invalid output data dictionary supplied.",
+    ):
+        converter._serialize_data(data={"line": np.array([])}, extra_info=None)
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._extra_info_to_idx_lookup")

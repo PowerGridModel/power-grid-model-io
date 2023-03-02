@@ -113,7 +113,21 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             self._extra_info_to_pgm_input_data(extra_info)
 
         # Convert
-        self._create_output_data()
+        def pgm_output_dtype_checker(check_type: str) -> bool:
+            return all(
+                (
+                    comp_array.dtype == power_grid_meta_data[check_type][component]
+                    for component, comp_array in self.pgm_output_data.items()
+                )
+            )
+
+        # Convert
+        if pgm_output_dtype_checker("sym_output"):
+            self._create_output_data()
+        elif pgm_output_dtype_checker("asym_output"):
+            self._create_output_data_3ph()
+        else:
+            raise TypeError("Invalid output data dictionary supplied.")
 
         return self.pp_output_data
 
