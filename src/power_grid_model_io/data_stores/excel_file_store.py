@@ -35,7 +35,6 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         # Create a dictionary of all supplied file paths:
         # {"": file_path, extra_name[0]: extra_path[0], extra_name[1]: extra_path[1], ...}
         self._file_paths: Dict[str, Path] = {}
-        self._excel_files: Dict[str, pd.ExcelFile] = {}
         if file_path is not None:
             self._file_paths[""] = file_path
         for name, path in extra_paths.items():
@@ -64,36 +63,27 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         have no prefix, while the tables of all the extra files will be prefixed with the name of the key word argument
         as supplied in the constructor.
         """
+
+        def lazy_sheet_loader(xls_file: pd.ExcelFile, xls_sheet_name: str):
+            def sheet_loader():
+                sheet_data = xls_file.parse(xls_sheet_name, header=self._header_rows)
+                sheet_data = self._remove_unnamed_column_placeholders(data=sheet_data)
+                sheet_data = self._handle_duplicate_columns(data=sheet_data, sheet_name=xls_sheet_name)
+                return sheet_data
+
+            return sheet_loader
+
         data: Dict[str, LazyDataFrame] = {}
         for name, path in self._file_paths.items():
-            self._excel_files[name] = pd.ExcelFile(path)
-            for sheet_name in self._excel_files[name].sheet_names:
-                loader = self._load_sheet_wrapper(name, sheet_name)
-                if name:
+            excel_file = pd.ExcelFile(path)
+            for sheet_name in excel_file.sheet_names:
+                loader = lazy_sheet_loader(excel_file, sheet_name)
+                if name != "":  # If the Excel file is not the main file, prefix the sheet name with the file name
                     sheet_name = f"{name}.{sheet_name}"
                 if sheet_name in data:
                     raise ValueError(f"Duplicate sheet name '{sheet_name}'")
                 data[sheet_name] = loader
         return TabularData(**data)
-
-    def _load_sheet_wrapper(self, name: str, sheet_name: str):
-        """
-        Load a single Excel sheet as a Pandas DataFrame.
-
-        Args:
-            name: the name of the file (empty string for the main sheet)
-            sheet_name: the name of the sheet
-
-        Returns: The contents the specified Excel sheet.
-        """
-
-        def wrapper():
-            sheet_data = self._excel_files[name].parse(sheet_name, header=self._header_rows)
-            sheet_data = self._remove_unnamed_column_placeholders(data=sheet_data)
-            sheet_data = self._handle_duplicate_columns(data=sheet_data, sheet_name=sheet_name)
-            return sheet_data
-
-        return wrapper
 
     def save(self, data: TabularData) -> None:
         """
