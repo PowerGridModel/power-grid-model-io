@@ -478,7 +478,7 @@ class TabularConverter(BaseConverter[TabularData]):
                     value_column=sub_def["value_column"],
                 )
             elif isinstance(sub_def, list):
-                col_data = self._parse_pandas_function(data=data, table=table, function=name, col_def=sub_def)
+                col_data = self._parse_pandas_function(data=data, table=table, fn_name=name, col_def=sub_def)
             elif isinstance(sub_def, dict):
                 col_data = self._parse_function(data=data, table=table, function=name, col_def=sub_def)
             else:
@@ -549,13 +549,13 @@ class TabularConverter(BaseConverter[TabularData]):
 
         return col_data.apply(auto_id, axis=1, raw=True)
 
-    def _parse_pandas_function(self, data: TabularData, table: str, function: str, col_def: List[Any]) -> pd.DataFrame:
+    def _parse_pandas_function(self, data: TabularData, table: str, fn_name: str, col_def: List[Any]) -> pd.DataFrame:
         """Special vectorized functions.
 
         Args:
           data: The data
           table: The name of the current table
-          function: The name of the function.
+          fn_name: The name of the function.
           col_def: The definition of the function arguments
 
         Returns:
@@ -564,15 +564,15 @@ class TabularConverter(BaseConverter[TabularData]):
         assert isinstance(col_def, list)
 
         # "multiply" is an alias for "prod"
-        if function == "multiply":
-            function = "prod"
+        if fn_name == "multiply":
+            fn_name = "prod"
 
         col_data = self._parse_col_def(data=data, table=table, col_def=col_def, extra_info=None)
 
         try:
-            fn_ptr = getattr(col_data, function)
+            fn_ptr = getattr(col_data, fn_name)
         except AttributeError as ex:
-            raise ValueError(f"Pandas DataFrame has no function '{function}'") from ex
+            raise ValueError(f"Pandas DataFrame has no function '{fn_name}'") from ex
 
         # If the function expects an 'other' argument, apply the function per column (e.g. divide)
         empty = inspect.Parameter.empty
@@ -581,12 +581,12 @@ class TabularConverter(BaseConverter[TabularData]):
             n_columns = col_data.shape[1] if col_data.ndim > 1 else 1
             result = col_data.iloc[:, 0]
             for i in range(1, n_columns):
-                result = getattr(result, function)(other=col_data.iloc[:, i])
+                result = getattr(result, fn_name)(other=col_data.iloc[:, i])
             return pd.DataFrame(result)
 
         # If the function expects any argument
         if any(param.default == empty for name, param in fn_sig.parameters.items() if name != "kwargs"):
-            raise ValueError(f"Invalid pandas function DataFrame.{function}")
+            raise ValueError(f"Invalid pandas function DataFrame.{fn_name}")
 
         return pd.DataFrame(fn_ptr(axis=1))
 
