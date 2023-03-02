@@ -12,7 +12,7 @@ import pytest
 from power_grid_model.data_types import SingleDataset
 
 from power_grid_model_io.converters import PandaPowerConverter
-from power_grid_model_io.data_types import ExtraInfoLookup
+from power_grid_model_io.data_types import ExtraInfo
 from power_grid_model_io.utils.json import JsonEncoder
 
 from ...data.pandapower.pp_validation import pp_net
@@ -22,7 +22,7 @@ VALIDATION_FILE = Path(__file__).parents[2] / "data" / "pandapower" / "pgm_input
 
 
 @lru_cache
-def load_and_convert_pp_data() -> Tuple[SingleDataset, ExtraInfoLookup]:
+def load_and_convert_pp_data() -> Tuple[SingleDataset, ExtraInfo]:
     """
     Load and convert the pandapower validation network
     """
@@ -33,7 +33,7 @@ def load_and_convert_pp_data() -> Tuple[SingleDataset, ExtraInfoLookup]:
 
 
 @lru_cache
-def load_validation_data() -> Tuple[SingleDataset, ExtraInfoLookup]:
+def load_validation_data() -> Tuple[SingleDataset, ExtraInfo]:
     """
     Load the validation data from the json file
     """
@@ -52,7 +52,7 @@ def input_data() -> Tuple[SingleDataset, SingleDataset]:
 
 
 @pytest.fixture
-def extra_info() -> Tuple[ExtraInfoLookup, ExtraInfoLookup]:
+def extra_info() -> Tuple[ExtraInfo, ExtraInfo]:
     """
     Load the pandapower network and the json file, and return the extra_info
     """
@@ -91,7 +91,7 @@ def test_attributes(input_data: Tuple[SingleDataset, SingleDataset], component: 
     ("component", "obj_ids"),
     (pytest.param(component, objects, id=component) for component, objects in component_objects(VALIDATION_FILE)),
 )
-def test_extra_info(extra_info: Tuple[ExtraInfoLookup, ExtraInfoLookup], component: str, obj_ids: List[int]):
+def test_extra_info(extra_info: Tuple[ExtraInfo, ExtraInfo], component: str, obj_ids: List[int]):
     """
     For each object, check if the actual extra info is consistent with the expected extra info
     """

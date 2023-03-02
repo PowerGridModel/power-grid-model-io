@@ -16,7 +16,7 @@ from power_grid_model.data_types import Dataset
 
 from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_stores.base_data_store import BaseDataStore
-from power_grid_model_io.data_types import ExtraInfoLookup, TabularData
+from power_grid_model_io.data_types import ExtraInfo, TabularData
 from power_grid_model_io.mappings.multiplier_mapping import MultiplierMapping, Multipliers
 from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes, Tables, TabularMapping
 from power_grid_model_io.mappings.unit_mapping import UnitMapping, Units
@@ -79,7 +79,7 @@ class TabularConverter(BaseConverter[TabularData]):
             MultiplierMapping(cast(Multipliers, mapping["multipliers"])) if "multipliers" in mapping else None
         )
 
-    def _parse_data(self, data: TabularData, data_type: str, extra_info: Optional[ExtraInfoLookup]) -> Dataset:
+    def _parse_data(self, data: TabularData, data_type: str, extra_info: Optional[ExtraInfo]) -> Dataset:
         """This function parses tabular data and returns power-grid-model data
 
         Args:
@@ -90,7 +90,7 @@ class TabularConverter(BaseConverter[TabularData]):
         power-grid-model data) can be specified
           data: TabularData:
           data_type: str:
-          extra_info: Optional[ExtraInfoLookup]:
+          extra_info: Optional[ExtraInfo]:
 
         Returns:
           a power-grid-model dataset, i.e. a dictionary as {component: np.ndarray}
@@ -140,7 +140,7 @@ class TabularConverter(BaseConverter[TabularData]):
         table: str,
         component: str,
         attributes: InstanceAttributes,
-        extra_info: Optional[ExtraInfoLookup],
+        extra_info: Optional[ExtraInfo],
     ) -> Optional[np.ndarray]:
         """
         This function converts a single table/sheet of TabularData to a power-grid-model input/update array. One table
@@ -160,7 +160,7 @@ class TabularConverter(BaseConverter[TabularData]):
           table: str:
           component: str:
           attributes: InstanceAttributes:
-          extra_info: Optional[ExtraInfoLookup]:
+          extra_info: Optional[ExtraInfo]:
 
         Returns:
           returns a power-grid-model structured array for one component
@@ -204,7 +204,7 @@ class TabularConverter(BaseConverter[TabularData]):
         component: str,
         attr: str,
         col_def: Any,
-        extra_info: Optional[ExtraInfoLookup],
+        extra_info: Optional[ExtraInfo],
     ):
         """This function updates one of the attributes of pgm_data, based on the corresponding table/column in a tabular
         dataset
@@ -225,7 +225,7 @@ class TabularConverter(BaseConverter[TabularData]):
           component: str:
           attr: str:
           col_def: Any:
-          extra_info: Optional[ExtraInfoLookup]:
+          extra_info: Optional[ExtraInfo]:
 
         Returns:
           the function updates pgm_data, it should not return something
@@ -259,7 +259,7 @@ class TabularConverter(BaseConverter[TabularData]):
         table: str,
         col_def: Any,
         uuids: np.ndarray,
-        extra_info: Optional[ExtraInfoLookup],
+        extra_info: Optional[ExtraInfo],
     ) -> None:
         """This function can extract extra info from the tabular data and store it in the extra_info dict
 
@@ -275,7 +275,7 @@ class TabularConverter(BaseConverter[TabularData]):
           table: str:
           col_def: Any:
           uuids: np.ndarray:
-          extra_info: Optional[ExtraInfoLookup]:
+          extra_info: Optional[ExtraInfo]:
 
         Returns:
 
@@ -322,7 +322,7 @@ class TabularConverter(BaseConverter[TabularData]):
 
         return merged
 
-    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup]) -> TabularData:
+    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfo]) -> TabularData:
         if extra_info is not None:
             raise NotImplementedError("Extra info can not (yet) be stored for tabular data")
         if isinstance(data, list):
@@ -330,7 +330,7 @@ class TabularConverter(BaseConverter[TabularData]):
         return TabularData(**data)
 
     def _parse_col_def(
-        self, data: TabularData, table: str, col_def: Any, extra_info: Optional[ExtraInfoLookup]
+        self, data: TabularData, table: str, col_def: Any, extra_info: Optional[ExtraInfo]
     ) -> pd.DataFrame:
         """Interpret the column definition and extract/convert/create the data as a pandas DataFrame.
 
@@ -338,7 +338,7 @@ class TabularConverter(BaseConverter[TabularData]):
           data: TabularData:
           table: str:
           col_def: Any:
-          extra_info: Optional[ExtraInfoLookup]:
+          extra_info: Optional[ExtraInfo]:
 
         Returns:
 
@@ -436,7 +436,7 @@ class TabularConverter(BaseConverter[TabularData]):
         return result[[value_column]]
 
     def _parse_col_def_filter(
-        self, data: TabularData, table: str, col_def: Dict[str, Any], extra_info: Optional[ExtraInfoLookup]
+        self, data: TabularData, table: str, col_def: Dict[str, Any], extra_info: Optional[ExtraInfo]
     ) -> pd.DataFrame:
         """
         Parse column filters like 'auto_id', 'reference', 'function', etc
@@ -493,7 +493,7 @@ class TabularConverter(BaseConverter[TabularData]):
         ref_table: Optional[str],
         ref_name: Optional[str],
         key_col_def: Union[str, List[str], Dict[str, str]],
-        extra_info: Optional[ExtraInfoLookup],
+        extra_info: Optional[ExtraInfo],
     ) -> pd.DataFrame:
         """
         Create (or retrieve) a unique numerical id for each object (row) in `data[table]`, based on the `name`

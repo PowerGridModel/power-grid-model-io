@@ -7,31 +7,33 @@ Common data types used in the Power Grid Model project
 
 from typing import Any, Dict, List, Union
 
-from power_grid_model.data_types import AttributeValue
-
-ExtraInfoType = Union[str, AttributeValue, List["ExtraInfoType"], Dict[str, "ExtraInfoType"]]
-ExtraInfo = Dict[str, ExtraInfoType]
+ExtraInfo = Dict[int, Any]
 """
 ExtraInfo is information about power grid model objects that are not part of the calculations. E.g. the original ID or
-name of a node, or the material of a cable (line) etc. Extra info should be a dictionary with textual keys. The
-values may be numerical or textual. Nested structures are also allowed (i.e. dictionaries and lists of numerical or
-textual values, etc etc).
+name of a node, or the material of a cable (line) etc.
+
+It is a dictionary with numerical keys corresponding to the ids in input_data etc. The values are dictionaries with
+textual keys. Their values may be anything, but it is advised to use only JSON serializable types like numerical values,
+strings, lists, dictionaries etc.
 
     {
-        "id": 123,
-        "length_km": 123.4,
-        "material": "Aluminuminuminum",
-        "auto_id": {
-            "name": ["Transformers", "internal_node"],
-            "key": {"Node.Number": 1, "Subnumber": 2}
+        1: {
+            "length_km": 123.4,
+            "material": "Aluminuminuminum",
+        },
+        2: {
+            "id_reference": {
+                "table": "load",
+                "name": "const_power",
+                "index": 101
+            }
         }
     }
 """
 
-ExtraInfoLookup = Dict[int, ExtraInfo]
+ExtraInfoLookup = ExtraInfo
 """
-An ExtraInfoLookup is a dictionary with numerical keys corresponding to the ids in input_data etc. The values are
-ExtraInfo dictionaries.
+Legacy type name; use ExtraInfo instead!
 """
 
 StructuredData = Union[Dict[str, List[Dict[str, Any]]], List[Dict[str, List[Dict[str, Any]]]]]

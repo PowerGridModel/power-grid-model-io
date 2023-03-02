@@ -12,7 +12,7 @@ import pytest
 from power_grid_model.data_types import SingleDataset
 
 from power_grid_model_io.converters import VisionExcelConverter
-from power_grid_model_io.data_types import ExtraInfoLookup
+from power_grid_model_io.data_types import ExtraInfo
 from power_grid_model_io.utils.json import JsonEncoder
 
 from ..utils import compare_extra_info, component_attributes, component_objects, load_json_single_dataset, select_values
@@ -25,7 +25,7 @@ VALIDATION_EN = Path(str(VALIDATION_FILE).format(language="en"))
 
 
 @lru_cache
-def load_and_convert_excel_file(language: str) -> Tuple[SingleDataset, ExtraInfoLookup]:
+def load_and_convert_excel_file(language: str) -> Tuple[SingleDataset, ExtraInfo]:
     """
     Read the excel file and do the conversion
     """
@@ -35,7 +35,7 @@ def load_and_convert_excel_file(language: str) -> Tuple[SingleDataset, ExtraInfo
 
 
 @lru_cache
-def load_validation_data(language: str) -> Tuple[SingleDataset, ExtraInfoLookup]:
+def load_validation_data(language: str) -> Tuple[SingleDataset, ExtraInfo]:
     """
     Load the validation data from the json file
     """
@@ -55,7 +55,7 @@ def input_data(request) -> Tuple[SingleDataset, SingleDataset]:
 
 
 @pytest.fixture
-def extra_info(request) -> Tuple[ExtraInfoLookup, ExtraInfoLookup]:
+def extra_info(request) -> Tuple[ExtraInfo, ExtraInfo]:
     """
     Read the excel file and the json file, and return the extra_info
     """
@@ -96,7 +96,7 @@ def test_attributes(input_data: Tuple[SingleDataset, SingleDataset], component: 
     (pytest.param(component, objects, id=component) for component, objects in component_objects(VALIDATION_EN)),
 )
 @pytest.mark.parametrize("extra_info", LANGUAGES, indirect=True)
-def test_extra_info(extra_info: Tuple[ExtraInfoLookup, ExtraInfoLookup], component: str, obj_ids: List[int]):
+def test_extra_info(extra_info: Tuple[ExtraInfo, ExtraInfo], component: str, obj_ids: List[int]):
     """
     For each object, check if the actual extra info is consistent with the expected extra info
     """
