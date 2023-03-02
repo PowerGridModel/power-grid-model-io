@@ -11,6 +11,7 @@ import pytest
 from power_grid_model import initialize_array
 
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter
+from tests.utils import MockDf
 
 
 @pytest.fixture
@@ -313,9 +314,11 @@ def test_output_sgen(converter):
         converter.pp_output_data.__setitem__.assert_called_once_with("res_sgen", mock_pp_df.return_value)
 
 
-def test_output_trafos(converter):
+def test_output_trafos__current(converter):
     # Arrange
     mock_pgm_array = MagicMock()
+    converter.trafo_loading = "current"
+    converter.pp_input_data["trafo"] = MockDf(2)
     converter.pgm_input_data["transformer"] = mock_pgm_array
     converter.pgm_output_data["transformer"] = mock_pgm_array
     converter.pgm_nodes_lookup = pd.DataFrame(
@@ -341,9 +344,8 @@ def test_output_trafos(converter):
         mock_pgm_array.__getitem__.assert_any_call("q_to")
         mock_pgm_array.__getitem__.assert_any_call("i_from")
         mock_pgm_array.__getitem__.assert_any_call("i_to")
-        # mock_pgm_array.__getitem__.assert_any_call("u_pu")
-        # mock_pgm_array.__getitem__.assert_any_call("u_degree")
-        mock_pgm_array.__getitem__.assert_any_call("loading")
+        # current loading retrieval
+        mock_pgm_array.__getitem__.assert_any_call("sn")
 
         # assignment
         mock_pp_df.return_value.__setitem__.assert_any_call("p_hv_mw", ANY)
@@ -362,6 +364,42 @@ def test_output_trafos(converter):
 
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_trafo", mock_pp_df.return_value)
+
+
+def test_output_trafos__power(converter):
+    # Arrange
+    mock_pgm_array = MagicMock()
+    converter.trafo_loading = "power"
+    converter.pp_input_data["trafo"] = MockDf(2)
+    converter.pgm_input_data["transformer"] = mock_pgm_array
+    converter.pgm_output_data["transformer"] = mock_pgm_array
+    converter.pgm_nodes_lookup = pd.DataFrame(
+        {"u_pu": mock_pgm_array, "u_degree": mock_pgm_array}, index=mock_pgm_array
+    )
+
+    with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
+        # Act
+        converter._pp_trafos_output()
+
+        mock_pgm_array.__getitem__.assert_any_call("loading")
+        mock_pp_df.return_value.__setitem__.assert_any_call("loading_percent", ANY)
+        # result
+        converter.pp_output_data.__setitem__.assert_called_once_with("res_trafo", mock_pp_df.return_value)
+
+
+def test_output_trafos__invalid_trafo_loading(converter):
+    # Arrange
+    mock_pgm_array = MagicMock()
+    converter.trafo_loading = "abcd"
+    converter.pp_input_data["trafo"] = MockDf(2)
+    converter.pgm_input_data["transformer"] = mock_pgm_array
+    converter.pgm_output_data["transformer"] = mock_pgm_array
+    converter.pgm_nodes_lookup = pd.DataFrame(
+        {"u_pu": mock_pgm_array, "u_degree": mock_pgm_array}, index=mock_pgm_array
+    )
+
+    with pytest.raises(ValueError, match="Invalid transformer loading type: abcd"):
+        converter._pp_trafos_output()
 
 
 def test_output_trafo3w(converter):
