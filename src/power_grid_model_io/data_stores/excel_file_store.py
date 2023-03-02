@@ -78,7 +78,7 @@ class ExcelFileStore(BaseDataStore[TabularData]):
             excel_file = pd.ExcelFile(path)
             for sheet_name in excel_file.sheet_names:
                 loader = lazy_sheet_loader(excel_file, sheet_name)
-                if name:
+                if name != "":  # If the Excel file is not the main file, prefix the sheet name with the file name
                     sheet_name = f"{name}.{sheet_name}"
                 if sheet_name in data:
                     raise ValueError(f"Duplicate sheet name '{sheet_name}'")
