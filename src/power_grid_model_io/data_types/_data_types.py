@@ -36,7 +36,6 @@ ExtraInfoLookup = ExtraInfo
 Legacy type name; use ExtraInfo instead!
 """
 
-
 StructuredData = Union[Dict[str, List[Dict[str, Any]]], List[Dict[str, List[Dict[str, Any]]]]]
 """
 Structured data is a multi dimensional structure (component_type -> objects -> attribute -> value) or a list of those
