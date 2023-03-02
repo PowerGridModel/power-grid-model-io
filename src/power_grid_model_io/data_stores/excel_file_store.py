@@ -13,6 +13,7 @@ import pandas as pd
 
 from power_grid_model_io.data_stores.base_data_store import BaseDataStore
 from power_grid_model_io.data_types import TabularData
+from power_grid_model_io.data_types.tabular_data import LazyDataFrame
 
 
 class ExcelFileStore(BaseDataStore[TabularData]):
@@ -24,7 +25,7 @@ class ExcelFileStore(BaseDataStore[TabularData]):
     same values) or renamed.
     """
 
-    __slots__ = ("_file_paths", "_header_rows")
+    __slots__ = ("_file_paths", "_excel_files", "_header_rows")
 
     _unnamed_pattern: re.Pattern = re.compile(r"Unnamed: \d+_level_\d+")
 
@@ -34,6 +35,7 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         # Create a dictionary of all supplied file paths:
         # {"": file_path, extra_name[0]: extra_path[0], extra_name[1]: extra_path[1], ...}
         self._file_paths: Dict[str, Path] = {}
+        self._excel_files: Dict[str, pd.ExcelFile] = {}
         if file_path is not None:
             self._file_paths[""] = file_path
         for name, path in extra_paths.items():
@@ -62,20 +64,36 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         have no prefix, while the tables of all the extra files will be prefixed with the name of the key word argument
         as supplied in the constructor.
         """
-        data: Dict[str, pd.DataFrame] = {}
+        data: Dict[str, LazyDataFrame] = {}
         for name, path in self._file_paths.items():
-            with path.open(mode="rb") as file_pointer:
-                spreadsheet = pd.read_excel(io=file_pointer, sheet_name=None, header=self._header_rows)
-            for sheet_name, sheet_data in spreadsheet.items():
-                sheet_data = self._remove_unnamed_column_placeholders(data=sheet_data)
-                sheet_data = self._handle_duplicate_columns(data=sheet_data, sheet_name=sheet_name)
+            self._excel_files[name] = pd.ExcelFile(path)
+            for sheet_name in self._excel_files[name].sheet_names:
+                loader = self._load_sheet_wrapper(name, sheet_name)
                 if name:
                     sheet_name = f"{name}.{sheet_name}"
                 if sheet_name in data:
                     raise ValueError(f"Duplicate sheet name '{sheet_name}'")
-                data[sheet_name] = sheet_data
-
+                data[sheet_name] = loader
         return TabularData(**data)
+
+    def _load_sheet_wrapper(self, name: str, sheet_name: str):
+        """
+        Load a single Excel sheet as a Pandas DataFrame.
+
+        Args:
+            name: the name of the file (empty string for the main sheet)
+            sheet_name: the name of the sheet
+
+        Returns: The contents the specified Excel sheet.
+        """
+
+        def wrapper():
+            sheet_data = self._excel_files[name].parse(sheet_name, header=self._header_rows)
+            sheet_data = self._remove_unnamed_column_placeholders(data=sheet_data)
+            sheet_data = self._handle_duplicate_columns(data=sheet_data, sheet_name=sheet_name)
+            return sheet_data
+
+        return wrapper
 
     def save(self, data: TabularData) -> None:
         """
