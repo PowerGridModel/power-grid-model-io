@@ -4,26 +4,14 @@
 
 from pydantic import parse_obj_as
 
-from power_grid_model_io.data_types import ExtraInfo, ExtraInfoLookup, StructuredData
+from power_grid_model_io.data_types import ExtraInfo, StructuredData
 
 
 def test_extra_info():
-    extra_info = {
-        "a": 123,  # NominalValue = int
-        "b": 1.23,  # RealValue = float
-        "c": (1.2, 3.4, 5.6),  # AsymValue = Tuple[float, float, float]
-        "d": "foo",  # str
-    }
+    extra_info = {1: {"a": 123, "b": 1.23}, 2: {"c": (1.2, 3.4, 5.6), "d": "foo"}}
 
     # Expect no exception
     parse_obj_as(ExtraInfo, extra_info)
-
-
-def test_extra_info_lookup():
-    extra_info_lookup = {1: {"a": 123, "b": 1.23}, 2: {"c": (1.2, 3.4, 5.6), "d": "foo"}}
-
-    # Expect no exception
-    parse_obj_as(ExtraInfoLookup, extra_info_lookup)
 
 
 def test_structured_data__single():

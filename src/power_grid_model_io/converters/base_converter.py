@@ -11,7 +11,7 @@ import structlog
 from power_grid_model.data_types import Dataset, SingleDataset
 
 from power_grid_model_io.data_stores.base_data_store import BaseDataStore
-from power_grid_model_io.data_types import ExtraInfoLookup
+from power_grid_model_io.data_types import ExtraInfo
 from power_grid_model_io.utils.auto_id import AutoID
 
 T = TypeVar("T")
@@ -31,7 +31,7 @@ class BaseConverter(Generic[T], ABC):
 
     def load_input_data(
         self, data: Optional[T] = None, make_extra_info: bool = True
-    ) -> Tuple[SingleDataset, ExtraInfoLookup]:
+    ) -> Tuple[SingleDataset, ExtraInfo]:
         """Load input data and extra info
 
         Note: You shouldn't have to overwrite this method. Check _parse_data() instead.
@@ -44,7 +44,7 @@ class BaseConverter(Generic[T], ABC):
         """
 
         data = self._load_data(data)
-        extra_info: ExtraInfoLookup = {}
+        extra_info: ExtraInfo = {}
         parsed_data = self._parse_data(data=data, data_type="input", extra_info=extra_info if make_extra_info else None)
         if isinstance(parsed_data, list):
             raise TypeError("Input data can not be batch data")
@@ -92,14 +92,14 @@ class BaseConverter(Generic[T], ABC):
         data = self._load_data(data)
         return self._parse_data(data=data, data_type="asym_output", extra_info=None)
 
-    def convert(self, data: Dataset, extra_info: Optional[ExtraInfoLookup] = None) -> T:
+    def convert(self, data: Dataset, extra_info: Optional[ExtraInfo] = None) -> T:
         """Convert input/update/(a)sym_output data and optionally extra info.
 
         Note: You shouldn't have to overwrite this method. Check _serialize_data() instead.
 
         Args:
           data: Dataset:
-          extra_info: Optional[ExtraInfoLookup]:  (Default value = None)
+          extra_info: Optional[ExtraInfo]:  (Default value = None)
 
         Returns:
 
@@ -109,7 +109,7 @@ class BaseConverter(Generic[T], ABC):
     def save(
         self,
         data: Dataset,
-        extra_info: Optional[ExtraInfoLookup] = None,
+        extra_info: Optional[ExtraInfo] = None,
         destination: Optional[BaseDataStore[T]] = None,
     ) -> None:
         """Save input/update/(a)sym_output data and optionally extra info.
@@ -118,7 +118,7 @@ class BaseConverter(Generic[T], ABC):
 
         Args:
           data: Dataset:
-          extra_info: Optional[ExtraInfoLookup]:  (Default value = None)
+          extra_info: Optional[ExtraInfo]:  (Default value = None)
           destination: Optional[BaseDataStore[T]]:  (Default value = None)
 
         Returns:
@@ -140,9 +140,9 @@ class BaseConverter(Generic[T], ABC):
         raise ValueError("No data supplied!")
 
     @abstractmethod  # pragma: nocover
-    def _parse_data(self, data: T, data_type: str, extra_info: Optional[ExtraInfoLookup]) -> Dataset:
+    def _parse_data(self, data: T, data_type: str, extra_info: Optional[ExtraInfo]) -> Dataset:
         pass
 
     @abstractmethod  # pragma: nocover
-    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup]) -> T:
+    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfo]) -> T:
         pass
