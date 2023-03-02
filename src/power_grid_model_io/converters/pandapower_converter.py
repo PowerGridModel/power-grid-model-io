@@ -29,7 +29,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
     __slots__ = ("pp_input_data", "pgm_input_data", "idx", "idx_lookup", "next_idx", "system_frequency")
 
-    def __init__(self, system_frequency: float = 50.0):
+    def __init__(self, system_frequency: float = 50.0, trafo_loading: str = "current"):
         """
         Prepare some member variables
 
@@ -37,6 +37,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             system_frequency: fundamental frequency of the alternating current and voltage in the Network measured in Hz
         """
         super().__init__(source=None, destination=None)
+        self.trafo_loading = trafo_loading
         self.system_frequency: float = system_frequency
         self.pp_input_data: PandaPowerData = {}
         self.pgm_input_data: SingleDataset = {}
@@ -1060,15 +1061,28 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # TODO: create unit tests for the function
         assert "res_trafo" not in self.pp_output_data
 
-        if "transformer" not in self.pgm_output_data or self.pgm_output_data["transformer"].size == 0:
+        if ("transformer" not in self.pgm_output_data or self.pgm_output_data["transformer"].size == 0) or (
+            "trafo" not in self.pp_input_data or len(self.pp_input_data["trafo"]) == 0
+        ):
             return
 
         pgm_input_transformers = self.pgm_input_data["transformer"]
-
+        pp_input_transformers = self.pp_input_data["trafo"]
         pgm_output_transformers = self.pgm_output_data["transformer"]
 
         from_nodes = self.pgm_nodes_lookup.loc[pgm_input_transformers["from_node"]]
         to_nodes = self.pgm_nodes_lookup.loc[pgm_input_transformers["to_node"]]
+
+        # Only derating factor used here. Sn is already being multiplied by parallel
+        loading_multiplier = pp_input_transformers["df"]
+        if self.trafo_loading == "current":
+            ui_from = pgm_output_transformers["i_from"] * pgm_input_transformers["u1"]
+            ui_to = pgm_output_transformers["i_to"] * pgm_input_transformers["u2"]
+            loading = np.maximum(ui_from, ui_to) / pgm_input_transformers["sn"] * loading_multiplier * 1e2
+        elif self.trafo_loading == "power":
+            loading = pgm_output_transformers["loading"] * loading_multiplier * 1e2
+        else:
+            raise ValueError(f"Invalid transformer loading type: {str(self.trafo_loading)}")
 
         pp_output_trafos = pd.DataFrame(
             columns=[
@@ -1100,7 +1114,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_trafos["vm_lv_pu"] = to_nodes["u_pu"].values
         pp_output_trafos["va_hv_degree"] = from_nodes["u_degree"].values
         pp_output_trafos["va_lv_degree"] = to_nodes["u_degree"].values
-        pp_output_trafos["loading_percent"] = pgm_output_transformers["loading"] * 1e2
+        pp_output_trafos["loading_percent"] = loading
 
         self.pp_output_data["res_trafo"] = pp_output_trafos
 
