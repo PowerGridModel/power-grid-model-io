@@ -12,8 +12,7 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 import pandas as pd
 
 from power_grid_model_io.data_stores.base_data_store import BaseDataStore
-from power_grid_model_io.data_types import TabularData
-from power_grid_model_io.data_types.tabular_data import LazyDataFrame
+from power_grid_model_io.data_types import LazyDataFrame, TabularData
 
 
 class ExcelFileStore(BaseDataStore[TabularData]):

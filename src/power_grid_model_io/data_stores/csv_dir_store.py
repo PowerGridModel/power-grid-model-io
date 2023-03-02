@@ -11,7 +11,7 @@ from typing import Any, Callable, Dict, List
 import pandas as pd
 
 from power_grid_model_io.data_stores.base_data_store import BaseDataStore
-from power_grid_model_io.data_types import TabularData
+from power_grid_model_io.data_types import LazyDataFrame, TabularData
 
 
 class CsvDirStore(BaseDataStore[TabularData]):
@@ -41,7 +41,7 @@ class CsvDirStore(BaseDataStore[TabularData]):
 
             return csv_loader
 
-        data: Dict[str, Callable[[], pd.DataFrame]] = {}
+        data: Dict[str, LazyDataFrame] = {}
         for path in self._dir_path.glob("*.csv"):
             data[path.stem] = lazy_csv_loader(path)
 
