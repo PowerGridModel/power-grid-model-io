@@ -35,7 +35,7 @@ class CsvDirStore(BaseDataStore[TabularData]):
         Create a lazy loader for all CSV files in a directory and store them in a TabularData instance.
         """
 
-        def lazy_csv_loader(csv_path: Path) -> Callable[[], pd.DataFrame]:
+        def lazy_csv_loader(csv_path: Path) -> LazyDataFrame:
             def csv_loader():
                 return pd.read_csv(filepath_or_buffer=csv_path, header=self._header_rows, **self._csv_kwargs)
 
