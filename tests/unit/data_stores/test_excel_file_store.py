@@ -15,7 +15,7 @@ from structlog.testing import capture_logs
 from power_grid_model_io.data_stores.excel_file_store import ExcelFileStore
 from power_grid_model_io.data_types.tabular_data import TabularData
 
-from ...utils import assert_log_exists
+from ...utils import MockExcelFile, assert_log_exists
 
 PandasExcelData = Dict[str, pd.DataFrame]
 
@@ -103,17 +103,15 @@ def test_files__read_only():
 
 @patch("power_grid_model_io.data_stores.excel_file_store.ExcelFileStore._handle_duplicate_columns")
 @patch("power_grid_model_io.data_stores.excel_file_store.ExcelFileStore._remove_unnamed_column_placeholders")
-@patch("power_grid_model_io.data_stores.excel_file_store.Path.open", mock_open())
-@patch("power_grid_model_io.data_stores.excel_file_store.pd.read_excel")
+@patch("power_grid_model_io.data_stores.excel_file_store.pd.ExcelFile")
 def test_load(
-    mock_read_excel: MagicMock,
+    mock_excel_file: MagicMock,
     mock_remove_unnamed_column_placeholders: MagicMock,
     mock_handle_duplicate_columns: MagicMock,
     objects_excel: PandasExcelData,
 ):
-    # Arrange
     fs = ExcelFileStore(file_path=Path("input_data.xlsx"))
-    mock_read_excel.return_value = objects_excel
+    mock_excel_file.return_value = MockExcelFile(objects_excel)
     mock_remove_unnamed_column_placeholders.side_effect = noop
     mock_handle_duplicate_columns.side_effect = noop
 
@@ -121,29 +119,29 @@ def test_load(
     data = fs.load()
 
     # Assert
-    mock_read_excel.assert_called_once()
+    mock_excel_file.assert_called_once()
+    pd.testing.assert_frame_equal(data["Nodes"], objects_excel["Nodes"])
+    pd.testing.assert_frame_equal(data["Lines"], objects_excel["Lines"])
     assert mock_remove_unnamed_column_placeholders.call_args_list[0] == call(data=objects_excel["Nodes"])
     assert mock_remove_unnamed_column_placeholders.call_args_list[1] == call(data=objects_excel["Lines"])
     assert mock_handle_duplicate_columns.call_args_list[0] == call(data=objects_excel["Nodes"], sheet_name="Nodes")
     assert mock_handle_duplicate_columns.call_args_list[1] == call(data=objects_excel["Lines"], sheet_name="Lines")
-    pd.testing.assert_frame_equal(data["Nodes"], objects_excel["Nodes"])
-    pd.testing.assert_frame_equal(data["Lines"], objects_excel["Lines"])
 
 
 @patch("power_grid_model_io.data_stores.excel_file_store.ExcelFileStore._handle_duplicate_columns")
 @patch("power_grid_model_io.data_stores.excel_file_store.ExcelFileStore._remove_unnamed_column_placeholders")
-@patch("power_grid_model_io.data_stores.excel_file_store.Path.open", mock_open())
-@patch("power_grid_model_io.data_stores.excel_file_store.pd.read_excel")
+@patch("power_grid_model_io.data_stores.excel_file_store.pd.ExcelFile")
 def test_load__extra(
-    mock_read_excel: MagicMock,
+    mock_excel_file: MagicMock,
     mock_remove_unnamed_column_placeholders: MagicMock,
     mock_handle_duplicate_columns: MagicMock,
     objects_excel: PandasExcelData,
     specs_excel: PandasExcelData,
 ):
+
     # Arrange
     fs = ExcelFileStore(Path("input_data.xlsx"), foo=Path("foo_types.xlsx"))
-    mock_read_excel.side_effect = (objects_excel, specs_excel)
+    mock_excel_file.side_effect = (MockExcelFile(objects_excel), MockExcelFile(specs_excel))
     mock_remove_unnamed_column_placeholders.side_effect = noop
     mock_handle_duplicate_columns.side_effect = noop
 
@@ -151,7 +149,11 @@ def test_load__extra(
     data = fs.load()
 
     # Assert
-    assert mock_read_excel.call_count == 2
+    assert mock_excel_file.call_count == 2
+    pd.testing.assert_frame_equal(data["Nodes"], objects_excel["Nodes"])
+    pd.testing.assert_frame_equal(data["Lines"], objects_excel["Lines"])
+    pd.testing.assert_frame_equal(data["foo.Colors"], specs_excel["Colors"])
+    pd.testing.assert_frame_equal(data["foo.Lines"], specs_excel["Lines"])
     assert mock_remove_unnamed_column_placeholders.call_args_list[0] == call(data=objects_excel["Nodes"])
     assert mock_remove_unnamed_column_placeholders.call_args_list[1] == call(data=objects_excel["Lines"])
     assert mock_remove_unnamed_column_placeholders.call_args_list[2] == call(data=specs_excel["Colors"])
@@ -160,18 +162,13 @@ def test_load__extra(
     assert mock_handle_duplicate_columns.call_args_list[1] == call(data=objects_excel["Lines"], sheet_name="Lines")
     assert mock_handle_duplicate_columns.call_args_list[2] == call(data=specs_excel["Colors"], sheet_name="Colors")
     assert mock_handle_duplicate_columns.call_args_list[3] == call(data=specs_excel["Lines"], sheet_name="Lines")
-    pd.testing.assert_frame_equal(data["Nodes"], objects_excel["Nodes"])
-    pd.testing.assert_frame_equal(data["Lines"], objects_excel["Lines"])
-    pd.testing.assert_frame_equal(data["foo.Colors"], specs_excel["Colors"])
-    pd.testing.assert_frame_equal(data["foo.Lines"], specs_excel["Lines"])
 
 
 @patch("power_grid_model_io.data_stores.excel_file_store.ExcelFileStore._handle_duplicate_columns")
 @patch("power_grid_model_io.data_stores.excel_file_store.ExcelFileStore._remove_unnamed_column_placeholders")
-@patch("power_grid_model_io.data_stores.excel_file_store.Path.open", mock_open())
-@patch("power_grid_model_io.data_stores.excel_file_store.pd.read_excel")
+@patch("power_grid_model_io.data_stores.excel_file_store.pd.ExcelFile")
 def test_load__extra__duplicate_sheet_name(
-    mock_read_excel: MagicMock,
+    mock_excel_file: MagicMock,
     mock_remove_unnamed_column_placeholders: MagicMock,
     mock_handle_duplicate_columns: MagicMock,
 ):
@@ -179,7 +176,7 @@ def test_load__extra__duplicate_sheet_name(
     foo_data = {"bar.Nodes": pd.DataFrame()}
     bar_data = {"Nodes": pd.DataFrame()}
     fs = ExcelFileStore(Path("foo.xlsx"), bar=Path("bar.xlsx"))
-    mock_read_excel.side_effect = (foo_data, bar_data)
+    mock_excel_file.side_effect = (MockExcelFile(foo_data), MockExcelFile(bar_data))
     mock_remove_unnamed_column_placeholders.side_effect = noop
     mock_handle_duplicate_columns.side_effect = noop
 

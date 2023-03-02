@@ -13,7 +13,7 @@ from power_grid_model import initialize_array, power_grid_meta_data
 from power_grid_model.data_types import SingleDataset
 
 from power_grid_model_io.converters.tabular_converter import TabularConverter
-from power_grid_model_io.data_types import ExtraInfoLookup, TabularData
+from power_grid_model_io.data_types import ExtraInfo, TabularData
 from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes
 from power_grid_model_io.mappings.unit_mapping import UnitMapping
 
@@ -221,7 +221,7 @@ def test_handle_extra_info(converter: TabularConverter, tabular_data_no_units_no
         data=tabular_data_no_units_no_substitutions, table="nodes", col_def="u_nom", uuids=uuids, extra_info=None
     )
     # _handle_extra_info creates extra info entry for id's that don't exist and updates existing entries
-    extra_info: ExtraInfoLookup = {0: {"some_value": "some_key"}}
+    extra_info: ExtraInfo = {0: {"some_value": "some_key"}}
     converter._handle_extra_info(
         data=tabular_data_no_units_no_substitutions, table="nodes", col_def="u_nom", uuids=uuids, extra_info=extra_info
     )
@@ -234,7 +234,7 @@ def test_handle_extra_info(converter: TabularConverter, tabular_data_no_units_no
 def test_handle_extra_info__units(converter: TabularConverter, tabular_data: TabularData):
     # Arrange
     uuids = np.array([0, 1])
-    extra_info: ExtraInfoLookup = {}
+    extra_info: ExtraInfo = {}
     tabular_data._units = UnitMapping({"V": {"kV": 1000.0}})
 
     # Act
@@ -266,9 +266,9 @@ def test_serialize_data(converter: TabularConverter, pgm_node_empty: SingleDatas
     pgm_node_empty["node"]["id"] = [1, 2]
     pgm_node_empty["node"]["u_rated"] = [3.0, 4.0]
     tabular_data = converter._serialize_data(data=pgm_node_empty, extra_info=None)
-    assert len(tabular_data._data) == 1
-    assert (tabular_data._data["node"]["id"] == np.array([1, 2])).all()
-    assert (tabular_data._data["node"]["u_rated"] == np.array([3.0, 4.0])).all()
+    assert len(tabular_data) == 1
+    assert (tabular_data["node"]["id"] == np.array([1, 2])).all()
+    assert (tabular_data["node"]["u_rated"] == np.array([3.0, 4.0])).all()
 
 
 def test_parse_col_def(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
@@ -559,7 +559,7 @@ def test_parse_auto_id__extra_info(
 ):
     # ref_table: None, ref_name: None, key_col_def: str, extra_info: dict
     mock_get_id.side_effect = [101, 102]
-    extra_info: ExtraInfoLookup = {}
+    extra_info: ExtraInfo = {}
     converter._parse_auto_id(
         data=tabular_data_no_units_no_substitutions,
         table="nodes",
@@ -581,7 +581,7 @@ def test_parse_auto_id__reference_column(
 ):
     # ref_table: str, ref_name: None, key_col_def: dict, extra_info: dict
     mock_get_id.side_effect = [101, 102]
-    extra_info: ExtraInfoLookup = {}
+    extra_info: ExtraInfo = {}
     converter._parse_auto_id(
         data=tabular_data_no_units_no_substitutions,
         table="lines",
@@ -602,7 +602,7 @@ def test_parse_auto_id__composite_key(
 ):
     # ref_table: None, ref_name: None, key_col_def: list, extra_info: dict
     mock_get_id.side_effect = [101, 102]
-    extra_info: ExtraInfoLookup = {}
+    extra_info: ExtraInfo = {}
     converter._parse_auto_id(
         data=tabular_data_no_units_no_substitutions,
         table="nodes",
@@ -627,7 +627,7 @@ def test_parse_auto_id__named_objects(
 ):
     # ref_table: None, ref_name: str, key_col_def: str, extra_info: dict
     mock_get_id.side_effect = [101, 102]
-    extra_info: ExtraInfoLookup = {}
+    extra_info: ExtraInfo = {}
     converter._parse_auto_id(
         data=tabular_data_no_units_no_substitutions,
         table="nodes",
@@ -652,7 +652,7 @@ def test_parse_auto_id__named_keys(
 ):
     # name: str, key_col_def: Dict[str, str], extra_info: dict
     mock_get_id.side_effect = [101, 102]
-    extra_info: ExtraInfoLookup = {}
+    extra_info: ExtraInfo = {}
     converter._parse_auto_id(
         data=tabular_data_no_units_no_substitutions,
         table="lines",

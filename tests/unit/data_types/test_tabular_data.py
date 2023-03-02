@@ -228,6 +228,53 @@ def test_get_column__sanity_check(mock_unit_conversion: MagicMock, nodes_iso: pd
         data.get_column(table_name="nodes", column_name="u_rated")
 
 
+def test_lazy_loading(nodes: pd.DataFrame, lines: pd.DataFrame):
+    # Arrange
+    def nodes_fn():
+        return nodes
+
+    def lines_fn():
+        return lines
+
+    data = TabularData(nodes=nodes_fn, lines=lines_fn)
+
+    # Assert: No data loaded
+    assert not isinstance(data._data["nodes"], pd.DataFrame)
+    assert not isinstance(data._data["lines"], pd.DataFrame)
+
+    # Act / Assert: Node data loaded
+    pd.testing.assert_frame_equal(data["nodes"], nodes)
+    assert isinstance(data._data["nodes"], pd.DataFrame)
+    assert not isinstance(data._data["lines"], pd.DataFrame)
+
+    # Act / Assert: Line data loaded
+    pd.testing.assert_frame_equal(data["lines"], lines)
+    assert isinstance(data._data["nodes"], pd.DataFrame)
+    assert isinstance(data._data["lines"], pd.DataFrame)
+
+
+def test_len(nodes: pd.DataFrame, lines: pd.DataFrame):
+    # Arrange
+    data = TabularData(nodes=nodes, lines=lines)
+
+    # Act
+    n_tables = len(data)
+
+    # Assert
+    assert n_tables == 2
+
+
+def test_len__empty():
+    # Arrange
+    data = TabularData()
+
+    # Act
+    n_tables = len(data)
+
+    # Assert
+    assert n_tables == 0
+
+
 def test_contains(nodes: pd.DataFrame, lines: pd.DataFrame):
     # Arrange
     data = TabularData(nodes=nodes, lines=lines)
@@ -235,6 +282,14 @@ def test_contains(nodes: pd.DataFrame, lines: pd.DataFrame):
     # Act / Assert
     assert "nodes" in data
     assert "lines" in data
+
+
+def test_contains__empty():
+    # Arrange
+    data = TabularData()
+
+    # Act / Assert
+    assert "nodes" not in data
 
 
 def test_keys(nodes: pd.DataFrame, lines: pd.DataFrame):
@@ -248,6 +303,17 @@ def test_keys(nodes: pd.DataFrame, lines: pd.DataFrame):
     assert keys == ["nodes", "lines"]
 
 
+def test_keys__empty():
+    # Arrange
+    data = TabularData()
+
+    # Act
+    keys = list(data.keys())
+
+    # Assert
+    assert keys == []
+
+
 def test_items(nodes: pd.DataFrame, lines: pd.DataFrame):
     # Arrange
     data = TabularData(nodes=nodes, lines=lines)
@@ -257,3 +323,14 @@ def test_items(nodes: pd.DataFrame, lines: pd.DataFrame):
 
     # Assert
     assert items == [("nodes", nodes), ("lines", lines)]
+
+
+def test_items__empty():
+    # Arrange
+    data = TabularData()
+
+    # Act
+    items = list(data.items())
+
+    # Assert
+    assert items == []
