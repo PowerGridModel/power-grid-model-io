@@ -223,7 +223,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 ref[i] = (pgm_id,) + tuple(extra[col] for col in node_cols)
             self.pgm_input_data[component] = ref
 
-    def _extra_info_to_pp_input_data(self, extra_info: ExtraInfoLookup):
+    def _extra_info_to_pp_input_data(self, extra_info: ExtraInfo):
         """
         Converts extra component info into node_lookup
 
