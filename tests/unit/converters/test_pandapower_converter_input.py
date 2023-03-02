@@ -534,11 +534,9 @@ def test_create_pgm_input_sources__asym(kwargs):
     converter.pp_input_data = {k: v for k, v in pp_net.items() if isinstance(v, pd.DataFrame)}
     converter.idx = {("bus", None): pd.Series([0], index=[0])}
 
-    with pytest.raises(
-        NotImplementedError,
-        match="Only equal positive and zero sequence parameters are supported for external grid in PGM",
-    ):
+    with patch("power_grid_model_io.converters.pandapower_converter.logger") as mock_logger:
         converter._create_pgm_input_sources()
+        mock_logger.warning.assert_called_once()
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -948,13 +946,9 @@ def test_create_pgm_input_transformers__asym(kwargs):
     converter = PandaPowerConverter()
     converter.pp_input_data = {k: v for k, v in pp_net.items() if isinstance(v, pd.DataFrame)}
 
-    with pytest.raises(
-        NotImplementedError,
-        match=re.escape(
-            f"Only equal positive and zero sequence parameters are supported for trafo in PGM. Check {list(kwargs.keys())[0]} parameter(s)"
-        ),
-    ):
+    with patch("power_grid_model_io.converters.pandapower_converter.logger") as mock_logger:
         converter._create_pgm_input_transformers()
+        mock_logger.warning.assert_called_once()
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -1313,13 +1307,9 @@ def test_create_pgm_input_transformers3w__asym(kwargs):
     converter.pp_input_data = {k: v for k, v in pp_net.items() if isinstance(v, pd.DataFrame)}
 
     # Act
-    with pytest.raises(
-        NotImplementedError,
-        match=re.escape(
-            f"Only equal positive and zero sequence parameters are supported for trafo3w in PGM. Check {list(kwargs.keys())[0]} parameter(s)"
-        ),
-    ):
+    with patch("power_grid_model_io.converters.pandapower_converter.logger") as mock_logger:
         converter._create_pgm_input_three_winding_transformers()
+        mock_logger.warning.assert_called_once()
 
 
 def test_create_pgm_input_three_winding_transformers__tap_at_star_point() -> None:

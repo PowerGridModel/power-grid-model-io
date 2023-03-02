@@ -757,6 +757,7 @@ def test_output_bus_3ph(mock_np_array: MagicMock, converter):
     # Arrange
     mock_pgm_array = MagicMock()
     converter.pgm_output_data["node"] = mock_pgm_array
+    converter._pp_buses_output_3ph__accumulate_power = MagicMock()
 
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
         # Act
@@ -780,7 +781,8 @@ def test_output_bus_3ph(mock_np_array: MagicMock, converter):
         mock_pp_df.return_value.__setitem__.assert_any_call("vm_c_pu", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("va_c_degree", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("unbalance_percent", ANY)
-        # TODO Add test after creating accumulate loads for 3ph
+
+        converter._pp_buses_output_3ph__accumulate_power.assert_called_once()
 
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_bus_3ph", mock_pp_df.return_value)
@@ -1017,3 +1019,121 @@ def test_output_asymmetric_sgen_3ph(converter):
 
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_asymmetric_sgen_3ph", mock_pp_df.return_value)
+
+
+def test_pp_buses_output_3ph__accumulate_power__zero():
+    # Arrange
+    power_columns = ["p_a_mw", "p_b_mw", "p_c_mw", "q_a_mvar", "q_b_mvar", "q_c_mvar"]
+    converter = PandaPowerConverter()
+    converter.idx = {"bus": pd.Series([0, 1, 2, 3], index=[101, 102, 103, 104], dtype=np.int32)}
+    pp_buses_3ph = pd.DataFrame(np.empty((4, 6), np.float64), columns=power_columns, index=[101, 102, 103, 104])
+
+    expected = pd.DataFrame(
+        np.full((4, 6), fill_value=0.0, dtype=np.float64), columns=power_columns, index=[101, 102, 103, 104]
+    )
+
+    # Act
+    converter._pp_buses_output_3ph__accumulate_power(pp_buses_3ph)
+
+    # Assert
+    pd.testing.assert_frame_equal(pp_buses_3ph[power_columns], expected)
+
+
+def test_pp_buses_output_3ph__accumulate_power__component_absent():
+    # Arrange
+    power_columns = ["p_a_mw", "p_b_mw", "p_c_mw", "q_a_mvar", "q_b_mvar", "q_c_mvar"]
+    converter = PandaPowerConverter()
+    converter.idx_lookup = {("bus", None): pd.Series([101, 102, 103, 104], index=[0, 1, 2, 3], dtype=np.int32)}
+    pp_buses_3ph = pd.DataFrame(np.empty((4, 6), np.float64), columns=power_columns, index=[101, 102, 103, 104])
+    converter.pgm_input_data = {
+        "link": initialize_array("input", "link", 2),
+    }
+    converter.pgm_output_data = {
+        "line": initialize_array("asym_output", "line", 3),
+    }
+    with pytest.raises(KeyError, match="PGM input_data is needed to accumulate output for lines"):
+        converter._pp_buses_output_3ph__accumulate_power(pp_buses_3ph)
+
+
+def test_pp_buses_output_3ph__accumulate_power():
+    # We make phase B = 2 x phase A and phase C = 3 x phase A of symmetric test for simplicity in calculations
+    multiplier = np.array([1, 2, 3])
+    # Arrange
+    power_columns = ["p_a_mw", "p_b_mw", "p_c_mw", "q_a_mvar", "q_b_mvar", "q_c_mvar"]
+    converter = PandaPowerConverter()
+    converter.idx_lookup = {("bus", None): pd.Series([101, 102, 103, 104], index=[0, 1, 2, 3], dtype=np.int32)}
+    pp_buses_3ph = pd.DataFrame(np.empty((4, 6), np.float64), columns=power_columns, index=[101, 102, 103, 104])
+
+    converter.pgm_input_data = {
+        "line": initialize_array("input", "line", 3),
+        "link": initialize_array("input", "link", 2),
+        "transformer": initialize_array("input", "transformer", 2),
+    }
+    converter.pgm_output_data = {
+        "line": initialize_array("asym_output", "line", 3),
+        "link": initialize_array("asym_output", "link", 2),
+        "transformer": initialize_array("asym_output", "transformer", 2),
+    }
+    converter.pgm_input_data["line"]["from_node"] = [0, 1, 1]
+    converter.pgm_input_data["line"]["to_node"] = [1, 2, 3]
+    converter.pgm_input_data["link"]["from_node"] = [0, 1]
+    converter.pgm_input_data["link"]["to_node"] = [1, 2]
+    converter.pgm_input_data["transformer"]["from_node"] = [0, 1]
+    converter.pgm_input_data["transformer"]["to_node"] = [1, 2]
+    converter.pgm_output_data["line"]["p_from"] = np.outer(np.array([1.0, 2.0, 4.0], ndmin=2), multiplier)
+    converter.pgm_output_data["line"]["q_from"] = np.outer(np.array([0.1, 0.2, 0.4], ndmin=2), multiplier)
+    converter.pgm_output_data["line"]["p_to"] = np.outer(np.array([-1.0, -2.0, -4.0], ndmin=2), multiplier)
+    converter.pgm_output_data["line"]["q_to"] = np.outer(np.array([-0.1, -0.2, -0.4], ndmin=2), multiplier)
+    converter.pgm_output_data["link"]["p_from"] = np.outer(np.array([10.0, 20.0], ndmin=2), multiplier)
+    converter.pgm_output_data["link"]["q_from"] = np.outer(np.array([0.01, 0.02], ndmin=2), multiplier)
+    converter.pgm_output_data["link"]["p_to"] = np.outer(np.array([-10.0, -20.0], ndmin=2), multiplier)
+    converter.pgm_output_data["link"]["q_to"] = np.outer(np.array([-0.01, -0.02], ndmin=2), multiplier)
+    converter.pgm_output_data["transformer"]["p_from"] = np.outer(np.array([100.0, 200.0], ndmin=2), multiplier)
+    converter.pgm_output_data["transformer"]["q_from"] = np.outer(np.array([0.001, 0.002], ndmin=2), multiplier)
+    converter.pgm_output_data["transformer"]["p_to"] = np.outer(np.array([-100.0, -200.0], ndmin=2), multiplier)
+    converter.pgm_output_data["transformer"]["q_to"] = np.outer(np.array([-0.001, -0.002], ndmin=2), multiplier)
+
+    p_101 = -1.0 - 10.0 - 100.0
+    p_102 = -2.0 - 4.0 + 1.0 - 20.0 + 10.0 - 200.0 + 100.0
+    p_103 = 2.0 + 20.0 + 200.0
+    p_104 = 4.0
+    q_101 = -0.1 - 0.01 - 0.001
+    q_102 = -0.2 - 0.4 + 0.1 - 0.02 + 0.01 - 0.002 + 0.001
+    q_103 = 0.2 + 0.02 + 0.002
+    q_104 = 0.4
+    p_arr = np.outer(np.array([p_101, p_102, p_103, p_104], ndmin=2), multiplier)
+    q_arr = np.outer(np.array([q_101, q_102, q_103, q_104], ndmin=2), multiplier)
+    expected = pd.DataFrame(data=np.hstack((p_arr, q_arr)), columns=power_columns, index=[101, 102, 103, 104]) * 1e-6
+
+    # Act
+    converter._pp_buses_output_3ph__accumulate_power(pp_buses_3ph)
+
+    # Assert
+    pd.testing.assert_frame_equal(pp_buses_3ph[power_columns], expected)
+
+
+def test_pp_buses_output_3ph__accumulate_power__output_empty():
+    # Arrange
+    power_columns = ["p_a_mw", "p_b_mw", "p_c_mw", "q_a_mvar", "q_b_mvar", "q_c_mvar"]
+    converter = PandaPowerConverter()
+    converter.idx_lookup = {("bus", None): pd.Series([101, 102, 103], index=[0, 1, 2], dtype=np.int32)}
+    pp_buses_3ph = pd.DataFrame(np.empty((3, 6), np.float64), columns=power_columns, index=[101, 102, 103])
+
+    converter.pgm_input_data = {
+        "link": initialize_array("input", "link", 2),
+    }
+    converter.pgm_output_data = {
+        "link": initialize_array("asym_output", "link", 0),
+    }
+    converter.pgm_input_data["link"]["from_node"] = [0, 1]
+    converter.pgm_input_data["link"]["to_node"] = [1, 2]
+
+    expected = pd.DataFrame(
+        np.full((3, 6), fill_value=0.0, dtype=np.float64), columns=power_columns, index=[101, 102, 103]
+    )
+
+    # Act
+    converter._pp_buses_output_3ph__accumulate_power(pp_buses_3ph)
+
+    # Assert
+    pd.testing.assert_frame_equal(pp_buses_3ph[power_columns], expected)
