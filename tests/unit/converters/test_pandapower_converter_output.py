@@ -840,7 +840,6 @@ def test_output_line_3ph(converter):
         mock_pp_df.return_value.__setitem__.assert_any_call("i_a_to_ka", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("i_b_to_ka", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("i_c_to_ka", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("i_ka", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("loading_percent", ANY)
 
         # result

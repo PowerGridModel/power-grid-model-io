@@ -1660,7 +1660,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 "i_b_to_ka",
                 "i_c_to_ka",
                 "i_n_to_ka",
-                "i_ka",
                 "loading_percent",
             ],
             index=self._get_pp_ids("line", pgm_output_lines["id"]),
@@ -1692,7 +1691,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_lines_3ph["i_b_to_ka"] = pgm_output_lines["i_to"][:, 1] * 1e-3
         pp_output_lines_3ph["i_c_to_ka"] = pgm_output_lines["i_to"][:, 2] * 1e-3
         pp_output_lines_3ph["i_n_to_ka"] = np.abs(np.sum(i_to, axis=1)) * 1e-3
-        pp_output_lines_3ph["i_ka"] = np.maximum(pgm_output_lines["i_from"], pgm_output_lines["i_to"]) * 1e-3
         # pp_output_lines_3ph["loading_a_percent"] = (
         #     np.maximum(pp_output_lines_3ph["i_a_from_ka"], pp_output_lines_3ph["i_a_to_ka"]) / pgm_input_lines["i_n"]
         # )
