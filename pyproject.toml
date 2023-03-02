@@ -35,6 +35,7 @@ dependencies = [
     "power_grid_model>=1.4",
     "pyyaml",
     "structlog",
+    "tqdm",
 ]
 dynamic = ["version"]
 
