@@ -42,7 +42,7 @@ node            The word 'node'
 $               End of the string
 """
 
-PVS_EFFICIENCY_TYPE_RE = re.compile(r"[ ,..]1 pu: (95|97) %")
+PVS_EFFICIENCY_TYPE_RE = re.compile(r"[ ,.]1 pu: (95|97) %")
 r"""
 Regular expressions to match the efficiency type percentage at 1 pu, eg:
     - 0,1 pu: 93 %; 1 pu: 97 %

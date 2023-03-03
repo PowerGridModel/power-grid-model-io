@@ -146,13 +146,14 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         for component_data in self.pgm_input_data.values():
             for attr_name in component_data.dtype.names:
-                if NODE_REF_RE.fullmatch(attr_name):
-                    for pgm_id, node_id in component_data[["id", attr_name]]:
-                        if pgm_id not in extra_info:
-                            extra_info[pgm_id] = {}
-                        if "pgm_input" not in extra_info[pgm_id]:
-                            extra_info[pgm_id]["pgm_input"] = {}
-                        extra_info[pgm_id]["pgm_input"][attr_name] = node_id
+                if not NODE_REF_RE.fullmatch(attr_name):
+                    continue
+                for pgm_id, node_id in component_data[["id", attr_name]]:
+                    if pgm_id not in extra_info:
+                        extra_info[pgm_id] = {}
+                    if "pgm_input" not in extra_info[pgm_id]:
+                        extra_info[pgm_id]["pgm_input"] = {}
+                    extra_info[pgm_id]["pgm_input"][attr_name] = node_id
 
     def _fill_pp_extra_info(self, extra_info: ExtraInfo):
         pp_input = {"trafo": {"df"}}

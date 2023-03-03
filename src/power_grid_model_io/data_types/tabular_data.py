@@ -203,7 +203,7 @@ class TabularData:
         """
         Mimic the dictionary .items() function
 
-        Returns: An generator of the table names and the raw table data
+        Returns: A generator of the table names and the raw table data
         """
 
         # Note: PyCharm complains about the type, but it is correct, as an ItemsView extends from
