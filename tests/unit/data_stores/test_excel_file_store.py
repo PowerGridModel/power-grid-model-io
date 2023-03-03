@@ -138,7 +138,6 @@ def test_load__extra(
     objects_excel: PandasExcelData,
     specs_excel: PandasExcelData,
 ):
-
     # Arrange
     fs = ExcelFileStore(Path("input_data.xlsx"), foo=Path("foo_types.xlsx"))
     mock_excel_file.side_effect = (MockExcelFile(objects_excel), MockExcelFile(specs_excel))

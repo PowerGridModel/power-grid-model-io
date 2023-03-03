@@ -88,9 +88,12 @@ def two_pp_objs() -> MockDf:
     return MockDf(2)
 
 
-@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._fill_extra_info")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._fill_pgm_extra_info")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._fill_pp_extra_info")
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._create_input_data")
-def test_parse_data(create_input_data_mock: MagicMock, fill_extra_info_mock: MagicMock):
+def test_parse_data(
+    create_input_data_mock: MagicMock, fill_pp_extra_info_mock: MagicMock, fill_pgm_extra_info_mock: MagicMock
+):
     # Arrange
     converter = PandaPowerConverter()
 
@@ -104,15 +107,19 @@ def test_parse_data(create_input_data_mock: MagicMock, fill_extra_info_mock: Mag
 
     # Assert
     create_input_data_mock.assert_called_once_with()
-    fill_extra_info_mock.assert_not_called()
+    fill_pgm_extra_info_mock.assert_not_called()
+    fill_pp_extra_info_mock.assert_not_called()
     assert len(converter.pp_input_data) == 1 and "bus" in converter.pp_input_data
     assert len(converter.pgm_input_data) == 1 and "node" in converter.pgm_input_data
     assert len(result) == 1 and "node" in result
 
 
-@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._fill_extra_info")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._fill_pgm_extra_info")
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._fill_pp_extra_info")
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._create_input_data")
-def test_parse_data__extra_info(create_input_data_mock: MagicMock, fill_extra_info_mock: MagicMock):
+def test_parse_data__extra_info(
+    create_input_data_mock: MagicMock, fill_pp_extra_info_mock: MagicMock, fill_pgm_extra_info_mock: MagicMock
+):
     # Arrange
     converter = PandaPowerConverter()
 
@@ -123,7 +130,8 @@ def test_parse_data__extra_info(create_input_data_mock: MagicMock, fill_extra_in
 
     # Assert
     create_input_data_mock.assert_called_once_with()
-    fill_extra_info_mock.assert_called_once_with(extra_info=extra_info)
+    fill_pgm_extra_info_mock.assert_called_once_with(extra_info=extra_info)
+    fill_pp_extra_info_mock.assert_called_once_with(extra_info=extra_info)
 
 
 def test_parse_data__update_data():
@@ -135,7 +143,7 @@ def test_parse_data__update_data():
         converter._parse_data(data={}, data_type="update", extra_info=None)
 
 
-def test_fill_extra_info():
+def test_fill_pgm_extra_info():
     # Arrange
     converter = PandaPowerConverter()
     converter.idx_lookup[("bus", None)] = pd.Series([101, 102, 103], index=[0, 1, 2])
@@ -150,7 +158,7 @@ def test_fill_extra_info():
 
     # Act
     extra_info = {}
-    converter._fill_extra_info(extra_info=extra_info)
+    converter._fill_pgm_extra_info(extra_info=extra_info)
 
     # Assert
     assert len(extra_info) == 8
@@ -171,6 +179,33 @@ def test_fill_extra_info():
     }
     assert extra_info[6] == {"pgm_input": {"from_node": 0, "to_node": 1}}
     assert extra_info[7] == {"pgm_input": {"from_node": 1, "to_node": 2}}
+
+
+def test_fill_pp_extra_info():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.idx_lookup[("line", None)] = pd.Series([102, 103], index=[1, 2])
+    converter.idx_lookup[("trafo", None)] = pd.Series([201, 202, 203], index=[3, 4, 5])
+    converter.idx[("line", None)] = pd.Series([1, 2], index=[102, 103])
+    converter.idx[("trafo", None)] = pd.Series([3, 4, 5], index=[201, 202, 203])
+
+    converter.pp_input_data["trafo"] = pd.DataFrame([0.1, 0.2, 0.3], columns=["df"], index=[201, 202, 203])
+    converter.pp_input_data["line"] = pd.DataFrame([10, 11, 12], columns=["df"], index=[201, 202, 203])
+
+    converter.pgm_input_data["transformer"] = initialize_array("input", "transformer", 3)
+    converter.pgm_input_data["transformer"]["id"] = [3, 4, 5]
+    converter.pgm_input_data["line"] = initialize_array("input", "line", 2)
+    converter.pgm_input_data["line"]["id"] = [1, 2]
+
+    # Act
+    extra_info = {}
+    converter._fill_pp_extra_info(extra_info=extra_info)
+
+    # Assert
+    assert len(extra_info) == 3
+    assert extra_info[3] == {"pp_input": {"df": 0.1}}
+    assert extra_info[4] == {"pp_input": {"df": 0.2}}
+    assert extra_info[5] == {"pp_input": {"df": 0.3}}
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._extra_info_to_idx_lookup")

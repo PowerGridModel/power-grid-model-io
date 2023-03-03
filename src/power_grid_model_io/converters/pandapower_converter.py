@@ -79,7 +79,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         # Construct extra_info
         if extra_info is not None:
-            self._fill_extra_info(extra_info=extra_info)
+            self._fill_pgm_extra_info(extra_info=extra_info)
+            self._fill_pp_extra_info(extra_info=extra_info)
 
         return self.pgm_input_data
 
@@ -135,8 +136,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._create_pgm_input_generators()
         self._create_pgm_input_dclines()
 
-
-    def _fill_extra_info(self, extra_info: ExtraInfo):
+    def _fill_pgm_extra_info(self, extra_info: ExtraInfo):
         for (pp_table, name), indices in self.idx_lookup.items():
             for pgm_id, pp_idx in zip(indices.index, indices):
                 if name:
@@ -154,14 +154,17 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                             extra_info[pgm_id]["pgm_input"] = {}
                         extra_info[pgm_id]["pgm_input"][attr_name] = node_id
 
+    def _fill_pp_extra_info(self, extra_info: ExtraInfo):
         pp_input = {"trafo": {"df"}}
         for pp_table, pp_attr in pp_input.items():
             if pp_table in self.pp_input_data:
-                pp_attr = pp_attr & set(self.pp_input_data[pp_table].columns.names)
+                pp_attr = pp_attr & set(self.pp_input_data[pp_table].columns)
                 if not pp_attr:
                     continue
                 pgm_ids = self._get_pgm_ids(pp_table=pp_table)
-                for pgm_id, pp_element in zip(pgm_ids, self.pp_input_data[pp_table]):
+                pp_extra_data = self.pp_input_data[pp_table][pp_attr]
+                pp_extra_data.index = pgm_ids
+                for pgm_id, pp_element in pp_extra_data.iterrows():
                     if pgm_id not in extra_info:
                         extra_info[pgm_id] = {}
                     if "pp_input" not in extra_info[pgm_id]:
