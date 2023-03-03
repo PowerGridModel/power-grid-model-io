@@ -13,7 +13,7 @@ from power_grid_model import power_grid_meta_data
 from power_grid_model.data_types import SingleDataset, SinglePythonDataset
 from power_grid_model.utils import convert_python_single_dataset_to_single_dataset
 
-from power_grid_model_io.data_types import ExtraInfoLookup, StructuredData
+from power_grid_model_io.data_types import ExtraInfo, StructuredData
 
 
 @lru_cache()
@@ -137,7 +137,7 @@ def select_values(actual: SingleDataset, expected: SingleDataset, component: str
     return actual_values, expected_values
 
 
-def extract_extra_info(data: SinglePythonDataset, data_type: str) -> ExtraInfoLookup:
+def extract_extra_info(data: SinglePythonDataset, data_type: str) -> ExtraInfo:
     """
     Reads the dataset and collect all arguments that aren't pgm attributes
 
@@ -147,7 +147,7 @@ def extract_extra_info(data: SinglePythonDataset, data_type: str) -> ExtraInfoLo
 
     Returns: A dictionary indexed on the object id and containing the extra info for all the objects.
     """
-    extra_info: ExtraInfoLookup = {}
+    extra_info: ExtraInfo = {}
     for component, objects in data.items():
         pgm_attr = set(power_grid_meta_data[data_type][component].dtype.names)
         for obj in objects:
@@ -157,7 +157,7 @@ def extract_extra_info(data: SinglePythonDataset, data_type: str) -> ExtraInfoLo
     return extra_info
 
 
-def load_json_single_dataset(file_path: Path, data_type: str) -> Tuple[SingleDataset, ExtraInfoLookup]:
+def load_json_single_dataset(file_path: Path, data_type: str) -> Tuple[SingleDataset, ExtraInfo]:
     """
     Loads and parses a json file in the most basic way, without using power_grid_model_io functions.
 
@@ -175,7 +175,7 @@ def load_json_single_dataset(file_path: Path, data_type: str) -> Tuple[SingleDat
     return dataset, extra_info
 
 
-def compare_extra_info(actual: ExtraInfoLookup, expected: ExtraInfoLookup, component: str, obj_ids: List[int]):
+def compare_extra_info(actual: ExtraInfo, expected: ExtraInfo, component: str, obj_ids: List[int]):
     # We'll collect all errors, instead of terminating at the first error
     errors = []
 

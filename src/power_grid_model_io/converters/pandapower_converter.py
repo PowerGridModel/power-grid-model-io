@@ -14,7 +14,7 @@ from power_grid_model import Branch3Side, BranchSide, LoadGenType, WindingType, 
 from power_grid_model.data_types import Dataset, SingleDataset
 
 from power_grid_model_io.converters.base_converter import BaseConverter
-from power_grid_model_io.data_types import ExtraInfoLookup
+from power_grid_model_io.data_types import ExtraInfo
 from power_grid_model_io.functions import get_winding
 from power_grid_model_io.utils.regex import NODE_REF_RE, TRAFO3_CONNECTION_RE, TRAFO_CONNECTION_RE
 
@@ -48,9 +48,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self.idx_lookup: Dict[Tuple[str, Optional[str]], pd.Series] = {}
         self.next_idx = 0
 
-    def _parse_data(
-        self, data: PandaPowerData, data_type: str, extra_info: Optional[ExtraInfoLookup] = None
-    ) -> Dataset:
+    def _parse_data(self, data: PandaPowerData, data_type: str, extra_info: Optional[ExtraInfo] = None) -> Dataset:
         """
         Set up for conversion from PandaPower to power-grid-model
 
@@ -85,7 +83,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         return self.pgm_input_data
 
-    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfoLookup]) -> PandaPowerData:
+    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfo]) -> PandaPowerData:
         """
         Set up for conversion from power-grid-model to PandaPower
 
@@ -137,7 +135,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._create_pgm_input_generators()
         self._create_pgm_input_dclines()
 
-    def _fill_extra_info(self, extra_info: ExtraInfoLookup):
+    def _fill_extra_info(self, extra_info: ExtraInfo):
         for (pp_table, name), indices in self.idx_lookup.items():
             for pgm_id, pp_idx in zip(indices.index, indices):
                 if name:
@@ -154,7 +152,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                     else:
                         extra_info[pgm_id] = {attr_name: node_id}
 
-    def _extra_info_to_idx_lookup(self, extra_info: ExtraInfoLookup):
+    def _extra_info_to_idx_lookup(self, extra_info: ExtraInfo):
         """
         Converts extra component info into idx_lookup
 
@@ -180,7 +178,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             self.idx[key] = pd.Series(pgm_ids, index=pp_indices)
             self.idx_lookup[key] = pd.Series(pp_indices, index=pgm_ids)
 
-    def _extra_info_to_pgm_input_data(self, extra_info: ExtraInfoLookup):
+    def _extra_info_to_pgm_input_data(self, extra_info: ExtraInfo):
         """
         Converts extra component info into node_lookup
 
