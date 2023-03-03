@@ -459,7 +459,7 @@ def test_parse_col_def_filter__pandas_function(mock_parse_function: MagicMock, c
 
     # Assert
     mock_parse_function.assert_called_once_with(
-        data=data, table="nodes", function="multiply", col_def=["id_number", "u_nom"]
+        data=data, table="nodes", fn_name="multiply", col_def=["id_number", "u_nom"]
     )
     pd.testing.assert_frame_equal(result, function_result)
 
@@ -707,7 +707,7 @@ def test_parse_pandas_function(
     mock_parse_col_def.return_value = parse_col_def_data
 
     # Act
-    result = converter._parse_pandas_function(data=data, table="foo", function=function, col_def=col_def)
+    result = converter._parse_pandas_function(data=data, table="foo", fn_name=function, col_def=col_def)
 
     # Assert
     mock_parse_col_def.assert_called_once_with(data=data, table="foo", col_def=col_def, extra_info=None)
@@ -723,7 +723,7 @@ def test_parse_pandas_function__no_data(mock_parse_col_def: MagicMock, converter
     mock_parse_col_def.return_value = parse_col_def_data
 
     # Act
-    result = converter._parse_pandas_function(data=data, table="foo", function="multiply", col_def=col_def)
+    result = converter._parse_pandas_function(data=data, table="foo", fn_name="multiply", col_def=col_def)
 
     # Assert
     mock_parse_col_def.assert_called_once_with(data=data, table="foo", col_def=col_def, extra_info=None)
@@ -737,17 +737,15 @@ def test_parse_pandas_function__invalid(mock_parse_col_def: MagicMock, converter
 
     # Act / Assert
     with pytest.raises(AssertionError):
-        converter._parse_pandas_function(
-            data=MagicMock(), table="foo", function="multiply", col_def=123  # type: ignore
-        )
+        converter._parse_pandas_function(data=MagicMock(), table="foo", fn_name="multiply", col_def=123)  # type: ignore
 
     # Act / Assert
     with pytest.raises(ValueError, match="Pandas DataFrame has no function 'bar'"):
-        converter._parse_pandas_function(data=MagicMock(), table="foo", function="bar", col_def=[])
+        converter._parse_pandas_function(data=MagicMock(), table="foo", fn_name="bar", col_def=[])
 
     # Act / Assert
     with pytest.raises(ValueError, match="Invalid pandas function DataFrame.apply"):
-        converter._parse_pandas_function(data=MagicMock(), table="foo", function="apply", col_def=[])
+        converter._parse_pandas_function(data=MagicMock(), table="foo", fn_name="apply", col_def=[])
 
 
 @patch("power_grid_model_io.converters.tabular_converter.get_function")
