@@ -241,7 +241,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         pgm_ids = self.pgm_output_data["transformer"]["id"]
         pp_ids = self._get_pp_ids(pp_table="trafo", pgm_idx=pgm_ids)
-        derating_factor = (extra_info.get(pgm_id, {}).get("pp_input", {}).get("df", np.nan) for pgm_id in pp_ids)
+        derating_factor = (extra_info.get(pgm_id, {}).get("pp_input", {}).get("df", np.nan) for pgm_id in pgm_ids)
         self.pp_input_data = {"trafo": pd.DataFrame(derating_factor, columns=["df"], index=pp_ids)}
 
     def _create_output_data(self):

@@ -189,7 +189,9 @@ def test_fill_pp_extra_info():
     converter.idx[("line", None)] = pd.Series([1, 2], index=[102, 103])
     converter.idx[("trafo", None)] = pd.Series([3, 4, 5], index=[201, 202, 203])
 
-    converter.pp_input_data["trafo"] = pd.DataFrame([0.1, 0.2, 0.3], columns=["df"], index=[201, 202, 203])
+    converter.pp_input_data["trafo"] = pd.DataFrame(
+        {"df": [0.1, 0.2, 0.3], "other": [0.1, 0.2, 0.3]}, index=[201, 202, 203]
+    )
     converter.pp_input_data["line"] = pd.DataFrame([10, 11, 12], columns=["df"], index=[201, 202, 203])
 
     converter.pgm_input_data["transformer"] = initialize_array("input", "transformer", 3)
@@ -206,6 +208,25 @@ def test_fill_pp_extra_info():
     assert extra_info[3] == {"pp_input": {"df": 0.1}}
     assert extra_info[4] == {"pp_input": {"df": 0.2}}
     assert extra_info[5] == {"pp_input": {"df": 0.3}}
+
+
+def test_fill_pp_extra_info__no_info():
+    # Arrange
+    converter = PandaPowerConverter()
+    converter.idx_lookup[("trafo", None)] = pd.Series([201, 202, 203], index=[3, 4, 5])
+    converter.idx[("trafo", None)] = pd.Series([3, 4, 5], index=[201, 202, 203])
+
+    converter.pp_input_data["trafo"] = pd.DataFrame(
+        {"col1": [0.1, 0.2, 0.3], "col2": [0.1, 0.2, 0.3]}, index=[201, 202, 203]
+    )
+    converter.pgm_input_data["transformer"] = initialize_array("input", "transformer", 3)
+    converter.pgm_input_data["transformer"]["id"] = [3, 4, 5]
+    # Act
+    extra_info = {}
+    converter._fill_pp_extra_info(extra_info=extra_info)
+
+    # Assert
+    assert extra_info == {}
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._extra_info_to_idx_lookup")
@@ -306,6 +327,34 @@ def test_extra_info_to_pgm_input_data():
         converter.pgm_input_data["line"],
         [{"id": 12, "from_node": 1, "to_node": 2}, {"id": 23, "from_node": 2, "to_node": 3}],
     )
+
+
+def test__extra_info_to_pp_input_data():
+    converter = PandaPowerConverter()
+    converter.pgm_output_data["transformer"] = initialize_array("sym_output", "transformer", 3)
+    converter.pgm_output_data["transformer"]["id"] = [3, 4, 5]
+
+    converter.idx_lookup[("trafo", None)] = pd.Series([201, 202, 203], index=[3, 4, 5])
+    converter.idx[("trafo", None)] = pd.Series([3, 4, 5], index=[201, 202, 203])
+    extra_info = {
+        3: {"pp_input": {"df": 0.1}},
+        4: {"pp_input": {"df": 0.2}},
+        5: {"pp_input": {"df": 0.3}},
+    }
+
+    expected_trafo = pd.DataFrame({"df": [0.1, 0.2, 0.3]}, index=[201, 202, 203])
+
+    converter._extra_info_to_pp_input_data(extra_info)
+
+    pd.testing.assert_frame_equal(converter.pp_input_data["trafo"], expected_trafo)
+
+
+def test__extra_info_to_pp_input_data__empty():
+    converter = PandaPowerConverter()
+    converter.pgm_output_data["line"] = initialize_array("sym_output", "line", 3)
+
+    converter._extra_info_to_pp_input_data({})
+    assert len(converter.pp_input_data) == 0
 
 
 def test_create_input_data():
