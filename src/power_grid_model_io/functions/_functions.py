@@ -100,8 +100,7 @@ def both_zeros_to_nan(value: float, other_value: float) -> float:
     value   0      value     nan
     nan     nan    value     nan
     """
-    if value == 0:
-        if other_value == 0 or not has_value(other_value):
-            _LOG.warning("0 replaced to nan")
-            return float("nan")
+    if value == 0 and (other_value == 0 or not has_value(other_value)):
+        _LOG.warning("0 replaced to nan")
+        return float("nan")
     return value

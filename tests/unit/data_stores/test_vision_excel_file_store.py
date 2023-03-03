@@ -7,16 +7,16 @@ from unittest.mock import MagicMock, mock_open, patch
 from power_grid_model_io.data_stores.vision_excel_file_store import VisionExcelFileStore
 
 
-@patch("power_grid_model_io.data_stores.excel_file_store.pd.read_excel")
+@patch("power_grid_model_io.data_stores.excel_file_store.pd.ExcelFile")
 @patch("power_grid_model_io.data_stores.excel_file_store.Path.open", mock_open())
-def test_header_rows(read_excel_mock: MagicMock):
+def test_header_rows(mock_excel_file: MagicMock):
     # Arrange
     store = VisionExcelFileStore(file_path=Path("dummy.xlsx"))
-    read_excel_mock.return_value = {}
+    mock_excel_file.return_value.sheet_names = ["foo"]
 
     # Act
-    store.load()
+    data = store.load()
+    data["foo"]
 
     # Assert
-    read_excel_mock.assert_called_once()
-    assert read_excel_mock.call_args_list[0].kwargs["header"] == [0, 1]
+    mock_excel_file.return_value.parse.assert_called_once_with("foo", header=[0, 1])

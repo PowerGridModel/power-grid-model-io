@@ -13,7 +13,7 @@ from power_grid_model import initialize_array, power_grid_meta_data
 from power_grid_model.data_types import SingleDataset
 
 from power_grid_model_io.converters.tabular_converter import TabularConverter
-from power_grid_model_io.data_types import ExtraInfoLookup, TabularData
+from power_grid_model_io.data_types import ExtraInfo, TabularData
 from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes
 from power_grid_model_io.mappings.unit_mapping import UnitMapping
 
@@ -221,7 +221,7 @@ def test_handle_extra_info(converter: TabularConverter, tabular_data_no_units_no
         data=tabular_data_no_units_no_substitutions, table="nodes", col_def="u_nom", uuids=uuids, extra_info=None
     )
     # _handle_extra_info creates extra info entry for id's that don't exist and updates existing entries
-    extra_info: ExtraInfoLookup = {0: {"some_value": "some_key"}}
+    extra_info: ExtraInfo = {0: {"some_value": "some_key"}}
     converter._handle_extra_info(
         data=tabular_data_no_units_no_substitutions, table="nodes", col_def="u_nom", uuids=uuids, extra_info=extra_info
     )
@@ -234,7 +234,7 @@ def test_handle_extra_info(converter: TabularConverter, tabular_data_no_units_no
 def test_handle_extra_info__units(converter: TabularConverter, tabular_data: TabularData):
     # Arrange
     uuids = np.array([0, 1])
-    extra_info: ExtraInfoLookup = {}
+    extra_info: ExtraInfo = {}
     tabular_data._units = UnitMapping({"V": {"kV": 1000.0}})
 
     # Act
@@ -266,9 +266,9 @@ def test_serialize_data(converter: TabularConverter, pgm_node_empty: SingleDatas
     pgm_node_empty["node"]["id"] = [1, 2]
     pgm_node_empty["node"]["u_rated"] = [3.0, 4.0]
     tabular_data = converter._serialize_data(data=pgm_node_empty, extra_info=None)
-    assert len(tabular_data._data) == 1
-    assert (tabular_data._data["node"]["id"] == np.array([1, 2])).all()
-    assert (tabular_data._data["node"]["u_rated"] == np.array([3.0, 4.0])).all()
+    assert len(tabular_data) == 1
+    assert (tabular_data["node"]["id"] == np.array([1, 2])).all()
+    assert (tabular_data["node"]["u_rated"] == np.array([3.0, 4.0])).all()
 
 
 def test_parse_col_def(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
@@ -459,7 +459,7 @@ def test_parse_col_def_filter__pandas_function(mock_parse_function: MagicMock, c
 
     # Assert
     mock_parse_function.assert_called_once_with(
-        data=data, table="nodes", function="multiply", col_def=["id_number", "u_nom"]
+        data=data, table="nodes", fn_name="multiply", col_def=["id_number", "u_nom"]
     )
     pd.testing.assert_frame_equal(result, function_result)
 
@@ -559,7 +559,7 @@ def test_parse_auto_id__extra_info(
 ):
     # ref_table: None, ref_name: None, key_col_def: str, extra_info: dict
     mock_get_id.side_effect = [101, 102]
-    extra_info: ExtraInfoLookup = {}
+    extra_info: ExtraInfo = {}
     converter._parse_auto_id(
         data=tabular_data_no_units_no_substitutions,
         table="nodes",
@@ -581,7 +581,7 @@ def test_parse_auto_id__reference_column(
 ):
     # ref_table: str, ref_name: None, key_col_def: dict, extra_info: dict
     mock_get_id.side_effect = [101, 102]
-    extra_info: ExtraInfoLookup = {}
+    extra_info: ExtraInfo = {}
     converter._parse_auto_id(
         data=tabular_data_no_units_no_substitutions,
         table="lines",
@@ -602,7 +602,7 @@ def test_parse_auto_id__composite_key(
 ):
     # ref_table: None, ref_name: None, key_col_def: list, extra_info: dict
     mock_get_id.side_effect = [101, 102]
-    extra_info: ExtraInfoLookup = {}
+    extra_info: ExtraInfo = {}
     converter._parse_auto_id(
         data=tabular_data_no_units_no_substitutions,
         table="nodes",
@@ -627,7 +627,7 @@ def test_parse_auto_id__named_objects(
 ):
     # ref_table: None, ref_name: str, key_col_def: str, extra_info: dict
     mock_get_id.side_effect = [101, 102]
-    extra_info: ExtraInfoLookup = {}
+    extra_info: ExtraInfo = {}
     converter._parse_auto_id(
         data=tabular_data_no_units_no_substitutions,
         table="nodes",
@@ -652,7 +652,7 @@ def test_parse_auto_id__named_keys(
 ):
     # name: str, key_col_def: Dict[str, str], extra_info: dict
     mock_get_id.side_effect = [101, 102]
-    extra_info: ExtraInfoLookup = {}
+    extra_info: ExtraInfo = {}
     converter._parse_auto_id(
         data=tabular_data_no_units_no_substitutions,
         table="lines",
@@ -707,7 +707,7 @@ def test_parse_pandas_function(
     mock_parse_col_def.return_value = parse_col_def_data
 
     # Act
-    result = converter._parse_pandas_function(data=data, table="foo", function=function, col_def=col_def)
+    result = converter._parse_pandas_function(data=data, table="foo", fn_name=function, col_def=col_def)
 
     # Assert
     mock_parse_col_def.assert_called_once_with(data=data, table="foo", col_def=col_def, extra_info=None)
@@ -723,7 +723,7 @@ def test_parse_pandas_function__no_data(mock_parse_col_def: MagicMock, converter
     mock_parse_col_def.return_value = parse_col_def_data
 
     # Act
-    result = converter._parse_pandas_function(data=data, table="foo", function="multiply", col_def=col_def)
+    result = converter._parse_pandas_function(data=data, table="foo", fn_name="multiply", col_def=col_def)
 
     # Assert
     mock_parse_col_def.assert_called_once_with(data=data, table="foo", col_def=col_def, extra_info=None)
@@ -737,17 +737,15 @@ def test_parse_pandas_function__invalid(mock_parse_col_def: MagicMock, converter
 
     # Act / Assert
     with pytest.raises(AssertionError):
-        converter._parse_pandas_function(
-            data=MagicMock(), table="foo", function="multiply", col_def=123  # type: ignore
-        )
+        converter._parse_pandas_function(data=MagicMock(), table="foo", fn_name="multiply", col_def=123)  # type: ignore
 
     # Act / Assert
     with pytest.raises(ValueError, match="Pandas DataFrame has no function 'bar'"):
-        converter._parse_pandas_function(data=MagicMock(), table="foo", function="bar", col_def=[])
+        converter._parse_pandas_function(data=MagicMock(), table="foo", fn_name="bar", col_def=[])
 
     # Act / Assert
     with pytest.raises(ValueError, match="Invalid pandas function DataFrame.apply"):
-        converter._parse_pandas_function(data=MagicMock(), table="foo", function="apply", col_def=[])
+        converter._parse_pandas_function(data=MagicMock(), table="foo", fn_name="apply", col_def=[])
 
 
 @patch("power_grid_model_io.converters.tabular_converter.get_function")
