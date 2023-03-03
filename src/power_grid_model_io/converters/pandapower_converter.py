@@ -350,8 +350,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         # Source Asym parameter check
         checks = {
-            "rx_max": np.isnan(r0x0_max).all() or np.array_equal(rx_max, r0x0_max),
-            "x0x_cond": np.isnan(x0x_max).all() or all(x0x_max == 1),
+            "r0x0_max": np.isnan(r0x0_max).all() or np.array_equal(rx_max, r0x0_max),
+            "x0x_max": np.isnan(x0x_max).all() or all(x0x_max == 1),
         }
         if not all(checks.values()):
             failed_checks = ", ".join([key for key, value in checks.items() if not value])
