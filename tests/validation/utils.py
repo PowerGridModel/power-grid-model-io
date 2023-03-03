@@ -114,12 +114,15 @@ def select_values(actual: SingleDataset, expected: SingleDataset, component: str
     assert attribute in expected[component].dtype.names
 
     # Create an index series for both the actual data and the expected data
-    actual_values = pd.Series(actual[component][attribute], index=actual[component]["id"]).sort_index()
-    expected_values = pd.Series(expected[component][attribute], index=expected[component]["id"]).sort_index()
+    actual_attr = actual[component][attribute]
+    expected_attr = expected[component][attribute]
+    pd_data_fn = pd.DataFrame if actual_attr.ndim == expected_attr.ndim == 2 else pd.Series
+    actual_values = pd_data_fn(actual_attr, index=actual[component]["id"]).sort_index()
+    expected_values = pd_data_fn(expected_attr, index=expected[component]["id"]).sort_index()
 
     # Create a selection mask, to select only non-NaN values in the validation file
-    if np.issubdtype(expected_values.dtype, np.integer):
-        mask = expected_values != np.iinfo(expected_values.dtype).min
+    if np.issubdtype(expected_values.values.dtype, np.integer):
+        mask = expected_values != np.iinfo(expected_values.values.dtype).min
     else:
         mask = ~pd.isna(expected_values)
 
@@ -130,7 +133,7 @@ def select_values(actual: SingleDataset, expected: SingleDataset, component: str
     elif len(missing_idx) > 1:
         raise KeyError(f"Expected {component}s {missing_idx}, but they are missing {actual_values.index.tolist()}.")
 
-    actual_values = actual_values[expected_values.index][mask]
+    actual_values = actual_values.loc[expected_values.index][mask]
     expected_values = expected_values[mask]
 
     # Return the result
