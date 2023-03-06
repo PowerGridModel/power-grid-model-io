@@ -244,6 +244,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
     def _extra_info_to_pp_input_data(self, extra_info: ExtraInfo):
         """
         Converts extra component info into node_lookup
+        Currently, it is possible to only retrieve the derating factor (df) of trafo.
 
         Args:
             extra_info: a dictionary where the node reference ids are stored
