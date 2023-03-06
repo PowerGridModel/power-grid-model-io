@@ -137,6 +137,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._create_pgm_input_dclines()
 
     def _fill_pgm_extra_info(self, extra_info: ExtraInfo):
+        """
+        Fills in extra information of power-grid-model input after conversion from pandapower to the extra_info dict
+
+        Args:
+            extra_info: The extra info dict
+        """
         for (pp_table, name), indices in self.idx_lookup.items():
             for pgm_id, pp_idx in zip(indices.index, indices):
                 if name:
@@ -156,6 +162,14 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                     extra_info[pgm_id]["pgm_input"][attr_name] = node_id
 
     def _fill_pp_extra_info(self, extra_info: ExtraInfo):
+        """
+        Fills extra information from pandapower input dataframes not available in power-grid-model input
+        to the extra_info dict.
+        Currently, it is possible to only store the derating factor (df) of trafo.
+
+        Args:
+            extra_info: The extra info dict
+        """
         pp_input = {"trafo": {"df"}}
         for pp_table, pp_attr in pp_input.items():
             if pp_table in self.pp_input_data:
