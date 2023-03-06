@@ -49,10 +49,10 @@
     ],
   "asym_load":
     [
-      {"id": 16, "node": 4, "status": 1, "type": 0, "id_reference": {"table": "asymmetric_load", "index": 33}}
+      {"id": 16, "node": 4, "status": 1, "type": 0, "p_specified": [100000.0, 200000.0, 3000000.0], "q_specified": [10000.0, 10000.0, 10000.0], "id_reference": {"table": "asymmetric_load", "index": 33}}
     ],
   "asym_gen":
     [
-      {"id": 17, "node": 4, "status": 1, "type": 0, "id_reference": {"table": "asymmetric_sgen", "index": 32}}
+      {"id": 17, "node": 4, "status": 1, "type": 0, "p_specified": [100000.0, 200000.0, 3000000.0], "q_specified": [10000.0, 10000.0, 10000.0], "id_reference": {"table": "asymmetric_sgen", "index": 32}}
     ]
 }
