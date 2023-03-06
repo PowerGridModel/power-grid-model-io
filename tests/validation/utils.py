@@ -116,7 +116,8 @@ def select_values(actual: SingleDataset, expected: SingleDataset, component: str
     # Create an index series for both the actual data and the expected data
     actual_attr = actual[component][attribute]
     expected_attr = expected[component][attribute]
-    pd_data_fn = pd.DataFrame if actual_attr.ndim == expected_attr.ndim == 2 else pd.Series
+    assert actual_attr.ndim == expected_attr.ndim in [1, 2]
+    pd_data_fn = pd.DataFrame if actual_attr.ndim == 2 else pd.Series
     actual_values = pd_data_fn(actual_attr, index=actual[component]["id"]).sort_index()
     expected_values = pd_data_fn(expected_attr, index=expected[component]["id"]).sort_index()
 
