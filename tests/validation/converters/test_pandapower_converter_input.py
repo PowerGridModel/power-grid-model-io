@@ -84,7 +84,10 @@ def test_attributes(input_data: Tuple[SingleDataset, SingleDataset], component: 
     actual_values, expected_values = select_values(actual_data, expected_data, component, attribute)
 
     # Assert
-    pd.testing.assert_series_equal(actual_values, expected_values)
+    if isinstance(actual_values, pd.Series) and isinstance(expected_values, pd.Series):
+        pd.testing.assert_series_equal(actual_values, expected_values)
+    else:
+        pd.testing.assert_frame_equal(actual_values, expected_values)
 
 
 @pytest.mark.parametrize(
