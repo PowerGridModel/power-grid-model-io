@@ -79,7 +79,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         # Construct extra_info
         if extra_info is not None:
-            self._fill_extra_info(extra_info=extra_info)
+            self._fill_pgm_extra_info(extra_info=extra_info)
+            self._fill_pp_extra_info(extra_info=extra_info)
 
         return self.pgm_input_data
 
@@ -135,22 +136,56 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._create_pgm_input_generators()
         self._create_pgm_input_dclines()
 
-    def _fill_extra_info(self, extra_info: ExtraInfo):
+    def _fill_pgm_extra_info(self, extra_info: ExtraInfo):
+        """
+        Fills in extra information of power-grid-model input after conversion from pandapower to the extra_info dict
+
+        Args:
+            extra_info: The extra info dict
+        """
         for (pp_table, name), indices in self.idx_lookup.items():
             for pgm_id, pp_idx in zip(indices.index, indices):
                 if name:
                     extra_info[pgm_id] = {"id_reference": {"table": pp_table, "name": name, "index": pp_idx}}
                 else:
                     extra_info[pgm_id] = {"id_reference": {"table": pp_table, "index": pp_idx}}
+
         for component_data in self.pgm_input_data.values():
             for attr_name in component_data.dtype.names:
                 if not NODE_REF_RE.fullmatch(attr_name):
                     continue
                 for pgm_id, node_id in component_data[["id", attr_name]]:
-                    if pgm_id in extra_info:
-                        extra_info[pgm_id][attr_name] = node_id
-                    else:
-                        extra_info[pgm_id] = {attr_name: node_id}
+                    if pgm_id not in extra_info:
+                        extra_info[pgm_id] = {}
+                    if "pgm_input" not in extra_info[pgm_id]:
+                        extra_info[pgm_id]["pgm_input"] = {}
+                    extra_info[pgm_id]["pgm_input"][attr_name] = node_id
+
+    def _fill_pp_extra_info(self, extra_info: ExtraInfo):
+        """
+        Fills extra information from pandapower input dataframes not available in power-grid-model input
+        to the extra_info dict.
+        Currently, it is possible to only store the derating factor (df) of trafo.
+
+        Args:
+            extra_info: The extra info dict
+        """
+        pp_input = {"trafo": {"df"}}
+        for pp_table, pp_attr in pp_input.items():
+            if pp_table in self.pp_input_data:
+                pp_attr = pp_attr & set(self.pp_input_data[pp_table].columns)
+                if not pp_attr:
+                    continue
+                pgm_ids = self._get_pgm_ids(pp_table=pp_table)
+                pp_extra_data = self.pp_input_data[pp_table][pp_attr]
+                pp_extra_data.index = pgm_ids
+                for pgm_id, pp_element in pp_extra_data.iterrows():
+                    if pgm_id not in extra_info:
+                        extra_info[pgm_id] = {}
+                    if "pp_input" not in extra_info[pgm_id]:
+                        extra_info[pgm_id]["pp_input"] = {}
+                    for attr in pp_attr:
+                        extra_info[pgm_id]["pp_input"][attr] = pp_element[attr]
 
     def _extra_info_to_idx_lookup(self, extra_info: ExtraInfo):
         """
@@ -202,9 +237,28 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 dtype={"names": ["id"] + node_cols, "formats": [dtype] * num_cols},
             )
             for i, pgm_id in enumerate(data["id"]):
-                extra = extra_info[pgm_id]
+                extra = extra_info[pgm_id].get("pgm_input", {})
                 ref[i] = (pgm_id,) + tuple(extra[col] for col in node_cols)
             self.pgm_input_data[component] = ref
+
+    def _extra_info_to_pp_input_data(self, extra_info: ExtraInfo):
+        """
+        Converts extra component info into node_lookup
+        Currently, it is possible to only retrieve the derating factor (df) of trafo.
+
+        Args:
+            extra_info: a dictionary where the node reference ids are stored
+        """
+        assert not self.pp_input_data
+        assert self.pgm_output_data
+
+        if "transformer" not in self.pgm_output_data:
+            return
+
+        pgm_ids = self.pgm_output_data["transformer"]["id"]
+        pp_ids = self._get_pp_ids(pp_table="trafo", pgm_idx=pgm_ids)
+        derating_factor = (extra_info.get(pgm_id, {}).get("pp_input", {}).get("df", np.nan) for pgm_id in pgm_ids)
+        self.pp_input_data = {"trafo": pd.DataFrame(derating_factor, columns=["df"], index=pp_ids)}
 
     def _create_output_data(self):
         """
