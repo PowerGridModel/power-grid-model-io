@@ -191,8 +191,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_input = {"trafo": {"df"}}
         for pp_table, pp_attr in pp_input.items():
             if pp_table in self.pp_input_data:
-                pp_attr = pp_attr & set(self.pp_input_data[pp_table].columns)
-                if not pp_attr:
+                if not pp_attr & set(self.pp_input_data[pp_table].columns):
                     continue
                 pgm_ids = self._get_pgm_ids(pp_table=pp_table)
                 pp_extra_data = self.pp_input_data[pp_table][pp_attr]
