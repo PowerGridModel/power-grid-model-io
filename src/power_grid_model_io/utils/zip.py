@@ -69,7 +69,7 @@ def extract(src_file_path: Path, dst_dir_path: Optional[Path] = None, skip_if_ex
         if only_item is None:
             only_item = item
         # Else, if only_item is not None, there are more than one items in the root of the directory.
-        # This means hat there is no 'only_item' and we can stop the loop
+        # This means that there is no 'only_item' and we can stop the loop
         else:
             only_item = None
             break

@@ -18,7 +18,7 @@ csv_dir_path = download_and_extract(url)
 This downloads the zip file as described above, and then it extracts the files there as well, in a folder which
 corresponds to the zip file name ("/tmp/1-complete_data-mixed-all-0-sw/" in our example), and it returns the path to
 that directory. By default, it will not re-download or re-extract the zip file as long as the files exist in your
-temp dir. Your temp dir is typically emptied whe you reboot your computer.
+temp dir. Your temp dir is typically emptied when you reboot your computer.
 
 """
 
@@ -43,7 +43,7 @@ _log = structlog.get_logger(__name__)
 @dataclass
 class ResponseInfo:
     """
-    Struct to store response information extracted from the response header
+    Data class to store response information extracted from the response header
     """
 
     status: int
@@ -61,7 +61,7 @@ class DownloadProgressHook:  # pylint: disable=too-few-public-methods
         Report hook for request.urlretrieve() to update a progress bar based on the amount of downloaded blocks
 
         Args:
-            progress_bar: A tqdb progress bar
+            progress_bar: A tqdm progress bar
         """
         self._progress_bar = progress_bar
         self._last_block = 0
@@ -103,7 +103,7 @@ def download_and_extract(
     src_file_path = download(url=url, file_name=file_name, dir_path=dir_path, overwrite=overwrite)
     dst_dir_path = src_file_path.with_suffix("")
 
-    # If we explicitly want to overwrite the extracted files, remove the
+    # If we explicitly want to overwrite the extracted files, remove the destination dir.
     if overwrite and dst_dir_path.is_dir():
         remove_dir(dst_dir_path)
 
