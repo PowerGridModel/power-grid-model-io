@@ -63,17 +63,37 @@ def extract(src_file_path: Path, dst_dir_path: Optional[Path] = None, skip_if_ex
 
     # Zip files often contain a single directory with the same name as the zip file.
     # In that case, return the dir to that directory instead of the root dir
-    only_item: Optional[Path] = None
-    for item in dst_dir_path.iterdir():
-        # If only_item is None, this is the first iteration, so item may be the only item
-        if only_item is None:
-            only_item = item
-        # Else, if only_item is not None, there are more than one items in the root of the directory.
-        # This means that there is no 'only_item' and we can stop the loop
-        else:
-            only_item = None
-            break
+    only_item = _get_only_item_in_dir(dst_dir_path)
     if only_item and only_item.is_dir() and only_item.name == src_file_path.stem:
         dst_dir_path = only_item
 
     return dst_dir_path.resolve()
+
+
+def _get_only_item_in_dir(dir_path: Path) -> Optional[Path]:
+    """
+    If dir path contains only a single item, return that item.
+    Return None otherwise (if there are no items at all, or more than one item).
+
+    Args:
+        dir_path: The path tho the directory
+
+    Returns:
+        A path to the only item (dir or file) in the directory
+    """
+
+    only_item: Optional[Path] = None
+    for item in dir_path.iterdir():
+
+        # If only_item is not None at this point, it must have been set in the first iteration, i.e. there are more
+        # than one items in the directory, so return None.
+        if only_item is not None:
+            return None
+
+        # Else, if only_item is None, we are in the first iteration, i.e. the first item in the dir. This item may be
+        # the only item in the dir, so let's remember it.
+        only_item = item
+
+    # If we have come to this point, there were zero or one items in the directory. Return the path to that item (or
+    # None, the initial value).
+    return only_item
