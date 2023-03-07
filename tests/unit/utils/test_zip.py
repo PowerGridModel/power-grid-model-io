@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import structlog.testing
 
-from power_grid_model_io.utils.zip import extract
+from power_grid_model_io.utils.zip import _get_only_item_in_dir, extract
 
 from ...utils import MockTqdm, assert_log_exists
 
@@ -123,3 +123,36 @@ def test_extract__return_subdir_path(mock_tqdm: MagicMock, temp_dir: Path):
     # Assert
     assert extract_dir_path == temp_dir / "foo" / "foo"
     assert (temp_dir / "foo" / "foo" / "foo.txt").is_file()
+
+
+def test_get_only_item_in_dir__no_items(temp_dir):
+    # Act / Assert
+    assert _get_only_item_in_dir(temp_dir) == None
+
+
+def test_get_only_item_in_dir__one_file(temp_dir):
+    # Arrange
+    with open(temp_dir / "file.txt", "wb"):
+        pass
+
+    # Act / Assert
+    assert _get_only_item_in_dir(temp_dir) == temp_dir / "file.txt"
+
+
+def test_get_only_item_in_dir__one_dir(temp_dir):
+    # Arrange
+    (temp_dir / "subdir").mkdir()
+
+    # Act / Assert
+    assert _get_only_item_in_dir(temp_dir) == temp_dir / "subdir"
+
+
+def test_get_only_item_in_dir__two_files(temp_dir):
+    # Arrange
+    with open(temp_dir / "file_1.txt", "wb"):
+        pass
+    with open(temp_dir / "file_2.txt", "wb"):
+        pass
+
+    # Act / Assert
+    assert _get_only_item_in_dir(temp_dir) == None
