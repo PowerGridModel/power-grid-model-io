@@ -178,6 +178,8 @@ class MockFn:
                     return False
             if isinstance(left, NDFrame):
                 return (left == right).all()
+            if isinstance(right, NDFrame):
+                return False
             if isnan(left) and isnan(right):
                 return True
             return left == right
@@ -268,3 +270,14 @@ class MockExcelFile:
 
     def parse(self, sheet_name: str, **_kwargs) -> pd.DataFrame:
         return self.data[sheet_name]
+
+
+class MockTqdm:
+    """To use: for x in tqdm(iterable)"""
+
+    def __init__(self, iterable=None, **kwargs):
+        self.iterable = iterable
+
+    def __iter__(self):
+        for item in self.iterable:
+            yield item
