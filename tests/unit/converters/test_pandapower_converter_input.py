@@ -155,6 +155,7 @@ def test_fill_pgm_extra_info():
     converter.pgm_input_data["line"]["id"] = [6, 7]
     converter.pgm_input_data["line"]["from_node"] = [0, 1]
     converter.pgm_input_data["line"]["to_node"] = [1, 2]
+    converter.pgm_input_data["line"]["i_n"] = [106.0, 105.0]
 
     # Act
     extra_info = {}
@@ -177,8 +178,8 @@ def test_fill_pgm_extra_info():
         "id_reference": {"table": "load", "name": "const_current", "index": 203},
         "pgm_input": {"node": 2},
     }
-    assert extra_info[6] == {"pgm_input": {"from_node": 0, "to_node": 1}}
-    assert extra_info[7] == {"pgm_input": {"from_node": 1, "to_node": 2}}
+    assert extra_info[6] == {"pgm_input": {"from_node": 0, "to_node": 1, "i_n": 106.0}}
+    assert extra_info[7] == {"pgm_input": {"from_node": 1, "to_node": 2, "i_n": 105.0}}
 
 
 def test_fill_pp_extra_info():
@@ -354,8 +355,8 @@ def test_extra_info_to_pgm_input_data():
     converter.pgm_output_data["node"]["id"] = [1, 2, 3]
     converter.pgm_output_data["line"]["id"] = [12, 23]
     extra_info = {
-        12: {"pgm_input": {"from_node": 1, "to_node": 2}},
-        23: {"pgm_input": {"from_node": 2, "to_node": 3}},
+        12: {"pgm_input": {"from_node": 1, "to_node": 2, "i_n": 105.0}},
+        23: {"pgm_input": {"from_node": 2, "to_node": 3, "i_n": 5.0}},
     }
 
     # Act
@@ -365,7 +366,7 @@ def test_extra_info_to_pgm_input_data():
     assert "node" not in converter.pgm_input_data
     assert_struct_array_equal(
         converter.pgm_input_data["line"],
-        [{"id": 12, "from_node": 1, "to_node": 2}, {"id": 23, "from_node": 2, "to_node": 3}],
+        [{"id": 12, "from_node": 1, "to_node": 2, "i_n": 105.0}, {"id": 23, "from_node": 2, "to_node": 3, "i_n": 5.0}],
     )
 
 

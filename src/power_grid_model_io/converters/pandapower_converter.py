@@ -167,9 +167,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 else:
                     extra_info[pgm_id] = {"id_reference": {"table": pp_table, "index": pp_idx}}
 
+        extra_cols = ["i_n"]
         for component_data in self.pgm_input_data.values():
             for attr_name in component_data.dtype.names:
-                if not NODE_REF_RE.fullmatch(attr_name):
+                if not NODE_REF_RE.fullmatch(attr_name) and attr_name not in extra_cols:
                     continue
                 for pgm_id, node_id in component_data[["id", attr_name]]:
                     if pgm_id not in extra_info:
@@ -230,7 +231,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             self.idx[key] = pd.Series(pgm_ids, index=pp_indices)
             self.idx_lookup[key] = pd.Series(pp_indices, index=pgm_ids)
 
-    def _extra_info_to_pgm_input_data(self, extra_info: ExtraInfo):
+    def _extra_info_to_pgm_input_data(self, extra_info: ExtraInfo):  # pylint: disable-msg=too-many-locals
         """
         Converts extra component info into node_lookup
 
@@ -241,21 +242,28 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         assert self.pgm_output_data
 
         dtype = np.int32
+        other_cols_dtype = np.float
         nan = np.iinfo(dtype).min
+        all_other_cols = ["i_n"]
         for component, data in self.pgm_output_data.items():
             input_cols = power_grid_meta_data["input"][component].dtype.names
             node_cols = [col for col in input_cols if NODE_REF_RE.fullmatch(col)]
-            if not node_cols:
+            other_cols = [col for col in input_cols if col in all_other_cols]
+            if not node_cols + other_cols:
                 continue
             num_cols = 1 + len(node_cols)
+            num_other_cols = len(other_cols)
             ref = np.full(
                 shape=len(data),
                 fill_value=nan,
-                dtype={"names": ["id"] + node_cols, "formats": [dtype] * num_cols},
+                dtype={
+                    "names": ["id"] + node_cols + other_cols,
+                    "formats": [dtype] * num_cols + [other_cols_dtype] * num_other_cols,
+                },
             )
             for i, pgm_id in enumerate(data["id"]):
                 extra = extra_info[pgm_id].get("pgm_input", {})
-                ref[i] = (pgm_id,) + tuple(extra[col] for col in node_cols)
+                ref[i] = (pgm_id,) + tuple(extra[col] for col in node_cols + other_cols)
             self.pgm_input_data[component] = ref
 
     def _extra_info_to_pp_input_data(self, extra_info: ExtraInfo):
@@ -1753,20 +1761,20 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_lines_3ph["i_a_from_ka"] = pgm_output_lines["i_from"][:, 0] * 1e-3
         pp_output_lines_3ph["i_b_from_ka"] = pgm_output_lines["i_from"][:, 1] * 1e-3
         pp_output_lines_3ph["i_c_from_ka"] = pgm_output_lines["i_from"][:, 2] * 1e-3
-        pp_output_lines_3ph["i_n_from_ka"] = np.abs(np.sum(i_from, axis=1)) * 1e-3
+        pp_output_lines_3ph["i_n_from_ka"] = np.array(np.abs(np.sum(i_from, axis=1))) * 1e-3
         pp_output_lines_3ph["i_a_to_ka"] = pgm_output_lines["i_to"][:, 0] * 1e-3
         pp_output_lines_3ph["i_b_to_ka"] = pgm_output_lines["i_to"][:, 1] * 1e-3
         pp_output_lines_3ph["i_c_to_ka"] = pgm_output_lines["i_to"][:, 2] * 1e-3
-        pp_output_lines_3ph["i_n_to_ka"] = np.abs(np.sum(i_to, axis=1)) * 1e-3
-        # pp_output_lines_3ph["loading_a_percent"] = (
-        #     np.maximum(pp_output_lines_3ph["i_a_from_ka"], pp_output_lines_3ph["i_a_to_ka"]) / pgm_input_lines["i_n"]
-        # )
-        # pp_output_lines_3ph["loading_b_percent"] = (
-        #     np.maximum(pp_output_lines_3ph["i_b_from_ka"], pp_output_lines_3ph["i_b_to_ka"]) / pgm_input_lines["i_n"]
-        # )
-        # pp_output_lines_3ph["loading_b_percent"] = (
-        #     np.maximum(pp_output_lines_3ph["i_c_from_ka"], pp_output_lines_3ph["i_c_to_ka"]) / pgm_input_lines["i_n"]
-        # )
+        pp_output_lines_3ph["i_n_to_ka"] = np.array(np.abs(np.sum(i_to, axis=1))) * 1e-3
+        pp_output_lines_3ph["loading_a_percent"] = (
+            np.maximum(pp_output_lines_3ph["i_a_from_ka"], pp_output_lines_3ph["i_a_to_ka"]) / pgm_input_lines["i_n"]
+        ) * 1e5
+        pp_output_lines_3ph["loading_b_percent"] = (
+            np.maximum(pp_output_lines_3ph["i_b_from_ka"], pp_output_lines_3ph["i_b_to_ka"]) / pgm_input_lines["i_n"]
+        ) * 1e5
+        pp_output_lines_3ph["loading_c_percent"] = (
+            np.maximum(pp_output_lines_3ph["i_c_from_ka"], pp_output_lines_3ph["i_c_to_ka"]) / pgm_input_lines["i_n"]
+        ) * 1e5
         pp_output_lines_3ph["loading_percent"] = pgm_output_lines["loading"] * 1e2
 
         assert "res_line_3ph" not in self.pp_output_data
@@ -1828,10 +1836,25 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the Transformer component
         """
-        if "transformer" not in self.pgm_output_data or self.pgm_output_data["transformer"].size == 0:
+        if ("transformer" not in self.pgm_output_data or self.pgm_output_data["transformer"].size == 0) or (
+            "trafo" not in self.pp_input_data or len(self.pp_input_data["trafo"]) == 0
+        ):
             return
 
+        pgm_input_transformers = self.pgm_input_data["transformer"]
+        pp_input_transformers = self.pp_input_data["trafo"]
         pgm_output_transformers = self.pgm_output_data["transformer"]
+
+        # Only derating factor used here. Sn is already being multiplied by parallel
+        loading_multiplier = pp_input_transformers["df"]
+        if self.trafo_loading == "current":
+            ui_from = np.sum(pgm_output_transformers["i_from"] * pgm_input_transformers["u1"], axis=1)
+            ui_to = np.sum(pgm_output_transformers["i_to"] * pgm_input_transformers["u2"], axis=1)
+            loading = np.maximum(ui_from, ui_to) / pgm_input_transformers["sn"] * loading_multiplier * 1e2
+        elif self.trafo_loading == "power":
+            loading = pgm_output_transformers["loading"] * loading_multiplier * 1e2
+        else:
+            raise ValueError(f"Invalid transformer loading type: {str(self.trafo_loading)}")
 
         pp_output_trafos_3ph = pd.DataFrame(
             columns=[
@@ -1899,7 +1922,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_trafos_3ph["i_b_lv_ka"] = pgm_output_transformers["i_to"][:, 1] * 1e-3
         pp_output_trafos_3ph["i_c_hv_ka"] = pgm_output_transformers["i_from"][:, 2] * 1e-3
         pp_output_trafos_3ph["i_c_lv_ka"] = pgm_output_transformers["i_to"][:, 2] * 1e-3
-        pp_output_trafos_3ph["loading_percent"] = pgm_output_transformers["loading"] * 1e2
+        pp_output_trafos_3ph["loading_percent"] = loading
 
         assert "res_trafo_3ph" not in self.pp_output_data
         self.pp_output_data["res_trafo_3ph"] = pp_output_trafos_3ph

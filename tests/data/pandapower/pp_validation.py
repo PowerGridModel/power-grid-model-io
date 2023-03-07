@@ -185,7 +185,7 @@ def pp_net_3ph() -> pp.pandapowerNet:
         net, index=33, bus=103, p_a_mw=0.4, p_b_mw=0.5, p_c_mw=1, q_a_mvar=0.01, q_b_mvar=0.01, q_c_mvar=0.01
     )
     # TODO Shunt motor ward are not validated.
-    # pp.create_shunt(net, index=1201, in_service=True, bus=103, p_mw=0.1, q_mvar=0.55, step=3)
+    # pp.create_shunt(net, index=1201, in_service=True, bus=103, p_mw=1, q_mvar=1, step=1)
     # pp.create_ward(net, index=34, bus=103, ps_mw=0.1, qs_mvar=0.1, pz_mw=0.1, qz_mvar=0.1)
     # pp.create_motor(
     #     net, bus=103, index=12, pn_mech_mw=0.1, cos_phi=0.9, loading_percent=80, efficiency_percent=90, scaling=0.8
