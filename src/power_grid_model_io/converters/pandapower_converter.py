@@ -1927,23 +1927,23 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_trafos_3ph["p_c_lv_mw"] = pgm_output_transformers["p_to"][:, 2] * 1e-6
         pp_output_trafos_3ph["q_c_lv_mvar"] = pgm_output_transformers["q_to"][:, 2] * 1e-6
         pp_output_trafos_3ph["p_a_l_mw"] = (
-            np.abs(pgm_output_transformers["p_from"][:, 0] + pgm_output_transformers["p_to"][:, 0]) * 1e-6
-        )
+            pgm_output_transformers["p_from"][:, 0] + pgm_output_transformers["p_to"][:, 0]
+        ) * 1e-6
         pp_output_trafos_3ph["q_a_l_mvar"] = (
-            np.abs(pgm_output_transformers["q_from"][:, 0] + pgm_output_transformers["q_to"][:, 0]) * 1e-6
-        )
+            pgm_output_transformers["q_from"][:, 0] + pgm_output_transformers["q_to"][:, 0]
+        ) * 1e-6
         pp_output_trafos_3ph["p_b_l_mw"] = (
-            np.abs(pgm_output_transformers["p_from"][:, 1] + pgm_output_transformers["p_to"][:, 1]) * 1e-6
-        )
+            pgm_output_transformers["p_from"][:, 1] + pgm_output_transformers["p_to"][:, 1]
+        ) * 1e-6
         pp_output_trafos_3ph["q_b_l_mvar"] = (
-            np.abs(pgm_output_transformers["q_from"][:, 1] + pgm_output_transformers["q_to"][:, 1]) * 1e-6
-        )
+            pgm_output_transformers["q_from"][:, 1] + pgm_output_transformers["q_to"][:, 1]
+        ) * 1e-6
         pp_output_trafos_3ph["p_c_l_mw"] = (
-            np.abs(pgm_output_transformers["p_from"][:, 2] + pgm_output_transformers["p_to"][:, 2]) * 1e-6
-        )
+            pgm_output_transformers["p_from"][:, 2] + pgm_output_transformers["p_to"][:, 2]
+        ) * 1e-6
         pp_output_trafos_3ph["q_c_l_mvar"] = (
-            np.abs(pgm_output_transformers["q_from"][:, 2] + pgm_output_transformers["q_to"][:, 2]) * 1e-6
-        )
+            pgm_output_transformers["q_from"][:, 2] + pgm_output_transformers["q_to"][:, 2]
+        ) * 1e-6
         pp_output_trafos_3ph["i_a_hv_ka"] = pgm_output_transformers["i_from"][:, 0] * 1e-3
         pp_output_trafos_3ph["i_a_lv_ka"] = pgm_output_transformers["i_to"][:, 0] * 1e-3
         pp_output_trafos_3ph["i_b_hv_ka"] = pgm_output_transformers["i_from"][:, 1] * 1e-3
