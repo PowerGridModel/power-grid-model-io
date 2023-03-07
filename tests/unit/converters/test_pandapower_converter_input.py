@@ -607,7 +607,7 @@ def test_create_pgm_input_sources(mock_init_array: MagicMock, two_pp_objs, conve
 
 
 @pytest.mark.parametrize("kwargs", [{"r0x0_max": 0.5, "rx_max": 4}, {"x0x_max": 0.6}])
-def test_create_pgm_input_sources__asym(kwargs):
+def test_create_pgm_input_sources__zero_sequence(kwargs):
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=1.0)
     pp.create_ext_grid(pp_net, 0, **kwargs)
@@ -705,7 +705,7 @@ def test_create_pgm_input_asym_loads(mock_init_array: MagicMock, two_pp_objs, co
     assert converter.pgm_input_data["asym_load"] == mock_init_array.return_value
 
 
-def test_create_pgm_input_sym_loads__asym() -> None:
+def test_create_pgm_input_sym_loads__delta() -> None:
     # Arrange
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
@@ -721,7 +721,7 @@ def test_create_pgm_input_sym_loads__asym() -> None:
         converter._create_pgm_input_sym_loads()
 
 
-def test_create_pgm_input_asym_loads__asym() -> None:
+def test_create_pgm_input_asym_loads__delta() -> None:
     # Arrange
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
@@ -1018,7 +1018,7 @@ def test_create_pgm_input_sym_gens(mock_init_array: MagicMock, two_pp_objs, conv
     "power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._get_pgm_ids",
     new=MagicMock(return_value=pd.Series([0])),
 )
-def test_create_pgm_input_transformers__asym(kwargs):
+def test_create_pgm_input_transformers__zero_sequence(kwargs):
     # Arrange
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
@@ -1378,7 +1378,7 @@ def test_create_pgm_input_transformers3w__default() -> None:
     "power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._get_pgm_ids",
     new=MagicMock(return_value=pd.Series([0])),
 )
-def test_create_pgm_input_transformers3w__asym(kwargs):
+def test_create_pgm_input_transformers3w__zero_sequence(kwargs):
     # Arrange
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
