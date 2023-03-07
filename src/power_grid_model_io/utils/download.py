@@ -215,7 +215,7 @@ def get_download_path(
     """
 
     # If no specific download path was given, we need to generate a unique key (based on the given unique key)
-    if dir_path is None or file_name is None:
+    if file_name is None or unique_key is not None:
         if unique_key is None:
             raise ValueError("Supply a unique key in order to auto generate a download path.")
 
@@ -228,8 +228,7 @@ def get_download_path(
         if file_name is None:
             file_name = Path(f"{unique_key}.download")
         # Otherwise, use the unique key as a sub directory
-        else:
-            assert dir_path is None  # sanity check
+        elif dir_path is None:
             dir_path = Path(tempfile.gettempdir()) / unique_key
 
     # If no dir_path is given, use the system's designated folder for temporary files.

@@ -26,6 +26,8 @@ Response = namedtuple("Response", ["status", "headers"])
 # The / and + will be replaced with a _ and - character and the trailing = character(s) will be removed.
 FOO_KEY = "LCa0a2j_xo_5m0U8HTBBNBNCLXBkg7-g-YpeiGJm564"
 
+TEMP_DIR = Path(tempfile.gettempdir()).resolve()
+
 
 @pytest.fixture()
 def temp_dir():
@@ -374,12 +376,20 @@ def test_get_download_path__ignore_unique_key(temp_dir: Path):
     assert path == temp_dir / "file_name.zip"
 
 
+def test_get_download_path__temp_dir():
+    # Act
+    path = get_download_path(file_name="file_name.zip")
+
+    # Assert
+    assert path == TEMP_DIR / "file_name.zip"
+
+
 def test_get_download_path__auto_dir():
     # Act
     path = get_download_path(file_name="file_name.zip", unique_key="foo")
 
     # Assert
-    assert path == Path(tempfile.gettempdir()).resolve() / FOO_KEY / "file_name.zip"
+    assert path == TEMP_DIR / FOO_KEY / "file_name.zip"
 
 
 def test_get_download_path__auto_file_name(temp_dir: Path):
