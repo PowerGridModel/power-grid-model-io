@@ -366,6 +366,14 @@ def test_get_download_path(temp_dir: Path):
     assert path == temp_dir / "file_name.zip"
 
 
+def test_get_download_path__ignore_unique_key(temp_dir: Path):
+    # Act
+    path = get_download_path(dir_path=temp_dir, file_name="file_name.zip", unique_key="foo")
+
+    # Assert
+    assert path == temp_dir / "file_name.zip"
+
+
 def test_get_download_path__auto_dir():
     # Act
     path = get_download_path(file_name="file_name.zip", unique_key="foo")
