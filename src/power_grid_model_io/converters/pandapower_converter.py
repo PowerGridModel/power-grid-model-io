@@ -242,7 +242,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         assert self.pgm_output_data
 
         dtype = np.int32
-        other_cols_dtype = np.float
+        other_cols_dtype = np.float64
         nan = np.iinfo(dtype).min
         all_other_cols = ["i_n"]
         for component, data in self.pgm_output_data.items():
