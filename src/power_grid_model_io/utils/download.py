@@ -214,20 +214,26 @@ def get_download_path(
         unique_key: A unique string that can be used to generate a filename (e.g. a url).
     """
 
-    # If no file_name is given, generate a file name
-    if file_name is None:
+    # If no dir_path is given, use the system's designated folder for temporary files.
+    if dir_path is None:
+        dir_path = Path(tempfile.gettempdir())
+
+    # If no specific download path was given, we need to generate a unique key (based on the given unique key)
+    if file_name is None or unique_key is not None:
         if unique_key is None:
-            raise ValueError("Supply data in order to auto generate a download path.")
+            raise ValueError("Supply a unique key in order to auto generate a download path.")
 
         sha256 = hashlib.sha256()
         sha256.update(unique_key.encode())
-        hash_str = base64.b64encode(sha256.digest()).decode("ascii")
-        hash_str = hash_str.replace("/", "_").replace("+", "-").rstrip("=")
-        file_name = Path(f"{hash_str}.download")
+        unique_key = base64.b64encode(sha256.digest()).decode("ascii")
+        unique_key = unique_key.replace("/", "_").replace("+", "-").rstrip("=")
 
-    # If no dir_path is given, use the system's designated folder for temporary files
-    elif dir_path is None:
-        dir_path = Path(tempfile.gettempdir())
+        # If no file name was given, use the unique key as a file name
+        if file_name is None:
+            file_name = Path(f"{unique_key}.download")
+        # Otherwise, use the unique key as a sub directory
+        else:
+            dir_path /= unique_key
 
     # Combine the two paths
     assert file_name is not None

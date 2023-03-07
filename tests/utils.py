@@ -178,6 +178,8 @@ class MockFn:
                     return False
             if isinstance(left, NDFrame):
                 return (left == right).all()
+            if isinstance(right, NDFrame):
+                return False
             if isnan(left) and isnan(right):
                 return True
             return left == right

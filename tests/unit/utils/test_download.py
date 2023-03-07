@@ -22,6 +22,10 @@ from ...utils import assert_log_exists
 
 Response = namedtuple("Response", ["status", "headers"])
 
+# The base64 representation of the sha256 hash of "foo" is LCa0a2j/xo/5m0U8HTBBNBNCLXBkg7+g+YpeiGJm564=
+# The / and + will be replaced with a _ and - character and the trailing = character(s) will be removed.
+FOO_KEY = "LCa0a2j_xo_5m0U8HTBBNBNCLXBkg7-g-YpeiGJm564"
+
 
 @pytest.fixture()
 def temp_dir():
@@ -356,7 +360,7 @@ def test_get_response_info__no_length(mock_urlopen):
 
 def test_get_download_path(temp_dir: Path):
     # Act
-    path = get_download_path(dir_path=temp_dir, file_name="file_name.zip", unique_key="foo")
+    path = get_download_path(dir_path=temp_dir, file_name="file_name.zip")
 
     # Assert
     assert path == temp_dir / "file_name.zip"
@@ -364,17 +368,15 @@ def test_get_download_path(temp_dir: Path):
 
 def test_get_download_path__auto_dir():
     # Act
-    path = get_download_path(file_name="file_name.zip")
+    path = get_download_path(file_name="file_name.zip", unique_key="foo")
 
     # Assert
-    assert path == Path(tempfile.gettempdir()).resolve() / "file_name.zip"
+    assert path == Path(tempfile.gettempdir()).resolve() / FOO_KEY / "file_name.zip"
 
 
 def test_get_download_path__auto_file_name(temp_dir: Path):
     # Arrange
-    # The base64 representation of the sha256 hash of "foo" is LCa0a2j/xo/5m0U8HTBBNBNCLXBkg7+g+YpeiGJm564=
-    # The / and + will be replaced with a _ and - character and the trailing = character(s) will be removed.
-    expected_file_name = "LCa0a2j_xo_5m0U8HTBBNBNCLXBkg7-g-YpeiGJm564.download"
+    expected_file_name = f"{FOO_KEY}.download"
 
     # Act
     path = get_download_path(dir_path=temp_dir, unique_key="foo")
@@ -385,7 +387,7 @@ def test_get_download_path__auto_file_name(temp_dir: Path):
 
 def test_get_download_path__missing_data(temp_dir: Path):
     # Act / Assert
-    with pytest.raises(ValueError, match=r"Supply data in order to auto generate a download path\."):
+    with pytest.raises(ValueError, match=r"Supply a unique key in order to auto generate a download path\."):
         get_download_path(dir_path=temp_dir)
 
 
