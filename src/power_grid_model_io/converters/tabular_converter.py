@@ -6,7 +6,7 @@ Tabular Data Converter: Load data from multiple tables and use a mapping file to
 """
 import inspect
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Union, cast
+from typing import Any, Collection, Dict, List, Mapping, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -676,3 +676,21 @@ class TabularConverter(BaseConverter[TabularData]):
             reference["name"] = name
         reference["key"] = key
         return reference
+
+    def lookup_ids(self, pgm_ids: Collection[int]) -> pd.DataFrame:
+        """
+        Retrieve the original name / key combination of a list of pgm object
+        Args:
+            pgm_ids: a list of unique numerical ID
+        Returns: A (possibly sparse) pandas dataframe storing all the original reference data
+        """
+
+        def lookup(pgm_id):
+            table, key, name = self._auto_id[pgm_id]
+            reference = {"table": table}
+            if name is not None:
+                reference["name"] = name
+            reference.update(key)
+            return reference
+
+        return pd.DataFrame((lookup(pgm_id) for pgm_id in pgm_ids), index=pgm_ids)

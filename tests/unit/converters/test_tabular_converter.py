@@ -887,3 +887,40 @@ def test_lookup_id(converter: TabularConverter):
     assert converter.lookup_id(pgm_id=2) == {"table": "node", "key": {"a": 1, "c": 2}}
     assert converter.lookup_id(pgm_id=3) == {"table": "foo", "key": {"a": 1, "b": 2}}
     assert converter.lookup_id(pgm_id=4) == {"table": "node", "name": "bar", "key": {"a": 1, "b": 2}}
+
+
+def test_lookup_ids(converter: TabularConverter):
+    # Arrange
+    converter._get_id(table="node", key={"a": 1, "b": 2}, name=None)  # 0
+    converter._get_id(table="node", key={"a": 1, "b": 3}, name=None)  # 1
+    converter._get_id(table="node", key={"a": 1, "c": 2}, name=None)  # 2
+    converter._get_id(table="foo", key={"a": 1, "b": 2}, name=None)  # 3
+    converter._get_id(table="node", key={"a": 1, "b": 2}, name="bar")  # 4
+
+    # Act
+    reference = converter.lookup_ids(pgm_ids=[3, 2, 4])
+
+    # Assert
+    pd.testing.assert_frame_equal(
+        reference,
+        pd.DataFrame(
+            [
+                ["foo", 1, 2, None, None],
+                ["node", 1, None, 2, None],
+                ["node", 1, 2, None, "bar"],
+            ],
+            columns=["table", "a", "b", "c", "name"],
+            index=[3, 2, 4],
+        ),
+    )
+
+
+def test_lookup_ids__duplicate_keys(converter: TabularConverter):
+    # Arrange
+    converter._get_id(table="foo", name="bar", key={"table": 123, "name": 456})
+
+    # Act
+    reference = converter.lookup_ids(pgm_ids=[0])
+
+    # Assert
+    pd.testing.assert_frame_equal(reference, pd.DataFrame([[123, 456]], columns=["table", "name"], index=[0]))
