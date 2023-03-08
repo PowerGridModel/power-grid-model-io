@@ -128,7 +128,7 @@ def test_extra_info__serializable(extra_info):
     json.dumps(actual, cls=JsonEncoder)  # expect no exception
 
 
-@pytest.mark.parametrize(("language", "table", "column"), [("en", "Nodes", "Number")])
+@pytest.mark.parametrize(("language", "table", "column"), [("en", "Nodes", "Number"), ("nl", "Knooppunten", "Nummer")])
 def test_get_node_id(language: str, table: str, column: str):
     # Arrange
     converter = vision_excel_converter(language=language)
@@ -138,7 +138,7 @@ def test_get_node_id(language: str, table: str, column: str):
     # Act/Assert
     for number in source_data:
         pgm_id = converter.get_node_id(number=number)
-        assert extra_info[pgm_id]["id_reference"] == {"table": table, "key": {"Number": number}}
+        assert extra_info[pgm_id]["id_reference"] == {"table": table, "key": {"number": number}}
 
 
 @pytest.mark.parametrize(
@@ -151,6 +151,13 @@ def test_get_node_id(language: str, table: str, column: str):
         ("en", "Transformers", "Number"),
         ("en", "Special transformers", "Number"),
         ("en", "Three winding transformers", "Number"),
+        ("nl", "Kabels", "Nummer"),
+        ("nl", "Verbindingen", "Nummer"),
+        ("nl", "Smoorspoelen", "Nummer"),
+        ("nl", "Links", "Nummer"),
+        ("nl", "Transformatoren", "Nummer"),
+        ("nl", "Speciale transformatoren", "Nummer"),
+        ("nl", "Driewikkelingstransformatoren", "Nummer"),
     ],
 )
 def test_get_branch_id(language: str, table: str, column: str):
@@ -162,7 +169,7 @@ def test_get_branch_id(language: str, table: str, column: str):
     # Act/Assert
     for number in source_data:
         pgm_id = converter.get_branch_id(table=table, number=number)
-        assert extra_info[pgm_id]["id_reference"] == {"table": table, "key": {"Number": number}}
+        assert extra_info[pgm_id]["id_reference"] == {"table": table, "key": {"number": number}}
 
 
 @pytest.mark.parametrize(
@@ -176,6 +183,14 @@ def test_get_branch_id(language: str, table: str, column: str):
         ("en", "Zigzag transformers", ["Node.Number", "Subnumber"]),
         ("en", "Capacitors", ["Node.Number", "Subnumber"]),
         ("en", "Reactors", ["Node.Number", "Subnumber"]),
+        ("nl", "Belastingen", ["Knooppunt.Nummer", "Subnummer"]),
+        ("nl", "Synchrone generatoren", ["Knooppunt.Nummer", "Subnummer"]),
+        ("nl", "Windturbines", ["Knooppunt.Nummer", "Subnummer"]),
+        ("nl", "Pv's", ["Knooppunt.Nummer", "Subnummer"]),
+        ("nl", "Netvoedingen", ["Knooppunt.Nummer", "Subnummer"]),
+        ("nl", "Nulpuntstransformatoren", ["Knooppunt.Nummer", "Subnummer"]),
+        ("nl", "Condensatoren", ["Knooppunt.Nummer", "Subnummer"]),
+        ("nl", "Spoelen", ["Knooppunt.Nummer", "Subnummer"]),
     ],
 )
 def test_get_get_appliance_id(language: str, table: str, columns: List[str]):
@@ -189,7 +204,7 @@ def test_get_get_appliance_id(language: str, table: str, columns: List[str]):
         pgm_id = converter.get_appliance_id(table=table, node_number=node_number, sub_number=sub_number)
         assert extra_info[pgm_id]["id_reference"] == {
             "table": table,
-            "key": {"Node.Number": node_number, "Subnumber": sub_number},
+            "key": {"node_number": node_number, "sub_number": sub_number},
         }
 
 
@@ -201,6 +216,11 @@ def test_get_get_appliance_id(language: str, table: str, columns: List[str]):
         ("en", "Transformer loads", "load", ["Node.Number", "Subnumber"]),
         ("en", "Transformer loads", "generation", ["Node.Number", "Subnumber"]),
         ("en", "Transformer loads", "pv_generation", ["Node.Number", "Subnumber"]),
+        ("nl", "Transformatorbelastingen", "transformer", ["Knooppunt.Nummer", "Subnummer"]),
+        ("nl", "Transformatorbelastingen", "internal_node", ["Knooppunt.Nummer", "Subnummer"]),
+        ("nl", "Transformatorbelastingen", "load", ["Knooppunt.Nummer", "Subnummer"]),
+        ("nl", "Transformatorbelastingen", "generation", ["Knooppunt.Nummer", "Subnummer"]),
+        ("nl", "Transformatorbelastingen", "pv_generation", ["Knooppunt.Nummer", "Subnummer"]),
     ],
 )
 def test_get_get_virtual_id(language: str, table: str, name: str, columns: List[str]):
@@ -215,5 +235,5 @@ def test_get_get_virtual_id(language: str, table: str, name: str, columns: List[
         assert extra_info[pgm_id]["id_reference"] == {
             "table": table,
             "name": name,
-            "key": {"Node.Number": node_number, "Subnumber": sub_number},
+            "key": {"node_number": node_number, "sub_number": sub_number},
         }
