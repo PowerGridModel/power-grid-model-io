@@ -52,4 +52,6 @@ class CsvDirStore(BaseDataStore[TabularData]):
         Store each table in data as a separate CSV file
         """
         for table_name, table_data in data.items():
+            if not isinstance(table_data, pd.DataFrame):
+                table_data = pd.DataFrame(table_data)
             table_data.to_csv(path_or_buf=self._dir_path / f"{table_name}.csv", **self._csv_kwargs)
