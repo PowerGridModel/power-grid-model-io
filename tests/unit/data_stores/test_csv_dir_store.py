@@ -6,6 +6,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -48,7 +49,7 @@ def test_load(mock_read_csv: MagicMock, temp_dir: Path):
 def test_save(mock_to_csv: MagicMock, temp_dir):
     # Arrange
     foo_data = pd.DataFrame()
-    bar_data = pd.DataFrame()
+    bar_data = np.array([])
     data = TabularData(foo=foo_data, bar=bar_data)
     csv_dir = CsvDirStore(temp_dir, bla=True)
 
