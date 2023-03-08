@@ -2,6 +2,11 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 ---
+id_reference:
+  nodes_table: Nodes
+  number: Number
+  node_number: Node.Number
+  sub_number: Subnumber
 grid:
   Nodes:
     node:

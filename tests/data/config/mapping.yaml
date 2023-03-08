@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 ---
+custom_data:
+  answer: 42
 grid:
   nodes:
     node:
@@ -55,3 +57,8 @@ substitutions:
   from_node_side:
     100: 1
     200: 2
+
+multipliers:
+  .+_percent: 0.01
+  .+_k(a|v|w): 1_000.0
+  .+_m(w|va|var): 1_000_000.0
