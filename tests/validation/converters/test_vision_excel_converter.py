@@ -138,7 +138,7 @@ def test_get_node_id(language: str, table: str, column: str):
     # Act/Assert
     for number in source_data:
         pgm_id = converter.get_node_id(number=number)
-        assert extra_info[pgm_id]["id_reference"] == {"table": table, "key": {"number": number}}
+        assert extra_info[pgm_id]["id_reference"] == {"table": table, "key": {column: number}}
 
 
 @pytest.mark.parametrize(
@@ -169,7 +169,7 @@ def test_get_branch_id(language: str, table: str, column: str):
     # Act/Assert
     for number in source_data:
         pgm_id = converter.get_branch_id(table=table, number=number)
-        assert extra_info[pgm_id]["id_reference"] == {"table": table, "key": {"number": number}}
+        assert extra_info[pgm_id]["id_reference"] == {"table": table, "key": {column: number}}
 
 
 @pytest.mark.parametrize(
@@ -204,7 +204,7 @@ def test_get_get_appliance_id(language: str, table: str, columns: List[str]):
         pgm_id = converter.get_appliance_id(table=table, node_number=node_number, sub_number=sub_number)
         assert extra_info[pgm_id]["id_reference"] == {
             "table": table,
-            "key": {"node_number": node_number, "sub_number": sub_number},
+            "key": {columns[0]: node_number, columns[1]: sub_number},
         }
 
 
@@ -235,5 +235,5 @@ def test_get_get_virtual_id(language: str, table: str, name: str, columns: List[
         assert extra_info[pgm_id]["id_reference"] == {
             "table": table,
             "name": name,
-            "key": {"node_number": node_number, "sub_number": sub_number},
+            "key": {columns[0]: node_number, columns[1]: sub_number},
         }
