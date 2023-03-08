@@ -2,6 +2,11 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 ---
+id_reference:
+  nodes_table: Knooppunten
+  number: Nummer
+  node_number: Knooppunt.Nummer
+  sub_number: Subnummer
 grid:
   Knooppunten:
     node:

@@ -6,7 +6,7 @@ Tabular Data Converter: Load data from multiple tables and use a mapping file to
 """
 import inspect
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Mapping, Optional, Union, cast
+from typing import Any, Dict, List, Mapping, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -22,8 +22,6 @@ from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes, Tab
 from power_grid_model_io.mappings.unit_mapping import UnitMapping, Units
 from power_grid_model_io.mappings.value_mapping import ValueMapping, Values
 from power_grid_model_io.utils.modules import get_function
-
-MappingFile = Dict[Literal["multipliers", "grid", "units", "substitutions"], Union[Multipliers, Tables, Units, Values]]
 
 
 class TabularConverter(BaseConverter[TabularData]):
@@ -50,15 +48,9 @@ class TabularConverter(BaseConverter[TabularData]):
             self.set_mapping_file(mapping_file=mapping_file)
 
     def set_mapping_file(self, mapping_file: Path) -> None:
-        """Read, parse and interpret a mapping file. This includes:
-         * the table to table mapping ('grid')
-         * the unit conversions ('units')
-         * the value substitutions ('substitutions') (e.g. enums or other one-on-one value mapping)
-
+        """Read, parse and interpret a mapping file.
         Args:
-          mapping_file: Path:
-
-        Returns:
+          mapping_file: The path to the mapping file
 
         """
         # Read mapping
@@ -67,17 +59,32 @@ class TabularConverter(BaseConverter[TabularData]):
         self._log.debug("Read mapping file", mapping_file=mapping_file)
 
         with open(mapping_file, "r", encoding="utf-8") as mapping_stream:
-            mapping: MappingFile = yaml.safe_load(mapping_stream)
+            mapping = yaml.safe_load(mapping_stream)
+
         if "grid" not in mapping:
             raise KeyError("Missing 'grid' mapping in mapping_file")
-        self._mapping = TabularMapping(cast(Tables, mapping["grid"]))
-        self._units = UnitMapping(cast(Units, mapping["units"])) if "units" in mapping else None
-        self._substitutions = (
-            ValueMapping(cast(Values, mapping["substitutions"])) if "substitutions" in mapping else None
-        )
-        self._multipliers = (
-            MultiplierMapping(cast(Multipliers, mapping["multipliers"])) if "multipliers" in mapping else None
-        )
+
+        self.set_mapping(mapping=mapping)
+
+    def set_mapping(self, mapping: Mapping[str, Any]) -> None:
+        """Interpret a mapping structure. This includes:
+         * the table to table mapping ('grid')
+         * the unit conversions ('units')
+         * the value substitutions ('substitutions') (e.g. enums or other one-on-one value mapping)
+         * column multipliers ('multipliers') (e.g. values in a column ending with _kv should be multiplied by 1000.0)
+
+        Args:
+          mapping: A mapping structure (dictionary):
+
+        """
+        if "grid" in mapping:
+            self._mapping = TabularMapping(cast(Tables, mapping["grid"]))
+        if "units" in mapping:
+            self._units = UnitMapping(cast(Units, mapping["units"]))
+        if "substitutions" in mapping:
+            self._substitutions = ValueMapping(cast(Values, mapping["substitutions"]))
+        if "multipliers" in mapping:
+            self._multipliers = MultiplierMapping(cast(Multipliers, mapping["multipliers"]))
 
     def _parse_data(self, data: TabularData, data_type: str, extra_info: Optional[ExtraInfo]) -> Dataset:
         """This function parses tabular data and returns power-grid-model data

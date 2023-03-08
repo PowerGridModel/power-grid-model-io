@@ -32,7 +32,7 @@ def converter() -> VisionExcelConverter:
     return converter
 
 
-@pytest.mark.parametrize("language", ["en"])
+@pytest.mark.parametrize("language", ["en", "nl"])
 def test_mapping_files_exist(language: str):
     vf = Path(str(DEFAULT_MAPPING_FILE).format(language=language))
     assert vf.exists()
@@ -54,6 +54,25 @@ def test_initialization():
 
         VisionExcelConverter(source_file="source_file")
         MockFileStore.assert_called_once()
+
+
+def test_id_lookup_exceptions():
+    # Arrange
+    converter = VisionExcelConverter()
+    converter._id_reference = None
+
+    # Act / Assert
+    with pytest.raises(ValueError, match=r"Missing .* for VisionExcelConverter\.get_node_id\(\)"):
+        converter.get_node_id(number=0)
+
+    with pytest.raises(ValueError, match=r"Missing .* VisionExcelConverter\.get_branch_id\(\)"):
+        converter.get_branch_id(table="", number=0)
+
+    with pytest.raises(ValueError, match=r"Missing .* VisionExcelConverter\.get_appliance_id\(\)"):
+        converter.get_appliance_id(table="", node_number=0, sub_number=0)
+
+    with pytest.raises(ValueError, match=r"Missing .* VisionExcelConverter\.get_virtual_id\(\)"):
+        converter.get_virtual_id(table="", obj_name="", node_number=0, sub_number=0)
 
 
 def test_get_node_id(converter: VisionExcelConverter):

@@ -25,12 +25,20 @@ VALIDATION_EN = Path(str(VALIDATION_FILE).format(language="en"))
 
 
 @lru_cache
-def load_and_convert_excel_file(language: str) -> Tuple[SingleDataset, ExtraInfo]:
+def vision_excel_converter(language: str) -> VisionExcelConverter:
     """
-    Read the excel file and do the conversion
+    Read the excel file
     """
     source_file = Path(str(SOURCE_FILE).format(language=language))
-    data, extra_info = VisionExcelConverter(source_file, language=language).load_input_data()
+    return VisionExcelConverter(source_file, language=language)
+
+
+@lru_cache
+def load_and_convert_excel_file(language: str) -> Tuple[SingleDataset, ExtraInfo]:
+    """
+    Convert the excel file
+    """
+    data, extra_info = vision_excel_converter(language=language).load_input_data()
     return data, extra_info
 
 
@@ -118,3 +126,114 @@ def test_extra_info__serializable(extra_info):
 
     # Assert
     json.dumps(actual, cls=JsonEncoder)  # expect no exception
+
+
+@pytest.mark.parametrize(("language", "table", "column"), [("en", "Nodes", "Number"), ("nl", "Knooppunten", "Nummer")])
+def test_get_node_id(language: str, table: str, column: str):
+    # Arrange
+    converter = vision_excel_converter(language=language)
+    _input_data, extra_info = load_and_convert_excel_file(language=language)
+    source_data = converter._source.load()[table][column]
+
+    # Act/Assert
+    for number in source_data:
+        pgm_id = converter.get_node_id(number=number)
+        assert extra_info[pgm_id]["id_reference"] == {"table": table, "key": {column: number}}
+
+
+@pytest.mark.parametrize(
+    ("language", "table", "column"),
+    [
+        ("en", "Cables", "Number"),
+        ("en", "Lines", "Number"),
+        ("en", "Reactance coils", "Number"),
+        ("en", "Links", "Number"),
+        ("en", "Transformers", "Number"),
+        ("en", "Special transformers", "Number"),
+        ("en", "Three winding transformers", "Number"),
+        ("nl", "Kabels", "Nummer"),
+        ("nl", "Verbindingen", "Nummer"),
+        ("nl", "Smoorspoelen", "Nummer"),
+        ("nl", "Links", "Nummer"),
+        ("nl", "Transformatoren", "Nummer"),
+        ("nl", "Speciale transformatoren", "Nummer"),
+        ("nl", "Driewikkelingstransformatoren", "Nummer"),
+    ],
+)
+def test_get_branch_id(language: str, table: str, column: str):
+    # Arrange
+    converter = vision_excel_converter(language=language)
+    _input_data, extra_info = load_and_convert_excel_file(language=language)
+    source_data = converter._source.load()[table][column]
+
+    # Act/Assert
+    for number in source_data:
+        pgm_id = converter.get_branch_id(table=table, number=number)
+        assert extra_info[pgm_id]["id_reference"] == {"table": table, "key": {column: number}}
+
+
+@pytest.mark.parametrize(
+    ("language", "table", "columns"),
+    [
+        ("en", "Loads", ["Node.Number", "Subnumber"]),
+        ("en", "Synchronous generators", ["Node.Number", "Subnumber"]),
+        ("en", "Wind turbines", ["Node.Number", "Subnumber"]),
+        ("en", "Pvs", ["Node.Number", "Subnumber"]),
+        ("en", "Sources", ["Node.Number", "Subnumber"]),
+        ("en", "Zigzag transformers", ["Node.Number", "Subnumber"]),
+        ("en", "Capacitors", ["Node.Number", "Subnumber"]),
+        ("en", "Reactors", ["Node.Number", "Subnumber"]),
+        ("nl", "Belastingen", ["Knooppunt.Nummer", "Subnummer"]),
+        ("nl", "Synchrone generatoren", ["Knooppunt.Nummer", "Subnummer"]),
+        ("nl", "Windturbines", ["Knooppunt.Nummer", "Subnummer"]),
+        ("nl", "Pv's", ["Knooppunt.Nummer", "Subnummer"]),
+        ("nl", "Netvoedingen", ["Knooppunt.Nummer", "Subnummer"]),
+        ("nl", "Nulpuntstransformatoren", ["Knooppunt.Nummer", "Subnummer"]),
+        ("nl", "Condensatoren", ["Knooppunt.Nummer", "Subnummer"]),
+        ("nl", "Spoelen", ["Knooppunt.Nummer", "Subnummer"]),
+    ],
+)
+def test_get_get_appliance_id(language: str, table: str, columns: List[str]):
+    # Arrange
+    converter = vision_excel_converter(language=language)
+    _input_data, extra_info = load_and_convert_excel_file(language=language)
+    source_data = converter._source.load()[table][columns]
+
+    # Act/Assert
+    for _, (node_number, sub_number) in source_data.iterrows():
+        pgm_id = converter.get_appliance_id(table=table, node_number=node_number, sub_number=sub_number)
+        assert extra_info[pgm_id]["id_reference"] == {
+            "table": table,
+            "key": {columns[0]: node_number, columns[1]: sub_number},
+        }
+
+
+@pytest.mark.parametrize(
+    ("language", "table", "name", "columns"),
+    [
+        ("en", "Transformer loads", "transformer", ["Node.Number", "Subnumber"]),
+        ("en", "Transformer loads", "internal_node", ["Node.Number", "Subnumber"]),
+        ("en", "Transformer loads", "load", ["Node.Number", "Subnumber"]),
+        ("en", "Transformer loads", "generation", ["Node.Number", "Subnumber"]),
+        ("en", "Transformer loads", "pv_generation", ["Node.Number", "Subnumber"]),
+        ("nl", "Transformatorbelastingen", "transformer", ["Knooppunt.Nummer", "Subnummer"]),
+        ("nl", "Transformatorbelastingen", "internal_node", ["Knooppunt.Nummer", "Subnummer"]),
+        ("nl", "Transformatorbelastingen", "load", ["Knooppunt.Nummer", "Subnummer"]),
+        ("nl", "Transformatorbelastingen", "generation", ["Knooppunt.Nummer", "Subnummer"]),
+        ("nl", "Transformatorbelastingen", "pv_generation", ["Knooppunt.Nummer", "Subnummer"]),
+    ],
+)
+def test_get_get_virtual_id(language: str, table: str, name: str, columns: List[str]):
+    # Arrange
+    converter = vision_excel_converter(language=language)
+    _input_data, extra_info = load_and_convert_excel_file(language=language)
+    source_data = converter._source.load()[table][columns]
+
+    # Act/Assert
+    for _, (node_number, sub_number) in source_data.iterrows():
+        pgm_id = converter.get_virtual_id(table=table, obj_name=name, node_number=node_number, sub_number=sub_number)
+        assert extra_info[pgm_id]["id_reference"] == {
+            "table": table,
+            "name": name,
+            "key": {columns[0]: node_number, columns[1]: sub_number},
+        }
