@@ -32,7 +32,6 @@
   "sym_gen":
     [
       {"id": 14, "node": 12, "id_reference": {"table": "Transformatorbelastingen", "name": "generation", "key": {"Knooppunt.Nummer": 3, "Subnummer": 4}}, "Naam": "transformer_load_1"},
-      {"id": 14, "node": 12, "id_reference": {"table": "Transformatorbelastingen", "name": "generation", "key": {"Knooppunt.Nummer": 3, "Subnummer": 4}}, "Naam": "transformer_load_1"},
       {"id": 15, "node": 12, "id_reference": {"table": "Transformatorbelastingen", "name": "pv_generation", "key": {"Knooppunt.Nummer": 3, "Subnummer": 4}}, "Naam": "transformer_load_1"},
       {"id": 17, "node": 3, "id_reference": {"table": "Synchrone generatoren", "key": {"Knooppunt.Nummer": 4, "Subnummer": 2}}, "Naam": "syngen1"},
       {"id": 18, "node": 2, "id_reference": {"table": "Windturbines", "key": {"Knooppunt.Nummer": 3, "Subnummer": 3}}, "Naam": "wind1"},
