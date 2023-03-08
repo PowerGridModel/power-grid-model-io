@@ -7,7 +7,8 @@ grid:
     node:
       id:
         auto_id:
-          key: Nummer
+          key:
+            number: Nummer
       u_rated: Unom
       extra:
         - ID
@@ -16,18 +17,19 @@ grid:
     line:
       id:
         auto_id:
-          key: Nummer
+          key:
+            number: Nummer
       from_node:
         auto_id:
           table: Knooppunten
           key:
-            Nummer: Van.Nummer
+            number: Van.Nummer
       from_status: Van.Schakelstand
       to_node:
         auto_id:
           table: Knooppunten
           key:
-            Nummer: Naar.Nummer
+            number: Naar.Nummer
       to_status: Naar.Schakelstand
       r1: R
       x1: X
@@ -51,18 +53,19 @@ grid:
     line:
       id:
         auto_id:
-          key: Nummer
+          key:
+            number: Nummer
       from_node:
         auto_id:
           table: Knooppunten
           key:
-            Nummer: Van.Nummer
+            number: Van.Nummer
       from_status: Van.Schakelstand
       to_node:
         auto_id:
           table: Knooppunten
           key:
-            Nummer: Naar.Nummer
+            number: Naar.Nummer
       to_status: Naar.Schakelstand
       r1: R
       x1: X
@@ -86,18 +89,19 @@ grid:
     link:
       id:
         auto_id:
-          key: Nummer
+          key:
+            number: Nummer
       from_node:
         auto_id:
           table: Knooppunten
           key:
-            Nummer: Van.Nummer
+            number: Van.Nummer
       from_status: Van.Schakelstand
       to_node:
         auto_id:
           table: Knooppunten
           key:
-            Nummer: Naar.Nummer
+            number: Naar.Nummer
       to_status: Naar.Schakelstand
       extra:
         - ID
@@ -106,18 +110,19 @@ grid:
     line:
       id:
         auto_id:
-          key: Nummer
+          key:
+            number: Nummer
       from_node:
         auto_id:
           table: Knooppunten
           key:
-            Nummer: Van.Nummer
+            number: Van.Nummer
       from_status: Van.Schakelstand
       to_node:
         auto_id:
           table: Knooppunten
           key:
-            Nummer: Naar.Nummer
+            number: Naar.Nummer
       to_status: Naar.Schakelstand
       r1: R
       x1: X
@@ -141,18 +146,19 @@ grid:
     transformer:
       id:
         auto_id:
-          key: Nummer
+          key:
+            number: Nummer
       from_node:
         auto_id:
           table: Knooppunten
           key:
-            Nummer: Van.Nummer
+            number: Van.Nummer
       from_status: Van.Schakelstand
       to_node:
         auto_id:
           table: Knooppunten
           key:
-            Nummer: Naar.Nummer
+            number: Naar.Nummer
       to_status: Naar.Schakelstand
       u1: Unom1
       u2: Unom2
@@ -219,18 +225,19 @@ grid:
     transformer:
       id:
         auto_id:
-          key: Nummer
+          key:
+            number: Nummer
       from_node:
         auto_id:
           table: Knooppunten
           key:
-            Nummer: Van.Nummer
+            number: Van.Nummer
       from_status: Van.Schakelstand
       to_node:
         auto_id:
           table: Knooppunten
           key:
-            Nummer: Naar.Nummer
+            number: Naar.Nummer
       to_status: Naar.Schakelstand
       u1: Unom1
       u2: Unom2
@@ -291,19 +298,19 @@ grid:
         auto_id:
           name: transformer
           key:
-            - Knooppunt.Nummer
-            - Subnummer
+            node_number: Knooppunt.Nummer
+            sub_number: Subnummer
       from_node:
         auto_id:
           table: Knooppunten
           key:
-            Nummer: Knooppunt.Nummer
+            number: Knooppunt.Nummer
       to_node:
         auto_id:
           name: internal_node
           key:
-            - Knooppunt.Nummer
-            - Subnummer
+            node_number: Knooppunt.Nummer
+            sub_number: Subnummer
       from_status: Schakelstand
       to_status: 1
       u1: Unom1
@@ -370,8 +377,8 @@ grid:
         auto_id:
           name: internal_node
           key:
-            - Knooppunt.Nummer
-            - Subnummer
+            node_number: Knooppunt.Nummer
+            sub_number: Subnummer
       u_rated: Unom2
       extra:
         - ID
@@ -381,14 +388,14 @@ grid:
         auto_id:
           name: load
           key:
-            - Knooppunt.Nummer
-            - Subnummer
+            node_number: Knooppunt.Nummer
+            sub_number: Subnummer
       node:
         auto_id:
           name: internal_node
           key:
-            - Knooppunt.Nummer
-            - Subnummer
+            node_number: Knooppunt.Nummer
+            sub_number: Subnummer
       status: Schakelstand
       type: Gedrag
       p_specified:
@@ -415,14 +422,14 @@ grid:
           auto_id:
             name: generation
             key:
-              - Knooppunt.Nummer
-              - Subnummer
+              node_number: Knooppunt.Nummer
+              sub_number: Subnummer
         node:
           auto_id:
             name: internal_node
             key:
-              - Knooppunt.Nummer
-              - Subnummer
+              node_number: Knooppunt.Nummer
+              sub_number: Subnummer
         status: Schakelstand
         type: 0
         p_specified: Opwekking.P
@@ -434,14 +441,14 @@ grid:
           auto_id:
             name: pv_generation
             key:
-              - Knooppunt.Nummer
-              - Subnummer
+              node_number: Knooppunt.Nummer
+              sub_number: Subnummer
         node:
           auto_id:
             name: internal_node
             key:
-              - Knooppunt.Nummer
-              - Subnummer
+              node_number: Knooppunt.Nummer
+              sub_number: Subnummer
         status: Schakelstand
         type: 0
         p_specified: PV.Pnom
@@ -457,13 +464,13 @@ grid:
       id:
         auto_id:
           key:
-            - Knooppunt.Nummer
-            - Subnummer
+            node_number: Knooppunt.Nummer
+            sub_number: Subnummer
       node:
         auto_id:
           table: Knooppunten
           key:
-            Nummer: Knooppunt.Nummer
+            number: Knooppunt.Nummer
       status: Schakelstand
       u_ref: Uref
       sk: Sk"nom
@@ -477,13 +484,13 @@ grid:
       id:
         auto_id:
           key:
-            - Knooppunt.Nummer
-            - Subnummer
+            node_number: Knooppunt.Nummer
+            sub_number: Subnummer
       node:
         auto_id:
           table: Knooppunten
           key:
-            Nummer: Knooppunt.Nummer
+            number: Knooppunt.Nummer
       status: Schakelstand
       type: 0
       p_specified: Pref
@@ -501,13 +508,13 @@ grid:
       id:
         auto_id:
           key:
-            - Knooppunt.Nummer
-            - Subnummer
+            node_number: Knooppunt.Nummer
+            sub_number: Subnummer
       node:
         auto_id:
           table: Knooppunten
           key:
-            Nummer: Knooppunt.Nummer
+            number: Knooppunt.Nummer
       status: Schakelstand
       type: 0
       p_specified:
@@ -535,13 +542,13 @@ grid:
       id:
         auto_id:
           key:
-            - Knooppunt.Nummer
-            - Subnummer
+            node_number: Knooppunt.Nummer
+            sub_number: Subnummer
       node:
         auto_id:
           table: Knooppunten
           key:
-            Nummer: Knooppunt.Nummer
+            number: Knooppunt.Nummer
       status: Schakelstand
       type: Gedrag
       p_specified:
@@ -568,13 +575,13 @@ grid:
       id:
         auto_id:
           key:
-            - Knooppunt.Nummer
-            - Subnummer
+            node_number: Knooppunt.Nummer
+            sub_number: Subnummer
       node:
         auto_id:
           table: Knooppunten
           key:
-            Nummer: Knooppunt.Nummer
+            number: Knooppunt.Nummer
       status: Schakelstand
       g1: 0
       b1: 0
@@ -594,13 +601,13 @@ grid:
       id:
         auto_id:
           key:
-            - Knooppunt.Nummer
-            - Subnummer
+            node_number: Knooppunt.Nummer
+            sub_number: Subnummer
       node:
         auto_id:
           table: Knooppunten
           key:
-            Nummer: Knooppunt.Nummer
+            number: Knooppunt.Nummer
       status: Schakelstand
       g1: 0
       b1:
@@ -617,13 +624,13 @@ grid:
       id:
         auto_id:
           key:
-            - Knooppunt.Nummer
-            - Subnummer
+            node_number: Knooppunt.Nummer
+            sub_number: Subnummer
       node:
         auto_id:
           table: Knooppunten
           key:
-            Nummer: Knooppunt.Nummer
+            number: Knooppunt.Nummer
       status: Schakelstand
       g1: 0
       b1:
@@ -642,13 +649,13 @@ grid:
       id:
         auto_id:
           key:
-            - Knooppunt.Nummer
-            - Subnummer
+            node_number: Knooppunt.Nummer
+            sub_number: Subnummer
       node:
         auto_id:
           table: Knooppunten
           key:
-            Nummer: Knooppunt.Nummer
+            number: Knooppunt.Nummer
       status: Schakelstand
       type: 0
       p_specified:
@@ -676,24 +683,25 @@ grid:
     three_winding_transformer:
       id:
         auto_id:
-          key: Nummer
+          key:
+            number: Nummer
       node_1:
         auto_id:
           table: Knooppunten
           key:
-            Nummer: Knooppunt1.Nummer
+            number: Knooppunt1.Nummer
       status_1: Schakelstand1
       node_2:
         auto_id:
           table: Knooppunten
           key:
-            Nummer: Knooppunt2.Nummer
+            number: Knooppunt2.Nummer
       status_2: Schakelstand2
       node_3:
         auto_id:
           table: Knooppunten
           key:
-            Nummer: Knooppunt3.Nummer
+            number: Knooppunt3.Nummer
       status_3: Schakelstand3
       u1: Unom1
       u2: Unom2

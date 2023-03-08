@@ -7,7 +7,8 @@ grid:
     node:
       id:
         auto_id:
-          key: Number
+          key:
+            number: Number
       u_rated: Unom
       extra:
         - ID
@@ -16,18 +17,19 @@ grid:
     line:
       id:
         auto_id:
-          key: Number
+          key:
+            number: Number
       from_node:
         auto_id:
           table: Nodes
           key:
-            Number: From.Number
+            number: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
           table: Nodes
           key:
-            Number: To.Number
+            number: To.Number
       to_status: To.Switch state
       r1: R
       x1: X
@@ -51,18 +53,19 @@ grid:
     line:
       id:
         auto_id:
-          key: Number
+          key:
+            number: Number
       from_node:
         auto_id:
           table: Nodes
           key:
-            Number: From.Number
+            number: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
           table: Nodes
           key:
-            Number: To.Number
+            number: To.Number
       to_status: To.Switch state
       r1: R
       x1: X
@@ -86,18 +89,19 @@ grid:
     link:
       id:
         auto_id:
-          key: Number
+          key:
+            number: Number
       from_node:
         auto_id:
           table: Nodes
           key:
-            Number: From.Number
+            number: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
           table: Nodes
           key:
-            Number: To.Number
+            number: To.Number
       to_status: To.Switch state
       extra:
         - ID
@@ -106,18 +110,19 @@ grid:
     line:
       id:
         auto_id:
-          key: Number
+          key:
+            number: Number
       from_node:
         auto_id:
           table: Nodes
           key:
-            Number: From.Number
+            number: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
           table: Nodes
           key:
-            Number: To.Number
+            number: To.Number
       to_status: To.Switch state
       r1: R
       x1: X
@@ -141,18 +146,19 @@ grid:
     transformer:
       id:
         auto_id:
-          key: Number
+          key:
+            number: Number
       from_node:
         auto_id:
           table: Nodes
           key:
-            Number: From.Number
+            number: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
           table: Nodes
           key:
-            Number: To.Number
+            number: To.Number
       to_status: To.Switch state
       u1: Unom1
       u2: Unom2
@@ -219,18 +225,19 @@ grid:
     transformer:
       id:
         auto_id:
-          key: Number
+          key:
+            number: Number
       from_node:
         auto_id:
           table: Nodes
           key:
-            Number: From.Number
+            number: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
           table: Nodes
           key:
-            Number: To.Number
+            number: To.Number
       to_status: To.Switch state
       u1: Unom1
       u2: Unom2
@@ -291,19 +298,19 @@ grid:
         auto_id:
           name: transformer
           key:
-            - Node.Number
-            - Subnumber
+            node_number: Node.Number
+            sub_number: Subnumber
       from_node:
         auto_id:
           table: Nodes
           key:
-            Number: Node.Number
+            number: Node.Number
       to_node:
         auto_id:
           name: internal_node
           key:
-            - Node.Number
-            - Subnumber
+            node_number: Node.Number
+            sub_number: Subnumber
       from_status: Switch state
       to_status: 1
       u1: Unom1
@@ -370,8 +377,8 @@ grid:
         auto_id:
           name: internal_node
           key:
-            - Node.Number
-            - Subnumber
+            node_number: Node.Number
+            sub_number: Subnumber
       u_rated: Unom2
       extra:
         - ID
@@ -381,14 +388,14 @@ grid:
         auto_id:
           name: load
           key:
-            - Node.Number
-            - Subnumber
+            node_number: Node.Number
+            sub_number: Subnumber
       node:
         auto_id:
           name: internal_node
           key:
-            - Node.Number
-            - Subnumber
+            node_number: Node.Number
+            sub_number: Subnumber
       status: Switch state
       type: Behaviour
       p_specified:
@@ -415,14 +422,14 @@ grid:
           auto_id:
             name: generation
             key:
-              - Node.Number
-              - Subnumber
+              node_number: Node.Number
+              sub_number: Subnumber
         node:
           auto_id:
             name: internal_node
             key:
-              - Node.Number
-              - Subnumber
+              node_number: Node.Number
+              sub_number: Subnumber
         status: Switch state
         type: 0
         p_specified: Generation.P
@@ -434,14 +441,14 @@ grid:
           auto_id:
             name: pv_generation
             key:
-              - Node.Number
-              - Subnumber
+              node_number: Node.Number
+              sub_number: Subnumber
         node:
           auto_id:
             name: internal_node
             key:
-              - Node.Number
-              - Subnumber
+              node_number: Node.Number
+              sub_number: Subnumber
         status: Switch state
         type: 0
         p_specified: PV.Pnom
@@ -457,13 +464,13 @@ grid:
       id:
         auto_id:
           key:
-            - Node.Number
-            - Subnumber
+            node_number: Node.Number
+            sub_number: Subnumber
       node:
         auto_id:
           table: Nodes
           key:
-            Number: Node.Number
+            number: Node.Number
       status: Switch state
       u_ref: Uref
       sk: Sk"nom
@@ -477,13 +484,13 @@ grid:
       id:
         auto_id:
           key:
-            - Node.Number
-            - Subnumber
+            node_number: Node.Number
+            sub_number: Subnumber
       node:
         auto_id:
           table: Nodes
           key:
-            Number: Node.Number
+            number: Node.Number
       status: Switch state
       type: 0
       p_specified: Pref
@@ -501,13 +508,13 @@ grid:
       id:
         auto_id:
           key:
-            - Node.Number
-            - Subnumber
+            node_number: Node.Number
+            sub_number: Subnumber
       node:
         auto_id:
           table: Nodes
           key:
-            Number: Node.Number
+            number: Node.Number
       status: Switch state
       type: 0
       p_specified:
@@ -535,13 +542,13 @@ grid:
       id:
         auto_id:
           key:
-            - Node.Number
-            - Subnumber
+            node_number: Node.Number
+            sub_number: Subnumber
       node:
         auto_id:
           table: Nodes
           key:
-            Number: Node.Number
+            number: Node.Number
       status: Switch state
       type: Behaviour
       p_specified:
@@ -568,13 +575,13 @@ grid:
       id:
         auto_id:
           key:
-            - Node.Number
-            - Subnumber
+            node_number: Node.Number
+            sub_number: Subnumber
       node:
         auto_id:
           table: Nodes
           key:
-            Number: Node.Number
+            number: Node.Number
       status: Switch state
       g1: 0
       b1: 0
@@ -594,13 +601,13 @@ grid:
       id:
         auto_id:
           key:
-            - Node.Number
-            - Subnumber
+            node_number: Node.Number
+            sub_number: Subnumber
       node:
         auto_id:
           table: Nodes
           key:
-            Number: Node.Number
+            number: Node.Number
       status: Switch state
       g1: 0
       b1:
@@ -617,13 +624,13 @@ grid:
       id:
         auto_id:
           key:
-            - Node.Number
-            - Subnumber
+            node_number: Node.Number
+            sub_number: Subnumber
       node:
         auto_id:
           table: Nodes
           key:
-            Number: Node.Number
+            number: Node.Number
       status: Switch state
       g1: 0
       b1:
@@ -642,13 +649,13 @@ grid:
       id:
         auto_id:
           key:
-            - Node.Number
-            - Subnumber
+            node_number: Node.Number
+            sub_number: Subnumber
       node:
         auto_id:
           table: Nodes
           key:
-            Number: Node.Number
+            number: Node.Number
       status: Switch state
       type: 0
       p_specified:
@@ -676,24 +683,25 @@ grid:
     three_winding_transformer:
       id:
         auto_id:
-          key: Number
+          key:
+            number: Number
       node_1:
         auto_id:
           table: Nodes
           key:
-            Number: Node1.Number
+            number: Node1.Number
       status_1: Switch state 1
       node_2:
         auto_id:
           table: Nodes
           key:
-            Number: Node2.Number
+            number: Node2.Number
       status_2: Switch state 2
       node_3:
         auto_id:
           table: Nodes
           key:
-            Number: Node3.Number
+            number: Node3.Number
       status_3: Switch state 3
       u1: Unom1
       u2: Unom2

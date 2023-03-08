@@ -133,11 +133,11 @@ def test_get_node_id(language: str, table: str, column: str):
     # Arrange
     converter = vision_excel_converter(language=language)
     _input_data, extra_info = load_and_convert_excel_file(language=language)
-    source_data = converter._source.load()[table][column]
+    source_data = converter._source.load()[table][column]  # type: ignore[union-attr]
 
     # Act/Assert
     for number in source_data:
-        pgm_id = converter.get_node_id(number=number)
+        pgm_id = converter.get_node_id(table=table, number=number)
         assert extra_info[pgm_id]["id_reference"] == {"table": table, "key": {"number": number}}
 
 
@@ -164,7 +164,7 @@ def test_get_branch_id(language: str, table: str, column: str):
     # Arrange
     converter = vision_excel_converter(language=language)
     _input_data, extra_info = load_and_convert_excel_file(language=language)
-    source_data = converter._source.load()[table][column]
+    source_data = converter._source.load()[table][column]  # type: ignore[union-attr]
 
     # Act/Assert
     for number in source_data:
@@ -197,7 +197,7 @@ def test_get_get_appliance_id(language: str, table: str, columns: List[str]):
     # Arrange
     converter = vision_excel_converter(language=language)
     _input_data, extra_info = load_and_convert_excel_file(language=language)
-    source_data = converter._source.load()[table][columns]
+    source_data = converter._source.load()[table][columns]  # type: ignore[union-attr]
 
     # Act/Assert
     for _, (node_number, sub_number) in source_data.iterrows():
@@ -227,7 +227,7 @@ def test_get_get_virtual_id(language: str, table: str, name: str, columns: List[
     # Arrange
     converter = vision_excel_converter(language=language)
     _input_data, extra_info = load_and_convert_excel_file(language=language)
-    source_data = converter._source.load()[table][columns]
+    source_data = converter._source.load()[table][columns]  # type: ignore[union-attr]
 
     # Act/Assert
     for _, (node_number, sub_number) in source_data.iterrows():

@@ -26,26 +26,26 @@ class VisionExcelConverter(TabularConverter):
         source = VisionExcelFileStore(file_path=Path(source_file)) if source_file else None
         super().__init__(mapping_file=mapping_file, source=source)
 
-    def get_node_id(self, number: int) -> int:
+    def get_node_id(self, number: int, table: str = "Nodes") -> int:
         """
         Get the automatically assigned id of a node
         """
-        return self.get_id(table="Nodes", key={"Number": number})
+        return self.get_id(table=table, key={"number": number})
 
     def get_branch_id(self, table: str, number: int) -> int:
         """
         Get the automatically assigned id of a branch (line, transformer, etc.)
         """
-        return self.get_id(table=table, key={"Number": number})
+        return self.get_id(table=table, key={"number": number})
 
     def get_appliance_id(self, table: str, node_number: int, sub_number: int) -> int:
         """
         Get the automatically assigned id of an appliance (source, load, etc.)
         """
-        return self.get_id(table=table, key={"Node.Number": node_number, "Subnumber": sub_number})
+        return self.get_id(table=table, key={"node_number": node_number, "sub_number": sub_number})
 
     def get_virtual_id(self, table: str, obj_name: str, node_number: int, sub_number: int) -> int:
         """
         Get the automatically assigned id of a vitual object (e.g. the internal node of a 'TansformerLoad')
         """
-        return self.get_id(table=table, name=obj_name, key={"Node.Number": node_number, "Subnumber": sub_number})
+        return self.get_id(table=table, name=obj_name, key={"node_number": node_number, "sub_number": sub_number})
