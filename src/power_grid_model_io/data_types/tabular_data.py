@@ -186,8 +186,9 @@ class TabularData:
 
         Returns: The 'raw' table data
         """
-        if callable(self._data[table_name]):
-            self._data[table_name] = self._data[table_name]()
+        data = self._data[table_name]
+        if callable(data):
+            self._data[table_name] = data()
         return self._data[table_name]
 
     def keys(self) -> Iterable[str]:

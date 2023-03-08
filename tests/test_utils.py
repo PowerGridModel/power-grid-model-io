@@ -9,15 +9,7 @@ import pytest
 import structlog
 from structlog.testing import capture_logs
 
-from .utils import (
-    MockDf,
-    MockVal,
-    assert_log_exists,
-    assert_log_match,
-    assert_struct_array_equal,
-    dict_in_dict,
-    idx_to_str,
-)
+from .utils import MockDf, MockVal, assert_log_exists, assert_log_match, assert_struct_array_equal, contains, idx_to_str
 
 
 @pytest.fixture
@@ -30,16 +22,16 @@ def captured_logs():
 
 def test_dict_in_dict():
     # Act / Assert
-    assert dict_in_dict({}, {})
-    assert dict_in_dict({"a": 1}, {"a": 1})
-    assert dict_in_dict({"a": 1}, {"a": 1, "b": 2})
-    assert dict_in_dict({"a": 1, "b": 2}, {"a": 1, "b": 2})
-    assert dict_in_dict({"a": 1, "b": 2}, {"a": 1, "b": 2, "c": 3})
-    assert not dict_in_dict({"a": 1}, {})
-    assert not dict_in_dict({"a": 1}, {"a": 2})
-    assert not dict_in_dict({"a": 1}, {"b": 1})
-    assert not dict_in_dict({"a": 1}, {"b": 2})
-    assert not dict_in_dict({"a": 1, "b": 2}, {"c": 3})
+    assert contains({}, {})
+    assert contains({"a": 1}, {"a": 1})
+    assert contains({"a": 1}, {"a": 1, "b": 2})
+    assert contains({"a": 1, "b": 2}, {"a": 1, "b": 2})
+    assert contains({"a": 1, "b": 2}, {"a": 1, "b": 2, "c": 3})
+    assert not contains({"a": 1}, {})
+    assert not contains({"a": 1}, {"a": 2})
+    assert not contains({"a": 1}, {"b": 1})
+    assert not contains({"a": 1}, {"b": 2})
+    assert not contains({"a": 1, "b": 2}, {"c": 3})
 
 
 @patch("pandas.DataFrame")
