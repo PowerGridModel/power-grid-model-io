@@ -5,7 +5,7 @@
 import sys
 from copy import copy, deepcopy
 from itertools import chain
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Mapping, MutableMapping, Optional, Tuple, Union
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -13,7 +13,7 @@ import pandas as pd
 from pandas.core.generic import NDFrame
 
 
-def dict_in_dict(needle: Dict[str, Any], data: Dict[str, Any]) -> bool:
+def contains(needle: Mapping[str, Any], data: Mapping[str, Any]) -> bool:
     return all(item in data.items() for item in needle.items())
 
 
@@ -25,13 +25,13 @@ def assert_struct_array_equal(actual: np.ndarray, expected: Union[np.ndarray, pd
 
 
 def assert_log_exists(
-    capture: List[Dict[str, Any]], log_level: Optional[str] = None, event: Optional[str] = None, **kwargs
+    capture: List[MutableMapping[str, Any]], log_level: Optional[str] = None, event: Optional[str] = None, **kwargs
 ):
     if log_level is not None:
         kwargs["log_level"] = log_level
     if event is not None:
         kwargs["event"] = event
-    if not any(dict_in_dict(kwargs, log_line) for log_line in capture):
+    if not any(contains(kwargs, log_line) for log_line in capture):
         capture = deepcopy(capture)
         print(
             "Logs:\n"
@@ -41,12 +41,14 @@ def assert_log_exists(
         raise KeyError(f"Log {kwargs} does not exist")
 
 
-def assert_log_match(capture: Dict[str, Any], level: Optional[str] = None, event: Optional[str] = None, **kwargs):
+def assert_log_match(
+    capture: MutableMapping[str, Any], level: Optional[str] = None, event: Optional[str] = None, **kwargs
+):
     if level is not None:
         kwargs["log_level"] = level
     if event is not None:
         kwargs["event"] = event
-    if not dict_in_dict(kwargs, capture):
+    if not contains(kwargs, capture):
         capture = deepcopy(capture)
         print(f"Log:\n[{capture.pop('log_level')}] {capture.pop('event')} {capture}", file=sys.stderr)
         raise KeyError(f"Expected log {kwargs} does not match actual log {capture}")
