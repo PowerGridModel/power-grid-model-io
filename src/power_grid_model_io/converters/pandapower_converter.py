@@ -194,7 +194,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 if not pp_attr & set(self.pp_input_data[pp_table].columns):
                     continue
                 pgm_ids = self._get_pgm_ids(pp_table=pp_table)
-                pp_extra_data = self.pp_input_data[pp_table][pp_attr]
+                pp_extra_data = self.pp_input_data[pp_table][list(pp_attr)]
                 pp_extra_data.index = pgm_ids
                 for pgm_id, pp_element in pp_extra_data.iterrows():
                     if pgm_id not in extra_info:

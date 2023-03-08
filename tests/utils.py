@@ -163,9 +163,9 @@ class MockFn:
         if not isinstance(other, MockFn):
             return False
 
-        def isnan(
-            x: Any,
-        ):
+        def isnan(x: Any):
+            if isinstance(x, np.ndarray) and x.size == 0:
+                return False
             try:
                 return np.isnan(x)
             except TypeError:
@@ -182,6 +182,8 @@ class MockFn:
                 return (left == right).all()
             if isinstance(right, NDFrame):
                 return False
+            if isinstance(left, np.ndarray) and left.size == 0:
+                return isinstance(right, np.ndarray) and right.size == 0
             if isnan(left) and isnan(right):
                 return True
             return left == right
