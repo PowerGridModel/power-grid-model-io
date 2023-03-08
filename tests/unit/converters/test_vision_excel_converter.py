@@ -32,7 +32,7 @@ def converter() -> VisionExcelConverter:
     return converter
 
 
-@pytest.mark.parametrize("language", ["en"])
+@pytest.mark.parametrize("language", ["en", "nl"])
 def test_mapping_files_exist(language: str):
     vf = Path(str(DEFAULT_MAPPING_FILE).format(language=language))
     assert vf.exists()
