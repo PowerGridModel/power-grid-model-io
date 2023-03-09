@@ -872,6 +872,80 @@ def test_get_id__public(converter: TabularConverter):
         converter.get_id(table="node", key={"a": 1, "b": 3})
 
 
+def test_get_ids(converter: TabularConverter):
+    # Arrange
+    converter._get_id(table="node", key={"a": 1, "b": 2}, name=None)  # 0
+    converter._get_id(table="node", key={"a": 1, "b": 3}, name=None)  # 1
+    converter._get_id(table="node", key={"a": 1, "c": 2}, name=None)  # 2
+    converter._get_id(table="foo", key={"a": 1, "b": 2}, name=None)  # 3
+    converter._get_id(table="node", key={"a": 1, "b": 2}, name="bar")  # 4
+
+    # Act
+    query = pd.DataFrame(
+        [
+            {"a": 1, "b": 3},  # 1
+            {"a": 1, "c": 2},  # 2
+            {"a": 1, "b": 2},  # 0
+        ]
+    )
+    pgm_ids = converter.get_ids(table="node", keys=query)
+
+    # Assert
+    assert pgm_ids == [1, 2, 0]
+
+
+def test_get_ids__table_and_name(converter: TabularConverter):
+    # Arrange
+    converter._get_id(table="node", key={"a": 1, "b": 2}, name=None)  # 0
+    converter._get_id(table="node", key={"a": 1, "b": 3}, name=None)  # 1
+    converter._get_id(table="node", key={"a": 1, "c": 2}, name=None)  # 2
+    converter._get_id(table="foo", key={"a": 1, "b": 2}, name=None)  # 3
+    converter._get_id(table="node", key={"a": 1, "b": 2}, name="bar")  # 4
+
+    # Act
+    query = pd.DataFrame(
+        [
+            {"table": "node", "a": 1, "b": 3},  # 1
+            {"table": "node", "a": 1, "c": 2},  # 2
+            {"table": "node", "a": 1, "b": 2},  # 0
+            {"table": "node", "name": "bar", "a": 1, "b": 2},  # 4
+            {"table": "foo", "a": 1, "b": 2},  # 3
+        ]
+    )
+    pgm_ids = converter.get_ids(keys=query)
+
+    # Assert
+    assert pgm_ids == [1, 2, 0, 4, 3]
+
+
+def test_get_ids__round_trip(converter: TabularConverter):
+    # Arrange
+    converter._get_id(table="node", key={"a": 1, "b": 2}, name=None)  # 0
+    converter._get_id(table="node", key={"a": 1, "b": 3}, name=None)  # 1
+    converter._get_id(table="node", key={"a": 1, "c": 2}, name=None)  # 2
+    converter._get_id(table="foo", key={"a": 1, "b": 2}, name=None)  # 3
+    converter._get_id(table="node", key={"a": 1, "b": 2}, name="bar")  # 4
+
+    # Act
+    query = pd.DataFrame(
+        [
+            {"table": "node", "a": 1, "b": 3},  # 1
+            {"table": "node", "a": 1, "c": 2},  # 2
+            {"table": "node", "a": 1, "b": 2},  # 0
+            {"table": "node", "name": "bar", "a": 1, "b": 2},  # 4
+            {"table": "foo", "a": 1, "b": 2},  # 3
+        ]
+    )
+    pgm_ids = converter.get_ids(keys=query)
+    reference = converter.lookup_ids(pgm_ids=pgm_ids)
+
+    # Assert
+    # We don't know the pgm_ids in the original query, so let's remove them from the reference as well.
+    # I.e. the order of the rows in query and reference should match
+    reference.reset_index(drop=True, inplace=True)
+    pd.testing.assert_frame_equal(reference, query)
+
+
 def test_lookup_id(converter: TabularConverter):
     # Arrange
     converter._get_id(table="node", key={"a": 1, "b": 2}, name=None)
@@ -898,21 +972,40 @@ def test_lookup_ids(converter: TabularConverter):
     converter._get_id(table="node", key={"a": 1, "b": 2}, name="bar")  # 4
 
     # Act
-    reference = converter.lookup_ids(pgm_ids=[3, 2, 4])
+    query = [3, 2, 4]
+    reference = converter.lookup_ids(pgm_ids=query)
 
     # Assert
     pd.testing.assert_frame_equal(
         reference,
         pd.DataFrame(
             [
-                ["foo", 1, 2, None, None],
-                ["node", 1, None, 2, None],
-                ["node", 1, 2, None, "bar"],
+                ["foo", None, 1, 2, None],
+                ["node", None, 1, None, 2],
+                ["node", "bar", 1, 2, None],
             ],
-            columns=["table", "a", "b", "c", "name"],
+            columns=["table", "name", "a", "b", "c"],
             index=[3, 2, 4],
         ),
+        check_like=True,  # Ignore order of rows and columns
     )
+
+
+def test_lookup_ids__round_trip(converter: TabularConverter):
+    # Arrange
+    converter._get_id(table="node", key={"a": 1, "b": 2}, name=None)  # 0
+    converter._get_id(table="node", key={"a": 1, "b": 3}, name=None)  # 1
+    converter._get_id(table="node", key={"a": 1, "c": 2}, name=None)  # 2
+    converter._get_id(table="foo", key={"a": 1, "b": 2}, name=None)  # 3
+    converter._get_id(table="node", key={"a": 1, "b": 2}, name="bar")  # 4
+
+    # Act
+    query = [3, 2, 4]
+    reference = converter.lookup_ids(pgm_ids=query)
+    pgm_ids = converter.get_ids(reference)
+
+    # Assert
+    assert query == pgm_ids
 
 
 def test_lookup_ids__duplicate_keys(converter: TabularConverter):
