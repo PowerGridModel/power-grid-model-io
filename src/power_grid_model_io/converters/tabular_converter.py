@@ -663,6 +663,24 @@ class TabularConverter(BaseConverter[TabularData]):
             raise KeyError((table, key, name))
         return self._auto_id(item=(table, key, name), key=auto_id_key)
 
+    def get_ids(self, keys: pd.DataFrame, table: Optional[str] = None, name: Optional[str] = None) -> List[int]:
+        """
+        Get a the numerical ID previously associated with the supplied name / key combination
+        Args:
+            keys: Component identifiers (e.g. a pandas Dataframe with columns "number" and "sub_number")
+            table: Table name (e.g. "Nodes")
+            name: Optional component name (e.g. "internal_node")
+        Returns: The associated id
+        """
+
+        def get_id(row: pd.Series) -> int:
+            key = row.dropna().to_dict()
+            row_table = key.pop("table") if table is None and "table" in key else table
+            row_name = key.pop("name") if name is None and "name" in key else name
+            return self.get_id(table=row_table, key=key, name=row_name)
+
+        return keys.apply(get_id, axis=1).to_list()
+
     def lookup_id(self, pgm_id: int) -> Dict[str, Union[str, Dict[str, int]]]:
         """
         Retrieve the original name / key combination of a pgm object
