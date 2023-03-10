@@ -195,11 +195,6 @@ def test_fill_pp_extra_info():
     )
     converter.pp_input_data["line"] = pd.DataFrame([10, 11, 12], columns=["df"], index=[201, 202, 203])
 
-    converter.pgm_input_data["transformer"] = initialize_array("input", "transformer", 3)
-    converter.pgm_input_data["transformer"]["id"] = [3, 4, 5]
-    converter.pgm_input_data["line"] = initialize_array("input", "line", 2)
-    converter.pgm_input_data["line"]["id"] = [1, 2]
-
     # Act
     extra_info = {}
     converter._fill_pp_extra_info(extra_info=extra_info)
