@@ -46,12 +46,19 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self.pgm_input_data: SingleDataset = {}
         self.pp_output_data: PandaPowerData = {}
         self.pgm_output_data: SingleDataset = {}
+        self.pp_update_data: PandaPowerData = {}
+        self.pgm_update_data: SingleDataset = {}
         self.pgm_nodes_lookup: pd.DataFrame = pd.DataFrame()
         self.idx: Dict[Tuple[str, Optional[str]], pd.Series] = {}
         self.idx_lookup: Dict[Tuple[str, Optional[str]], pd.Series] = {}
         self.next_idx = 0
 
-    def _parse_data(self, data: PandaPowerData, data_type: str, extra_info: Optional[ExtraInfo] = None) -> Dataset:
+    def _parse_data(
+        self,
+        data: PandaPowerData,
+        data_type: str,
+        extra_info: Optional[ExtraInfo] = None,
+    ) -> Dataset:
         """
         Set up for conversion from PandaPower to power-grid-model
 
@@ -65,18 +72,21 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             Converted power-grid-model data
         """
-
         # Clear pgm data
         self.pgm_input_data = {}
         self.idx_lookup = {}
         self.next_idx = 0
 
-        # Set pandas data
-        self.pp_input_data = data
+        self.pgm_update_data = {}
 
         # Convert
         if data_type == "input":
+            # Set pandas data
+            self.pp_input_data = data
             self._create_input_data()
+        elif data_type == "update":
+            self.pp_update_data = data
+            self._update_input_data()
         else:
             raise ValueError(f"Data type: '{data_type}' is not implemented")
 
@@ -115,7 +125,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         def pgm_output_dtype_checker(check_type: str) -> bool:
             return all(
                 (
-                    comp_array.dtype == power_grid_meta_data[check_type][component]
+                    comp_array.dtype == power_grid_meta_data[check_type][component]["dtype"]
                     for component, comp_array in self.pgm_output_data.items()
                 )
             )
@@ -247,7 +257,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         nan = np.iinfo(dtype).min
         all_other_cols = ["i_n"]
         for component, data in self.pgm_output_data.items():
-            input_cols = power_grid_meta_data["input"][component].dtype.names
+            input_cols = power_grid_meta_data["input"][component]["dtype"].names
             node_cols = [col for col in input_cols if NODE_REF_RE.fullmatch(col)]
             other_cols = [col for col in input_cols if col in all_other_cols]
             if not node_cols + other_cols:
@@ -331,6 +341,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._pp_sgens_output_3ph()
         self._pp_asym_gens_output_3ph()
         self._pp_asym_loads_output_3ph()
+
+    def _update_input_data(self):
+        self._pp_update_loads()
+        self._pp_update_sgens()
 
     def _create_pgm_input_nodes(self):
         """
@@ -2044,6 +2058,110 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         assert "res_asymmetric_sgen_3ph" not in self.pp_output_data
         self.pp_output_data["res_asymmetric_sgen_3ph"] = pp_output_asym_gens_3ph
+
+    def _pp_update_loads(self):
+        # The DF itself does not hold any information on the type of values inside of it. It can hold p or q values,
+        # thus we hold this information in tuples as keys to the dictionary. What is more, we need to create checks to
+        # find out which variable is stored in the DF.
+        pp_upd_data = self.pp_update_data
+
+        if "load.p_mw" not in pp_upd_data and "load.q_mvar" not in pp_upd_data:
+            return
+
+        if "load.p_mw" in pp_upd_data and "load.q_mvar" not in pp_upd_data:
+            load_pmw_profile = pp_upd_data["load.p_mw"]
+            # Length of a DF represents time steps
+            time_steps = len(load_pmw_profile)
+            # Length of columns of a DF represents number of profiles
+            profiles = len(load_pmw_profile.columns)
+
+            load_profile = initialize_array("update", "sym_load", (time_steps, profiles))
+
+            load_profile["id"] = self._get_pgm_ids("load", np.array(load_pmw_profile.columns))
+
+            load_profile["p_specified"] = load_pmw_profile.to_numpy() * 1e6
+
+            self.pgm_update_data["sym_load"] = load_profile
+
+        if "load.q_mvar" in pp_upd_data and "load.p_mw" not in pp_upd_data:
+            load_qmvar_profile = pp_upd_data["load.q_mvar"]
+
+            time_steps = len(load_qmvar_profile)
+            profiles = len(load_qmvar_profile.columns)
+
+            load_profile = initialize_array("update", "sym_load", (time_steps, profiles))
+
+            load_profile["id"] = self._get_pgm_ids("load", np.array(load_qmvar_profile.columns))
+
+            load_profile["q_specified"] = load_qmvar_profile.to_numpy() * 1e6
+
+            self.pgm_update_data["sym_load"] = load_profile
+
+        if "load.q_mvar" in pp_upd_data and "load.p_mw" in pp_upd_data:
+            load_pmw_profile = pp_upd_data["load.p_mw"]
+            load_qmvar_profile = pp_upd_data["load.q_mvar"]
+
+            time_steps = len(load_pmw_profile)
+            profiles = len(load_pmw_profile.columns)
+
+            load_profile = initialize_array("update", "sym_load", (time_steps, profiles))
+
+            load_profile["id"] = self._get_pgm_ids("load", np.array(load_qmvar_profile.columns))
+
+            load_profile["p_specified"] = load_pmw_profile.to_numpy() * 1e6
+            load_profile["q_specified"] = load_qmvar_profile.to_numpy() * 1e6
+
+            self.pgm_update_data["sym_load"] = load_profile
+
+    def _pp_update_sgens(self):
+        pp_upd_data = self.pp_update_data
+
+        if "sgen.p_mw" not in pp_upd_data and "sgen.q_mvar" not in pp_upd_data:
+            return
+
+        if "sgen.p_mw" in pp_upd_data and "sgen.q_mvar" not in pp_upd_data:
+            sgen_pmw_profile = pp_upd_data["sgen.p_mw"]
+
+            time_steps = len(sgen_pmw_profile)
+            profiles = len(sgen_pmw_profile.columns)
+
+            sgen_profile = initialize_array("update", "sym_gen", (time_steps, profiles))
+
+            sgen_profile["id"] = self._get_pgm_ids("sgen", np.array(sgen_pmw_profile.columns))
+
+            sgen_profile["p_specified"] = sgen_pmw_profile.to_numpy() * 1e6
+
+            self.pgm_update_data["sym_gen"] = sgen_profile
+
+        if "sgen.q_mvar" in pp_upd_data and "sgen.p_mw" not in pp_upd_data:
+            sgen_qmvar_profile = pp_upd_data["sgen.q_mvar"]
+
+            time_steps = len(sgen_qmvar_profile)
+            profiles = len(sgen_qmvar_profile)
+
+            sgen_profile = initialize_array("update", "sym_gen", (time_steps, profiles))
+
+            sgen_profile["id"] = self._get_pgm_ids("sgen", np.array(sgen_qmvar_profile.columns))
+
+            sgen_profile["q_specified"] = sgen_qmvar_profile.to_numpy() * 1e6
+
+            self.pgm_update_data["sym_gen"] = sgen_profile
+
+        if "sgen.q_mvar" in pp_upd_data and "sgen.p_mw" in pp_upd_data:
+            sgen_pmw_profile = pp_upd_data["sgen.p_mw"]
+            sgen_qmvar_profile = pp_upd_data["sgen.q_mvar"]
+
+            time_steps = len(sgen_pmw_profile)
+            profiles = len(sgen_pmw_profile.columns)
+
+            sgen_profile = initialize_array("update", "sym_gen", (time_steps, profiles))
+
+            sgen_profile["id"] = self._get_pgm_ids("sgen", np.array(sgen_pmw_profile.columns))
+
+            sgen_profile["p_specified"] = sgen_pmw_profile.to_numpy() * 1e6
+            sgen_profile["q_specified"] = sgen_qmvar_profile.to_numpy() * 1e6
+
+            self.pgm_update_data["sym_gen"] = sgen_profile
 
     def _generate_ids(self, pp_table: str, pp_idx: pd.Index, name: Optional[str] = None) -> np.ndarray:
         """
