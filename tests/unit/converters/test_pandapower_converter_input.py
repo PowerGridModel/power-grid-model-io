@@ -195,11 +195,6 @@ def test_fill_pp_extra_info():
     )
     converter.pp_input_data["line"] = pd.DataFrame([10, 11, 12], columns=["df"], index=[201, 202, 203])
 
-    converter.pgm_input_data["transformer"] = initialize_array("input", "transformer", 3)
-    converter.pgm_input_data["transformer"]["id"] = [3, 4, 5]
-    converter.pgm_input_data["line"] = initialize_array("input", "line", 2)
-    converter.pgm_input_data["line"]["id"] = [1, 2]
-
     # Act
     extra_info = {}
     converter._fill_pp_extra_info(extra_info=extra_info)
@@ -607,7 +602,7 @@ def test_create_pgm_input_sources(mock_init_array: MagicMock, two_pp_objs, conve
 
 
 @pytest.mark.parametrize("kwargs", [{"r0x0_max": 0.5, "rx_max": 4}, {"x0x_max": 0.6}])
-def test_create_pgm_input_sources__zero_sequence(kwargs):
+def test_create_pgm_input_sources__zero_sequence(kwargs) -> None:
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=1.0)
     pp.create_ext_grid(pp_net, 0, **kwargs)
@@ -1018,7 +1013,7 @@ def test_create_pgm_input_sym_gens(mock_init_array: MagicMock, two_pp_objs, conv
     "power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._get_pgm_ids",
     new=MagicMock(return_value=pd.Series([0])),
 )
-def test_create_pgm_input_transformers__zero_sequence(kwargs):
+def test_create_pgm_input_transformers__zero_sequence(kwargs) -> None:
     # Arrange
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
@@ -1378,7 +1373,7 @@ def test_create_pgm_input_transformers3w__default() -> None:
     "power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._get_pgm_ids",
     new=MagicMock(return_value=pd.Series([0])),
 )
-def test_create_pgm_input_transformers3w__zero_sequence(kwargs):
+def test_create_pgm_input_transformers3w__zero_sequence(kwargs) -> None:
     # Arrange
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)

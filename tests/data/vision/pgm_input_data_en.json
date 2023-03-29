@@ -32,7 +32,6 @@
   "sym_gen":
     [
       {"id": 14, "node": 12, "id_reference": {"table": "Transformer loads", "name": "generation", "key": {"Node.Number": 3, "Subnumber": 4}}, "Name": "transformer_load_1"},
-      {"id": 14, "node": 12, "id_reference": {"table": "Transformer loads", "name": "generation", "key": {"Node.Number": 3, "Subnumber": 4}}, "Name": "transformer_load_1"},
       {"id": 15, "node": 12, "id_reference": {"table": "Transformer loads", "name": "pv_generation", "key": {"Node.Number": 3, "Subnumber": 4}}, "Name": "transformer_load_1"},
       {"id": 17, "node": 3, "id_reference": {"table": "Synchronous generators", "key": {"Node.Number": 4, "Subnumber": 2}}, "Name": "syngen1"},
       {"id": 18, "node": 2, "id_reference": {"table": "Wind turbines", "key": {"Node.Number": 3, "Subnumber": 3}}, "Name": "wind1"},

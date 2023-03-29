@@ -47,7 +47,7 @@ jobs:
 
   sonar-cloud:
     # only run sonar server in push event or pull request event from own repo
-    if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release') && (github.event.pull_request.head.repo.owner.login == 'alliander-opensource'))
+    if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release') && (github.event.pull_request.head.repo.owner.login == 'PowerGridModel'))
     permissions:
       contents: write
     runs-on: ubuntu-latest

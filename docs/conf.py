@@ -11,8 +11,9 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "power-grid-model-io"
-copyright = "2022, alliander-opensource"
-author = "alliander-opensource"
+copyright = "2022, Alliander Dynamic Grid Calculation"
+author = "Alliander Dynamic Grid Calculation"
+
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

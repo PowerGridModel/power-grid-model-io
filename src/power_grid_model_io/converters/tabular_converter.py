@@ -6,7 +6,7 @@ Tabular Data Converter: Load data from multiple tables and use a mapping file to
 """
 import inspect
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Mapping, Optional, Union, cast
+from typing import Any, Collection, Dict, List, Mapping, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -22,8 +22,6 @@ from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes, Tab
 from power_grid_model_io.mappings.unit_mapping import UnitMapping, Units
 from power_grid_model_io.mappings.value_mapping import ValueMapping, Values
 from power_grid_model_io.utils.modules import get_function
-
-MappingFile = Dict[Literal["multipliers", "grid", "units", "substitutions"], Union[Multipliers, Tables, Units, Values]]
 
 
 class TabularConverter(BaseConverter[TabularData]):
@@ -50,15 +48,9 @@ class TabularConverter(BaseConverter[TabularData]):
             self.set_mapping_file(mapping_file=mapping_file)
 
     def set_mapping_file(self, mapping_file: Path) -> None:
-        """Read, parse and interpret a mapping file. This includes:
-         * the table to table mapping ('grid')
-         * the unit conversions ('units')
-         * the value substitutions ('substitutions') (e.g. enums or other one-on-one value mapping)
-
+        """Read, parse and interpret a mapping file.
         Args:
-          mapping_file: Path:
-
-        Returns:
+          mapping_file: The path to the mapping file
 
         """
         # Read mapping
@@ -67,17 +59,32 @@ class TabularConverter(BaseConverter[TabularData]):
         self._log.debug("Read mapping file", mapping_file=mapping_file)
 
         with open(mapping_file, "r", encoding="utf-8") as mapping_stream:
-            mapping: MappingFile = yaml.safe_load(mapping_stream)
+            mapping = yaml.safe_load(mapping_stream)
+
         if "grid" not in mapping:
             raise KeyError("Missing 'grid' mapping in mapping_file")
-        self._mapping = TabularMapping(cast(Tables, mapping["grid"]))
-        self._units = UnitMapping(cast(Units, mapping["units"])) if "units" in mapping else None
-        self._substitutions = (
-            ValueMapping(cast(Values, mapping["substitutions"])) if "substitutions" in mapping else None
-        )
-        self._multipliers = (
-            MultiplierMapping(cast(Multipliers, mapping["multipliers"])) if "multipliers" in mapping else None
-        )
+
+        self.set_mapping(mapping=mapping)
+
+    def set_mapping(self, mapping: Mapping[str, Any]) -> None:
+        """Interpret a mapping structure. This includes:
+         * the table to table mapping ('grid')
+         * the unit conversions ('units')
+         * the value substitutions ('substitutions') (e.g. enums or other one-on-one value mapping)
+         * column multipliers ('multipliers') (e.g. values in a column ending with _kv should be multiplied by 1000.0)
+
+        Args:
+          mapping: A mapping structure (dictionary):
+
+        """
+        if "grid" in mapping:
+            self._mapping = TabularMapping(cast(Tables, mapping["grid"]))
+        if "units" in mapping:
+            self._units = UnitMapping(cast(Units, mapping["units"]))
+        if "substitutions" in mapping:
+            self._substitutions = ValueMapping(cast(Values, mapping["substitutions"]))
+        if "multipliers" in mapping:
+            self._multipliers = MultiplierMapping(cast(Multipliers, mapping["multipliers"]))
 
     def _parse_data(self, data: TabularData, data_type: str, extra_info: Optional[ExtraInfo]) -> Dataset:
         """This function parses tabular data and returns power-grid-model data
@@ -656,6 +663,24 @@ class TabularConverter(BaseConverter[TabularData]):
             raise KeyError((table, key, name))
         return self._auto_id(item=(table, key, name), key=auto_id_key)
 
+    def get_ids(self, keys: pd.DataFrame, table: Optional[str] = None, name: Optional[str] = None) -> List[int]:
+        """
+        Get a the numerical ID previously associated with the supplied name / key combination
+        Args:
+            keys: Component identifiers (e.g. a pandas Dataframe with columns "number" and "sub_number")
+            table: Table name (e.g. "Nodes")
+            name: Optional component name (e.g. "internal_node")
+        Returns: The associated id
+        """
+
+        def get_id(row: pd.Series) -> int:
+            key = row.dropna().to_dict()
+            row_table = key.pop("table") if table is None and "table" in key else table
+            row_name = key.pop("name") if name is None and "name" in key else name
+            return self.get_id(table=row_table, key=key, name=row_name)
+
+        return keys.apply(get_id, axis=1).to_list()
+
     def lookup_id(self, pgm_id: int) -> Dict[str, Union[str, Dict[str, int]]]:
         """
         Retrieve the original name / key combination of a pgm object
@@ -669,3 +694,21 @@ class TabularConverter(BaseConverter[TabularData]):
             reference["name"] = name
         reference["key"] = key
         return reference
+
+    def lookup_ids(self, pgm_ids: Collection[int]) -> pd.DataFrame:
+        """
+        Retrieve the original name / key combination of a list of pgm object
+        Args:
+            pgm_ids: a list of unique numerical ID
+        Returns: A (possibly sparse) pandas dataframe storing all the original reference data
+        """
+
+        def lookup(pgm_id):
+            table, key, name = self._auto_id[pgm_id]
+            reference = {"table": table}
+            if name is not None:
+                reference["name"] = name
+            reference.update(key)
+            return reference
+
+        return pd.DataFrame((lookup(pgm_id) for pgm_id in pgm_ids), index=pgm_ids)

@@ -2,6 +2,11 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 ---
+id_reference:
+  nodes_table: Nodes
+  number: Number
+  node_number: Node.Number
+  sub_number: Subnumber
 grid:
   Nodes:
     node:
@@ -165,6 +170,7 @@ grid:
           - power_grid_model_io.functions.value_or_default:
               value: uk
               default: 0.001
+          - 0.001
       pk: Pk
       i0:
         power_grid_model_io.functions.phase_to_phase.relative_no_load_current:
@@ -198,6 +204,7 @@ grid:
           - power_grid_model_io.functions.value_or_default:
               value: uk
               default: 0.001
+          - 0.001
       uk_max:
         max:
           - divide:
@@ -206,6 +213,7 @@ grid:
           - power_grid_model_io.functions.value_or_default:
               value: uk
               default: 0.001
+          - 0.001
       pk_min: Pk
       pk_max: Pk
       r_grounding_from: Re1
@@ -243,6 +251,7 @@ grid:
           - power_grid_model_io.functions.value_or_default:
               value: uknom
               default: 0.001
+          - 0.001
       pk: Pknom
       i0:
         power_grid_model_io.functions.phase_to_phase.relative_no_load_current:
@@ -268,6 +277,7 @@ grid:
           - power_grid_model_io.functions.value_or_default:
               value: ukmin
               default: 0.001
+          - 0.001
       uk_max:
         max:
           - divide:
@@ -276,6 +286,7 @@ grid:
           - power_grid_model_io.functions.value_or_default:
               value: ukmax
               default: 0.001
+          - 0.001
       pk_min: Pkmin
       pk_max: Pkmax
       r_grounding_from: 0
@@ -317,6 +328,7 @@ grid:
           - power_grid_model_io.functions.value_or_default:
               value: uk
               default: 0.001
+          - 0.001
       pk: Pk
       p0: Po
       i0:
@@ -348,6 +360,7 @@ grid:
           - power_grid_model_io.functions.value_or_default:
               value: uk
               default: 0.001
+          - 0.001
       uk_max:
         max:
           - divide:
@@ -356,6 +369,7 @@ grid:
           - power_grid_model_io.functions.value_or_default:
               value: uk
               default: 0.001
+          - 0.001
       pk_min: Pk
       pk_max: Pk
       r_grounding_from: 0
@@ -711,6 +725,7 @@ grid:
           - power_grid_model_io.functions.value_or_default:
               value: uk12
               default: 0.001
+          - 0.001
       uk_13:
         max:
           - divide:
@@ -721,6 +736,7 @@ grid:
           - power_grid_model_io.functions.value_or_default:
               value: uk13
               default: 0.001
+          - 0.001
       uk_23:
         max:
           - divide:
@@ -731,6 +747,7 @@ grid:
           - power_grid_model_io.functions.value_or_default:
               value: uk23
               default: 0.001
+          - 0.001
       pk_12: Pk12
       pk_13: Pk13
       pk_23: Pk23
