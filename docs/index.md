@@ -12,7 +12,7 @@ SPDX-License-Identifier: MPL-2.0
 :align: right
 ```
 
-Power Grid Model IO is a tool to convert grid data to and from the native data format of [power-grid-model](https://github.com/alliander-opensource/power-grid-model).
+Power Grid Model IO is a tool to convert grid data to and from the native data format of [power-grid-model](https://github.com/PowerGridModel/power-grid-model).
 Currently, conversions from Vision excel exports is possible. Pandapower conversions are under development.
 
 
