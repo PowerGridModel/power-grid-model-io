@@ -6,7 +6,7 @@ SPDX-License-Identifier: MPL-2.0
 # Vision converter
 
 The vision converter converts the excel exports of vision to PGM data. As mentioned in [Converters](converters/converter.md), vision converter is an implementation of the tabular converter.
-The mapping of all attributes is stored in the `vision_en.yaml` and `vision_nl.yaml` files in [config](https://github.com/alliander-opensource/power-grid-model-io/tree/main/src/power_grid_model_io/config) directory.
+The mapping of all attributes is stored in the `vision_en.yaml` and `vision_nl.yaml` files in [config](https://github.com/PowerGridModel/power-grid-model-io/tree/main/src/power_grid_model_io/config) directory.
 
 ## Load rate of elements 
 

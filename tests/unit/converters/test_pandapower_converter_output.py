@@ -878,7 +878,16 @@ def test_output_line_3ph(converter):
         mock_pp_df.return_value.__setitem__.assert_any_call("i_a_to_ka", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("i_b_to_ka", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("i_c_to_ka", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("i_n_from_ka", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("i_n_to_ka", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("i_n_ka", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("i_a_ka", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("i_b_ka", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("i_c_ka", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("loading_percent", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("loading_a_percent", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("loading_b_percent", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("loading_c_percent", ANY)
 
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_line_3ph", mock_pp_df.return_value)
@@ -991,6 +1000,9 @@ def test_output_trafos_3ph__current(converter):
         mock_pp_df.return_value.__setitem__.assert_any_call("i_a_lv_ka", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("i_b_lv_ka", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("i_c_lv_ka", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("loading_a_percent", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("loading_b_percent", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("loading_c_percent", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("loading_percent", ANY)
 
         # result

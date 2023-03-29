@@ -190,9 +190,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
         pp_input = {"trafo": {"df"}}
         for pp_table, pp_attr in pp_input.items():
-            if pp_table in self.pp_input_data:
-                if not pp_attr & set(self.pp_input_data[pp_table].columns):
-                    continue
+            if (
+                pp_table in self.pp_input_data
+                and pp_attr & set(self.pp_input_data[pp_table].columns)
+                and len(self.pp_input_data[pp_table]) > 0
+            ):
                 pgm_ids = self._get_pgm_ids(pp_table=pp_table)
                 pp_extra_data = self.pp_input_data[pp_table][list(pp_attr)]
                 pp_extra_data.index = pgm_ids
@@ -1730,11 +1732,18 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 "i_b_from_ka",
                 "i_c_from_ka",
                 "i_n_from_ka",
+                "i_a_ka",
+                "i_b_ka",
+                "i_c_ka",
+                "i_n_ka",
                 "i_a_to_ka",
                 "i_b_to_ka",
                 "i_c_to_ka",
                 "i_n_to_ka",
                 "loading_percent",
+                "loading_a_percent",
+                "loading_b_percent",
+                "loading_c_percent",
             ],
             index=self._get_pp_ids("line", pgm_output_lines["id"]),
         )
@@ -1765,6 +1774,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_lines_3ph["i_b_to_ka"] = pgm_output_lines["i_to"][:, 1] * 1e-3
         pp_output_lines_3ph["i_c_to_ka"] = pgm_output_lines["i_to"][:, 2] * 1e-3
         pp_output_lines_3ph["i_n_to_ka"] = np.array(np.abs(np.sum(i_to, axis=1))) * 1e-3
+        pp_output_lines_3ph["i_a_ka"] = np.maximum(pp_output_lines_3ph["i_a_from_ka"], pp_output_lines_3ph["i_a_to_ka"])
+        pp_output_lines_3ph["i_b_ka"] = np.maximum(pp_output_lines_3ph["i_b_from_ka"], pp_output_lines_3ph["i_b_to_ka"])
+        pp_output_lines_3ph["i_c_ka"] = np.maximum(pp_output_lines_3ph["i_c_from_ka"], pp_output_lines_3ph["i_c_to_ka"])
+        pp_output_lines_3ph["i_n_ka"] = np.maximum(pp_output_lines_3ph["i_n_from_ka"], pp_output_lines_3ph["i_n_to_ka"])
         pp_output_lines_3ph["loading_a_percent"] = (
             np.maximum(pp_output_lines_3ph["i_a_from_ka"], pp_output_lines_3ph["i_a_to_ka"]) / pgm_input_lines["i_n"]
         ) * 1e5
@@ -1827,7 +1840,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         assert "res_sgen_3ph" not in self.pp_output_data
         self.pp_output_data["res_sgen_3ph"] = pp_output_sgens
 
-    def _pp_trafos_output_3ph(self):
+    def _pp_trafos_output_3ph(self):  # pylint: disable=too-many-statements
         """
         This function converts a power-grid-model Transformer output array to a Transformer Dataframe of
         PandaPower.
@@ -1845,13 +1858,28 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_output_transformers = self.pgm_output_data["transformer"]
 
         # Only derating factor used here. Sn is already being multiplied by parallel
-        loading_multiplier = pp_input_transformers["df"]
+        loading_multiplier = pp_input_transformers["df"] * 1e2
         if self.trafo_loading == "current":
-            ui_from = np.sum(pgm_output_transformers["i_from"] * pgm_input_transformers["u1"], axis=1)
-            ui_to = np.sum(pgm_output_transformers["i_to"] * pgm_input_transformers["u2"], axis=1)
-            loading = np.maximum(ui_from, ui_to) / pgm_input_transformers["sn"] * loading_multiplier * 1e2
+            ui_from = pgm_output_transformers["i_from"] * pgm_input_transformers["u1"]
+            ui_to = pgm_output_transformers["i_to"] * pgm_input_transformers["u2"]
+            loading_a_percent = np.maximum(ui_from[:, 0], ui_to[:, 0]) / pgm_input_transformers["sn"]
+            loading_b_percent = np.maximum(ui_from[:, 1], ui_to[:, 1]) / pgm_input_transformers["sn"]
+            loading_c_percent = np.maximum(ui_from[:, 2], ui_to[:, 2]) / pgm_input_transformers["sn"]
+            loading = np.maximum(np.sum(ui_from, axis=1), np.sum(ui_to, axis=1)) / pgm_input_transformers["sn"]
         elif self.trafo_loading == "power":
-            loading = pgm_output_transformers["loading"] * loading_multiplier * 1e2
+            loading_a_percent = (
+                np.maximum(pgm_output_transformers["s_from"][:, 0], pgm_output_transformers["s_to"][:, 0])
+                / pgm_output_transformers["s_n"]
+            )
+            loading_b_percent = (
+                np.maximum(pgm_output_transformers["s_from"][:, 1], pgm_output_transformers["s_to"][:, 1])
+                / pgm_output_transformers["s_n"]
+            )
+            loading_c_percent = (
+                np.maximum(pgm_output_transformers["s_from"][:, 2], pgm_output_transformers["s_to"][:, 2])
+                / pgm_output_transformers["s_n"]
+            )
+            loading = pgm_output_transformers["loading"]
         else:
             raise ValueError(f"Invalid transformer loading type: {str(self.trafo_loading)}")
 
@@ -1881,6 +1909,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 "i_b_lv_ka",
                 "i_c_hv_ka",
                 "i_c_lv_ka",
+                "loading_a_percent",
+                "loading_b_percent",
+                "loading_c_percent",
                 "loading_percent",
             ],
             index=self._get_pp_ids("trafo", pgm_output_transformers["id"]),
@@ -1921,7 +1952,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_trafos_3ph["i_b_lv_ka"] = pgm_output_transformers["i_to"][:, 1] * 1e-3
         pp_output_trafos_3ph["i_c_hv_ka"] = pgm_output_transformers["i_from"][:, 2] * 1e-3
         pp_output_trafos_3ph["i_c_lv_ka"] = pgm_output_transformers["i_to"][:, 2] * 1e-3
-        pp_output_trafos_3ph["loading_percent"] = loading
+        pp_output_trafos_3ph["loading_a_percent"] = loading_a_percent * loading_multiplier
+        pp_output_trafos_3ph["loading_b_percent"] = loading_b_percent * loading_multiplier
+        pp_output_trafos_3ph["loading_c_percent"] = loading_c_percent * loading_multiplier
+        pp_output_trafos_3ph["loading_percent"] = loading * loading_multiplier
 
         assert "res_trafo_3ph" not in self.pp_output_data
         self.pp_output_data["res_trafo_3ph"] = pp_output_trafos_3ph
