@@ -75,3 +75,6 @@ nb_execution_excludepatterns = ["examples/*.ipynb"]
 
 # -- Add google html -----------------------------------
 html_extra_path = ["google6d726d2d56f95e32.html"]
+
+# Override theme CSS with style adjustments of our own
+html_style = "css/custom.css"
