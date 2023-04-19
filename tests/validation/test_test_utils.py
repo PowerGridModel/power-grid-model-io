@@ -35,8 +35,8 @@ def test_select_values():
     )
 
     # Assert
-    pd.testing.assert_series_equal(actual_values, pd.Series([3.0, np.nan], index=[3, 4]))
-    pd.testing.assert_series_equal(expected_values, pd.Series([3.0, 4.0], index=[3, 4]))
+    pd.testing.assert_series_equal(actual_values, pd.Series([3.0, np.nan], index=np.array([3, 4], dtype=np.int32)))
+    pd.testing.assert_series_equal(expected_values, pd.Series([3.0, 4.0], index=np.array([3, 4], dtype=np.int32)))
 
 
 def test_extract_extra_info():
