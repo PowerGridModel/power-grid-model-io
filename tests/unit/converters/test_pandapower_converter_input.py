@@ -1404,7 +1404,6 @@ def test_create_pgm_input_three_winding_transformers__tap_at_star_point() -> Non
         converter._create_pgm_input_three_winding_transformers()
 
 
-@pytest.mark.xfail(reason="https://github.com/e2nIEE/pandapower/issues/1831")
 def test_create_pgm_input_three_winding_transformers__tap_dependent_impedance() -> None:
     # Arrange
     pp_net: pp.pandapowerNet = pp.create_empty_network()
