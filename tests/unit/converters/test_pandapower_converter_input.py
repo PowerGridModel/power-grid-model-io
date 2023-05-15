@@ -9,6 +9,8 @@ import numpy as np
 import pandapower as pp
 import pandas as pd
 import pytest
+from pandapower.control import ConstControl
+from pandapower.timeseries import DFData
 from power_grid_model import Branch3Side, BranchSide, LoadGenType, WindingType, initialize_array, power_grid_meta_data
 
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter
@@ -426,6 +428,19 @@ def test_create_input_data():
     converter._create_pgm_input_motors.assert_called_once_with()
     converter._create_pgm_input_generators.assert_called_once_with()
     converter._create_pgm_input_dclines.assert_called_once_with()
+
+
+def test_update_input_data():
+    # Arrange
+    converter = MagicMock()
+
+    # Act
+    PandaPowerConverter._update_input_data(self=converter)  # type: ignore
+
+    # Assert
+    assert len(converter.method_calls) == 2
+    converter._pp_update_loads.assert_called_once_with()
+    converter._pp_update_sgens.assert_called_once_with()
 
 
 @pytest.mark.parametrize(
