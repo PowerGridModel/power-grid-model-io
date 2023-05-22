@@ -2,8 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-import os
-import re
 from pathlib import Path
 
 # noinspection PyPackageRequirements
