@@ -84,7 +84,6 @@ def _get_only_item_in_dir(dir_path: Path) -> Optional[Path]:
 
     only_item: Optional[Path] = None
     for item in dir_path.iterdir():
-
         # If only_item is not None at this point, it must have been set in the first iteration, i.e. there are more
         # than one items in the directory, so return None.
         if only_item is not None:
