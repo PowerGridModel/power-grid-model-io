@@ -27,13 +27,16 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v3
 
-      - name: Setup Python 3.10
+      - name: Setup Python 3.11
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Build
-        run: pip wheel -v --no-deps -w wheelhouse .
+        run: |
+          pip install requests build
+          python set_pypi_version.py
+          python -m build --outdir wheelhouse .
 
       - name: Save version
         id: version
@@ -179,7 +182,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            ./wheelhouse/*.whl
+            ./wheelhouse/*
           tag_name: v${{ needs.build-python.outputs.version }}
           prerelease: ${{ contains(needs.build-python.outputs.version, 'rc') || contains(needs.build-python.outputs.version, 'a') }}
           generate_release_notes: true
