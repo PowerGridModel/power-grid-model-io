@@ -25,16 +25,22 @@ SPDX-License-Identifier: MPL-2.0
 `power-grid-model-io` can be used for various conversions to the [power-grid-model](https://github.com/PowerGridModel/power-grid-model).
 For detailed documentation, see [Read the Docs](https://power-grid-model-io.readthedocs.io/en/stable/index.html).
 
-# Examples
+## Examples
+
 * [PGM JSON Example](https://github.com/PowerGridModel/power-grid-model-io/tree/main/docs/examples)
 
 
-# License
+## License
+
 This project is licensed under the Mozilla Public License, version 2.0 - see [LICENSE](https://github.com/PowerGridModel/power-grid-model-io/blob/main/LICENSE) for details.
 
-# Contributing
+## Contributing
+
 Please read [CODE_OF_CONDUCT](https://github.com/PowerGridModel/.github/blob/main/CODE_OF_CONDUCT.md) and [CONTRIBUTING](https://github.com/PowerGridModel/.github/blob/main/CONTRIBUTING.md) for details on the process 
 for submitting pull requests to us.
 
-# Contact
+Visit [Contribute](https://github.com/PowerGridModel/power-grid-model-io/contribute) for a list of good first issues in this repo.
+
+## Contact
+
 Please read [SUPPORT](https://github.com/PowerGridModel/.github/blob/main/SUPPORT.md) for how to connect and get into contact with the Power Gird Model IO project.
