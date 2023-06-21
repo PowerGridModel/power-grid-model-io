@@ -40,6 +40,38 @@ for submitting pull requests to us.
 
 Visit [Contribute](https://github.com/PowerGridModel/power-grid-model-io/contribute) for a list of good first issues in this repo.
 
+## Citations
+
+If you are using Power Grid Model IO in your research work, please consider citing our library using the following references.
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8059257.svg)](https://zenodo.org/record/8059257)
+
+```bibtex
+@software{Xiang_PowerGridModel_power-grid-model-io,
+  author = {Xiang, Yu and Salemink, Peter and Bharambe, Nitish and Govers, Martinus and van den Bogaard, Jonas and Stoeller, Bram and Jagutis, Laurynas and Wang, Chenguang and {Contributors from the LF Energy project Power Grid Model}},
+  doi = {10.5281/zenodo.8059257},
+  license = {MPL-2.0},
+  title = {{PowerGridModel/power-grid-model-io}},
+  url = {https://github.com/PowerGridModel/power-grid-model-io}
+}
+@software{Xiang_PowerGridModel_power-grid-model,
+  author = {Xiang, Yu and Salemink, Peter and Bharambe, Nitish and Govers, Martinus and van den Bogaard, Jonas and Stoeller, Bram and Jagutis, Laurynas and Wang, Chenguang and {Contributors from the LF Energy project Power Grid Model}},
+  doi = {10.5281/zenodo.8054429},
+  license = {MPL-2.0},
+  title = {{PowerGridModel/power-grid-model}},
+  url = {https://github.com/PowerGridModel/power-grid-model}
+}
+@inproceedings{Xiang2023,
+  author = {Xiang, Yu and Salemink, Peter and Stoeller, Bram and Bharambe, Nitish and van Westering, Werner},
+  booktitle = {CIRED 2023 - The 27th International Conference and Exhibition on Electricity Distribution},
+  title = {Power grid model: A high-performance distribution grid calculation library},
+  year = {2023},
+  volume={2023},
+  number = {},
+  pages={1-5}
+}
+```
+
 ## Contact
 
 Please read [SUPPORT](https://github.com/PowerGridModel/.github/blob/main/SUPPORT.md) for how to connect and get into contact with the Power Gird Model IO project.
