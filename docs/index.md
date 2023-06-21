@@ -53,6 +53,16 @@ power_grid_model_io
 ```
 
 ```{toctree}
-:caption: "Citations"
-:maxdepth: 4
-citations/CITATION.md
+:caption: "Contribution"
+:maxdepth: 2
+contribution/CODE_OF_CONDUCT.md
+contribution/CONTRIBUTING.md
+contribution/GOVERNANCE.md
+```
+
+```{toctree}
+:caption: "Release and Support"
+:maxdepth: 2
+release_and_support/RELEASE.md
+release_and_support/SUPPORT.md
+```
