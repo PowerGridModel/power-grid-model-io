@@ -17,7 +17,7 @@ Currently, conversions from Vision excel exports is possible. Pandapower convers
 
 ## Citations
 
-If you are using Power Grid Model IO in your research work, please consider citing our library using the references in [Citation](release_and_support/CITATION.md)
+If you are using Power Grid Model IO in your research work, please consider citing our library using the references in [Citation](citations/CITATION.md)
 
 ## Contents
 
