@@ -16,3 +16,5 @@ build:
     post_install:
       # Build package with doc requirements from pyproject.optional-dependencies
       - pip install --verbose --editable .[doc]
+      # Download citations
+      - wget -P docs/citations https://github.com/PowerGridModel/.github/raw/main/CITATION.md

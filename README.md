@@ -29,7 +29,6 @@ For detailed documentation, see [Read the Docs](https://power-grid-model-io.read
 
 * [PGM JSON Example](https://github.com/PowerGridModel/power-grid-model-io/tree/main/docs/examples)
 
-
 ## License
 
 This project is licensed under the Mozilla Public License, version 2.0 - see [LICENSE](https://github.com/PowerGridModel/power-grid-model-io/blob/main/LICENSE) for details.

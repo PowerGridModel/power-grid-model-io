@@ -76,7 +76,7 @@ class VisionExcelConverter(TabularConverter):
 
     def get_virtual_id(self, table: str, obj_name: str, node_number: int, sub_number: int) -> int:
         """
-        Get the automatically assigned id of a vitual object (e.g. the internal node of a 'TansformerLoad')
+        Get the automatically assigned id of a virtual object (e.g. the internal node of a 'TransformerLoad')
         """
         if self._id_reference is None:
             raise ValueError(f"Missing ID reference definition for {type(self).__name__}.get_virtual_id()")
