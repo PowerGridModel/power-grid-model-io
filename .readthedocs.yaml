@@ -16,3 +16,11 @@ build:
     post_install:
       # Build package with doc requirements from pyproject.optional-dependencies
       - pip install --verbose --editable .[doc]
+      # download support
+      - wget -P docs/release_and_support https://github.com/PowerGridModel/.github/raw/main/RELEASE.md
+      - wget -P docs/release_and_support https://github.com/PowerGridModel/.github/raw/main/SUPPORT.md
+      - wget -P docs/release_and_support https://github.com/PowerGridModel/.github/raw/main/CITATION.md
+      # download contribution
+      - wget -P docs/contribution https://github.com/PowerGridModel/.github/raw/main/GOVERNANCE.md
+      - wget -P docs/contribution https://github.com/PowerGridModel/.github/raw/main/CONTRIBUTING.md
+      - wget -P docs/contribution https://github.com/PowerGridModel/.github/raw/main/CODE_OF_CONDUCT.md

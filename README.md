@@ -18,6 +18,8 @@ SPDX-License-Identifier: MPL-2.0
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model-io&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model-io)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model-io&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model-io)
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8059257.svg)](https://zenodo.org/record/8059257)
+
 [![](https://github.com/PowerGridModel/.github/blob/main/artwork/svg/color.svg)](#)
 
 # Power Grid Model Input/Output
@@ -29,7 +31,6 @@ For detailed documentation, see [Read the Docs](https://power-grid-model-io.read
 
 * [PGM JSON Example](https://github.com/PowerGridModel/power-grid-model-io/tree/main/docs/examples)
 
-
 ## License
 
 This project is licensed under the Mozilla Public License, version 2.0 - see [LICENSE](https://github.com/PowerGridModel/power-grid-model-io/blob/main/LICENSE) for details.
@@ -40,6 +41,38 @@ Please read [CODE_OF_CONDUCT](https://github.com/PowerGridModel/.github/blob/mai
 for submitting pull requests to us.
 
 Visit [Contribute](https://github.com/PowerGridModel/power-grid-model-io/contribute) for a list of good first issues in this repo.
+
+## Citations
+
+If you are using Power Grid Model IO in your research work, please consider citing our library using the following references.
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8059257.svg)](https://zenodo.org/record/8059257)
+
+```bibtex
+@software{Xiang_PowerGridModel_power-grid-model-io,
+  author = {Xiang, Yu and Salemink, Peter and Bharambe, Nitish and Govers, Martinus and van den Bogaard, Jonas and Stoeller, Bram and Jagutis, Laurynas and Wang, Chenguang and {Contributors from the LF Energy project Power Grid Model}},
+  doi = {10.5281/zenodo.8059257},
+  license = {MPL-2.0},
+  title = {{PowerGridModel/power-grid-model-io}},
+  url = {https://github.com/PowerGridModel/power-grid-model-io}
+}
+@software{Xiang_PowerGridModel_power-grid-model,
+  author = {Xiang, Yu and Salemink, Peter and Bharambe, Nitish and Govers, Martinus and van den Bogaard, Jonas and Stoeller, Bram and Jagutis, Laurynas and Wang, Chenguang and {Contributors from the LF Energy project Power Grid Model}},
+  doi = {10.5281/zenodo.8054429},
+  license = {MPL-2.0},
+  title = {{PowerGridModel/power-grid-model}},
+  url = {https://github.com/PowerGridModel/power-grid-model}
+}
+@inproceedings{Xiang2023,
+  author = {Xiang, Yu and Salemink, Peter and Stoeller, Bram and Bharambe, Nitish and van Westering, Werner},
+  booktitle = {CIRED 2023 - The 27th International Conference and Exhibition on Electricity Distribution},
+  title = {Power grid model: A high-performance distribution grid calculation library},
+  year = {2023},
+  volume={2023},
+  number = {},
+  pages={1-5}
+}
+```
 
 ## Contact
 
