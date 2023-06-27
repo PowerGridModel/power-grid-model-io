@@ -15,6 +15,22 @@ SPDX-License-Identifier: MPL-2.0
 Power Grid Model IO is a tool to convert grid data to and from the native data format of [power-grid-model](https://github.com/PowerGridModel/power-grid-model).
 Currently, conversions from Vision excel exports is possible. Pandapower conversions are under development.
 
+## Install from PyPI
+
+You can directly install the package from PyPI.
+
+```
+pip install power-grid-model-io
+```
+
+## Install from Conda
+
+If you are using `conda`, you can directly install the package from `conda-forge` channel.
+
+```
+conda install -c conda-forge power-grid-model-io
+```
+
 ## Citations
 
 If you are using Power Grid Model IO in your research work, please consider citing our library using the references in [Citation](release_and_support/CITATION.md)
