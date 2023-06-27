@@ -5,6 +5,7 @@ SPDX-License-Identifier: MPL-2.0
 -->
 
 [![PyPI version](https://badge.fury.io/py/power-grid-model-io.svg)](https://badge.fury.io/py/power-grid-model-io)
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/power-grid-model-io/badges/version.svg)](https://anaconda.org/conda-forge/power-grid-model-io)
 [![License: MIT](https://img.shields.io/badge/License-MPL2.0-informational.svg)](https://github.com/PowerGridModel/power-grid-model-io/blob/main/LICENSE)
 [![Build and Test Python](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/build-test-and-sonar.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/build-test-and-sonar.yml)
 [![Check Code Quality](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/check-code-quality.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/check-code-quality.yml)
@@ -26,6 +27,24 @@ SPDX-License-Identifier: MPL-2.0
 
 `power-grid-model-io` can be used for various conversions to the [power-grid-model](https://github.com/PowerGridModel/power-grid-model).
 For detailed documentation, see [Read the Docs](https://power-grid-model-io.readthedocs.io/en/stable/index.html).
+
+## Installation
+
+### Install from PyPI
+
+You can directly install the package from PyPI.
+
+```
+pip install power-grid-model-io
+```
+
+### Install from Conda
+
+If you are using `conda`, you can directly install the package from `conda-forge` channel.
+
+```
+conda install -c conda-forge power-grid-model-io
+```
 
 ## Examples
 
