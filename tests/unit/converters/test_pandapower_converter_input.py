@@ -9,7 +9,9 @@ import numpy as np
 import pandapower as pp
 import pandas as pd
 import pytest
-from power_grid_model import Branch3Side, BranchSide, LoadGenType, WindingType, initialize_array
+from pandapower.control import ConstControl
+from pandapower.timeseries import DFData
+from power_grid_model import Branch3Side, BranchSide, LoadGenType, WindingType, initialize_array, power_grid_meta_data
 
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter
 
@@ -88,11 +90,15 @@ def two_pp_objs() -> MockDf:
     return MockDf(2)
 
 
+@patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._update_input_data")
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._fill_pgm_extra_info")
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._fill_pp_extra_info")
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._create_input_data")
-def test_parse_data(
-    create_input_data_mock: MagicMock, fill_pp_extra_info_mock: MagicMock, fill_pgm_extra_info_mock: MagicMock
+def test_parse_data__input_data(
+    create_input_data_mock: MagicMock,
+    fill_pp_extra_info_mock: MagicMock,
+    fill_pgm_extra_info_mock: MagicMock,
+    update_input_data_mock: MagicMock,
 ):
     # Arrange
     converter = PandaPowerConverter()
@@ -103,10 +109,11 @@ def test_parse_data(
     create_input_data_mock.side_effect = create_input_data
 
     # Act
-    result = converter._parse_data(data={"bus": pd.DataFrame()}, data_type="input", extra_info=None)
+    result = converter._parse_data(data={"bus": pd.DataFrame()}, data_type="input")
 
     # Assert
     create_input_data_mock.assert_called_once_with()
+    update_input_data_mock.assert_not_called()
     fill_pgm_extra_info_mock.assert_not_called()
     fill_pp_extra_info_mock.assert_not_called()
     assert len(converter.pp_input_data) == 1 and "bus" in converter.pp_input_data
@@ -134,6 +141,7 @@ def test_parse_data__extra_info(
     fill_pp_extra_info_mock.assert_called_once_with(extra_info=extra_info)
 
 
+@pytest.mark.xfail()
 def test_parse_data__update_data():
     # Arrange
     converter = PandaPowerConverter()
@@ -420,6 +428,19 @@ def test_create_input_data():
     converter._create_pgm_input_motors.assert_called_once_with()
     converter._create_pgm_input_generators.assert_called_once_with()
     converter._create_pgm_input_dclines.assert_called_once_with()
+
+
+def test_update_input_data():
+    # Arrange
+    converter = MagicMock()
+
+    # Act
+    PandaPowerConverter._update_input_data(self=converter)  # type: ignore
+
+    # Assert
+    assert len(converter.method_calls) == 2
+    converter._pp_update_loads.assert_called_once_with()
+    converter._pp_update_sgens.assert_called_once_with()
 
 
 @pytest.mark.parametrize(

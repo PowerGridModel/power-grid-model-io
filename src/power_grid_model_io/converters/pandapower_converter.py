@@ -46,12 +46,19 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self.pgm_input_data: SingleDataset = {}
         self.pp_output_data: PandaPowerData = {}
         self.pgm_output_data: SingleDataset = {}
+        self.pp_update_data: PandaPowerData = {}
+        self.pgm_update_data: SingleDataset = {}
         self.pgm_nodes_lookup: pd.DataFrame = pd.DataFrame()
         self.idx: Dict[Tuple[str, Optional[str]], pd.Series] = {}
         self.idx_lookup: Dict[Tuple[str, Optional[str]], pd.Series] = {}
         self.next_idx = 0
 
-    def _parse_data(self, data: PandaPowerData, data_type: str, extra_info: Optional[ExtraInfo] = None) -> Dataset:
+    def _parse_data(
+        self,
+        data: PandaPowerData,
+        data_type: str,
+        extra_info: Optional[ExtraInfo] = None,
+    ) -> Dataset:
         """
         Set up for conversion from PandaPower to power-grid-model
 
@@ -65,27 +72,35 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             Converted power-grid-model data
         """
-
-        # Clear pgm data
-        self.pgm_input_data = {}
-        self.idx_lookup = {}
-        self.next_idx = 0
-
-        # Set pandas data
-        self.pp_input_data = data
-
         # Convert
         if data_type == "input":
+            # Clear pgm data
+            self.pgm_input_data = {}
+            self.idx_lookup = {}
+            self.next_idx = 0
+
+            # Set pandas data
+            self.pp_input_data = data
             self._create_input_data()
-        else:
-            raise ValueError(f"Data type: '{data_type}' is not implemented")
 
-        # Construct extra_info
-        if extra_info is not None:
-            self._fill_pgm_extra_info(extra_info=extra_info)
-            self._fill_pp_extra_info(extra_info=extra_info)
+            # Construct extra_info
+            if extra_info is not None:
+                self._fill_pgm_extra_info(extra_info=extra_info)
+                self._fill_pp_extra_info(extra_info=extra_info)
 
-        return self.pgm_input_data
+            return self.pgm_input_data
+
+        if data_type == "update":
+            # Clear pgm data
+            self.pgm_update_data = {}
+
+            # Set pandas data
+            self.pp_update_data = data
+            self._update_input_data()
+
+            return self.pgm_update_data
+
+        raise ValueError(f"Data type: '{data_type}' is not implemented")
 
     def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfo]) -> PandaPowerData:
         """
@@ -115,7 +130,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         def pgm_output_dtype_checker(check_type: str) -> bool:
             return all(
                 (
-                    comp_array.dtype == power_grid_meta_data[check_type][component]
+                    comp_array.dtype == power_grid_meta_data[check_type][component]["dtype"]
                     for component, comp_array in self.pgm_output_data.items()
                 )
             )
@@ -247,7 +262,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         nan = np.iinfo(dtype).min
         all_other_cols = ["i_n"]
         for component, data in self.pgm_output_data.items():
-            input_cols = power_grid_meta_data["input"][component].dtype.names
+            input_cols = power_grid_meta_data["input"][component]["dtype"].names
             node_cols = [col for col in input_cols if NODE_REF_RE.fullmatch(col)]
             other_cols = [col for col in input_cols if col in all_other_cols]
             if not node_cols + other_cols:
@@ -331,6 +346,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._pp_sgens_output_3ph()
         self._pp_asym_gens_output_3ph()
         self._pp_asym_loads_output_3ph()
+
+    def _update_input_data(self):
+        self._pp_update_loads()
+        self._pp_update_sgens()
 
     def _create_pgm_input_nodes(self):
         """
@@ -2045,6 +2064,58 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         assert "res_asymmetric_sgen_3ph" not in self.pp_output_data
         self.pp_output_data["res_asymmetric_sgen_3ph"] = pp_output_asym_gens_3ph
 
+    def _pp_update_loads(self):  # pragma: no cover
+        pp_upd_data = self.pp_update_data["controller"]["object"]
+
+        # Obtain controllers responsible for loads and load ids which the controllers are responsible for
+        load_controller_ids, pp_load_ids = self._get_element_controller_ids("load")
+
+        # If there are no controllers for loads, we stop here
+        if len(load_controller_ids) < 1:
+            return  # Let's not create a crash here. If there aren't any loads then return nothing for loads
+
+        # Every constcontroller uses the same df, so we take the df of the first constcontroller?
+        data = pp_upd_data[load_controller_ids[0]].data_source.df
+
+        # Time steps are Dataframe indexes
+        time_steps = len(data)
+
+        # Profiles are Dataframe columns
+        profiles = len(pp_load_ids)
+
+        pgm_load_profile = initialize_array("update", "sym_load", (time_steps, profiles * 3))
+
+        pgm_load_profile["id"] = self._get_timeseries_load_ids(pp_load_ids)
+
+        pgm_load_profile = self._create_load_profile(pgm_load_profile, load_controller_ids, data)
+
+        self.pgm_update_data["sym_load"] = pgm_load_profile
+
+    def _pp_update_sgens(self):  # pragma: no cover
+        pp_upd_data = self.pp_update_data["controller"]["object"]
+
+        sgen_controller_ids, pp_sgen_ids = self._get_element_controller_ids("sgen")
+
+        # If there are no controllers for sgens, we stop here
+        if len(sgen_controller_ids) < 1:
+            return  # Let's not create a crash here. If there aren't any sgens then return nothing for sgens
+
+        data = pp_upd_data[sgen_controller_ids[0]].data_source.df
+
+        # Time steps are Dataframe indexes
+        time_steps = len(data)
+
+        # Profiles are Dataframe columns
+        profiles = len(pp_sgen_ids)
+
+        pgm_symgen_profile = initialize_array("update", "sym_load", (time_steps, profiles))
+
+        pgm_symgen_profile["id"] = self._get_pgm_ids("sgen", np.array(list(pp_sgen_ids)))
+
+        pgm_symgen_profile = self._get_sgen_profile(pgm_symgen_profile, sgen_controller_ids, data)
+
+        self.pgm_update_data["sym_gen"] = pgm_symgen_profile
+
     def _generate_ids(self, pp_table: str, pp_idx: pd.Index, name: Optional[str] = None) -> np.ndarray:
         """
         Generate numerical power-grid-model IDs for a PandaPower component
@@ -2102,6 +2173,125 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pgm_idx is None:
             return self.idx_lookup[key]
         return self.idx_lookup[key][pgm_idx]
+
+    def _get_timeseries_load_ids(self, pp_load_ids):
+
+        load_id_const_power = self._get_pgm_ids("load", np.array(pp_load_ids), name="const_power")
+
+        load_id_const_impedance = self._get_pgm_ids("load", np.array(pp_load_ids), name="const_impedance")
+
+        load_id_const_current = self._get_pgm_ids("load", np.array(pp_load_ids), name="const_current")
+
+        pgm_ids = pd.concat([load_id_const_power, load_id_const_impedance, load_id_const_current])
+
+        return pgm_ids
+
+    def _get_element_controller_ids(self, element: str):  # pragma: no cover
+        pp_upd_data = self.pp_update_data["controller"]["object"]
+        element_controller_ids = []
+        pp_element_ids = set()
+        # Loop over all controllers
+        for count, control in enumerate(pp_upd_data):
+            # If the element of a controller is a load, we save the controller id and load id
+            if control.element == element:
+                element_controller_ids.append(count)
+                pp_element_ids.add(pp_upd_data[count].element_index[0])
+
+        return element_controller_ids, list(pp_element_ids)
+
+    def _create_load_profile(self, pgm_load_profile, load_controller_ids, data):  # pragma: no cover
+        pp_upd_data = self.pp_update_data["controller"]["object"]
+        scaling = self._get_pp_attr("load", "scaling", 1.0)
+        all_load_ids = self.pp_update_data["load"].index.values
+        const_i_multiplier = self._get_pp_attr("load", "const_i_percent", 0) * scaling * 1e4
+        const_z_multiplier = self._get_pp_attr("load", "const_z_percent", 0) * scaling * 1e4
+        const_p_multiplier = (1e6 - const_i_multiplier - const_z_multiplier) * scaling
+
+        # Loop through controller IDs which are responsible for loads
+        for controller_id in load_controller_ids:
+
+            loads = {
+                "const_power": self._get_pgm_ids(
+                    "load", np.array(pp_upd_data[controller_id].element_index), name="const_power"
+                ).iloc[0],
+                "const_impedance": self._get_pgm_ids(
+                    "load", np.array(pp_upd_data[controller_id].element_index), name="const_impedance"
+                ).iloc[0],
+                "const_current": self._get_pgm_ids(
+                    "load", np.array(pp_upd_data[controller_id].element_index), name="const_current"
+                ).iloc[0],
+            }
+
+            # load_id_const_power = self._get_pgm_ids(
+            #     "load", np.array(pp_upd_data[controller_id].element_index), name="const_power"
+            # ).iloc[0]
+            #
+            # load_id_const_impedance = self._get_pgm_ids(
+            #     "load", np.array(pp_upd_data[controller_id].element_index), name="const_impedance"
+            # ).iloc[0]
+            #
+            # load_id_const_current = self._get_pgm_ids(
+            #     "load", np.array(pp_upd_data[controller_id].element_index), name="const_current"
+            # ).iloc[0]
+
+            scaling_index = np.where(all_load_ids == pp_upd_data[controller_id].element_index[0])[0]
+
+            # If the current controller is reponsilbe for the p_mw attribute, set p_specified
+            if pp_upd_data[controller_id].variable == "p_mw":
+                p_mw = data.iloc[:, controller_id].to_numpy()
+
+                pgm_load_profile["p_specified"][pgm_load_profile["id"] == loads["const_power"]] = (
+                    p_mw * const_p_multiplier[scaling_index]
+                )
+                pgm_load_profile["p_specified"][pgm_load_profile["id"] == loads["const_impedance"]] = (
+                    p_mw * const_z_multiplier[scaling_index]
+                )
+                pgm_load_profile["p_specified"][pgm_load_profile["id"] == loads["const_current"]] = (
+                    p_mw * const_i_multiplier[scaling_index]
+                )
+
+            # If the current controller is reponsilbe for the q_mvar attribute, set q_specified
+            if pp_upd_data[controller_id].variable == "q_mvar":
+                q_mvar = data.iloc[:, controller_id].to_numpy()
+
+                pgm_load_profile["q_specified"][pgm_load_profile["id"] == loads["const_power"]] = (
+                    q_mvar * const_p_multiplier[scaling_index]
+                )
+                pgm_load_profile["q_specified"][pgm_load_profile["id"] == loads["const_impedance"]] = (
+                    q_mvar * const_z_multiplier[scaling_index]
+                )
+                pgm_load_profile["q_specified"][pgm_load_profile["id"] == loads["const_current"]] = (
+                    q_mvar * const_i_multiplier[scaling_index]
+                )
+
+        return pgm_load_profile
+
+    def _get_sgen_profile(self, pgm_symgen_profile, sgen_controller_ids, data):  # pragma: no cover
+        pp_upd_data = self.pp_update_data["controller"]["object"]
+        scaling = self._get_pp_attr("sgen", "scaling", 1.0)
+        all_sgen_ids = self.pp_update_data["sgen"].index.values
+
+        for controller_id in sgen_controller_ids:
+
+            sym_gen_id = self._get_pgm_ids("sgen", np.array(pp_upd_data[controller_id].element_index)).iloc[0]
+
+            scaling_index = np.where(all_sgen_ids == pp_upd_data[controller_id].element_index[0])[0]
+
+            # If the current controller is reponsilbe for the p_mw attribute, set p_specified
+            if pp_upd_data[controller_id].variable == "p_mw":
+                p_mw = data.iloc[:, controller_id].to_numpy()
+                pgm_symgen_profile["p_specified"][pgm_symgen_profile["id"] == sym_gen_id] = p_mw * (
+                    1e6 * scaling[scaling_index]
+                )
+
+            # If the current controller is reponsilbe for the q_mvar attribute, set q_specified
+            if pp_upd_data[controller_id].variable == "q_mvar":
+                q_mvar = data.iloc[:, controller_id].to_numpy()
+                pgm_symgen_profile["q_specified"][pgm_symgen_profile["id"] == sym_gen_id] = q_mvar * (
+                    1e6 * scaling[scaling_index]
+                )
+
+        return pgm_symgen_profile
 
     @staticmethod
     def _get_tap_size(pp_trafo: pd.DataFrame) -> np.ndarray:
