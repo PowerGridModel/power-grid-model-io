@@ -42,6 +42,7 @@ dynamic = ["version"]
 dev = [
     "pandapower>2.11.1",
     "pre-commit",
+    "pyarrow",
     "pylint",
     "pytest",
     "pytest-cov",
