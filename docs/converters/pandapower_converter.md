@@ -24,7 +24,7 @@ The user must be aware of following unsupported features or differences in conve
 * Currently, the conversions only support powerflow calculations and their relevant attributes.
 * Any feature involving a PV bus, ie. generator, DC line are unsupported as of now.
 * Due to differences between the power-grid-model and pandapower, some components in one model are modeled as multiple components in the other or vise versa.
-  An example on how to cross-reference can be found in the [pandapower conversion example](../examples/pandapower_example.html#cross-referencing-objects).
+  An example on how to cross-reference can be found in the [pandapower conversion example](../examples/pandapower_example.ipynb#cross-referencing-objects).
 
 In addition, the following component-specific modelling differences exist.
 
