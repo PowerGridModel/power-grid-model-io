@@ -20,8 +20,13 @@ If the clocks are odd, then the vector group is converted as `YNynd`, `YNdyn` or
 ## Modelling differences
 
 The user must be aware of following unsupported features or differences in conversion. 
-Currently, the conversions only support powerflow calculations and their relevant attributes.
-Any feature involving a PV bus, ie. generator, DC line are unsupported as of now.
+
+* Currently, the conversions only support powerflow calculations and their relevant attributes.
+* Any feature involving a PV bus, ie. generator, DC line are unsupported as of now.
+* Due to differences between the power-grid-model and Pandapower, some components in one model are modeled as multiple components in the other or vise versa.
+  The converter has a `lookup_id` method to query the relation between the IDs.
+
+In addition, the following component-specific modelling differences exist.
 
 ### Load
 
