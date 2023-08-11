@@ -92,6 +92,20 @@ class BaseConverter(Generic[T], ABC):
         data = self._load_data(data)
         return self._parse_data(data=data, data_type="asym_output", extra_info=None)
 
+    def load_sc_output_data(self, data: Optional[T] = None) -> Dataset:
+        """Load sc output data
+
+        Note: You shouldn't have to overwrite this method. Check _parse_data() instead.
+
+        Args:
+          data: Optional[T]:  (Default value = None)
+
+        Returns:
+
+        """
+        data = self._load_data(data)
+        return self._parse_data(data=data, data_type="sc_output", extra_info=None)
+
     def convert(self, data: Dataset, extra_info: Optional[ExtraInfo] = None) -> T:
         """Convert input/update/(a)sym_output data and optionally extra info.
 
