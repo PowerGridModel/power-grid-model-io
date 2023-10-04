@@ -31,7 +31,7 @@ dependencies = [
     "numpy>=1.20",
     "openpyxl",
     "pandas",
-    "power_grid_model>=1.4, <1.6",
+    "power_grid_model>=1.6",
     "pyyaml",
     "structlog",
     "tqdm",

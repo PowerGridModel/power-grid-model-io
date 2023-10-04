@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 from power_grid_model import initialize_array
 from power_grid_model.data_types import BatchDataset, SingleDataset
+from power_grid_model.errors import PowerGridSerializationError
 from structlog.testing import capture_logs
 
 from power_grid_model_io.converters.pgm_json_converter import PgmJsonConverter
@@ -60,7 +61,7 @@ def pgm_sparse_batch_data():
 
 
 def test_parse_data(converter: PgmJsonConverter, structured_input_data, structured_batch_data):
-    with pytest.raises(TypeError, match="Raw data should be either a list or a dictionary!"):
+    with pytest.raises(PowerGridSerializationError, match="Wrong data type for key data in the root level dictionary!"):
         converter._parse_data(data="str", data_type="input", extra_info=None)  # type: ignore
 
     # test for input dataset
@@ -118,7 +119,8 @@ def test_serialize_data(converter: PgmJsonConverter, pgm_input_data: SingleDatas
     with capture_logs() as cap_log:
         structured_batch_data = converter._serialize_data(data=pgm_batch_data, extra_info={})
     assert structured_batch_data == [{"line": [{}, {}]}, {"line": [{}, {}]}, {"line": [{}, {}]}]
-    assert_log_match(cap_log[0], "warning", "Extra info is not supported for batch data export")
+    # TODO(mgovers): re-add extra info
+    # assert_log_match(cap_log[0], "warning", "Extra info is not supported for batch data export")
 
 
 def test_is_batch(
