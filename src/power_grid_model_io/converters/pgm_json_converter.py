@@ -78,22 +78,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
         )
 
         if extra_info is not None:
-            # extract extra info
-            reserialized = self._serialize_data(data=result, extra_info=None)
-            if len(data) != len(reserialized):
-                warnings.warn("The extra info cannot be determined.")
-                return {}
-
-            extra_info: ExtraInfo = {}
-
-            for entry in data:
-                entry_id = entry["id"]
-                reserialized_entry = next(filter(lambda x, desired=entry_id: x["id"] == desired, reserialized), None)
-                if reserialized_entry is None:
-                    warnings.warn(f"The extra info cannot be determined for ID {entry_id}")
-                for key, value in entry.items():
-                    if key not in reserialized_entry:
-                        extra_info[entry_id] = value
+            self._extract_extra_info(original_data=data, deserialized_data=result, extra_info=extra_info)
 
         return result
 
@@ -254,3 +239,32 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
             ]
             for component, objects in data.items()
         }
+
+    def _extract_extra_info(self, original_data: StructuredData, deserialized_data: SingleDataset, extra_info: ExtraInfo) -> None:
+        if not isinstance(original_data, dict):
+            warnings.warn(f"Extracting extra info is not supported for batch data.")
+            return
+
+        reserialized_data = self._serialize_data(data=deserialized_data, extra_info=extra_info)
+        if len(original_data) != len(reserialized_data):
+            warnings.warn("The extra info cannot be determined.")
+            return
+
+        for component, component_data in original_data.items():
+            for entry in component_data:
+                entry_id = entry["id"]
+                reserialized_entry = next(
+                    filter(lambda x, desired=entry_id: x["id"] == desired, reserialized_data[component]), None
+                )
+                if reserialized_entry is None:
+                    warnings.warn(
+                        f"The extra info cannot be determined for component '{component}' with ID {entry_id}"
+                    )
+                for key, value in entry.items():
+                    if key in reserialized_entry:
+                        continue
+
+                    if entry_id not in extra_info:
+                        extra_info[entry_id] = {}
+
+                    extra_info[entry_id][key] = value
