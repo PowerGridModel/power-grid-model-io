@@ -6,15 +6,15 @@ Power Grid Model 'Converter': Load and store power grid model data in the native
 """
 
 import json
+import warnings
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, Union, cast
-import warnings
 
 import numpy as np
-from power_grid_model.data_types import BatchDataset, ComponentList, Dataset, SingleDataset, SinglePythonDataset
 from power_grid_model import initialize_array
-from power_grid_model.utils import json_deserialize, json_serialize
 from power_grid_model._utils import is_nan
+from power_grid_model.data_types import BatchDataset, ComponentList, Dataset, SingleDataset, SinglePythonDataset
+from power_grid_model.utils import json_deserialize, json_serialize
 
 from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_stores.json_file_store import JsonFileStore
@@ -240,7 +240,9 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
             for component, objects in data.items()
         }
 
-    def _extract_extra_info(self, original_data: StructuredData, deserialized_data: SingleDataset, extra_info: ExtraInfo) -> None:
+    def _extract_extra_info(
+        self, original_data: StructuredData, deserialized_data: SingleDataset, extra_info: ExtraInfo
+    ) -> None:
         if not isinstance(original_data, dict):
             warnings.warn(f"Extracting extra info is not supported for batch data.")
             return
@@ -257,9 +259,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
                     filter(lambda x, desired=entry_id: x["id"] == desired, reserialized_data[component]), None
                 )
                 if reserialized_entry is None:
-                    warnings.warn(
-                        f"The extra info cannot be determined for component '{component}' with ID {entry_id}"
-                    )
+                    warnings.warn(f"The extra info cannot be determined for component '{component}' with ID {entry_id}")
                 for key, value in entry.items():
                     if key in reserialized_entry:
                         continue

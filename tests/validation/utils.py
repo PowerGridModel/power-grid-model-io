@@ -3,10 +3,10 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import json
+import warnings
 from functools import lru_cache
 from pathlib import Path
 from typing import Generator, List, Mapping, Tuple
-import warnings
 
 import numpy as np
 import pandas as pd
