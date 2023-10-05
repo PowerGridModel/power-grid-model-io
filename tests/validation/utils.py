@@ -176,21 +176,26 @@ def load_json_single_dataset(file_path: Path, data_type: str) -> Tuple[SingleDat
     """
     try:
         dataset = json_deserialize_from_file(file_path=file_path)
-    except PowerGridSerializationError as actual_error:
+    except PowerGridSerializationError as error:
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 dataset = import_json_data(json_file=file_path, data_type=data_type, ignore_extra=True)
 
             warnings.warn(
-                DeprecationWarning,
                 "Provided file path is in a deprecated format. This is a temporary backwards-compatibility measure. "
                 "Please upgrade to use_deprecated_format=False or json_serialize_to_file as soon as possible.",
+                DeprecationWarning,
             )
-        except PowerGridSerializationError as fallback_error:
-            raise actual_error
 
-    extra_info = extract_extra_info(file_path, data_type=data_type)
+            error = None
+        except PowerGridSerializationError as _:
+            pass
+        finally:
+            if error is not None:
+                raise error
+
+    extra_info = extract_extra_info(json.loads(file_path.read_text(encoding="utf-8")), data_type=data_type)
     return dataset, extra_info
 
 
