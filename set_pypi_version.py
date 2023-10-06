@@ -47,8 +47,8 @@ def set_version(pkg_dir: Path):
 
 
 def get_pypi_latest():
-    r = requests.get("https://pypi.org/pypi/power-grid-model-io/json")
-    data = r.json()
+    request = requests.get("https://pypi.org/pypi/power-grid-model-io/json")
+    data = request.json()
     version: str = data["info"]["version"]
     return (int(x) for x in version.split("."))
 
@@ -57,16 +57,17 @@ def get_new_version(major, minor, latest_major, latest_minor, latest_patch):
     if (major > latest_major) or ((major == latest_major) and minor > latest_minor):
         # brand-new version with patch zero
         return f"{major}.{minor}.0"
-    elif major == latest_major and minor == latest_minor:
+
+    if major == latest_major and minor == latest_minor:
         # current version, increment path
         return f"{major}.{minor}.{latest_patch + 1}"
-    else:
-        # does not allow building older version
-        raise ValueError(
-            "Invalid version number!\n"
-            f"latest version: {latest_major}.{latest_minor}.{latest_patch}\n"
-            f"to be built version: {major}.{minor}\n"
-        )
+
+    # does not allow building older version
+    raise ValueError(
+        "Invalid version number!\n"
+        f"latest version: {latest_major}.{latest_minor}.{latest_patch}\n"
+        f"to be built version: {major}.{minor}\n"
+    )
 
 
 if __name__ == "__main__":

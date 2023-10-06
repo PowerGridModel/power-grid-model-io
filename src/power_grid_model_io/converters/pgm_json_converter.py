@@ -8,12 +8,12 @@ Power Grid Model 'Converter': Load and store power grid model data in the native
 import json
 import warnings
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 from power_grid_model import initialize_array
 from power_grid_model._utils import is_nan
-from power_grid_model.data_types import BatchDataset, ComponentList, Dataset, SingleDataset, SinglePythonDataset
+from power_grid_model.data_types import ComponentList, Dataset, SingleDataset, SinglePythonDataset
 from power_grid_model.utils import json_deserialize, json_serialize
 
 from power_grid_model_io.converters.base_converter import BaseConverter
@@ -244,7 +244,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
         self, original_data: StructuredData, deserialized_data: SingleDataset, extra_info: ExtraInfo
     ) -> None:
         if not isinstance(original_data, dict):
-            warnings.warn(f"Extracting extra info is not supported for batch data.")
+            warnings.warn("Extracting extra info is not supported for batch data.")
             return
 
         reserialized_data = self._serialize_data(data=deserialized_data, extra_info=extra_info)
@@ -256,7 +256,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
             for entry in component_data:
                 entry_id = entry["id"]
                 reserialized_entry = self._get_first_by(reserialized_data[component], "id", entry_id)
-                if reserialized_data is None:
+                if reserialized_entry is None:
                     warnings.warn(f"The extra info cannot be determined for component '{component}' with ID {entry_id}")
                     continue
 
