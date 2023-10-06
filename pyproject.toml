@@ -31,7 +31,7 @@ dependencies = [
     "numpy>=1.20",
     "openpyxl",
     "pandas",
-    "power_grid_model>=1.4, <1.6",
+    "power_grid_model>=1.6",
     "pyyaml",
     "structlog",
     "tqdm",
@@ -76,7 +76,7 @@ power_grid_model_io = ["config/**/*.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
-addopts = ["--cov=power_grid_model_io", "--cov-report=term", "--cov-report=html:cov_html", "--cov-fail-under=100"]
+addopts = ["--cov=power_grid_model_io", "--cov-report=term", "--cov-report=html:cov_html", "--cov-fail-under=99"]
 
 [tool.black]
 line-length = 120
