@@ -264,20 +264,23 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
 
         for component, component_data in original_data.items():
             for entry in component_data:
-                entry_id = entry["id"]
-                reserialized_entry = self._get_first_by(reserialized_data[component], "id", entry_id)
-                if reserialized_entry is None:
-                    warnings.warn(f"The extra info cannot be determined for component '{component}' with ID {entry_id}")
-                    continue
+                self._extract_extra_component_info(component, entry, reserialized_data, extra_info)
 
-                for attribute, value in entry.items():
-                    if attribute in reserialized_entry:
-                        continue
+    def _extract_extra_component_info(
+        self, component: str, attributes: Dict[str, Any], reserialized_data: SingleDataset, extra_info: ExtraInfo
+    ):
+        entry_id = attributes["id"]
+        reserialized_entry = self._get_first_by(reserialized_data[component], "id", entry_id)
+        if reserialized_entry is None:
+            warnings.warn(f"The extra info cannot be determined for component '{component}' with ID {entry_id}")
+            return
 
-                    if entry_id not in extra_info:
-                        extra_info[entry_id] = {}
+        for attribute, value in attributes.items():
+            if attribute not in reserialized_entry:
+                if entry_id not in extra_info:
+                    extra_info[entry_id] = {}
 
-                    extra_info[entry_id][attribute] = value
+                extra_info[entry_id][attribute] = value
 
     @staticmethod
     def _get_first_by(data: List[Dict[str, Any]], field: str, value: Any) -> Optional[Dict[str, Any]]:
