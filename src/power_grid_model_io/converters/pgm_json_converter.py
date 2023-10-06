@@ -8,7 +8,7 @@ Power Grid Model 'Converter': Load and store power grid model data in the native
 import json
 import warnings
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
 from power_grid_model import initialize_array
@@ -248,23 +248,31 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
             return
 
         reserialized_data = self._serialize_data(data=deserialized_data, extra_info=extra_info)
-        if len(original_data) != len(reserialized_data):
+        if len(original_data) != len(reserialized_data) or not isinstance(reserialized_data, dict):
             warnings.warn("The extra info cannot be determined.")
             return
 
         for component, component_data in original_data.items():
             for entry in component_data:
                 entry_id = entry["id"]
-                reserialized_entry = next(
-                    filter(lambda x, desired=entry_id: x["id"] == desired, reserialized_data[component]), None
-                )
-                if reserialized_entry is None:
+                reserialized_entry = self._get_first_by(reserialized_data[component], "id", entry_id)
+                if reserialized_data is None:
                     warnings.warn(f"The extra info cannot be determined for component '{component}' with ID {entry_id}")
-                for key, value in entry.items():
-                    if key in reserialized_entry:
+                    continue
+
+                for attribute, value in entry.items():
+                    if attribute in reserialized_entry:
                         continue
 
                     if entry_id not in extra_info:
                         extra_info[entry_id] = {}
 
-                    extra_info[entry_id][key] = value
+                    extra_info[entry_id][attribute] = value
+
+    @staticmethod
+    def _get_first_by(data: List[Dict[str, Any]], field: str, value: Any) -> Optional[Dict[str, Any]]:
+        for entry in data:
+            if entry[field] == value:
+                return entry
+
+        return None
