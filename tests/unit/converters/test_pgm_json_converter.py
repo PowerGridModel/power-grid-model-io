@@ -119,8 +119,7 @@ def test_serialize_data(converter: PgmJsonConverter, pgm_input_data: SingleDatas
     with capture_logs() as cap_log:
         structured_batch_data = converter._serialize_data(data=pgm_batch_data, extra_info={})
     assert structured_batch_data == [{"line": [{}, {}]}, {"line": [{}, {}]}, {"line": [{}, {}]}]
-    # TODO(mgovers): re-add extra info
-    # assert_log_match(cap_log[0], "warning", "Extra info is not supported for batch data export")
+    assert_log_match(cap_log[0], "warning", "Extra info is not supported for batch data export")
 
 
 def test_is_batch(
