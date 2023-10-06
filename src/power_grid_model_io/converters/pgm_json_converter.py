@@ -169,7 +169,17 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
           the function returns a structured dataset
 
         """
-        return json.loads(json_serialize(data))["data"]
+        result = json.loads(json_serialize(data))["data"]
+
+        if extra_info is not None:
+            if self._is_batch(data=data):
+                self._log.warning("Extra info is not supported for batch data export")
+            else:
+                for component_data in result.values():
+                    for component in component_data:
+                        component.update(extra_info.get(component["id"], {}))
+
+        return result
 
     @staticmethod
     def _is_batch(data: Dataset) -> bool:
