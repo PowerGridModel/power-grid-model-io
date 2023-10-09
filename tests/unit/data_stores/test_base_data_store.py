@@ -8,5 +8,5 @@ from power_grid_model_io.data_stores.base_data_store import BaseDataStore
 
 
 def test_abstract_methods():
-    with pytest.raises(TypeError, match=r"with abstract methods load, save"):
+    with pytest.raises(TypeError, match=r"abstract methods .*load.* .*save.*"):
         BaseDataStore()
