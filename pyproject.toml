@@ -42,11 +42,13 @@ dynamic = ["version"]
 dev = [
     "pandapower>2.11.1",
     "pre-commit",
-    "pyarrow",
     "pylint",
     "pytest",
     "pytest-cov",
     "pydantic", # Used in unit tests
+]
+examples = [
+    "pyarrow", # Pyarrow support for Python 3.12 scheduled for 14.0.0: https://github.com/apache/arrow/issues/37880
 ]
 doc = [
     "sphinx",
