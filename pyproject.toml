@@ -48,6 +48,7 @@ dev = [
     "pydantic", # Used in unit tests
 ]
 examples = [
+    "pandapower>2.11.1",
     "pyarrow", # Pyarrow support for Python 3.12 scheduled for 14.0.0: https://github.com/apache/arrow/issues/37880
 ]
 doc = [
