@@ -29,19 +29,6 @@ Regular expressions to the winding_1, winding_2 and winding_3 codes and optional
 $               End of the string
 """
 
-NODE_REF_RE = re.compile(r"^(.+_)?node(_.+)?$")
-r"""
-Regular expressions to match the word node with an optional prefix or suffix, e.g.:
-    - node
-    - from_node
-    - node_1
-^               Start of the string
-(.+_)?          Optional prefix, ending with an underscore
-node            The word 'node'
-(_.+)?          Optional suffix, starting with in an underscore
-$               End of the string
-"""
-
 
 def is_node_ref(string: str) -> bool:
     """Check whether the string is a node reference.
@@ -58,7 +45,20 @@ def is_node_ref(string: str) -> bool:
     Returns:
         bool: Whether the string is a reference to a node.
     """
-    return NODE_REF_RE.fullmatch(string) is not None
+    if "node" not in string:
+        return False
+
+    prefix_and_suffix = string.split("node")
+    if len(prefix_and_suffix) != 2:
+        return False
+
+    prefix, suffix = prefix_and_suffix
+    if prefix != "" and not prefix.endswith("_"):
+        return False
+    if suffix != "" and not suffix.startswith("_"):
+        return False
+
+    return True
 
 
 PVS_EFFICIENCY_TYPE_RE = re.compile(r"[ ,.]1 pu: (95|97) %")

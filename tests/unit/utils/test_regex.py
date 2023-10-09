@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from power_grid_model_io.utils.regex import NODE_REF_RE, TRAFO3_CONNECTION_RE, TRAFO_CONNECTION_RE
+from power_grid_model_io.utils.regex import TRAFO3_CONNECTION_RE, TRAFO_CONNECTION_RE, is_node_ref
 
 
 def test_trafo_connection__pos():
@@ -47,15 +47,17 @@ def test_trafo3_connection__neg():
 
 
 def test_node_ref__pos():
-    assert NODE_REF_RE.fullmatch("node")
-    assert NODE_REF_RE.fullmatch("from_node")
-    assert NODE_REF_RE.fullmatch("to_node")
-    assert NODE_REF_RE.fullmatch("node_1")
-    assert NODE_REF_RE.fullmatch("node_2")
-    assert NODE_REF_RE.fullmatch("node_3")
+    assert is_node_ref("node")
+    assert is_node_ref("from_node")
+    assert is_node_ref("to_node")
+    assert is_node_ref("node_1")
+    assert is_node_ref("node_2")
+    assert is_node_ref("node_3")
 
 
 def test_node_ref__neg():
-    assert not NODE_REF_RE.fullmatch("nodes")
-    assert not NODE_REF_RE.fullmatch("anode")
-    assert not NODE_REF_RE.fullmatch("immunodeficient")
+    assert not is_node_ref("from_bla")
+    assert not is_node_ref("a_node_node_b")
+    assert not is_node_ref("nodes")
+    assert not is_node_ref("anode")
+    assert not is_node_ref("immunodeficient")
