@@ -42,6 +42,25 @@ node            The word 'node'
 $               End of the string
 """
 
+
+def is_node_ref(string: str) -> bool:
+    """Check whether the string is a node reference.
+
+    Returns True if and only if the input is the word node with an optional prefix or suffix, e.g.:
+
+    - node
+    - from_node
+    - node_1
+
+    Args:
+        string (str): The input string.
+
+    Returns:
+        bool: Whether the string is a reference to a node.
+    """
+    return NODE_REF_RE.fullmatch(string) is not None
+
+
 PVS_EFFICIENCY_TYPE_RE = re.compile(r"[ ,.]1 pu: (95|97) %")
 r"""
 Regular expressions to match the efficiency type percentage at 1 pu, eg:

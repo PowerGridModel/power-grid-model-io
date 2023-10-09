@@ -17,7 +17,7 @@ from power_grid_model.data_types import Dataset, SingleDataset
 from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_types import ExtraInfo
 from power_grid_model_io.functions import get_winding
-from power_grid_model_io.utils.regex import NODE_REF_RE, TRAFO3_CONNECTION_RE, TRAFO_CONNECTION_RE
+from power_grid_model_io.utils.regex import TRAFO3_CONNECTION_RE, TRAFO_CONNECTION_RE, is_node_ref
 
 PandaPowerData = MutableMapping[str, pd.DataFrame]
 
@@ -170,7 +170,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         extra_cols = ["i_n"]
         for component_data in self.pgm_input_data.values():
             for attr_name in component_data.dtype.names:
-                if not NODE_REF_RE.fullmatch(attr_name) and attr_name not in extra_cols:
+                if not is_node_ref(attr_name) and attr_name not in extra_cols:
                     continue
                 for pgm_id, node_id in component_data[["id", attr_name]]:
                     if pgm_id not in extra_info:
@@ -248,7 +248,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         all_other_cols = ["i_n"]
         for component, data in self.pgm_output_data.items():
             input_cols = power_grid_meta_data["input"][component].dtype.names
-            node_cols = [col for col in input_cols if NODE_REF_RE.fullmatch(col)]
+            node_cols = [col for col in input_cols if is_node_ref(col)]
             other_cols = [col for col in input_cols if col in all_other_cols]
             if not node_cols + other_cols:
                 continue
