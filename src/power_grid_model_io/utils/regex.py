@@ -42,8 +42,8 @@ _TRAFO3_CONNECTION_RE = re.compile(r"^(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(\d|1[0-2])?(y|y
 def parse_trafo3_connection(string: str) -> Optional[Dict[str, str]]:
     r"""Parse a trafo connection string if possible.
 
-    Matches the following regular expression to the winding_from and winding_to codes.
-    Optionally checks the clock number:
+    Matches the following regular expression to the winding_1, winding_2 and winding_3 codes.
+    Optionally checks the clock numbers:
 
     ^               Start of the string
     (Y|YN|D|Z|ZN)   First winding type
@@ -95,20 +95,39 @@ def parse_node_ref(string: str) -> Optional[Dict[str, str]]:
         return None
 
     prefix, suffix = prefix_and_suffix
-    if prefix != "" and not prefix.endswith("_"):
+    if prefix and not prefix.endswith("_"):
         return None
-    if suffix != "" and not suffix.startswith("_"):
+    if suffix and not suffix.startswith("_"):
         return None
 
     return {"prefix": prefix, "suffix": suffix}
 
 
-PVS_EFFICIENCY_TYPE_RE = re.compile(r"[ ,.]1 pu: (95|97) %")
-r"""
-Regular expressions to match the efficiency type percentage at 1 pu, eg:
+_PVS_EFFICIENCY_TYPE_RE = re.compile(r"[ ,.]1 pu: (95|97) %")
+
+
+def parse_pvs_efficiency_type(string: str) -> Optional[str]:
+    r"""Parse a PVS efficiency type string if possible.
+
+    Matches the following regex to the efficiency type percentage at 1 pu.
+
+    1 pu            After 1 pu  '1 pu:'
+    (95|97)         95 or 97 % type
+    %               before  '%'
+
+    E.g.:
+
     - 0,1 pu: 93 %; 1 pu: 97 %
     - 0,1..1 pu: 95 %
-1 pu            After 1 pu  '1 pu:'
-(95|97)         95 or 97 % type
-%               before  '%'
-"""
+
+    Args:
+        string (str): The input string.
+
+    Returns:
+        Optional[str]: The efficiency type percentage string at 1 pu if correct, else None.
+    """
+    match = _PVS_EFFICIENCY_TYPE_RE.search(string)
+    if not match:
+        return None
+
+    return match.group(1)

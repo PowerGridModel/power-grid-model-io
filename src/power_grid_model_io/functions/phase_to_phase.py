@@ -12,7 +12,7 @@ import structlog
 from power_grid_model import WindingType
 
 from power_grid_model_io.functions import get_winding
-from power_grid_model_io.utils.regex import PVS_EFFICIENCY_TYPE_RE, parse_trafo3_connection, parse_trafo_connection
+from power_grid_model_io.utils.regex import parse_pvs_efficiency_type, parse_trafo3_connection, parse_trafo_connection
 
 _LOG = structlog.get_logger(__file__)
 
@@ -185,11 +185,11 @@ def pvs_power_adjustment(p: float, efficiency_type: str) -> float:
     """
     Adjust power of PV for the default efficiency type of 97% or 95%. Defaults to 100 % for other custom types
     """
-    match = PVS_EFFICIENCY_TYPE_RE.search(efficiency_type)
-    if match is not None:
+    pvs_efficiency_type = parse_pvs_efficiency_type(efficiency_type)
+    if pvs_efficiency_type is not None:
         _LOG.warning("PV approximation applied for efficiency type", efficiency_type=efficiency_type)
-        if match.group(1) == "97":
+        if pvs_efficiency_type == "97":
             return p * 0.97
-        if match.group(1) == "95":
+        if pvs_efficiency_type == "95":
             return p * 0.95
     return p
