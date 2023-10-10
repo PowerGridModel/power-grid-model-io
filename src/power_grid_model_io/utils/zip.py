@@ -42,9 +42,8 @@ def extract(src_file_path: Path, dst_dir_path: Optional[Path] = None, skip_if_ex
 
     log = _log.bind(src_file_path=src_file_path, dst_dir_path=dst_dir_path)
 
-    if dst_dir_path.exists():
-        if not dst_dir_path.is_dir():
-            raise NotADirectoryError(f"Destination dir {dst_dir_path} exists and is not a directory")
+    if dst_dir_path.exists() and not dst_dir_path.is_dir():
+        raise NotADirectoryError(f"Destination dir {dst_dir_path} exists and is not a directory")
 
     # Create the destination directory
     dst_dir_path.mkdir(parents=True, exist_ok=True)
