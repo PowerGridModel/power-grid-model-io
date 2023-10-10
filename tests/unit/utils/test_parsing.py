@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from power_grid_model_io.utils.regex import parse_node_ref, parse_trafo3_connection, parse_trafo_connection
+from power_grid_model_io.utils.parsing import parse_node_ref, parse_trafo3_connection, parse_trafo_connection
 
 
 def test_trafo_connection__pos():

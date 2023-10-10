@@ -12,7 +12,7 @@ import structlog
 from power_grid_model import WindingType
 
 from power_grid_model_io.functions import get_winding
-from power_grid_model_io.utils.regex import parse_pvs_efficiency_type, parse_trafo3_connection, parse_trafo_connection
+from power_grid_model_io.utils.parsing import parse_pvs_efficiency_type, parse_trafo3_connection, parse_trafo_connection
 
 _LOG = structlog.get_logger(__file__)
 
