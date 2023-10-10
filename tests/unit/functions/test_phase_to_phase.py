@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import numpy as np
-import pytest
 from power_grid_model.enum import WindingType
 from pytest import approx, mark, param, raises
 
