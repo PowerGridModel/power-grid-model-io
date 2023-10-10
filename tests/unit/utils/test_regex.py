@@ -2,25 +2,25 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from power_grid_model_io.utils.regex import TRAFO3_CONNECTION_RE, TRAFO_CONNECTION_RE, is_node_ref
+from power_grid_model_io.utils.regex import TRAFO3_CONNECTION_RE, get_trafo_connection, is_node_ref
 
 
 def test_trafo_connection__pos():
-    assert TRAFO_CONNECTION_RE.fullmatch("Dyn").groups() == ("D", "yn", None)
-    assert TRAFO_CONNECTION_RE.fullmatch("Yyn").groups() == ("Y", "yn", None)
-    assert TRAFO_CONNECTION_RE.fullmatch("Yzn").groups() == ("Y", "zn", None)
-    assert TRAFO_CONNECTION_RE.fullmatch("YNy").groups() == ("YN", "y", None)
-    assert TRAFO_CONNECTION_RE.fullmatch("Dy5").groups() == ("D", "y", "5")
-    assert TRAFO_CONNECTION_RE.fullmatch("Dy11").groups() == ("D", "y", "11")
+    assert get_trafo_connection("Dyn") == {"winding_from": "D", "winding_to": "yn", "clock_number": None}
+    assert get_trafo_connection("Yyn") == {"winding_from": "Y", "winding_to": "yn", "clock_number": None}
+    assert get_trafo_connection("Yzn") == {"winding_from": "Y", "winding_to": "zn", "clock_number": None}
+    assert get_trafo_connection("YNy") == {"winding_from": "YN", "winding_to": "y", "clock_number": None}
+    assert get_trafo_connection("Dy5") == {"winding_from": "D", "winding_to": "y", "clock_number": "5"}
+    assert get_trafo_connection("Dy11") == {"winding_from": "D", "winding_to": "y", "clock_number": "11"}
 
 
 def test_trafo_connection__neg():
-    assert not TRAFO_CONNECTION_RE.fullmatch("Xyn")
-    assert not TRAFO_CONNECTION_RE.fullmatch("yyn")
-    assert not TRAFO_CONNECTION_RE.fullmatch("YZN")
-    assert not TRAFO_CONNECTION_RE.fullmatch("YNx")
-    assert not TRAFO_CONNECTION_RE.fullmatch("Dy13")
-    assert not TRAFO_CONNECTION_RE.fullmatch("Dy-1")
+    assert not get_trafo_connection("Xyn")
+    assert not get_trafo_connection("yyn")
+    assert not get_trafo_connection("YZN")
+    assert not get_trafo_connection("YNx")
+    assert not get_trafo_connection("Dy13")
+    assert not get_trafo_connection("Dy-1")
 
 
 def test_trafo3_connection__pos():

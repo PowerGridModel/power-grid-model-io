@@ -12,7 +12,7 @@ import structlog
 from power_grid_model import WindingType
 
 from power_grid_model_io.functions import get_winding
-from power_grid_model_io.utils.regex import PVS_EFFICIENCY_TYPE_RE, TRAFO3_CONNECTION_RE, TRAFO_CONNECTION_RE
+from power_grid_model_io.utils.regex import PVS_EFFICIENCY_TYPE_RE, TRAFO3_CONNECTION_RE, get_trafo_connection
 
 _LOG = structlog.get_logger(__file__)
 
@@ -154,10 +154,10 @@ def _split_connection_string(conn_str: str) -> Tuple[str, str, int]:
      * winding_to
      * clock
     """
-    match = TRAFO_CONNECTION_RE.fullmatch(conn_str)
-    if not match:
+    trafo_connection = get_trafo_connection(conn_str)
+    if not trafo_connection:
         raise ValueError(f"Invalid transformer connection string: '{conn_str}'")
-    return match.group(1), match.group(2), int(match.group(3))
+    return trafo_connection["winding_from"], trafo_connection["winding_to"], int(trafo_connection["clock_number"])
 
 
 def _split_connection_string_3w(conn_str: str) -> Tuple[str, str, int, str, int]:

@@ -6,16 +6,35 @@ General regular expressions
 """
 
 import re
+from typing import Dict, Optional
 
-TRAFO_CONNECTION_RE = re.compile(r"^(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(\d|1[0-2])?$")
-r"""
-Regular expressions to the winding_from and winding_to codes and optionally the clock number:
-^               Start of the string
-(Y|YN|D|Z|ZN)   From winding type
-(y|yn|d|z|zn)   To winding type
-(\d|1[0-2])?    Optional clock number (0-12)
-$               End of the string
-"""
+_TRAFO_CONNECTION_RE = re.compile(r"^(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(\d|1[0-2])?$")
+
+
+def get_trafo_connection(string: str) -> Optional[Dict[str, str]]:
+    r"""Check whether the string is a trafo connection
+
+    Matches the following regular expression to the winding_from and winding_to codes.
+    Optionally checks the clock number:
+
+    ^               Start of the string
+    (Y|YN|D|Z|ZN)   From winding type
+    (y|yn|d|z|zn)   To winding type
+    (\d|1[0-2])?    Optional clock number (0-12)
+    $               End of the string
+
+    Args:
+        string (str): The input string.
+
+    Returns:
+        bool: Whether the input is a trafo connection.
+    """
+    match = _TRAFO_CONNECTION_RE.fullmatch(string)
+    if not match:
+        return None
+
+    return {"winding_from": match.group(1), "winding_to": match.group(2), "clock_number": match.group(3)}
+
 
 TRAFO3_CONNECTION_RE = re.compile(r"^(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(\d|1[0-2])?(y|yn|d|z|zn)(\d|1[0-2])?$")
 r"""
@@ -43,7 +62,7 @@ def is_node_ref(string: str) -> bool:
         string (str): The input string.
 
     Returns:
-        bool: Whether the string is a reference to a node.
+        bool: Whether the input string is a reference to a node.
     """
     if "node" not in string:
         return False

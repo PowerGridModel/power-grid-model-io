@@ -17,7 +17,7 @@ from power_grid_model.data_types import Dataset, SingleDataset
 from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_types import ExtraInfo
 from power_grid_model_io.functions import get_winding
-from power_grid_model_io.utils.regex import TRAFO3_CONNECTION_RE, TRAFO_CONNECTION_RE, is_node_ref
+from power_grid_model_io.utils.regex import TRAFO3_CONNECTION_RE, get_trafo_connection, is_node_ref
 
 PandaPowerData = MutableMapping[str, pd.DataFrame]
 
@@ -2290,11 +2290,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         @lru_cache
         def vector_group_to_winding_types(vector_group: str) -> pd.Series:
-            match = TRAFO_CONNECTION_RE.fullmatch(vector_group)
-            if not match:
+            trafo_connection = get_trafo_connection(vector_group)
+            if not trafo_connection:
                 raise ValueError(f"Invalid transformer connection string: '{vector_group}'")
-            winding_from = get_winding(match.group(1)).value
-            winding_to = get_winding(match.group(2)).value
+            winding_from = get_winding(trafo_connection["winding_from"]).value
+            winding_to = get_winding(trafo_connection["winding_to"]).value
             return pd.Series([winding_from, winding_to])
 
         trafo = self.pp_input_data["trafo"]
