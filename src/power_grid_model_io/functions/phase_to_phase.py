@@ -6,7 +6,6 @@ These functions can be used in the mapping files to apply functions to vision da
 """
 
 import math
-from typing import Tuple
 
 import structlog
 from power_grid_model import WindingType
@@ -76,68 +75,36 @@ def power_wind_speed(  # pylint: disable=too-many-arguments
     return 0.0
 
 
-def get_winding_from(conn_str: str, neutral_grounding: bool = True) -> WindingType:
-    """
-    Get the winding type, based on a textual encoding of the conn_str
-    """
-    winding_from, _, _ = _split_connection_string(conn_str)
-    return get_winding(winding=winding_from, neutral_grounding=neutral_grounding)
+def _get_winding(trafo_connection_parser, winding_ref: str):
+    def _get_winding_impl(conn_str: str, neutral_grounding: bool = True) -> WindingType:
+        """
+        Get the winding type, based on a textual encoding of the conn_str
+        """
+        return get_winding(trafo_connection_parser(conn_str)[winding_ref], neutral_grounding=neutral_grounding)
+
+    return _get_winding_impl
 
 
-def get_winding_to(conn_str: str, neutral_grounding: bool = True) -> WindingType:
-    """
-    Get the winding type, based on a textual encoding of the conn_str
-    """
-    _, winding_to, _ = _split_connection_string(conn_str)
-    return get_winding(winding=winding_to, neutral_grounding=neutral_grounding)
+def _get_clock(trafo_connection_parser, clock_ref: str):
+    def _get_clock_impl(conn_str: str) -> int:
+        """
+        Extract the clock part of the conn_str
+        """
+        return int(trafo_connection_parser(conn_str)[clock_ref])
+
+    return _get_clock_impl
 
 
-def get_winding_1(conn_str: str, neutral_grounding: bool = True) -> WindingType:
-    """
-    Get the winding type, based on a textual encoding of the conn_str
-    """
-    winding_1, _, _, _, _ = _split_connection_string_3w(conn_str)
-    return get_winding(winding=winding_1, neutral_grounding=neutral_grounding)
+get_winding_from = _get_winding(parse_trafo_connection, "winding_from")
+get_winding_to = _get_winding(parse_trafo_connection, "winding_to")
+get_winding_1 = _get_winding(parse_trafo3_connection, "winding_1")
+get_winding_2 = _get_winding(parse_trafo3_connection, "winding_2")
+get_winding_3 = _get_winding(parse_trafo3_connection, "winding_3")
 
 
-def get_winding_2(conn_str: str, neutral_grounding: bool = True) -> WindingType:
-    """
-    Get the winding type, based on a textual encoding of the conn_str
-    """
-    _, winding_2, _, _, _ = _split_connection_string_3w(conn_str)
-    return get_winding(winding=winding_2, neutral_grounding=neutral_grounding)
-
-
-def get_winding_3(conn_str: str, neutral_grounding: bool = True) -> WindingType:
-    """
-    Get the winding type, based on a textual encoding of the conn_str
-    """
-    _, _, _, winding_3, _ = _split_connection_string_3w(conn_str)
-    return get_winding(winding=winding_3, neutral_grounding=neutral_grounding)
-
-
-def get_clock(conn_str: str) -> int:
-    """
-    Extract the clock part of the conn_str
-    """
-    _, _, clock = _split_connection_string(conn_str)
-    return clock
-
-
-def get_clock_12(conn_str: str) -> int:
-    """
-    Extract the clock part of the conn_str
-    """
-    _, _, clock_12, _, _ = _split_connection_string_3w(conn_str)
-    return clock_12
-
-
-def get_clock_13(conn_str: str) -> int:
-    """
-    Extract the clock part of the conn_str
-    """
-    _, _, _, _, clock_13 = _split_connection_string_3w(conn_str)
-    return clock_13
+get_clock = _get_clock(parse_trafo_connection, "clock")
+get_clock_12 = _get_clock(parse_trafo3_connection, "clock_12")
+get_clock_13 = _get_clock(parse_trafo3_connection, "clock_13")
 
 
 def reactive_power_to_susceptance(q: float, u_nom: float) -> float:
@@ -147,49 +114,19 @@ def reactive_power_to_susceptance(q: float, u_nom: float) -> float:
     return q / u_nom / u_nom
 
 
-def _split_connection_string(conn_str: str) -> Tuple[str, str, int]:
-    """
-    Helper function to split the conn_str into three parts:
-     * winding_from
-     * winding_to
-     * clock
-    """
-    trafo_connection = parse_trafo_connection(conn_str)
-    if not trafo_connection:
-        raise ValueError(f"Invalid transformer connection string: '{conn_str}'")
-    return trafo_connection["winding_from"], trafo_connection["winding_to"], int(trafo_connection["clock_number"])
-
-
-def _split_connection_string_3w(conn_str: str) -> Tuple[str, str, int, str, int]:
-    """
-    Helper function to split the conn_str into three parts:
-     * winding_1
-     * winding_2
-     * clock 12
-     * winding_3
-     * clock 13
-    """
-    trafo_connection = parse_trafo3_connection(conn_str)
-    if not trafo_connection:
-        raise ValueError(f"Invalid three winding transformer connection string: '{conn_str}'")
-    return (
-        trafo_connection["winding_1"],
-        trafo_connection["winding_2"],
-        int(trafo_connection["clock_12"]),
-        trafo_connection["winding_3"],
-        int(trafo_connection["clock_13"]),
-    )
-
-
 def pvs_power_adjustment(p: float, efficiency_type: str) -> float:
     """
     Adjust power of PV for the default efficiency type of 97% or 95%. Defaults to 100 % for other custom types
     """
-    pvs_efficiency_type = parse_pvs_efficiency_type(efficiency_type)
-    if pvs_efficiency_type is not None:
-        _LOG.warning("PV approximation applied for efficiency type", efficiency_type=efficiency_type)
-        if pvs_efficiency_type == "97":
-            return p * 0.97
-        if pvs_efficiency_type == "95":
-            return p * 0.95
+    try:
+        pvs_efficiency_type = parse_pvs_efficiency_type(efficiency_type)
+    except ValueError:
+        return p
+
+    _LOG.warning("PV approximation applied for efficiency type", efficiency_type=efficiency_type)
+    if pvs_efficiency_type == "97":
+        return p * 0.97
+    if pvs_efficiency_type == "95":
+        return p * 0.95
+
     return p

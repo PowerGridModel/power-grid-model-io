@@ -17,7 +17,7 @@ from power_grid_model.data_types import Dataset, SingleDataset
 from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_types import ExtraInfo
 from power_grid_model_io.functions import get_winding
-from power_grid_model_io.utils.parsing import parse_node_ref, parse_trafo3_connection, parse_trafo_connection
+from power_grid_model_io.utils.parsing import is_node_ref, parse_trafo3_connection, parse_trafo_connection
 
 PandaPowerData = MutableMapping[str, pd.DataFrame]
 
@@ -170,7 +170,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         extra_cols = ["i_n"]
         for component_data in self.pgm_input_data.values():
             for attr_name in component_data.dtype.names:
-                if not parse_node_ref(attr_name) and attr_name not in extra_cols:
+                if not is_node_ref(attr_name) and attr_name not in extra_cols:
                     continue
                 for pgm_id, node_id in component_data[["id", attr_name]]:
                     if pgm_id not in extra_info:
@@ -248,7 +248,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         all_other_cols = ["i_n"]
         for component, data in self.pgm_output_data.items():
             input_cols = power_grid_meta_data["input"][component].dtype.names
-            node_cols = [col for col in input_cols if parse_node_ref(col)]
+            node_cols = [col for col in input_cols if is_node_ref(col)]
             other_cols = [col for col in input_cols if col in all_other_cols]
             if not node_cols + other_cols:
                 continue
@@ -2291,8 +2291,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         @lru_cache
         def vector_group_to_winding_types(vector_group: str) -> pd.Series:
             trafo_connection = parse_trafo_connection(vector_group)
-            if not trafo_connection:
-                raise ValueError(f"Invalid transformer connection string: '{vector_group}'")
             winding_from = get_winding(trafo_connection["winding_from"]).value
             winding_to = get_winding(trafo_connection["winding_to"]).value
             return pd.Series([winding_from, winding_to])
@@ -2316,8 +2314,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         @lru_cache
         def vector_group_to_winding_types(vector_group: str) -> pd.Series:
             trafo_connection = parse_trafo3_connection(vector_group)
-            if not trafo_connection:
-                raise ValueError(f"Invalid transformer connection string: '{vector_group}'")
             winding_1 = get_winding(trafo_connection["winding_1"]).value
             winding_2 = get_winding(trafo_connection["winding_2"]).value
             winding_3 = get_winding(trafo_connection["winding_3"]).value
