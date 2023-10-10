@@ -122,7 +122,7 @@ def test_extra_info(extra_info: Tuple[ExtraInfo, ExtraInfo], component: str, obj
 @pytest.mark.parametrize("extra_info", LANGUAGES, indirect=True)
 def test_extra_info__serializable(extra_info):
     # Arrange
-    actual, _expected = extra_info
+    actual, _ = extra_info
 
     # Assert
     json.dumps(actual, cls=JsonEncoder)  # expect no exception
@@ -132,7 +132,9 @@ def test_extra_info__serializable(extra_info):
 def test_get_node_id(language: str, table: str, column: str):
     # Arrange
     converter = vision_excel_converter(language=language)
-    _input_data, extra_info = load_and_convert_excel_file(language=language)
+    _, extra_info = load_and_convert_excel_file(language=language)
+
+    assert converter._source is not None
     source_data = converter._source.load()[table][column]
 
     # Act/Assert
@@ -163,7 +165,9 @@ def test_get_node_id(language: str, table: str, column: str):
 def test_get_branch_id(language: str, table: str, column: str):
     # Arrange
     converter = vision_excel_converter(language=language)
-    _input_data, extra_info = load_and_convert_excel_file(language=language)
+    _, extra_info = load_and_convert_excel_file(language=language)
+
+    assert converter._source is not None
     source_data = converter._source.load()[table][column]
 
     # Act/Assert
@@ -196,10 +200,13 @@ def test_get_branch_id(language: str, table: str, column: str):
 def test_get_get_appliance_id(language: str, table: str, columns: List[str]):
     # Arrange
     converter = vision_excel_converter(language=language)
-    _input_data, extra_info = load_and_convert_excel_file(language=language)
+    _, extra_info = load_and_convert_excel_file(language=language)
+
+    assert converter._source is not None
     source_data = converter._source.load()[table][columns]
 
     # Act/Assert
+    assert isinstance(source_data, pd.DataFrame)
     for _, (node_number, sub_number) in source_data.iterrows():
         pgm_id = converter.get_appliance_id(table=table, node_number=node_number, sub_number=sub_number)
         assert extra_info[pgm_id]["id_reference"] == {
@@ -226,10 +233,13 @@ def test_get_get_appliance_id(language: str, table: str, columns: List[str]):
 def test_get_get_virtual_id(language: str, table: str, name: str, columns: List[str]):
     # Arrange
     converter = vision_excel_converter(language=language)
-    _input_data, extra_info = load_and_convert_excel_file(language=language)
+    _, extra_info = load_and_convert_excel_file(language=language)
+
+    assert converter._source is not None
     source_data = converter._source.load()[table][columns]
 
     # Act/Assert
+    assert isinstance(source_data, pd.DataFrame)
     for _, (node_number, sub_number) in source_data.iterrows():
         pgm_id = converter.get_virtual_id(table=table, obj_name=name, node_number=node_number, sub_number=sub_number)
         assert extra_info[pgm_id]["id_reference"] == {

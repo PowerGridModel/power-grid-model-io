@@ -31,7 +31,7 @@ def converter():
 
 
 def test_abstract_methods():
-    with pytest.raises(TypeError, match=r"with abstract methods _parse_data, _serialize_data"):
+    with pytest.raises(TypeError, match=r"abstract methods .*_parse_data.* .*_serialize_data.*"):
         BaseConverter()
 
 

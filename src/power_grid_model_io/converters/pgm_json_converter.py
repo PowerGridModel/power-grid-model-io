@@ -5,17 +5,16 @@
 Power Grid Model 'Converter': Load and store power grid model data in the native PGM JSON format.
 """
 
+import json
+import warnings
 from pathlib import Path
-from typing import Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
-from power_grid_model.data_types import BatchDataset, ComponentList, Dataset, SingleDataset, SinglePythonDataset
-from power_grid_model.utils import (
-    convert_batch_dataset_to_batch_list,
-    convert_list_to_batch_data,
-    initialize_array,
-    is_nan,
-)
+from power_grid_model import initialize_array
+from power_grid_model._utils import is_nan
+from power_grid_model.data_types import ComponentList, Dataset, SingleDataset, SinglePythonDataset
+from power_grid_model.utils import json_deserialize, json_serialize
 
 from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_stores.json_file_store import JsonFileStore
@@ -65,14 +64,23 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
 
         """
         self._log.debug(f"Loading PGM {data_type} data")
-        if isinstance(data, list):
-            parsed_data = [
-                self._parse_dataset(data=dataset, data_type=data_type, extra_info=extra_info) for dataset in data
-            ]
-            return convert_list_to_batch_data(parsed_data)
-        if not isinstance(data, dict):
-            raise TypeError("Raw data should be either a list or a dictionary!")
-        return self._parse_dataset(data=data, data_type=data_type, extra_info=extra_info)
+
+        result = json_deserialize(
+            json.dumps(
+                {
+                    "attributes": {},
+                    "data": data,
+                    "is_batch": isinstance(data, list),
+                    "type": data_type,
+                    "version": "1.0",
+                }
+            )
+        )
+
+        if extra_info is not None:
+            self._extract_extra_info(original_data=data, deserialized_data=result, extra_info=extra_info)
+
+        return result
 
     def _parse_dataset(
         self, data: SinglePythonDataset, data_type: str, extra_info: Optional[ExtraInfo]
@@ -161,21 +169,17 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
           the function returns a structured dataset
 
         """
-        # Check if the dataset is a single dataset or batch dataset
-        # It is batch dataset if it is 2D array or a indptr/data structure
+        result = json.loads(json_serialize(data))["data"]
 
-        # If it is a batch, convert the batch data to a list of batches, then convert each batch individually.
-        if self._is_batch(data=data):
-            if extra_info is not None:
+        if extra_info is not None:
+            if self._is_batch(data=data):
                 self._log.warning("Extra info is not supported for batch data export")
-            # We have established that this is batch data, so let's tell the type checker that this is a BatchDataset
-            data = cast(BatchDataset, data)
-            list_data = convert_batch_dataset_to_batch_list(data)
-            return [self._serialize_dataset(data=x) for x in list_data]
+            else:
+                for component_data in result.values():
+                    for component in component_data:
+                        component.update(extra_info.get(component["id"], {}))
 
-        # We have established that this is not batch data, so let's tell the type checker that this is a SingleDataset
-        data = cast(SingleDataset, data)
-        return self._serialize_dataset(data=data, extra_info=extra_info)
+        return result
 
     @staticmethod
     def _is_batch(data: Dataset) -> bool:
@@ -245,3 +249,43 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
             ]
             for component, objects in data.items()
         }
+
+    def _extract_extra_info(
+        self, original_data: StructuredData, deserialized_data: SingleDataset, extra_info: ExtraInfo
+    ) -> None:
+        if not isinstance(original_data, dict):
+            warnings.warn("Extracting extra info is not supported for batch data.")
+            return
+
+        reserialized_data = self._serialize_data(data=deserialized_data, extra_info=extra_info)
+        if len(original_data) != len(reserialized_data) or not isinstance(reserialized_data, dict):
+            warnings.warn("The extra info cannot be determined.")
+            return
+
+        for component, component_data in original_data.items():
+            for entry in component_data:
+                self._extract_extra_component_info(component, entry, reserialized_data, extra_info)
+
+    def _extract_extra_component_info(
+        self, component: str, attributes: Dict[str, Any], reserialized_data: SingleDataset, extra_info: ExtraInfo
+    ):
+        entry_id = attributes["id"]
+        reserialized_entry = self._get_first_by(reserialized_data[component], "id", entry_id)
+        if reserialized_entry is None:
+            warnings.warn(f"The extra info cannot be determined for component '{component}' with ID {entry_id}")
+            return
+
+        for attribute, value in attributes.items():
+            if attribute not in reserialized_entry:
+                if entry_id not in extra_info:
+                    extra_info[entry_id] = {}
+
+                extra_info[entry_id][attribute] = value
+
+    @staticmethod
+    def _get_first_by(data: List[Dict[str, Any]], field: str, value: Any) -> Optional[Dict[str, Any]]:
+        for entry in data:
+            if entry[field] == value:
+                return entry
+
+        return None

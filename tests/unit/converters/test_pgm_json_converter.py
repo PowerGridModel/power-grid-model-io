@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 from power_grid_model import initialize_array
 from power_grid_model.data_types import BatchDataset, SingleDataset
+from power_grid_model.errors import PowerGridSerializationError
 from structlog.testing import capture_logs
 
 from power_grid_model_io.converters.pgm_json_converter import PgmJsonConverter
@@ -60,7 +61,7 @@ def pgm_sparse_batch_data():
 
 
 def test_parse_data(converter: PgmJsonConverter, structured_input_data, structured_batch_data):
-    with pytest.raises(TypeError, match="Raw data should be either a list or a dictionary!"):
+    with pytest.raises(PowerGridSerializationError, match="Wrong data type for key data in the root level dictionary!"):
         converter._parse_data(data="str", data_type="input", extra_info=None)  # type: ignore
 
     # test for input dataset

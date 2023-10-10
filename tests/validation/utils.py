@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import json
+import warnings
 from functools import lru_cache
 from pathlib import Path
 from typing import Generator, List, Mapping, Tuple
@@ -11,7 +12,8 @@ import numpy as np
 import pandas as pd
 from power_grid_model import power_grid_meta_data
 from power_grid_model.data_types import SingleDataset, SinglePythonDataset
-from power_grid_model.utils import convert_python_single_dataset_to_single_dataset
+from power_grid_model.errors import PowerGridSerializationError
+from power_grid_model.utils import import_json_data, json_deserialize_from_file
 
 from power_grid_model_io.data_types import ExtraInfo, StructuredData
 
@@ -172,10 +174,27 @@ def load_json_single_dataset(file_path: Path, data_type: str) -> Tuple[SingleDat
     Returns: A native pgm dataset and an extra info lookup table
 
     """
-    raw_data = load_json_file(file_path)
-    assert isinstance(raw_data, dict)
-    dataset = convert_python_single_dataset_to_single_dataset(data=raw_data, data_type=data_type, ignore_extra=True)
-    extra_info = extract_extra_info(raw_data, data_type=data_type)
+    try:
+        dataset = json_deserialize_from_file(file_path=file_path)
+    except PowerGridSerializationError as error:
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                dataset = import_json_data(json_file=file_path, data_type=data_type, ignore_extra=True)
+        except PowerGridSerializationError:
+            pass
+        else:
+            error = None
+            warnings.warn(
+                "Provided file path is in a deprecated format. This is a temporary backwards-compatibility measure. "
+                "Please upgrade to use_deprecated_format=False or json_serialize_to_file as soon as possible.",
+                DeprecationWarning,
+            )
+        finally:
+            if error is not None:
+                raise error
+
+    extra_info = extract_extra_info(json.loads(file_path.read_text(encoding="utf-8")), data_type=data_type)
     return dataset, extra_info
 
 
