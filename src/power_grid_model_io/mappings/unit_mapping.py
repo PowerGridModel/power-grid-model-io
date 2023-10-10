@@ -8,6 +8,7 @@ Unit mapping helper class
 from numbers import Number
 from typing import Dict, Optional, Set, Tuple
 
+import numpy as np
 import structlog
 
 #            si-unit   unit factor
@@ -58,7 +59,7 @@ class UnitMapping:
                     )
                 self._mapping[unit] = (multiplier, si_unit)
                 if unit == si_unit:
-                    if multiplier != 1.0:
+                    if not np.isclose(multiplier, 1.0, rtol=1.0e-9, atol=0.0):
                         raise ValueError(
                             f"Invalid unit definition for '{unit}': 1{unit} cannot be {multiplier}{si_unit}"
                         )

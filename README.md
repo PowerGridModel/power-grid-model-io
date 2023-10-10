@@ -4,8 +4,8 @@ SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynam
 SPDX-License-Identifier: MPL-2.0
 -->
 
-[![PyPI version](https://badge.fury.io/py/power-grid-model-io.svg)](https://badge.fury.io/py/power-grid-model-io)
-[![Anaconda-Server Badge](https://anaconda.org/conda-forge/power-grid-model-io/badges/version.svg)](https://anaconda.org/conda-forge/power-grid-model-io)
+[![PyPI version](https://badge.fury.io/py/power-grid-model-io.svg?no-cache)](https://badge.fury.io/py/power-grid-model-io)
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/power-grid-model-io/badges/version.svg?no-cache)](https://anaconda.org/conda-forge/power-grid-model-io)
 [![License: MIT](https://img.shields.io/badge/License-MPL2.0-informational.svg)](https://github.com/PowerGridModel/power-grid-model-io/blob/main/LICENSE)
 [![Build and Test Python](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/build-test-and-sonar.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/build-test-and-sonar.yml)
 [![Check Code Quality](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/check-code-quality.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/check-code-quality.yml)
