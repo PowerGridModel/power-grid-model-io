@@ -125,7 +125,7 @@ def test_load_sc_output_data(converter: DummyConverter):
     data = converter.load_sc_output_data(data={"node": [{"id": 1}, {"id": 2}]})
 
     # Assert
-    converter._parse_data.assert_called_once_with(  # type: ignore
+    converter._parse_data.assert_called_once_with( 
         data={"node": [{"id": 1}, {"id": 2}]}, data_type="sc_output", extra_info=None
     )
     assert data == {"foo": 1}
