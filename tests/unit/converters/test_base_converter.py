@@ -119,7 +119,7 @@ def test_load_asym_output_data(converter: DummyConverter):
 
 def test_load_sc_output_data(converter: DummyConverter):
     # Arrange
-    converter._parse_data.return_value = {"foo": 1}  # type: ignore
+    converter._parse_data.return_value = {"foo": 1}
 
     # Act
     data = converter.load_sc_output_data(data={"node": [{"id": 1}, {"id": 2}]})
