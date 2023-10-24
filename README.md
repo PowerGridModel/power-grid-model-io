@@ -11,6 +11,8 @@ SPDX-License-Identifier: MPL-2.0
 [![Check Code Quality](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/check-code-quality.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/check-code-quality.yml)
 [![REUSE Compliance Check](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/reuse-compliance.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/reuse-compliance.yml)
 [![docs](https://readthedocs.org/projects/power-grid-model-io/badge/)](https://power-grid-model-io.readthedocs.io/en/stable/)
+[![Downloads](https://static.pepy.tech/badge/power-grid-model-io)](https://pepy.tech/project/power-grid-model-io)
+[![Downloads](https://static.pepy.tech/badge/power-grid-model-io/month)](https://pepy.tech/project/power-grid-model-io)
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model-io&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model-io)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model-io&metric=coverage)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model-io)
