@@ -119,13 +119,13 @@ def test_load_asym_output_data(converter: DummyConverter):
 
 def test_load_sc_output_data(converter: DummyConverter):
     # Arrange
-    converter._parse_data.return_value = {"foo": 1}
+    converter._parse_data.return_value = {"foo": 1}  # type: ignore
 
     # Act
     data = converter.load_sc_output_data(data={"node": [{"id": 1}, {"id": 2}]})
 
     # Assert
-    converter._parse_data.assert_called_once_with( 
+    converter._parse_data.assert_called_once_with(  # type: ignore
         data={"node": [{"id": 1}, {"id": 2}]}, data_type="sc_output", extra_info=None
     )
     assert data == {"foo": 1}
