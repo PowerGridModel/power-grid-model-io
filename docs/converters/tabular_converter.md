@@ -48,6 +48,7 @@ units:
 substitutions:
   ".*Switch state":
     "off": 0
+    "in": 1
     "on": 1
 ```
 
@@ -162,6 +163,7 @@ substitutions:
   ".*Switch state":
     "off": 0
     "in": 1
+    "on": 1
   N1:
     none: false
     own: true
