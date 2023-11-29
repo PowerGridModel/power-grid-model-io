@@ -13,7 +13,7 @@ def mapping() -> ValueMapping:
     return ValueMapping(
         {
             "sources.closed": {"yes": 1, "no": 0},
-            ".*_switch_state": {"off": 0, "in": 1},
+            ".*_switch_state": {"off": 0, "in": 1, "on": 1},
             "N1": {"none": False, "own": True},
         }
     )
@@ -30,7 +30,7 @@ def test_get_substitutions__exact_match_with_table(mapping: ValueMapping):
 
 
 def test_get_substitutions__regex_match(mapping: ValueMapping):
-    assert mapping.get_substitutions("from_switch_state") == {"off": 0, "in": 1}
+    assert mapping.get_substitutions("from_switch_state") == {"off": 0, "in": 1, "on": 1}
 
 
 def test_get_substitutions__no_match(mapping: ValueMapping):
