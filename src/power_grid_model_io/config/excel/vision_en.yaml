@@ -824,9 +824,11 @@ substitutions:
   ".*Switch state":
     "off": 0
     "in": 1
+    "on": 1
   "Switch state .*":
     "off": 0
     "in": 1
+    "on": 1
   N1:
     0: false
     1: true
