@@ -85,5 +85,6 @@ contribution/GOVERNANCE.md
 :maxdepth: 2
 release_and_support/RELEASE.md
 release_and_support/SUPPORT.md
+release_and_support/SECURITY.md
 release_and_support/CITATION.md
 ```
