@@ -104,7 +104,7 @@ jobs:
           python-version: ${{ matrix.python }}
 
       - name: Load built wheel file
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: power-grid-model-io
           path: wheelhouse/
@@ -135,7 +135,7 @@ jobs:
           python-version: ${{ matrix.python }}
 
       - name: Load built wheel file
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: power-grid-model-io
           path: wheelhouse/
@@ -165,7 +165,7 @@ jobs:
           python-version: "3.10"
 
       - name: Load built wheel file
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: power-grid-model-io
           path: wheelhouse/
