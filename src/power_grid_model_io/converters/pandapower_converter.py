@@ -9,6 +9,7 @@ from functools import lru_cache
 from typing import Dict, List, MutableMapping, Optional, Tuple, Union
 
 import numpy as np
+from numpy import dtype
 import pandas as pd
 import structlog
 from power_grid_model import Branch3Side, BranchSide, LoadGenType, WindingType, initialize_array, power_grid_meta_data
@@ -346,7 +347,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         pgm_nodes = initialize_array(data_type="input", component_type="node", shape=len(pp_busses))
         pgm_nodes["id"] = self._generate_ids("bus", pp_busses.index)
-        pgm_nodes["u_rated"] = self._get_pp_attr("bus", "vn_kv") * 1e3
+        pgm_nodes["u_rated"] = self._get_pp_attr("bus", "vn_kv", expected_type=np.float32) * 1e3
 
         assert "node" not in self.pgm_input_data
         self.pgm_input_data["node"] = pgm_nodes
@@ -2327,7 +2328,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         trafo3w.columns = col_names
         return trafo3w
 
-    def _get_pp_attr(self, table: str, attribute: str, default: Optional[Union[float, bool, str]] = None) -> np.ndarray:
+    def _get_pp_attr(self, table: str, attribute: str, default: Optional[Union[float, bool, str]] = None, expected_type: dtype = np.float64) -> np.ndarray:
         """
         Returns the selected PandaPower attribute from the selected PandaPower table.
 
@@ -2345,7 +2346,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if attribute not in pp_component_data:
             if default is None:
                 raise KeyError(f"No '{attribute}' value for '{table}'.")
-            return np.array([default])
+            return np.array([default], dtype=expected_type)
 
         attr_data = pp_component_data[attribute]
 
@@ -2358,7 +2359,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if any(nan_values):
             attr_data = attr_data.fillna(value=default, inplace=False)
 
-        return attr_data.to_numpy()
+        return attr_data.to_numpy(dtype=expected_type)
 
     def get_id(self, pp_table: str, pp_idx: int, name: Optional[str] = None) -> int:
         """
