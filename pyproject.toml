@@ -26,12 +26,12 @@ classifiers=[
     "Operating System :: MacOS",
     "Topic :: Scientific/Engineering :: Physics",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
     "numpy>=1.20",
     "openpyxl",
     "pandas",
-    "power_grid_model>=1.6",
+    "power_grid_model>=1.6.46",
     "pyyaml",
     "structlog",
     "tqdm",
