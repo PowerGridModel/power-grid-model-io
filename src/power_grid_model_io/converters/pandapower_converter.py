@@ -9,10 +9,8 @@ from functools import lru_cache
 from typing import Dict, List, MutableMapping, Optional, Tuple, Union
 
 import numpy as np
-from numpy import dtype
 import pandas as pd
 import structlog
-from numpy import dtype
 from power_grid_model import Branch3Side, BranchSide, LoadGenType, WindingType, initialize_array, power_grid_meta_data
 from power_grid_model.data_types import Dataset, SingleDataset
 
@@ -562,7 +560,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_loads.empty:
             return
 
-        if self._get_pp_attr("load", "type", expected_type=dtype(object)).any() == "delta":
+        if self._get_pp_attr("load", "type", expected_type=np.dtype(object)).any() == "delta":
             raise NotImplementedError("Delta loads are not implemented, only wye loads are supported in PGM.")
 
         scaling = self._get_pp_attr("load", "scaling", expected_type="f8", default=1.0)
@@ -620,7 +618,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_asym_loads.empty:
             return
 
-        if self._get_pp_attr("asymmetric_load", "type", expected_type=dtype(object)).any() == "delta":
+        if self._get_pp_attr("asymmetric_load", "type", expected_type=np.dtype(object)).any() == "delta":
             raise NotImplementedError("Delta loads are not implemented, only wye loads are supported in PGM.")
 
         scaling = self._get_pp_attr("asymmetric_load", "scaling", expected_type="f8")
@@ -684,7 +682,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         sn_mva = self._get_pp_attr("trafo", "sn_mva", expected_type="f8")
         switch_states = self.get_switch_states("trafo")
 
-        tap_side = self._get_pp_attr("trafo", "tap_side", expected_type=dtype(object), default=None)
+        tap_side = self._get_pp_attr("trafo", "tap_side", expected_type=np.dtype(object), default=None)
         tap_nom = self._get_pp_attr("trafo", "tap_neutral", expected_type="i4", default=np.nan)
         tap_pos = self._get_pp_attr("trafo", "tap_pos", expected_type="i4", default=np.nan)
         tap_size = self._get_tap_size(pp_trafo)
@@ -783,7 +781,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         sn_lv_mva = self._get_pp_attr("trafo3w", "sn_lv_mva", expected_type="f8")
         in_service = self._get_pp_attr("trafo3w", "in_service", expected_type="bool", default=True)
         switch_states = self.get_trafo3w_switch_states(pp_trafo3w)
-        tap_side = self._get_pp_attr("trafo3w", "tap_side", expected_type=dtype(object), default=None)
+        tap_side = self._get_pp_attr("trafo3w", "tap_side", expected_type=np.dtype(object), default=None)
         tap_nom = self._get_pp_attr("trafo3w", "tap_neutral", expected_type="i4", default=np.nan)
         tap_pos = self._get_pp_attr("trafo3w", "tap_pos", expected_type="i4", default=np.nan)
         tap_size = self._get_3wtransformer_tap_size(pp_trafo3w)
@@ -2371,7 +2369,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self,
         table: str,
         attribute: str,
-        expected_type: Union[str, dtype(object)],
+        expected_type: Union[str, np.dtype(object)],
         default: Optional[Union[float, bool, str]] = None,
     ) -> np.ndarray:
         """
