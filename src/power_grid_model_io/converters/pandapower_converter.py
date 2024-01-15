@@ -9,6 +9,7 @@ from functools import lru_cache
 from typing import Dict, List, MutableMapping, Optional, Tuple, Union
 
 import numpy as np
+from numpy import dtype
 import pandas as pd
 import structlog
 from power_grid_model import Branch3Side, BranchSide, LoadGenType, WindingType, initialize_array, power_grid_meta_data
