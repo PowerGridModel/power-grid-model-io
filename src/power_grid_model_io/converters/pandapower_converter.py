@@ -461,7 +461,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_shunts = initialize_array(data_type="input", component_type="shunt", shape=len(pp_shunts))
         pgm_shunts["id"] = self._generate_ids("shunt", pp_shunts.index)
         pgm_shunts["node"] = self._get_pgm_ids("bus", self._get_pp_attr("shunt", "bus", expected_type="u4"))
-        pgm_shunts["status"] = self._get_pp_attr("shunt", "in_service", expected_type="bool", default=1)
+        pgm_shunts["status"] = self._get_pp_attr("shunt", "in_service", expected_type="bool", default=True)
         pgm_shunts["g1"] = g1_shunt
         pgm_shunts["b1"] = b1_shunt
         pgm_shunts["g0"] = g1_shunt
@@ -520,7 +520,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_asym_gens["node"] = self._get_pgm_ids(
             "bus", self._get_pp_attr("asymmetric_sgen", "bus", expected_type="i8")
         )
-        pgm_asym_gens["status"] = self._get_pp_attr("asymmetric_sgen", "in_service", expected_type="bool")
+        pgm_asym_gens["status"] = self._get_pp_attr("asymmetric_sgen", "in_service", expected_type="bool", default=True)
         pgm_asym_gens["p_specified"] = np.transpose(
             np.array(
                 (
@@ -560,7 +560,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_loads.empty:
             return
 
-        if self._get_pp_attr("load", "type", expected_type='O').any() == "delta":
+        if self._get_pp_attr("load", "type", expected_type='O', default=None).any() == "delta":
             raise NotImplementedError("Delta loads are not implemented, only wye loads are supported in PGM.")
 
         scaling = self._get_pp_attr("load", "scaling", expected_type="f8", default=1.0)
@@ -618,7 +618,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_asym_loads.empty:
             return
 
-        if self._get_pp_attr("asymmetric_load", "type", expected_type='O').any() == "delta":
+        if self._get_pp_attr("asymmetric_load", "type", expected_type='O', default=None).any() == "delta":
             raise NotImplementedError("Delta loads are not implemented, only wye loads are supported in PGM.")
 
         scaling = self._get_pp_attr("asymmetric_load", "scaling", expected_type="f8")
@@ -629,7 +629,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_asym_loads["node"] = self._get_pgm_ids(
             "bus", self._get_pp_attr("asymmetric_load", "bus", expected_type="u4")
         )
-        pgm_asym_loads["status"] = self._get_pp_attr("asymmetric_load", "in_service", expected_type="bool")
+        pgm_asym_loads["status"] = self._get_pp_attr("asymmetric_load", "in_service", expected_type="bool", default=True)
         pgm_asym_loads["p_specified"] = np.transpose(
             np.array(
                 [
@@ -995,7 +995,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_loads_from_motor["node"] = self._get_pgm_ids(
             "bus", self._get_pp_attr("motor", "bus", expected_type="i8")
         )
-        pgm_sym_loads_from_motor["status"] = self._get_pp_attr("motor", "in_service", expected_type="bool")
+        pgm_sym_loads_from_motor["status"] = self._get_pp_attr("motor", "in_service", expected_type="bool", default=True)
         pgm_sym_loads_from_motor["type"] = LoadGenType.const_power
         #  The formula for p_specified is pn_mech_mw /(efficiency_percent/100) * (loading_percent/100) * scaling * 1e6
         pgm_sym_loads_from_motor["p_specified"] = (
@@ -2369,7 +2369,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self,
         table: str,
         attribute: str,
-        expected_type: str,
+        expected_type: Optional[str] = 'O',
         default: Optional[Union[float, bool, str]] = None,
     ) -> np.ndarray:
         """

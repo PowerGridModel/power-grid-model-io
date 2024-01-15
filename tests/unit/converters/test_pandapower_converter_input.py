@@ -494,7 +494,7 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     # administration
     converter.get_switch_states.assert_called_once_with("line")
     converter._generate_ids.assert_called_once_with("line", two_pp_objs.index)
-    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("line_get_pp_attr", "from_bus", expected_type='u4'))
+    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("line", "from_bus", expected_type='u4'))
     converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("line", "to_bus", expected_type='u4'))
 
     # initialization
@@ -590,7 +590,7 @@ def test_create_pgm_input_sources(mock_init_array: MagicMock, two_pp_objs, conve
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", _generate_ids("ext_grid", two_pp_objs.index))
     pgm.assert_any_call("node", _get_pgm_ids("bus", _get_pp_attr('ext_grid', 'bus', expected_type='u4')))
-    pgm.assert_any_call("status", _get_pp_attr('ext_grid', 'in_service', expected_type='bool'))
+    pgm.assert_any_call("status", _get_pp_attr('ext_grid', 'in_service', expected_type='bool', default=True))
     pgm.assert_any_call("u_ref", _get_pp_attr('ext_grid', 'vm_pu', expected_type='f8', default=1.0))
     pgm.assert_any_call("u_ref_angle", _get_pp_attr("ext_grid", "va_degree", expected_type='f8', default=0.0) * (np.pi / 180))
     pgm.assert_any_call("sk", _get_pp_attr("ext_grid", "s_sc_max_mva", expected_type='f8', default=np.nan) * 1e6)
@@ -817,7 +817,7 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
     converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("trafo", "hv_bus", expected_type='u4'))
     converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("trafo", "lv_bus", expected_type='u4'))
     converter._get_tap_size.assert_called_once_with(two_pp_objs)
-    converter._get_transformer_tap_side.assert_called_once_with(_get_pp_attr("trafo", "tap_side", expected_type='O'))
+    converter._get_transformer_tap_side.assert_called_once_with(_get_pp_attr("trafo", "tap_side", expected_type='O', default=None))
 
     # initialization
     mock_init_array.assert_called_once_with(data_type="input", component_type="transformer", shape=2)
@@ -983,7 +983,7 @@ def test_create_pgm_input_sym_gens(mock_init_array: MagicMock, two_pp_objs, conv
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", _generate_ids("sgen", two_pp_objs.index))
     pgm.assert_any_call("node", _get_pgm_ids("bus", _get_pp_attr("sgen", "bus", expected_type='i8')))
-    pgm.assert_any_call("status", _get_pp_attr("sgen", "in_service", expected_type='bool'))
+    pgm.assert_any_call("status", _get_pp_attr("sgen", "in_service", expected_type='bool', default=True))
     pgm.assert_any_call("type", LoadGenType.const_power)
     pgm.assert_any_call("p_specified", _get_pp_attr("sgen", "p_mw", expected_type='f8') * _get_pp_attr('sgen', 'scaling', expected_type='f8', default=1.0) * 1e6)
     pgm.assert_any_call("q_specified", _get_pp_attr('sgen', 'q_mvar', expected_type='f8', default=0.0) * _get_pp_attr('sgen', 'scaling', expected_type='f8', default=1.0) * 1e6)
@@ -1088,7 +1088,7 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
     converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr('trafo3w', 'mv_bus', expected_type='u4'))
     converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr('trafo3w', 'lv_bus', expected_type='u4'))
     converter._get_3wtransformer_tap_size.assert_called_once_with(two_pp_objs)
-    converter._get_3wtransformer_tap_side.assert_called_once_with(_get_pp_attr('trafo3w', 'tap_side', expected_type='O'))
+    converter._get_3wtransformer_tap_side.assert_called_once_with(_get_pp_attr('trafo3w', 'tap_side', expected_type='O', default=None))
 
     # initialization
     mock_init_array.assert_called_once_with(data_type="input", component_type="three_winding_transformer", shape=2)
@@ -1113,7 +1113,7 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
     converter._get_pp_attr.assert_any_call('trafo3w', 'i0_percent', expected_type='f8')
     converter._get_pp_attr.assert_any_call('trafo3w', 'shift_mv_degree', expected_type='f8', default=0.0)
     converter._get_pp_attr.assert_any_call('trafo3w', 'shift_lv_degree', expected_type='f8', default=0.0)
-    converter._get_pp_attr.assert_any_call('trafo3w', 'tap_side', expected_type='object', default=None)
+    converter._get_pp_attr.assert_any_call('trafo3w', 'tap_side', expected_type='O', default=None)
     converter._get_pp_attr.assert_any_call('trafo3w', 'tap_neutral', expected_type='i4', default=np.nan)
     converter._get_pp_attr.assert_any_call('trafo3w', 'tap_min', expected_type='i4', default=0)
     converter._get_pp_attr.assert_any_call('trafo3w', 'tap_max', expected_type='i4', default=0)
@@ -1309,7 +1309,7 @@ def test_create_pgm_input_transformers3w__default() -> None:
     # Act
     converter._create_pgm_input_three_winding_transformers()
     result = converter.pgm_input_data["three_winding_transformer"]
-
+    
     # Assert
     assert result[0]["tap_side"] == Branch3Side.side_1.value
     assert result[1]["tap_side"] == Branch3Side.side_2.value
