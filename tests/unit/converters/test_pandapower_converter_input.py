@@ -646,7 +646,7 @@ def test_create_pgm_input_sym_loads(mock_init_array: MagicMock, two_pp_objs, con
     converter._get_pp_attr.assert_any_call("load", "const_i_percent", expected_type='f8', default=0)
     converter._get_pp_attr.assert_any_call("load", "scaling", expected_type='f8', default=1)
     converter._get_pp_attr.assert_any_call("load", "in_service", expected_type='bool', default=True)
-    converter._get_pp_attr.assert_any_call('load', 'type', expected_type='O')
+    converter._get_pp_attr.assert_any_call('load', 'type', expected_type='O', default=None)
     assert len(converter._get_pp_attr.call_args_list) == 8
 
     # assignment:
@@ -684,15 +684,15 @@ def test_create_pgm_input_asym_loads(mock_init_array: MagicMock, two_pp_objs, co
     converter._get_pp_attr.assert_any_call("asymmetric_load", "q_b_mvar", expected_type='f8')
     converter._get_pp_attr.assert_any_call("asymmetric_load", "q_c_mvar", expected_type='f8')
     converter._get_pp_attr.assert_any_call("asymmetric_load", "scaling", expected_type='f8')
-    converter._get_pp_attr.assert_any_call("asymmetric_load", "in_service", expected_type='bool')
-    converter._get_pp_attr.assert_any_call("asymmetric_load", "type", expected_type='O')
+    converter._get_pp_attr.assert_any_call("asymmetric_load", "in_service", expected_type='bool', default=True)
+    converter._get_pp_attr.assert_any_call("asymmetric_load", "type", expected_type='O', default=None)
     assert len(converter._get_pp_attr.call_args_list) == 10
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", _generate_ids("asymmetric_load", two_pp_objs.index))
     pgm.assert_any_call("node", _get_pgm_ids("bus", _get_pp_attr('asymmetric_load', 'bus', expected_type='u4')))
-    pgm.assert_any_call("status", _get_pp_attr('asymmetric_load', 'in_service', expected_type='bool'))
+    pgm.assert_any_call("status", _get_pp_attr('asymmetric_load', 'in_service', expected_type='bool', default=True))
     pgm.assert_any_call("p_specified", ANY)
     pgm.assert_any_call("q_specified", ANY)
     assert len(pgm.call_args_list) == 6
@@ -1053,14 +1053,14 @@ def test_create_pgm_input_asym_gens(mock_init_array: MagicMock, two_pp_objs, con
     converter._get_pp_attr.assert_any_call('asymmetric_sgen', 'q_b_mvar', expected_type='f8')
     converter._get_pp_attr.assert_any_call('asymmetric_sgen', 'q_c_mvar', expected_type='f8')
     converter._get_pp_attr.assert_any_call('asymmetric_sgen', 'scaling', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('asymmetric_sgen', 'in_service', expected_type='bool')
+    converter._get_pp_attr.assert_any_call('asymmetric_sgen', 'in_service', expected_type='bool', default=True)
     assert len(converter._get_pp_attr.call_args_list) == 9
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", _generate_ids("asymmetric_sgen", two_pp_objs.index))
     pgm.assert_any_call("node", _get_pgm_ids("bus", _get_pp_attr('asymmetric_sgen', 'bus', expected_type='i8')))
-    pgm.assert_any_call("status", _get_pp_attr('asymmetric_sgen', 'in_service', expected_type='bool'))
+    pgm.assert_any_call("status", _get_pp_attr('asymmetric_sgen', 'in_service', expected_type='bool', default=True))
     pgm.assert_any_call("p_specified", ANY)
     pgm.assert_any_call("q_specified", ANY)
     pgm.assert_any_call("type", LoadGenType.const_power)
@@ -1321,7 +1321,7 @@ def test_create_pgm_input_transformers3w__default() -> None:
     assert result[1]["tap_pos"] == 34.0 != result[1]["tap_nom"]
     assert result[2]["tap_pos"] == 34.0 != result[2]["tap_nom"]
     assert result[3]["tap_pos"] == 0 == result[3]["tap_nom"]
-    assert result[4]["tap_pos"] == 0 == result[4]["tap_nom"]
+    assert result[4]["tap_pos"] == 0 == result[4]["tap_nom"] # TODO: check if this is correct
     assert result[5]["tap_pos"] == 0 == result[5]["tap_nom"]
     assert result[6]["tap_size"] == 0
 
@@ -1603,7 +1603,7 @@ def test_create_pgm_input_motors(mock_init_array: MagicMock, two_pp_objs, conver
     converter._get_pp_attr.assert_any_call('motor', 'efficiency_percent', expected_type='f8')
     converter._get_pp_attr.assert_any_call('motor', 'loading_percent', expected_type='f8')
     converter._get_pp_attr.assert_any_call('motor', 'scaling', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('motor', 'in_service', expected_type='bool')
+    converter._get_pp_attr.assert_any_call('motor', 'in_service', expected_type='bool', default=True)
     assert len(converter._get_pp_attr.call_args_list) == 7
 
     # assignment:
