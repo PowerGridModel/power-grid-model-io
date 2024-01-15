@@ -2369,7 +2369,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self,
         table: str,
         attribute: str,
-        expected_type: any,
+        expected_type: str,
         default: Optional[Union[float, bool, str]] = None,
     ) -> np.ndarray:
         """
