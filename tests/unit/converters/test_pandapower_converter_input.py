@@ -468,13 +468,13 @@ def test_create_pgm_input_nodes(mock_init_array: MagicMock, two_pp_objs: MockDf,
     mock_init_array.assert_called_once_with(data_type="input", component_type="node", shape=2)
 
     # retrieval
-    converter._get_pp_attr.assert_any_call("bus", "vn_kv", expected_type='f8')
+    converter._get_pp_attr.assert_any_call("bus", "vn_kv", expected_type="f8")
     assert len(converter._get_pp_attr.call_args_list) == 1
 
     # assignment
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", _generate_ids("bus", two_pp_objs.index))
-    pgm.assert_any_call("u_rated", _get_pp_attr('bus', 'vn_kv', expected_type='f8') * 1e3)
+    pgm.assert_any_call("u_rated", _get_pp_attr("bus", "vn_kv", expected_type="f8") * 1e3)
     assert len(pgm.call_args_list) == 2
 
     # result
@@ -494,60 +494,78 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     # administration
     converter.get_switch_states.assert_called_once_with("line")
     converter._generate_ids.assert_called_once_with("line", two_pp_objs.index)
-    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("line", "from_bus", expected_type='u4'))
-    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("line", "to_bus", expected_type='u4'))
+    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("line", "from_bus", expected_type="u4"))
+    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("line", "to_bus", expected_type="u4"))
 
     # initialization
     mock_init_array.assert_called_once_with(data_type="input", component_type="line", shape=2)
 
     # retrieval
-    converter._get_pp_attr.assert_any_call("line", "from_bus", expected_type='u4')
-    converter._get_pp_attr.assert_any_call("line", "to_bus", expected_type='u4')
-    converter._get_pp_attr.assert_any_call("line", "in_service", expected_type='bool', default=True)
-    converter._get_pp_attr.assert_any_call("line", "length_km", expected_type='f8')
-    converter._get_pp_attr.assert_any_call("line", "parallel", expected_type='u4', default=1)
-    converter._get_pp_attr.assert_any_call("line", "r_ohm_per_km", expected_type='f8')
-    converter._get_pp_attr.assert_any_call("line", "x_ohm_per_km", expected_type='f8')
-    converter._get_pp_attr.assert_any_call("line", "c_nf_per_km", expected_type='f8')
-    converter._get_pp_attr.assert_any_call("line", "g_us_per_km", expected_type='f8', default=0)
-    converter._get_pp_attr.assert_any_call("line", "max_i_ka", expected_type='f8')
-    converter._get_pp_attr.assert_any_call("line", "df", expected_type='f8', default=1)
-    converter._get_pp_attr.assert_any_call("line", "r0_ohm_per_km", expected_type='f8', default=np.nan)
-    converter._get_pp_attr.assert_any_call("line", "x0_ohm_per_km", expected_type='f8', default=np.nan)
-    converter._get_pp_attr.assert_any_call("line", "c0_nf_per_km", expected_type='f8', default=np.nan)
-    converter._get_pp_attr.assert_any_call("line", "g0_us_per_km", expected_type='f8', default=0)
+    converter._get_pp_attr.assert_any_call("line", "from_bus", expected_type="u4")
+    converter._get_pp_attr.assert_any_call("line", "to_bus", expected_type="u4")
+    converter._get_pp_attr.assert_any_call("line", "in_service", expected_type="bool", default=True)
+    converter._get_pp_attr.assert_any_call("line", "length_km", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("line", "parallel", expected_type="u4", default=1)
+    converter._get_pp_attr.assert_any_call("line", "r_ohm_per_km", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("line", "x_ohm_per_km", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("line", "c_nf_per_km", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("line", "g_us_per_km", expected_type="f8", default=0)
+    converter._get_pp_attr.assert_any_call("line", "max_i_ka", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("line", "df", expected_type="f8", default=1)
+    converter._get_pp_attr.assert_any_call("line", "r0_ohm_per_km", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call("line", "x0_ohm_per_km", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call("line", "c0_nf_per_km", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call("line", "g0_us_per_km", expected_type="f8", default=0)
     assert len(converter._get_pp_attr.call_args_list) == 15
 
     # assignment
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", _generate_ids("line", two_pp_objs.index))
-    pgm.assert_any_call("from_node", _get_pgm_ids("bus", _get_pp_attr('line', 'from_bus', expected_type='u4')))
-    pgm.assert_any_call("from_status", _get_pp_attr('line', 'in_service', expected_type='bool', default=True) & get_switch_states("line")["from"])
-    pgm.assert_any_call("to_node", _get_pgm_ids("bus", _get_pp_attr("line", "to_bus", expected_type='u4')))
-    pgm.assert_any_call("to_status", _get_pp_attr("line", "in_service", expected_type='bool', default=True) & get_switch_states("line")["to"])
+    pgm.assert_any_call("from_node", _get_pgm_ids("bus", _get_pp_attr("line", "from_bus", expected_type="u4")))
+    pgm.assert_any_call(
+        "from_status",
+        _get_pp_attr("line", "in_service", expected_type="bool", default=True) & get_switch_states("line")["from"],
+    )
+    pgm.assert_any_call("to_node", _get_pgm_ids("bus", _get_pp_attr("line", "to_bus", expected_type="u4")))
+    pgm.assert_any_call(
+        "to_status",
+        _get_pp_attr("line", "in_service", expected_type="bool", default=True) & get_switch_states("line")["to"],
+    )
     pgm.assert_any_call(
         "r1",
-        _get_pp_attr('line', 'r_ohm_per_km', expected_type='f8')
-        * (_get_pp_attr('line', 'length_km', expected_type='f8') / _get_pp_attr('line', 'parallel', expected_type='u4', default=1)),
+        _get_pp_attr("line", "r_ohm_per_km", expected_type="f8")
+        * (
+            _get_pp_attr("line", "length_km", expected_type="f8")
+            / _get_pp_attr("line", "parallel", expected_type="u4", default=1)
+        ),
     )
     pgm.assert_any_call(
         "x1",
-        _get_pp_attr('line', 'x_ohm_per_km', expected_type='f8')
-        * (_get_pp_attr('line', 'length_km', expected_type='f8') / _get_pp_attr('line', 'parallel', expected_type='u4', default=1)),
+        _get_pp_attr("line", "x_ohm_per_km", expected_type="f8")
+        * (
+            _get_pp_attr("line", "length_km", expected_type="f8")
+            / _get_pp_attr("line", "parallel", expected_type="u4", default=1)
+        ),
     )
     pgm.assert_any_call(
         "c1",
-        _get_pp_attr('line', 'c_nf_per_km', expected_type='f8')
-        * _get_pp_attr("line", "length_km", expected_type='f8')
-        * _get_pp_attr('line', 'parallel', expected_type='u4', default=1)
+        _get_pp_attr("line", "c_nf_per_km", expected_type="f8")
+        * _get_pp_attr("line", "length_km", expected_type="f8")
+        * _get_pp_attr("line", "parallel", expected_type="u4", default=1)
         * 1e-9,
     )
     pgm.assert_any_call(
-        "tan1", _get_pp_attr("line", "g_us_per_km", expected_type='f8', default=0) / _get_pp_attr('line', 'c_nf_per_km', expected_type='f8') / (np.pi / 10)
+        "tan1",
+        _get_pp_attr("line", "g_us_per_km", expected_type="f8", default=0)
+        / _get_pp_attr("line", "c_nf_per_km", expected_type="f8")
+        / (np.pi / 10),
     )
     pgm.assert_any_call(
         "i_n",
-        _get_pp_attr('line', 'max_i_ka', expected_type='f8') * 1e3 * _get_pp_attr('line', 'df', expected_type='f8', default=1) * _get_pp_attr('line', 'parallel', expected_type='u4', default=1),
+        _get_pp_attr("line", "max_i_ka", expected_type="f8")
+        * 1e3
+        * _get_pp_attr("line", "df", expected_type="f8", default=1)
+        * _get_pp_attr("line", "parallel", expected_type="u4", default=1),
     )
     pgm.assert_any_call("r0", ANY)
     pgm.assert_any_call("x0", ANY)
@@ -576,25 +594,27 @@ def test_create_pgm_input_sources(mock_init_array: MagicMock, two_pp_objs, conve
     mock_init_array.assert_called_once_with(data_type="input", component_type="source", shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call('ext_grid', 'bus', expected_type='u4')
-    converter._get_pp_attr.assert_any_call('ext_grid', 'vm_pu', expected_type='f8', default=1.0)
-    converter._get_pp_attr.assert_any_call("ext_grid", "va_degree", expected_type='f8', default=0.0)
-    converter._get_pp_attr.assert_any_call("ext_grid", "s_sc_max_mva", expected_type='f8', default=np.nan)
-    converter._get_pp_attr.assert_any_call("ext_grid", "rx_max", expected_type='f8', default=np.nan)
-    converter._get_pp_attr.assert_any_call("ext_grid", "in_service", expected_type='bool', default=True)
-    converter._get_pp_attr.assert_any_call("ext_grid", "r0x0_max", expected_type='f8', default=np.nan)
-    converter._get_pp_attr.assert_any_call("ext_grid", "x0x_max", expected_type='f8', default=np.nan)
+    converter._get_pp_attr.assert_any_call("ext_grid", "bus", expected_type="u4")
+    converter._get_pp_attr.assert_any_call("ext_grid", "vm_pu", expected_type="f8", default=1.0)
+    converter._get_pp_attr.assert_any_call("ext_grid", "va_degree", expected_type="f8", default=0.0)
+    converter._get_pp_attr.assert_any_call("ext_grid", "s_sc_max_mva", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call("ext_grid", "rx_max", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call("ext_grid", "in_service", expected_type="bool", default=True)
+    converter._get_pp_attr.assert_any_call("ext_grid", "r0x0_max", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call("ext_grid", "x0x_max", expected_type="f8", default=np.nan)
     assert len(converter._get_pp_attr.call_args_list) == 8
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", _generate_ids("ext_grid", two_pp_objs.index))
-    pgm.assert_any_call("node", _get_pgm_ids("bus", _get_pp_attr('ext_grid', 'bus', expected_type='u4')))
-    pgm.assert_any_call("status", _get_pp_attr('ext_grid', 'in_service', expected_type='bool', default=True))
-    pgm.assert_any_call("u_ref", _get_pp_attr('ext_grid', 'vm_pu', expected_type='f8', default=1.0))
-    pgm.assert_any_call("u_ref_angle", _get_pp_attr("ext_grid", "va_degree", expected_type='f8', default=0.0) * (np.pi / 180))
-    pgm.assert_any_call("sk", _get_pp_attr("ext_grid", "s_sc_max_mva", expected_type='f8', default=np.nan) * 1e6)
-    pgm.assert_any_call("rx_ratio", _get_pp_attr("ext_grid", "rx_max", expected_type='f8', default=np.nan))
+    pgm.assert_any_call("node", _get_pgm_ids("bus", _get_pp_attr("ext_grid", "bus", expected_type="u4")))
+    pgm.assert_any_call("status", _get_pp_attr("ext_grid", "in_service", expected_type="bool", default=True))
+    pgm.assert_any_call("u_ref", _get_pp_attr("ext_grid", "vm_pu", expected_type="f8", default=1.0))
+    pgm.assert_any_call(
+        "u_ref_angle", _get_pp_attr("ext_grid", "va_degree", expected_type="f8", default=0.0) * (np.pi / 180)
+    )
+    pgm.assert_any_call("sk", _get_pp_attr("ext_grid", "s_sc_max_mva", expected_type="f8", default=np.nan) * 1e6)
+    pgm.assert_any_call("rx_ratio", _get_pp_attr("ext_grid", "rx_max", expected_type="f8", default=np.nan))
     assert len(pgm.call_args_list) == 7
 
     # result
@@ -639,14 +659,14 @@ def test_create_pgm_input_sym_loads(mock_init_array: MagicMock, two_pp_objs, con
     mock_init_array.assert_called_once_with(data_type="input", component_type="sym_load", shape=3 * 2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call('load', 'bus', expected_type='u4')
-    converter._get_pp_attr.assert_any_call("load", "p_mw", expected_type='f8', default=0.0)
-    converter._get_pp_attr.assert_any_call("load", "q_mvar", expected_type='f8', default=0.0)
-    converter._get_pp_attr.assert_any_call("load", "const_z_percent", expected_type='f8', default=0)
-    converter._get_pp_attr.assert_any_call("load", "const_i_percent", expected_type='f8', default=0)
-    converter._get_pp_attr.assert_any_call("load", "scaling", expected_type='f8', default=1)
-    converter._get_pp_attr.assert_any_call("load", "in_service", expected_type='bool', default=True)
-    converter._get_pp_attr.assert_any_call('load', 'type', expected_type='O', default=None)
+    converter._get_pp_attr.assert_any_call("load", "bus", expected_type="u4")
+    converter._get_pp_attr.assert_any_call("load", "p_mw", expected_type="f8", default=0.0)
+    converter._get_pp_attr.assert_any_call("load", "q_mvar", expected_type="f8", default=0.0)
+    converter._get_pp_attr.assert_any_call("load", "const_z_percent", expected_type="f8", default=0)
+    converter._get_pp_attr.assert_any_call("load", "const_i_percent", expected_type="f8", default=0)
+    converter._get_pp_attr.assert_any_call("load", "scaling", expected_type="f8", default=1)
+    converter._get_pp_attr.assert_any_call("load", "in_service", expected_type="bool", default=True)
+    converter._get_pp_attr.assert_any_call("load", "type", expected_type="O", default=None)
     assert len(converter._get_pp_attr.call_args_list) == 8
 
     # assignment:
@@ -676,23 +696,23 @@ def test_create_pgm_input_asym_loads(mock_init_array: MagicMock, two_pp_objs, co
     mock_init_array.assert_called_once_with(data_type="input", component_type="asym_load", shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call('asymmetric_load', 'bus', expected_type='u4')
-    converter._get_pp_attr.assert_any_call('asymmetric_load', 'p_a_mw', expected_type='f8')
-    converter._get_pp_attr.assert_any_call("asymmetric_load", "p_b_mw", expected_type='f8')
-    converter._get_pp_attr.assert_any_call("asymmetric_load", "p_c_mw", expected_type='f8')
-    converter._get_pp_attr.assert_any_call("asymmetric_load", "q_a_mvar", expected_type='f8')
-    converter._get_pp_attr.assert_any_call("asymmetric_load", "q_b_mvar", expected_type='f8')
-    converter._get_pp_attr.assert_any_call("asymmetric_load", "q_c_mvar", expected_type='f8')
-    converter._get_pp_attr.assert_any_call("asymmetric_load", "scaling", expected_type='f8')
-    converter._get_pp_attr.assert_any_call("asymmetric_load", "in_service", expected_type='bool', default=True)
-    converter._get_pp_attr.assert_any_call("asymmetric_load", "type", expected_type='O', default=None)
+    converter._get_pp_attr.assert_any_call("asymmetric_load", "bus", expected_type="u4")
+    converter._get_pp_attr.assert_any_call("asymmetric_load", "p_a_mw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("asymmetric_load", "p_b_mw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("asymmetric_load", "p_c_mw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("asymmetric_load", "q_a_mvar", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("asymmetric_load", "q_b_mvar", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("asymmetric_load", "q_c_mvar", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("asymmetric_load", "scaling", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("asymmetric_load", "in_service", expected_type="bool", default=True)
+    converter._get_pp_attr.assert_any_call("asymmetric_load", "type", expected_type="O", default=None)
     assert len(converter._get_pp_attr.call_args_list) == 10
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", _generate_ids("asymmetric_load", two_pp_objs.index))
-    pgm.assert_any_call("node", _get_pgm_ids("bus", _get_pp_attr('asymmetric_load', 'bus', expected_type='u4')))
-    pgm.assert_any_call("status", _get_pp_attr('asymmetric_load', 'in_service', expected_type='bool', default=True))
+    pgm.assert_any_call("node", _get_pgm_ids("bus", _get_pp_attr("asymmetric_load", "bus", expected_type="u4")))
+    pgm.assert_any_call("status", _get_pp_attr("asymmetric_load", "in_service", expected_type="bool", default=True))
     pgm.assert_any_call("p_specified", ANY)
     pgm.assert_any_call("q_specified", ANY)
     assert len(pgm.call_args_list) == 6
@@ -764,33 +784,33 @@ def test_create_pgm_input_shunts(mock_init_array: MagicMock, two_pp_objs, conver
     mock_init_array.assert_called_once_with(data_type="input", component_type="shunt", shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call('shunt', 'bus', expected_type='u4')
-    converter._get_pp_attr.assert_any_call('shunt', 'p_mw', expected_type='f8')
-    converter._get_pp_attr.assert_any_call("shunt", "q_mvar", expected_type='f8')
-    converter._get_pp_attr.assert_any_call("shunt", "vn_kv", expected_type='f8')
-    converter._get_pp_attr.assert_any_call('shunt', 'step', expected_type='u4', default=1)
-    converter._get_pp_attr.assert_any_call('shunt', 'in_service', expected_type='bool', default=True)
+    converter._get_pp_attr.assert_any_call("shunt", "bus", expected_type="u4")
+    converter._get_pp_attr.assert_any_call("shunt", "p_mw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("shunt", "q_mvar", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("shunt", "vn_kv", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("shunt", "step", expected_type="u4", default=1)
+    converter._get_pp_attr.assert_any_call("shunt", "in_service", expected_type="bool", default=True)
 
     assert len(converter._get_pp_attr.call_args_list) == 6
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", _generate_ids("shunt", two_pp_objs.index))
-    pgm.assert_any_call("node", _get_pgm_ids("bus", _get_pp_attr('shunt', 'bus', expected_type='u4')))
-    pgm.assert_any_call("status", _get_pp_attr('shunt', 'in_service', expected_type='bool', default=True))
+    pgm.assert_any_call("node", _get_pgm_ids("bus", _get_pp_attr("shunt", "bus", expected_type="u4")))
+    pgm.assert_any_call("status", _get_pp_attr("shunt", "in_service", expected_type="bool", default=True))
     pgm.assert_any_call(
         "g1",
-        _get_pp_attr("shunt", "p_mw", expected_type='f8')
-        * _get_pp_attr("shunt", "step", expected_type='u4', default=1)
-        / _get_pp_attr("shunt", "vn_kv", expected_type='f8')
-        / _get_pp_attr("shunt", "vn_kv", expected_type='f8'),
+        _get_pp_attr("shunt", "p_mw", expected_type="f8")
+        * _get_pp_attr("shunt", "step", expected_type="u4", default=1)
+        / _get_pp_attr("shunt", "vn_kv", expected_type="f8")
+        / _get_pp_attr("shunt", "vn_kv", expected_type="f8"),
     )
     pgm.assert_any_call(
         "b1",
-        -_get_pp_attr("shunt", "q_mvar", expected_type='f8')
-        * _get_pp_attr('shunt', 'step', expected_type='u4', default=1)
-        / _get_pp_attr("shunt", "vn_kv", expected_type='f8')
-        / _get_pp_attr("shunt", "vn_kv", expected_type='f8'),
+        -_get_pp_attr("shunt", "q_mvar", expected_type="f8")
+        * _get_pp_attr("shunt", "step", expected_type="u4", default=1)
+        / _get_pp_attr("shunt", "vn_kv", expected_type="f8")
+        / _get_pp_attr("shunt", "vn_kv", expected_type="f8"),
     )
     pgm.assert_any_call("g0", ANY)
     pgm.assert_any_call("b0", ANY)
@@ -814,45 +834,47 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
     # administration:
     converter.get_switch_states.assert_called_once_with("trafo")
     converter._generate_ids.assert_called_once_with("trafo", two_pp_objs.index)
-    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("trafo", "hv_bus", expected_type='u4'))
-    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("trafo", "lv_bus", expected_type='u4'))
+    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("trafo", "hv_bus", expected_type="u4"))
+    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("trafo", "lv_bus", expected_type="u4"))
     converter._get_tap_size.assert_called_once_with(two_pp_objs)
-    converter._get_transformer_tap_side.assert_called_once_with(_get_pp_attr("trafo", "tap_side", expected_type='O', default=None))
+    converter._get_transformer_tap_side.assert_called_once_with(
+        _get_pp_attr("trafo", "tap_side", expected_type="O", default=None)
+    )
 
     # initialization
     mock_init_array.assert_called_once_with(data_type="input", component_type="transformer", shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call("trafo", "hv_bus", expected_type='u4')
-    converter._get_pp_attr.assert_any_call("trafo", "lv_bus", expected_type='u4')
-    converter._get_pp_attr.assert_any_call("trafo", "sn_mva", expected_type='f8')
-    converter._get_pp_attr.assert_any_call("trafo", "vn_hv_kv", expected_type='f8')
-    converter._get_pp_attr.assert_any_call("trafo", "vn_lv_kv", expected_type='f8')
-    converter._get_pp_attr.assert_any_call("trafo", "vk_percent", expected_type='f8')
-    converter._get_pp_attr.assert_any_call("trafo", "vkr_percent", expected_type='f8')
-    converter._get_pp_attr.assert_any_call("trafo", "pfe_kw", expected_type='f8')
-    converter._get_pp_attr.assert_any_call("trafo", "i0_percent", expected_type='f8')
-    converter._get_pp_attr.assert_any_call("trafo", "shift_degree", expected_type='f8', default=0.0)
-    converter._get_pp_attr.assert_any_call('trafo', 'tap_side', expected_type='O', default=None)
-    converter._get_pp_attr.assert_any_call('trafo', 'tap_neutral', expected_type='i4', default=np.nan)
-    converter._get_pp_attr.assert_any_call('trafo', 'tap_min', expected_type='i4', default=0)
-    converter._get_pp_attr.assert_any_call('trafo', 'tap_max', expected_type='i4', default=0)
-    converter._get_pp_attr.assert_any_call('trafo', 'tap_pos', expected_type='i4', default=np.nan)
-    converter._get_pp_attr.assert_any_call('trafo', 'parallel', expected_type='u4', default=1)
-    converter._get_pp_attr.assert_any_call('trafo', 'in_service', expected_type='bool', default=True)
-    converter._get_pp_attr.assert_any_call("trafo", "vk0_percent", expected_type='f8', default=np.nan)
-    converter._get_pp_attr.assert_any_call("trafo", "vkr0_percent", expected_type='f8', default=np.nan)
-    converter._get_pp_attr.assert_any_call("trafo", "mag0_percent", expected_type='f8', default=np.nan)
-    converter._get_pp_attr.assert_any_call("trafo", "mag0_rx", expected_type='f8', default=np.nan)
-    converter._get_pp_attr.assert_any_call("trafo", "si0_hv_partial", expected_type='f8', default=np.nan)
+    converter._get_pp_attr.assert_any_call("trafo", "hv_bus", expected_type="u4")
+    converter._get_pp_attr.assert_any_call("trafo", "lv_bus", expected_type="u4")
+    converter._get_pp_attr.assert_any_call("trafo", "sn_mva", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("trafo", "vn_hv_kv", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("trafo", "vn_lv_kv", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("trafo", "vk_percent", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("trafo", "vkr_percent", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("trafo", "pfe_kw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("trafo", "i0_percent", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("trafo", "shift_degree", expected_type="f8", default=0.0)
+    converter._get_pp_attr.assert_any_call("trafo", "tap_side", expected_type="O", default=None)
+    converter._get_pp_attr.assert_any_call("trafo", "tap_neutral", expected_type="i4", default=np.nan)
+    converter._get_pp_attr.assert_any_call("trafo", "tap_min", expected_type="i4", default=0)
+    converter._get_pp_attr.assert_any_call("trafo", "tap_max", expected_type="i4", default=0)
+    converter._get_pp_attr.assert_any_call("trafo", "tap_pos", expected_type="i4", default=np.nan)
+    converter._get_pp_attr.assert_any_call("trafo", "parallel", expected_type="u4", default=1)
+    converter._get_pp_attr.assert_any_call("trafo", "in_service", expected_type="bool", default=True)
+    converter._get_pp_attr.assert_any_call("trafo", "vk0_percent", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call("trafo", "vkr0_percent", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call("trafo", "mag0_percent", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call("trafo", "mag0_rx", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call("trafo", "si0_hv_partial", expected_type="f8", default=np.nan)
     # converter._get_pp_attr.assert_any_call('trafo', 'df', expected_type='f8')  #TODO add df in output conversions
     assert len(converter._get_pp_attr.call_args_list) == 22
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", _generate_ids("trafo", two_pp_objs.index))
-    pgm.assert_any_call("from_node", _get_pgm_ids("bus", _get_pp_attr("trafo", "hv_bus", expected_type='u4')))
-    pgm.assert_any_call("to_node", _get_pgm_ids("bus", _get_pp_attr("trafo", "lv_bus", expected_type='u4')))
+    pgm.assert_any_call("from_node", _get_pgm_ids("bus", _get_pp_attr("trafo", "hv_bus", expected_type="u4")))
+    pgm.assert_any_call("to_node", _get_pgm_ids("bus", _get_pp_attr("trafo", "lv_bus", expected_type="u4")))
     pgm.assert_any_call("from_status", ANY)
     pgm.assert_any_call("to_status", ANY)
     pgm.assert_any_call("u1", ANY)
@@ -972,21 +994,31 @@ def test_create_pgm_input_sym_gens(mock_init_array: MagicMock, two_pp_objs, conv
     mock_init_array.assert_called_once_with(data_type="input", component_type="sym_gen", shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call('sgen', 'bus', expected_type='i8')
-    converter._get_pp_attr.assert_any_call('sgen', 'p_mw', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('sgen', 'q_mvar', expected_type='f8', default=0.0)
-    converter._get_pp_attr.assert_any_call('sgen', 'scaling', expected_type='f8', default=1.0)
-    converter._get_pp_attr.assert_any_call('sgen', 'in_service', expected_type='bool', default=True)
+    converter._get_pp_attr.assert_any_call("sgen", "bus", expected_type="i8")
+    converter._get_pp_attr.assert_any_call("sgen", "p_mw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("sgen", "q_mvar", expected_type="f8", default=0.0)
+    converter._get_pp_attr.assert_any_call("sgen", "scaling", expected_type="f8", default=1.0)
+    converter._get_pp_attr.assert_any_call("sgen", "in_service", expected_type="bool", default=True)
     assert len(converter._get_pp_attr.call_args_list) == 5
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", _generate_ids("sgen", two_pp_objs.index))
-    pgm.assert_any_call("node", _get_pgm_ids("bus", _get_pp_attr("sgen", "bus", expected_type='i8')))
-    pgm.assert_any_call("status", _get_pp_attr("sgen", "in_service", expected_type='bool', default=True))
+    pgm.assert_any_call("node", _get_pgm_ids("bus", _get_pp_attr("sgen", "bus", expected_type="i8")))
+    pgm.assert_any_call("status", _get_pp_attr("sgen", "in_service", expected_type="bool", default=True))
     pgm.assert_any_call("type", LoadGenType.const_power)
-    pgm.assert_any_call("p_specified", _get_pp_attr("sgen", "p_mw", expected_type='f8') * _get_pp_attr('sgen', 'scaling', expected_type='f8', default=1.0) * 1e6)
-    pgm.assert_any_call("q_specified", _get_pp_attr('sgen', 'q_mvar', expected_type='f8', default=0.0) * _get_pp_attr('sgen', 'scaling', expected_type='f8', default=1.0) * 1e6)
+    pgm.assert_any_call(
+        "p_specified",
+        _get_pp_attr("sgen", "p_mw", expected_type="f8")
+        * _get_pp_attr("sgen", "scaling", expected_type="f8", default=1.0)
+        * 1e6,
+    )
+    pgm.assert_any_call(
+        "q_specified",
+        _get_pp_attr("sgen", "q_mvar", expected_type="f8", default=0.0)
+        * _get_pp_attr("sgen", "scaling", expected_type="f8", default=1.0)
+        * 1e6,
+    )
     assert len(pgm.call_args_list) == 6
 
     # result
@@ -1045,22 +1077,22 @@ def test_create_pgm_input_asym_gens(mock_init_array: MagicMock, two_pp_objs, con
     mock_init_array.assert_called_once_with(data_type="input", component_type="asym_gen", shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call('asymmetric_sgen', 'bus', expected_type='i8')
-    converter._get_pp_attr.assert_any_call('asymmetric_sgen', 'p_a_mw', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('asymmetric_sgen', 'p_b_mw', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('asymmetric_sgen', 'p_c_mw', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('asymmetric_sgen', 'q_a_mvar', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('asymmetric_sgen', 'q_b_mvar', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('asymmetric_sgen', 'q_c_mvar', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('asymmetric_sgen', 'scaling', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('asymmetric_sgen', 'in_service', expected_type='bool', default=True)
+    converter._get_pp_attr.assert_any_call("asymmetric_sgen", "bus", expected_type="i8")
+    converter._get_pp_attr.assert_any_call("asymmetric_sgen", "p_a_mw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("asymmetric_sgen", "p_b_mw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("asymmetric_sgen", "p_c_mw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("asymmetric_sgen", "q_a_mvar", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("asymmetric_sgen", "q_b_mvar", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("asymmetric_sgen", "q_c_mvar", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("asymmetric_sgen", "scaling", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("asymmetric_sgen", "in_service", expected_type="bool", default=True)
     assert len(converter._get_pp_attr.call_args_list) == 9
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", _generate_ids("asymmetric_sgen", two_pp_objs.index))
-    pgm.assert_any_call("node", _get_pgm_ids("bus", _get_pp_attr('asymmetric_sgen', 'bus', expected_type='i8')))
-    pgm.assert_any_call("status", _get_pp_attr('asymmetric_sgen', 'in_service', expected_type='bool', default=True))
+    pgm.assert_any_call("node", _get_pgm_ids("bus", _get_pp_attr("asymmetric_sgen", "bus", expected_type="i8")))
+    pgm.assert_any_call("status", _get_pp_attr("asymmetric_sgen", "in_service", expected_type="bool", default=True))
     pgm.assert_any_call("p_specified", ANY)
     pgm.assert_any_call("q_specified", ANY)
     pgm.assert_any_call("type", LoadGenType.const_power)
@@ -1084,55 +1116,57 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
     # administration:
     converter.get_trafo3w_switch_states.assert_called_once_with(two_pp_objs)
     converter._generate_ids.assert_called_once_with("trafo3w", two_pp_objs.index)
-    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr('trafo3w', 'hv_bus', expected_type='u4'))
-    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr('trafo3w', 'mv_bus', expected_type='u4'))
-    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr('trafo3w', 'lv_bus', expected_type='u4'))
+    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("trafo3w", "hv_bus", expected_type="u4"))
+    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("trafo3w", "mv_bus", expected_type="u4"))
+    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("trafo3w", "lv_bus", expected_type="u4"))
     converter._get_3wtransformer_tap_size.assert_called_once_with(two_pp_objs)
-    converter._get_3wtransformer_tap_side.assert_called_once_with(_get_pp_attr('trafo3w', 'tap_side', expected_type='O', default=None))
+    converter._get_3wtransformer_tap_side.assert_called_once_with(
+        _get_pp_attr("trafo3w", "tap_side", expected_type="O", default=None)
+    )
 
     # initialization
     mock_init_array.assert_called_once_with(data_type="input", component_type="three_winding_transformer", shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call('trafo3w', 'hv_bus', expected_type='u4')
-    converter._get_pp_attr.assert_any_call('trafo3w', 'mv_bus', expected_type='u4')
-    converter._get_pp_attr.assert_any_call('trafo3w', 'lv_bus', expected_type='u4')
-    converter._get_pp_attr.assert_any_call('trafo3w', 'vn_hv_kv', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('trafo3w', 'vn_mv_kv', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('trafo3w', 'vn_lv_kv', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('trafo3w', 'sn_hv_mva', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('trafo3w', 'sn_mv_mva', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('trafo3w', 'sn_lv_mva', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('trafo3w', 'vk_hv_percent', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('trafo3w', 'vk_mv_percent', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('trafo3w', 'vk_lv_percent', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('trafo3w', 'vkr_hv_percent', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('trafo3w', 'vkr_mv_percent', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('trafo3w', 'vkr_lv_percent', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('trafo3w', 'pfe_kw', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('trafo3w', 'i0_percent', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('trafo3w', 'shift_mv_degree', expected_type='f8', default=0.0)
-    converter._get_pp_attr.assert_any_call('trafo3w', 'shift_lv_degree', expected_type='f8', default=0.0)
-    converter._get_pp_attr.assert_any_call('trafo3w', 'tap_side', expected_type='O', default=None)
-    converter._get_pp_attr.assert_any_call('trafo3w', 'tap_neutral', expected_type='i4', default=np.nan)
-    converter._get_pp_attr.assert_any_call('trafo3w', 'tap_min', expected_type='i4', default=0)
-    converter._get_pp_attr.assert_any_call('trafo3w', 'tap_max', expected_type='i4', default=0)
-    converter._get_pp_attr.assert_any_call('trafo3w', 'tap_pos', expected_type='i4', default=np.nan)
-    converter._get_pp_attr.assert_any_call('trafo3w', 'in_service', expected_type='bool', default=True)
-    converter._get_pp_attr.assert_any_call("trafo3w", "vk0_hv_percent", expected_type='f8', default=np.nan)
-    converter._get_pp_attr.assert_any_call("trafo3w", "vkr0_hv_percent", expected_type='f8', default=np.nan)
-    converter._get_pp_attr.assert_any_call("trafo3w", "vk0_mv_percent", expected_type='f8', default=np.nan)
-    converter._get_pp_attr.assert_any_call("trafo3w", "vkr0_mv_percent", expected_type='f8', default=np.nan)
-    converter._get_pp_attr.assert_any_call("trafo3w", "vk0_lv_percent", expected_type='f8', default=np.nan)
-    converter._get_pp_attr.assert_any_call("trafo3w", "vkr0_lv_percent", expected_type='f8', default=np.nan)
+    converter._get_pp_attr.assert_any_call("trafo3w", "hv_bus", expected_type="u4")
+    converter._get_pp_attr.assert_any_call("trafo3w", "mv_bus", expected_type="u4")
+    converter._get_pp_attr.assert_any_call("trafo3w", "lv_bus", expected_type="u4")
+    converter._get_pp_attr.assert_any_call("trafo3w", "vn_hv_kv", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("trafo3w", "vn_mv_kv", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("trafo3w", "vn_lv_kv", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("trafo3w", "sn_hv_mva", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("trafo3w", "sn_mv_mva", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("trafo3w", "sn_lv_mva", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("trafo3w", "vk_hv_percent", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("trafo3w", "vk_mv_percent", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("trafo3w", "vk_lv_percent", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("trafo3w", "vkr_hv_percent", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("trafo3w", "vkr_mv_percent", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("trafo3w", "vkr_lv_percent", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("trafo3w", "pfe_kw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("trafo3w", "i0_percent", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("trafo3w", "shift_mv_degree", expected_type="f8", default=0.0)
+    converter._get_pp_attr.assert_any_call("trafo3w", "shift_lv_degree", expected_type="f8", default=0.0)
+    converter._get_pp_attr.assert_any_call("trafo3w", "tap_side", expected_type="O", default=None)
+    converter._get_pp_attr.assert_any_call("trafo3w", "tap_neutral", expected_type="i4", default=np.nan)
+    converter._get_pp_attr.assert_any_call("trafo3w", "tap_min", expected_type="i4", default=0)
+    converter._get_pp_attr.assert_any_call("trafo3w", "tap_max", expected_type="i4", default=0)
+    converter._get_pp_attr.assert_any_call("trafo3w", "tap_pos", expected_type="i4", default=np.nan)
+    converter._get_pp_attr.assert_any_call("trafo3w", "in_service", expected_type="bool", default=True)
+    converter._get_pp_attr.assert_any_call("trafo3w", "vk0_hv_percent", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call("trafo3w", "vkr0_hv_percent", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call("trafo3w", "vk0_mv_percent", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call("trafo3w", "vkr0_mv_percent", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call("trafo3w", "vk0_lv_percent", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call("trafo3w", "vkr0_lv_percent", expected_type="f8", default=np.nan)
     assert len(converter._get_pp_attr.call_args_list) == 31
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call("id", _generate_ids("trafo3w", two_pp_objs.index))
-    pgm.assert_any_call("node_1", _get_pgm_ids("bus", _get_pp_attr('trafo3w', 'hv_bus', expected_type='u4')))
-    pgm.assert_any_call("node_2", _get_pgm_ids("bus", _get_pp_attr('trafo3w', 'mv_bus', expected_type='u4')))
-    pgm.assert_any_call("node_3", _get_pgm_ids("bus", _get_pp_attr('trafo3w', 'lv_bus', expected_type='u4')))
+    pgm.assert_any_call("node_1", _get_pgm_ids("bus", _get_pp_attr("trafo3w", "hv_bus", expected_type="u4")))
+    pgm.assert_any_call("node_2", _get_pgm_ids("bus", _get_pp_attr("trafo3w", "mv_bus", expected_type="u4")))
+    pgm.assert_any_call("node_3", _get_pgm_ids("bus", _get_pp_attr("trafo3w", "lv_bus", expected_type="u4")))
     pgm.assert_any_call("status_1", ANY)
     pgm.assert_any_call("status_2", ANY)
     pgm.assert_any_call("status_3", ANY)
@@ -1309,7 +1343,7 @@ def test_create_pgm_input_transformers3w__default() -> None:
     # Act
     converter._create_pgm_input_three_winding_transformers()
     result = converter.pgm_input_data["three_winding_transformer"]
-    
+
     # Assert
     assert result[0]["tap_side"] == Branch3Side.side_1.value
     assert result[1]["tap_side"] == Branch3Side.side_2.value
@@ -1321,7 +1355,7 @@ def test_create_pgm_input_transformers3w__default() -> None:
     assert result[1]["tap_pos"] == 34.0 != result[1]["tap_nom"]
     assert result[2]["tap_pos"] == 34.0 != result[2]["tap_nom"]
     assert result[3]["tap_pos"] == 0 == result[3]["tap_nom"]
-    assert result[4]["tap_pos"] == 0 == result[4]["tap_nom"] # TODO: check if this is correct
+    assert result[4]["tap_pos"] == 0 == result[4]["tap_nom"]  # TODO: check if this is correct
     assert result[5]["tap_pos"] == 0 == result[5]["tap_nom"]
     assert result[6]["tap_size"] == 0
 
@@ -1503,12 +1537,12 @@ def test_create_pgm_input_wards(mock_init_array: MagicMock, two_pp_objs, convert
     mock_init_array.assert_called_once_with(data_type="input", component_type="sym_load", shape=2 * 2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call('ward', 'bus', expected_type='u4')
-    converter._get_pp_attr.assert_any_call('ward', 'ps_mw', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('ward', 'qs_mvar', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('ward', 'pz_mw', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('ward', 'qz_mvar', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('ward', 'in_service', expected_type='bool', default=True)
+    converter._get_pp_attr.assert_any_call("ward", "bus", expected_type="u4")
+    converter._get_pp_attr.assert_any_call("ward", "ps_mw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("ward", "qs_mvar", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("ward", "pz_mw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("ward", "qz_mvar", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("ward", "in_service", expected_type="bool", default=True)
     assert len(converter._get_pp_attr.call_args_list) == 6
 
     # assignment:
@@ -1597,13 +1631,13 @@ def test_create_pgm_input_motors(mock_init_array: MagicMock, two_pp_objs, conver
     mock_init_array.assert_called_once_with(data_type="input", component_type="sym_load", shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call('motor', 'bus', expected_type='i8')
-    converter._get_pp_attr.assert_any_call('motor', 'pn_mech_mw', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('motor', 'cos_phi', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('motor', 'efficiency_percent', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('motor', 'loading_percent', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('motor', 'scaling', expected_type='f8')
-    converter._get_pp_attr.assert_any_call('motor', 'in_service', expected_type='bool', default=True)
+    converter._get_pp_attr.assert_any_call("motor", "bus", expected_type="i8")
+    converter._get_pp_attr.assert_any_call("motor", "pn_mech_mw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("motor", "cos_phi", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("motor", "efficiency_percent", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("motor", "loading_percent", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("motor", "scaling", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("motor", "in_service", expected_type="bool", default=True)
     assert len(converter._get_pp_attr.call_args_list) == 7
 
     # assignment:
@@ -2089,7 +2123,7 @@ def test_get_pp_attr_attribute_exists():
     expected = np.array(32)
 
     # Act
-    actual = converter._get_pp_attr('trafo3w', 'hv_bus', expected_type='u4')
+    actual = converter._get_pp_attr("trafo3w", "hv_bus", expected_type="u4")
 
     # Assert
     np.testing.assert_array_equal(actual, expected)
@@ -2102,7 +2136,7 @@ def test_get_pp_attr_attribute_doesnt_exist():
 
     # Act / Assert
     with pytest.raises(KeyError):
-        converter._get_pp_attr('trafo3w', 'hv_bus', expected_type='u4')
+        converter._get_pp_attr("trafo3w", "hv_bus", expected_type="u4")
 
 
 def test_get_pp_attr_use_default():
@@ -2112,7 +2146,7 @@ def test_get_pp_attr_use_default():
     expected = np.array(625)
 
     # Act
-    actual = converter._get_pp_attr('trafo3w', 'hv_bus', expected_type='u4', default=625)
+    actual = converter._get_pp_attr("trafo3w", "hv_bus", expected_type="u4", default=625)
 
     # Assert
     np.testing.assert_array_equal(actual, expected)

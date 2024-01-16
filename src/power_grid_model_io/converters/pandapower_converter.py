@@ -382,7 +382,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_lines["c1"] = c_nf_per_km * length_km * parallel * 1e-9
         # The formula for tan1 = R_1 / Xc_1 = (g * 1e-6) / (2 * pi * f * c * 1e-9) = g / (2 * pi * f * c * 1e-3)
         pgm_lines["tan1"] = (
-            self._get_pp_attr("line", "g_us_per_km", expected_type="f8", default=0) / c_nf_per_km / (2 * np.pi * self.system_frequency * 1e-3)
+            self._get_pp_attr("line", "g_us_per_km", expected_type="f8", default=0)
+            / c_nf_per_km
+            / (2 * np.pi * self.system_frequency * 1e-3)
         )
         pgm_lines["i_n"] = (
             (self._get_pp_attr("line", "max_i_ka", expected_type="f8") * 1e3)
@@ -560,7 +562,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_loads.empty:
             return
 
-        if self._get_pp_attr("load", "type", expected_type='O', default=None).any() == "delta":
+        if self._get_pp_attr("load", "type", expected_type="O", default=None).any() == "delta":
             raise NotImplementedError("Delta loads are not implemented, only wye loads are supported in PGM.")
 
         scaling = self._get_pp_attr("load", "scaling", expected_type="f8", default=1.0)
@@ -618,7 +620,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_asym_loads.empty:
             return
 
-        if self._get_pp_attr("asymmetric_load", "type", expected_type='O', default=None).any() == "delta":
+        if self._get_pp_attr("asymmetric_load", "type", expected_type="O", default=None).any() == "delta":
             raise NotImplementedError("Delta loads are not implemented, only wye loads are supported in PGM.")
 
         scaling = self._get_pp_attr("asymmetric_load", "scaling", expected_type="f8")
@@ -629,7 +631,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_asym_loads["node"] = self._get_pgm_ids(
             "bus", self._get_pp_attr("asymmetric_load", "bus", expected_type="u4")
         )
-        pgm_asym_loads["status"] = self._get_pp_attr("asymmetric_load", "in_service", expected_type="bool", default=True)
+        pgm_asym_loads["status"] = self._get_pp_attr(
+            "asymmetric_load", "in_service", expected_type="bool", default=True
+        )
         pgm_asym_loads["p_specified"] = np.transpose(
             np.array(
                 [
@@ -682,7 +686,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         sn_mva = self._get_pp_attr("trafo", "sn_mva", expected_type="f8")
         switch_states = self.get_switch_states("trafo")
 
-        tap_side = self._get_pp_attr("trafo", "tap_side", expected_type='O', default=None)
+        tap_side = self._get_pp_attr("trafo", "tap_side", expected_type="O", default=None)
         tap_nom = self._get_pp_attr("trafo", "tap_neutral", expected_type="i4", default=np.nan)
         tap_pos = self._get_pp_attr("trafo", "tap_pos", expected_type="i4", default=np.nan)
         tap_size = self._get_tap_size(pp_trafo)
@@ -781,7 +785,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         sn_lv_mva = self._get_pp_attr("trafo3w", "sn_lv_mva", expected_type="f8")
         in_service = self._get_pp_attr("trafo3w", "in_service", expected_type="bool", default=True)
         switch_states = self.get_trafo3w_switch_states(pp_trafo3w)
-        tap_side = self._get_pp_attr("trafo3w", "tap_side", expected_type='O', default=None)
+        tap_side = self._get_pp_attr("trafo3w", "tap_side", expected_type="O", default=None)
         tap_nom = self._get_pp_attr("trafo3w", "tap_neutral", expected_type="i4", default=np.nan)
         tap_pos = self._get_pp_attr("trafo3w", "tap_pos", expected_type="i4", default=np.nan)
         tap_size = self._get_3wtransformer_tap_size(pp_trafo3w)
@@ -995,7 +999,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_loads_from_motor["node"] = self._get_pgm_ids(
             "bus", self._get_pp_attr("motor", "bus", expected_type="i8")
         )
-        pgm_sym_loads_from_motor["status"] = self._get_pp_attr("motor", "in_service", expected_type="bool", default=True)
+        pgm_sym_loads_from_motor["status"] = self._get_pp_attr(
+            "motor", "in_service", expected_type="bool", default=True
+        )
         pgm_sym_loads_from_motor["type"] = LoadGenType.const_power
         #  The formula for p_specified is pn_mech_mw /(efficiency_percent/100) * (loading_percent/100) * scaling * 1e6
         pgm_sym_loads_from_motor["p_specified"] = (
@@ -2369,7 +2375,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self,
         table: str,
         attribute: str,
-        expected_type: Optional[str] = 'O',
+        expected_type: Optional[str] = "O",
         default: Optional[Union[float, bool, str]] = None,
     ) -> np.ndarray:
         """
@@ -2383,13 +2389,14 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             the selected PandaPower attribute from the selected PandaPower table
         """
         pp_component_data = self.pp_input_data[table]
+        exp_dtype = type(default) if default is not None else expected_type
 
         # If the attribute does not exist, return the default value
         # (assume that broadcasting is handled by the caller / numpy)
         if attribute not in pp_component_data:
             if default is None:
                 raise KeyError(f"No '{attribute}' value for '{table}'.")
-            return np.array([default], dtype=expected_type)
+            return np.array([default], dtype=exp_dtype)
 
         attr_data = pp_component_data[attribute]
 
@@ -2402,7 +2409,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if any(nan_values):
             attr_data = attr_data.fillna(value=default, inplace=False)
 
-        return attr_data.to_numpy(dtype=expected_type)
+        return attr_data.to_numpy(dtype=exp_dtype)
 
     def get_id(self, pp_table: str, pp_idx: int, name: Optional[str] = None) -> int:
         """
