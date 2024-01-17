@@ -510,7 +510,7 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     converter._get_pp_attr.assert_any_call("line", "x_ohm_per_km", expected_type="f8")
     converter._get_pp_attr.assert_any_call("line", "c_nf_per_km", expected_type="f8")
     converter._get_pp_attr.assert_any_call("line", "g_us_per_km", expected_type="f8", default=0)
-    converter._get_pp_attr.assert_any_call("line", "max_i_ka", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("line", "max_i_ka", expected_type="f8", default=np.nan)
     converter._get_pp_attr.assert_any_call("line", "df", expected_type="f8", default=1)
     converter._get_pp_attr.assert_any_call("line", "r0_ohm_per_km", expected_type="f8", default=np.nan)
     converter._get_pp_attr.assert_any_call("line", "x0_ohm_per_km", expected_type="f8", default=np.nan)
@@ -562,7 +562,7 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     )
     pgm.assert_any_call(
         "i_n",
-        _get_pp_attr("line", "max_i_ka", expected_type="f8")
+        _get_pp_attr("line", "max_i_ka", expected_type="f8", default=np.nan)
         * 1e3
         * _get_pp_attr("line", "df", expected_type="f8", default=1)
         * _get_pp_attr("line", "parallel", expected_type="u4", default=1),
@@ -856,10 +856,10 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
     converter._get_pp_attr.assert_any_call("trafo", "i0_percent", expected_type="f8")
     converter._get_pp_attr.assert_any_call("trafo", "shift_degree", expected_type="f8", default=0.0)
     converter._get_pp_attr.assert_any_call("trafo", "tap_side", expected_type="O", default=None)
-    converter._get_pp_attr.assert_any_call("trafo", "tap_neutral", expected_type="i4", default=np.nan)
+    converter._get_pp_attr.assert_any_call("trafo", "tap_neutral", expected_type="f8", default=np.nan)
     converter._get_pp_attr.assert_any_call("trafo", "tap_min", expected_type="i4", default=0)
     converter._get_pp_attr.assert_any_call("trafo", "tap_max", expected_type="i4", default=0)
-    converter._get_pp_attr.assert_any_call("trafo", "tap_pos", expected_type="i4", default=np.nan)
+    converter._get_pp_attr.assert_any_call("trafo", "tap_pos", expected_type="f8", default=np.nan)
     converter._get_pp_attr.assert_any_call("trafo", "parallel", expected_type="u4", default=1)
     converter._get_pp_attr.assert_any_call("trafo", "in_service", expected_type="bool", default=True)
     converter._get_pp_attr.assert_any_call("trafo", "vk0_percent", expected_type="f8", default=np.nan)
@@ -1148,10 +1148,10 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
     converter._get_pp_attr.assert_any_call("trafo3w", "shift_mv_degree", expected_type="f8", default=0.0)
     converter._get_pp_attr.assert_any_call("trafo3w", "shift_lv_degree", expected_type="f8", default=0.0)
     converter._get_pp_attr.assert_any_call("trafo3w", "tap_side", expected_type="O", default=None)
-    converter._get_pp_attr.assert_any_call("trafo3w", "tap_neutral", expected_type="i4", default=np.nan)
+    converter._get_pp_attr.assert_any_call("trafo3w", "tap_neutral", expected_type="f8", default=np.nan)
     converter._get_pp_attr.assert_any_call("trafo3w", "tap_min", expected_type="i4", default=0)
     converter._get_pp_attr.assert_any_call("trafo3w", "tap_max", expected_type="i4", default=0)
-    converter._get_pp_attr.assert_any_call("trafo3w", "tap_pos", expected_type="i4", default=np.nan)
+    converter._get_pp_attr.assert_any_call("trafo3w", "tap_pos", expected_type="f8", default=np.nan)
     converter._get_pp_attr.assert_any_call("trafo3w", "in_service", expected_type="bool", default=True)
     converter._get_pp_attr.assert_any_call("trafo3w", "vk0_hv_percent", expected_type="f8", default=np.nan)
     converter._get_pp_attr.assert_any_call("trafo3w", "vkr0_hv_percent", expected_type="f8", default=np.nan)

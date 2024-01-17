@@ -6,7 +6,7 @@
 Panda Power Converter
 """
 from functools import lru_cache
-from typing import Dict, List, MutableMapping, Optional, Tuple, Union
+from typing import Dict, List, MutableMapping, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -387,7 +387,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             / (2 * np.pi * self.system_frequency * 1e-3)
         )
         pgm_lines["i_n"] = (
-            (self._get_pp_attr("line", "max_i_ka", expected_type="f8") * 1e3)
+            (self._get_pp_attr("line", "max_i_ka", expected_type="f8", default=np.nan) * 1e3)
             * self._get_pp_attr("line", "df", expected_type="f8", default=1)
             * parallel
         )
@@ -687,8 +687,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         switch_states = self.get_switch_states("trafo")
 
         tap_side = self._get_pp_attr("trafo", "tap_side", expected_type="O", default=None)
-        tap_nom = self._get_pp_attr("trafo", "tap_neutral", expected_type="i4", default=np.nan)
-        tap_pos = self._get_pp_attr("trafo", "tap_pos", expected_type="i4", default=np.nan)
+        tap_nom = self._get_pp_attr("trafo", "tap_neutral", expected_type="f8", default=np.nan)
+        tap_pos = self._get_pp_attr("trafo", "tap_pos", expected_type="f8", default=np.nan)
         tap_size = self._get_tap_size(pp_trafo)
         winding_types = self.get_trafo_winding_types()
         clocks = np.round(self._get_pp_attr("trafo", "shift_degree", expected_type="f8", default=0.0) / 30) % 12
@@ -749,8 +749,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_transformers["clock"] = clocks
         pgm_transformers["winding_from"] = winding_types["winding_from"]
         pgm_transformers["winding_to"] = winding_types["winding_to"]
-        pgm_transformers["tap_nom"] = tap_nom
-        pgm_transformers["tap_pos"] = tap_pos
+        pgm_transformers["tap_nom"] = tap_nom.astype("i4")  # TODO(mgovers) shouldn't this be rounded?
+        pgm_transformers["tap_pos"] = tap_pos.astype("i4")  # TODO(mgovers) shouldn't this be rounded?
         pgm_transformers["tap_side"] = self._get_transformer_tap_side(tap_side)
         pgm_transformers["tap_min"] = self._get_pp_attr("trafo", "tap_min", expected_type="i4", default=0)
         pgm_transformers["tap_max"] = self._get_pp_attr("trafo", "tap_max", expected_type="i4", default=0)
@@ -786,8 +786,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         in_service = self._get_pp_attr("trafo3w", "in_service", expected_type="bool", default=True)
         switch_states = self.get_trafo3w_switch_states(pp_trafo3w)
         tap_side = self._get_pp_attr("trafo3w", "tap_side", expected_type="O", default=None)
-        tap_nom = self._get_pp_attr("trafo3w", "tap_neutral", expected_type="i4", default=np.nan)
-        tap_pos = self._get_pp_attr("trafo3w", "tap_pos", expected_type="i4", default=np.nan)
+        tap_nom = self._get_pp_attr("trafo3w", "tap_neutral", expected_type="f8", default=np.nan)
+        tap_pos = self._get_pp_attr("trafo3w", "tap_pos", expected_type="f8", default=np.nan)
         tap_size = self._get_3wtransformer_tap_size(pp_trafo3w)
         vk_hv_percent = self._get_pp_attr("trafo3w", "vk_hv_percent", expected_type="f8")
         vkr_hv_percent = self._get_pp_attr("trafo3w", "vkr_hv_percent", expected_type="f8")
@@ -879,8 +879,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_3wtransformers["winding_1"] = winding_types["winding_1"]
         pgm_3wtransformers["winding_2"] = winding_types["winding_2"]
         pgm_3wtransformers["winding_3"] = winding_types["winding_3"]
-        pgm_3wtransformers["tap_nom"] = tap_nom
-        pgm_3wtransformers["tap_pos"] = tap_pos
+        pgm_3wtransformers["tap_nom"] = tap_nom.astype("i4")  # TODO(mgovers) shouldn't this be rounded?
+        pgm_3wtransformers["tap_pos"] = tap_pos.astype("i4")  # TODO(mgovers) shouldn't this be rounded?
         pgm_3wtransformers["tap_side"] = self._get_3wtransformer_tap_side(tap_side)
         pgm_3wtransformers["tap_min"] = self._get_pp_attr("trafo3w", "tap_min", expected_type="i4", default=0)
         pgm_3wtransformers["tap_max"] = self._get_pp_attr("trafo3w", "tap_max", expected_type="i4", default=0)
@@ -2375,7 +2375,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self,
         table: str,
         attribute: str,
-        expected_type: Optional[str] = "O",
+        expected_type: Optional[str] = None,
         default: Optional[Union[float, bool, str]] = None,
     ) -> np.ndarray:
         """
@@ -2389,7 +2389,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             the selected PandaPower attribute from the selected PandaPower table
         """
         pp_component_data = self.pp_input_data[table]
-        exp_dtype = type(default) if default is not None else expected_type
+
+        exp_dtype: Union[str, Type] = "O"
+        if expected_type is not None:
+            exp_dtype = expected_type
+        elif default is not None:
+            exp_dtype = type(default)
 
         # If the attribute does not exist, return the default value
         # (assume that broadcasting is handled by the caller / numpy)
