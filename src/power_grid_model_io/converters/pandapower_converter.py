@@ -749,8 +749,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_transformers["clock"] = clocks
         pgm_transformers["winding_from"] = winding_types["winding_from"]
         pgm_transformers["winding_to"] = winding_types["winding_to"]
-        pgm_transformers["tap_nom"] = tap_nom.astype("i4")  # TODO(mgovers) shouldn't this be rounded?
-        pgm_transformers["tap_pos"] = tap_pos.astype("i4")  # TODO(mgovers) shouldn't this be rounded?
+        pgm_transformers["tap_nom"] = tap_nom.astype("i4")
+        pgm_transformers["tap_pos"] = tap_pos.astype("i4")
         pgm_transformers["tap_side"] = self._get_transformer_tap_side(tap_side)
         pgm_transformers["tap_min"] = self._get_pp_attr("trafo", "tap_min", expected_type="i4", default=0)
         pgm_transformers["tap_max"] = self._get_pp_attr("trafo", "tap_max", expected_type="i4", default=0)

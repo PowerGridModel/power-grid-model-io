@@ -1355,7 +1355,7 @@ def test_create_pgm_input_transformers3w__default() -> None:
     assert result[1]["tap_pos"] == 34.0 != result[1]["tap_nom"]
     assert result[2]["tap_pos"] == 34.0 != result[2]["tap_nom"]
     assert result[3]["tap_pos"] == 0 == result[3]["tap_nom"]
-    assert result[4]["tap_pos"] == 0 == result[4]["tap_nom"]  # TODO: check if this is correct
+    assert result[4]["tap_pos"] == 0 == result[4]["tap_nom"]
     assert result[5]["tap_pos"] == 0 == result[5]["tap_nom"]
     assert result[6]["tap_size"] == 0
 
