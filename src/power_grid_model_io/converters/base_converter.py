@@ -7,7 +7,12 @@ Abstract converter class
 from abc import ABC, abstractmethod
 from typing import Generic, Optional, Tuple, TypeVar
 
+import logging
+logging.basicConfig(level=logging.ERROR)
+
 import structlog
+structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(logging.ERROR))
+
 from power_grid_model.data_types import Dataset, SingleDataset
 
 from power_grid_model_io.data_stores.base_data_store import BaseDataStore
@@ -20,10 +25,17 @@ T = TypeVar("T")
 class BaseConverter(Generic[T], ABC):
     """Abstract converter class"""
 
-    def __init__(self, source: Optional[BaseDataStore[T]] = None, destination: Optional[BaseDataStore[T]] = None):
+    def __init__(
+        self,
+        source: Optional[BaseDataStore[T]] = None,
+        destination: Optional[BaseDataStore[T]] = None,
+        log_level: int = logging.ERROR,
+    ):
         """
         Initialize a logger
         """
+        logging.basicConfig(level=log_level)
+        structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(log_level))
         self._log = structlog.get_logger(type(self).__name__)
         self._source = source
         self._destination = destination

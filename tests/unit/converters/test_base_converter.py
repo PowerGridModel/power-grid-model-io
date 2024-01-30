@@ -168,3 +168,13 @@ def test_load_data(converter: DummyConverter):
     converter_2 = DummyConverter(source=source)
     converter_2._load_data(data=None)
     source.load.assert_called_once()
+
+
+def test_base_converter_log_level():
+    import logging
+
+    converter = BaseConverter(log_level=logging.DEBUG)
+    assert converter._log.logger.level == logging.DEBUG
+
+    converter = BaseConverter()
+    assert converter._log.logger.level == logging.ERROR
