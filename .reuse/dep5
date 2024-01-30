@@ -1,0 +1,8 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: power-grid-model-io
+Upstream-Contact: Power Grid Model project <powergridmodel@lfenergy.org>
+Source: https://github.com/PowerGridModel/power-grid-model-io
+
+Files: ./*
+Copyright: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+License: MPL-2.0
