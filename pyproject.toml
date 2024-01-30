@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
 
@@ -11,7 +11,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "power-grid-model-io"
-authors = [{name = "Alliander Dynamic Grid Calculation", email = "dynamic.grid.calculation@alliander.com"}]
+authors = [{name = "Contributors to the Power Grid Model project", email = "powergridmodel@lfenergy.org"}]
 description = "Power Grid Model Input/Output"
 readme = "README.md"
 keywords = ["power grid model", "input/output", "conversions"]

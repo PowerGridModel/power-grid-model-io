@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2022 Contributors to the Power Grid Model project <dynamic.grid.calculation@alliander.com>
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
 
@@ -11,9 +11,8 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "power-grid-model-io"
-copyright = "2022, Alliander Dynamic Grid Calculation"
-author = "Alliander Dynamic Grid Calculation"
-
+copyright = "Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>"
+author = "Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
