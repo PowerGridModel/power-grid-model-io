@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import logging
 from typing import Dict, List
 from unittest.mock import ANY, MagicMock
 
@@ -171,10 +172,8 @@ def test_load_data(converter: DummyConverter):
 
 
 def test_base_converter_log_level():
-    import logging
-
     converter = BaseConverter(log_level=logging.DEBUG)
-    assert converter._log.logger.level == logging.DEBUG
+    assert converter._logger.level == logging.DEBUG
 
     converter = BaseConverter()
-    assert converter._log.logger.level == logging.ERROR
+    assert converter._logger.level == logging.ERROR

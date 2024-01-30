@@ -4,20 +4,19 @@
 """
 Abstract converter class
 """
+import logging
 from abc import ABC, abstractmethod
 from typing import Generic, Optional, Tuple, TypeVar
 
-import logging
-logging.basicConfig(level=logging.ERROR)
-
 import structlog
-structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(logging.ERROR))
-
 from power_grid_model.data_types import Dataset, SingleDataset
 
 from power_grid_model_io.data_stores.base_data_store import BaseDataStore
 from power_grid_model_io.data_types import ExtraInfo
 from power_grid_model_io.utils.auto_id import AutoID
+
+logging.basicConfig(level=logging.ERROR)
+structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(logging.ERROR))
 
 T = TypeVar("T")
 
@@ -37,6 +36,7 @@ class BaseConverter(Generic[T], ABC):
         logging.basicConfig(level=log_level)
         structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(log_level))
         self._log = structlog.get_logger(type(self).__name__)
+        self._logger = logging.getLogger(type(self).__name__)
         self._source = source
         self._destination = destination
         self._auto_id = AutoID()
