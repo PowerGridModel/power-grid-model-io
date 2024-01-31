@@ -33,10 +33,10 @@ class BaseConverter(Generic[T], ABC):
         """
         Initialize a logger
         """
-        logging.basicConfig(level=log_level)
+        self._logger = logging.getLogger(type(self).__name__)
+        self._logger.setLevel(log_level)
         structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(log_level))
         self._log = structlog.get_logger(type(self).__name__)
-        self._logger = logging.getLogger(type(self).__name__)
         self._source = source
         self._destination = destination
         self._auto_id = AutoID()
@@ -157,6 +157,25 @@ class BaseConverter(Generic[T], ABC):
             self._destination.save(data=data_converted)
         else:
             raise ValueError("No destination supplied!")
+
+    def set_log_level(self, log_level: int) -> None:
+        """
+        Set the log level
+
+        Args:
+          log_level: int:
+        """
+        self._logger.setLevel(log_level)
+        structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(log_level))
+
+    def get_log_level(self) -> int:
+        """
+        Get the log level
+
+        Returns:
+          int:
+        """
+        return self._logger.getEffectiveLevel()
 
     def _load_data(self, data: Optional[T]) -> T:
         if data is not None:

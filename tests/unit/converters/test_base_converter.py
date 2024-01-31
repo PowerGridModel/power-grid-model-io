@@ -13,6 +13,9 @@ from power_grid_model_io.converters.base_converter import BaseConverter
 
 
 class DummyConverter(BaseConverter[Dict[str, List[Dict[str, int]]]]):
+    def __init__(self, source=None, destination=None, log_level=logging.ERROR):
+        super().__init__(source, destination, log_level)
+
     def _parse_data(self, data, data_type, extra_info=None):
         # No need to implement _parse_data() for testing purposes
         pass
@@ -172,8 +175,11 @@ def test_load_data(converter: DummyConverter):
 
 
 def test_base_converter_log_level():
-    converter = BaseConverter(log_level=logging.DEBUG)
-    assert converter._logger.level == logging.DEBUG
+    converter = DummyConverter(log_level=logging.DEBUG)
+    assert converter.get_log_level() == logging.DEBUG
 
-    converter = BaseConverter()
-    assert converter._logger.level == logging.ERROR
+    converter = DummyConverter()
+    assert converter.get_log_level() == logging.ERROR
+
+    converter.set_log_level(logging.DEBUG)
+    assert converter.get_log_level() == logging.DEBUG
