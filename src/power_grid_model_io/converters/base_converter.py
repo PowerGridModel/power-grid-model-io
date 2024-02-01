@@ -4,6 +4,7 @@
 """
 Abstract converter class
 """
+import logging
 from abc import ABC, abstractmethod
 from typing import Generic, Optional, Tuple, TypeVar
 
@@ -20,11 +21,18 @@ T = TypeVar("T")
 class BaseConverter(Generic[T], ABC):
     """Abstract converter class"""
 
-    def __init__(self, source: Optional[BaseDataStore[T]] = None, destination: Optional[BaseDataStore[T]] = None):
+    def __init__(
+        self,
+        source: Optional[BaseDataStore[T]] = None,
+        destination: Optional[BaseDataStore[T]] = None,
+        log_level: int = logging.DEBUG,
+    ):
         """
         Initialize a logger
         """
-        self._log = structlog.get_logger(type(self).__name__)
+        self._logger = logging.getLogger(type(self).__name__)
+        self._logger.setLevel(log_level)
+        self._log = structlog.wrap_logger(self._logger, wrapper_class=structlog.make_filtering_bound_logger(log_level))
         self._source = source
         self._destination = destination
         self._auto_id = AutoID()
@@ -145,6 +153,25 @@ class BaseConverter(Generic[T], ABC):
             self._destination.save(data=data_converted)
         else:
             raise ValueError("No destination supplied!")
+
+    def set_log_level(self, log_level: int) -> None:
+        """
+        Set the log level
+
+        Args:
+          log_level: int:
+        """
+        self._logger.setLevel(log_level)
+        self._log = structlog.wrap_logger(self._logger, wrapper_class=structlog.make_filtering_bound_logger(log_level))
+
+    def get_log_level(self) -> int:
+        """
+        Get the log level
+
+        Returns:
+          int:
+        """
+        return self._logger.getEffectiveLevel()
 
     def _load_data(self, data: Optional[T]) -> T:
         if data is not None:

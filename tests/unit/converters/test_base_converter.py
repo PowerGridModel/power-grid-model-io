@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import logging
 from typing import Dict, List
 from unittest.mock import ANY, MagicMock
 
@@ -12,6 +13,9 @@ from power_grid_model_io.converters.base_converter import BaseConverter
 
 
 class DummyConverter(BaseConverter[Dict[str, List[Dict[str, int]]]]):
+    def __init__(self, source=None, destination=None, log_level=logging.ERROR):
+        super().__init__(source, destination, log_level)
+
     def _parse_data(self, data, data_type, extra_info=None):
         # No need to implement _parse_data() for testing purposes
         pass
@@ -168,3 +172,14 @@ def test_load_data(converter: DummyConverter):
     converter_2 = DummyConverter(source=source)
     converter_2._load_data(data=None)
     source.load.assert_called_once()
+
+
+def test_base_converter_log_level():
+    converter = DummyConverter(log_level=logging.DEBUG)
+    assert converter.get_log_level() == logging.DEBUG
+
+    converter = DummyConverter()
+    assert converter.get_log_level() == logging.ERROR
+
+    converter.set_log_level(logging.DEBUG)
+    assert converter.get_log_level() == logging.DEBUG
