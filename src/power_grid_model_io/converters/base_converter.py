@@ -15,9 +15,6 @@ from power_grid_model_io.data_stores.base_data_store import BaseDataStore
 from power_grid_model_io.data_types import ExtraInfo
 from power_grid_model_io.utils.auto_id import AutoID
 
-logging.basicConfig(level=logging.ERROR)
-structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(logging.ERROR))
-
 T = TypeVar("T")
 
 
@@ -28,15 +25,14 @@ class BaseConverter(Generic[T], ABC):
         self,
         source: Optional[BaseDataStore[T]] = None,
         destination: Optional[BaseDataStore[T]] = None,
-        log_level: int = logging.ERROR,
+        log_level: int = logging.DEBUG,
     ):
         """
         Initialize a logger
         """
         self._logger = logging.getLogger(type(self).__name__)
         self._logger.setLevel(log_level)
-        structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(log_level))
-        self._log = structlog.get_logger(type(self).__name__)
+        self._log = structlog.wrap_logger(self._logger, wrapper_class=structlog.make_filtering_bound_logger(log_level))
         self._source = source
         self._destination = destination
         self._auto_id = AutoID()
@@ -166,7 +162,7 @@ class BaseConverter(Generic[T], ABC):
           log_level: int:
         """
         self._logger.setLevel(log_level)
-        structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(log_level))
+        self._log = structlog.wrap_logger(self._logger, wrapper_class=structlog.make_filtering_bound_logger(log_level))
 
     def get_log_level(self) -> int:
         """
