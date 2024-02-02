@@ -1,0 +1,20 @@
+{
+    "sonarlint.connectedMode.project": {
+        "connectionId": "powergridmodel",
+        "projectKey": "PowerGridModel_power-grid-model-io"
+    },
+    "cmake.configureOnOpen": false,
+    "python.testing.pytestArgs": [
+        "tests",
+        "--no-cov"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./tests",
+        "-p",
+        "test_*.py"
+    ],
+}
