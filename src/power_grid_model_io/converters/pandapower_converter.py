@@ -21,6 +21,7 @@ from power_grid_model_io.utils.parsing import is_node_ref, parse_trafo3_connecti
 
 PandaPowerData = MutableMapping[str, pd.DataFrame]
 
+pd.set_option('future.no_silent_downcasting', True)
 logger = structlog.get_logger(__file__)
 
 
@@ -728,7 +729,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         no_vector_groups = np.isnan(winding_types["winding_from"]) | np.isnan(winding_types["winding_to"])
         no_vector_groups_dyn = no_vector_groups & (clocks % 2)
         winding_types[no_vector_groups] = WindingType.wye_n
-        winding_types["winding_from"][no_vector_groups_dyn] = WindingType.delta
+        winding_types.loc[no_vector_groups_dyn, "winding_from"] = WindingType.delta
 
         # Create PGM array
         pgm_transformers = initialize_array(data_type="input", component_type="transformer", shape=len(pp_trafo))
@@ -838,8 +839,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         no_vector_groups_ynd2 = no_vector_groups & (clocks_12 % 2)
         no_vector_groups_ynd3 = no_vector_groups & (clocks_13 % 2)
         winding_types[no_vector_groups] = WindingType.wye_n
-        winding_types["winding_2"][no_vector_groups_ynd2] = WindingType.delta
-        winding_types["winding_3"][no_vector_groups_ynd3] = WindingType.delta
+        winding_types.loc[no_vector_groups_ynd2, "winding_2"] = WindingType.delta
+        winding_types.loc[no_vector_groups_ynd3, "winding_3"] = WindingType.delta
 
         pgm_3wtransformers = initialize_array(
             data_type="input", component_type="three_winding_transformer", shape=len(pp_trafo3w)
