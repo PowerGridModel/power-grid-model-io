@@ -140,7 +140,7 @@ class ExcelFileStore(BaseDataStore[TabularData]):
 
         to_rename = self._check_duplicate_values(sheet_name=sheet_name, data=data)
         if to_rename:
-            columns = data.columns.values
+            columns = data.columns.values.copy()
             for col_idx, new_name in to_rename.items():
                 self._log.warning(
                     "Column is renamed",

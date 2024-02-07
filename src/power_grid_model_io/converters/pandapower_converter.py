@@ -21,7 +21,6 @@ from power_grid_model_io.utils.parsing import is_node_ref, parse_trafo3_connecti
 
 PandaPowerData = MutableMapping[str, pd.DataFrame]
 
-pd.set_option('future.no_silent_downcasting', True)
 logger = structlog.get_logger(__file__)
 
 
@@ -700,7 +699,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         mag0_percent = self._get_pp_attr("trafo", "mag0_percent", expected_type="f8", default=np.nan)
         mag0_rx = self._get_pp_attr("trafo", "mag0_rx", expected_type="f8", default=np.nan)
         # Calculate rx ratio of magnetising branch
-        mag_g = pfe / (sn_mva * 1000)
+        valid = np.logical_and(np.not_equal(sn_mva, 0.0), np.isfinite(sn_mva))
+        mag_g = np.divide(pfe, sn_mva * 1000, where=valid)
+        mag_g[np.logical_not(valid)] = np.nan
         rx_mag = mag_g / np.sqrt(i_no_load * i_no_load * 1e-4 - mag_g * mag_g)
         # positive and zero sequence magnetising impedance must be equal.
         # mag0_percent = z0mag / z0.
@@ -728,7 +729,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # Default vector group for odd clocks = DYn and for even clocks = YNyn
         no_vector_groups = np.isnan(winding_types["winding_from"]) | np.isnan(winding_types["winding_to"])
         no_vector_groups_dyn = no_vector_groups & (clocks % 2)
-        winding_types[no_vector_groups] = WindingType.wye_n
+        winding_types.loc[no_vector_groups] = WindingType.wye_n
         winding_types.loc[no_vector_groups_dyn, "winding_from"] = WindingType.delta
 
         # Create PGM array
@@ -1013,9 +1014,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             * 1e6
         )
         p_spec = pgm_sym_loads_from_motor["p_specified"]
-        pgm_sym_loads_from_motor["q_specified"] = np.sqrt(
-            np.power(p_spec / self._get_pp_attr("motor", "cos_phi", expected_type="f8"), 2) - p_spec**2
-        )
+        cos_phi = self._get_pp_attr("motor", "cos_phi", expected_type="f8")
+        valid = np.logical_and(np.not_equal(cos_phi, 0.0), np.isfinite(cos_phi))
+        q_spec = np.sqrt(np.power(np.divide(p_spec, cos_phi, where=valid), 2, where=valid) - p_spec**2, where=valid)
+        q_spec[np.logical_not(valid)] = np.nan
+        pgm_sym_loads_from_motor["q_specified"] = q_spec
 
         #  If input data of loads has already been filled then extend it with data of motors. If it is empty and there
         #  is no data about loads,then assign motor data to it
@@ -1614,7 +1617,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             links = self.pgm_output_data["link"]
             # For links, i_from = i_to = i_ka / 1e3
             link_ids = self._get_pp_ids("switch", links["id"], "b2b_switches")
-            pp_switches_output["i_ka"][link_ids] = links["i_from"] * 1e-3
+            pp_switches_output.loc[link_ids, "i_ka"] = links["i_from"] * 1e-3
 
         assert "res_switch" not in self.pp_output_data
         self.pp_output_data["res_switch"] = pp_switches_output
@@ -2248,7 +2251,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             the "closed" value of a Switch
         """
-        switch_state = (
+        switch_states = (
             component[["index", bus]]
             .merge(
                 switches,
@@ -2256,10 +2259,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 left_on=["index", bus],
                 right_on=["element", "bus"],
             )
-            .fillna(True)
-            .set_index(component.index)
+            .set_index(component.index)["closed"]
         )
-        return pd.Series(switch_state["closed"])
+
+        # no need to fill na because bool(NaN) == True
+        return pd.Series(switch_states.astype(bool, copy=False))
 
     def get_switch_states(self, pp_table: str) -> pd.DataFrame:
         """
@@ -2415,7 +2419,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if any(nan_values):
             attr_data = attr_data.fillna(value=default, inplace=False)
 
-        return attr_data.to_numpy(dtype=exp_dtype)
+        return attr_data.to_numpy(dtype=exp_dtype, copy=True)
 
     def get_id(self, pp_table: str, pp_idx: int, name: Optional[str] = None) -> int:
         """

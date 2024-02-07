@@ -80,12 +80,12 @@ class TabularData:
         # If the index 'column' is requested, but no column called 'index' exist,
         # return the index of the dataframe as if it were an actual column.
         if column_name == "index" and "index" not in table_data and hasattr(table_data, "index"):
-            return pd.Series(table_data.index, name="index")
+            return pd.Series(table_data.index, name="index", copy=False)
 
         column_data = table_data[column_name]
 
         if isinstance(column_data, np.ndarray):
-            column_data = pd.Series(column_data, name=column_name)
+            column_data = pd.Series(column_data, name=column_name, copy=False)
 
         # If unit information is available, convert the unit
         if not isinstance(column_data, pd.Series):
