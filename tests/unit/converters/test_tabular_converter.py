@@ -980,9 +980,9 @@ def test_lookup_ids(converter: TabularConverter):
         reference,
         pd.DataFrame(
             [
-                ["foo", None, 1, 2, None],
-                ["node", None, 1, None, 2],
-                ["node", "bar", 1, 2, None],
+                ["foo", np.nan, 1, 2, np.nan],
+                ["node", np.nan, 1, np.nan, 2],
+                ["node", "bar", 1, 2, np.nan],
             ],
             columns=["table", "name", "a", "b", "c"],
             index=[3, 2, 4],

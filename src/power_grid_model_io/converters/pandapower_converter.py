@@ -699,7 +699,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         mag0_percent = self._get_pp_attr("trafo", "mag0_percent", expected_type="f8", default=np.nan)
         mag0_rx = self._get_pp_attr("trafo", "mag0_rx", expected_type="f8", default=np.nan)
         # Calculate rx ratio of magnetising branch
-        mag_g = pfe / (sn_mva * 1000)
+        valid = np.logical_and(np.not_equal(sn_mva, 0.0), np.isfinite(sn_mva))
+        mag_g = np.divide(pfe, sn_mva * 1000, where=valid)
+        mag_g[np.logical_not(valid)] = np.nan
         rx_mag = mag_g / np.sqrt(i_no_load * i_no_load * 1e-4 - mag_g * mag_g)
         # positive and zero sequence magnetising impedance must be equal.
         # mag0_percent = z0mag / z0.
@@ -1012,9 +1014,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             * 1e6
         )
         p_spec = pgm_sym_loads_from_motor["p_specified"]
-        pgm_sym_loads_from_motor["q_specified"] = np.sqrt(
-            np.power(p_spec / self._get_pp_attr("motor", "cos_phi", expected_type="f8"), 2) - p_spec**2
-        )
+        cos_phi = self._get_pp_attr("motor", "cos_phi", expected_type="f8")
+        valid = np.logical_and(np.not_equal(cos_phi, 0.0), np.isfinite(cos_phi))
+        q_spec = np.sqrt(np.power(np.divide(p_spec, cos_phi, where=valid), 2, where=valid) - p_spec**2, where=valid)
+        q_spec[np.logical_not(valid)] = np.nan
+        pgm_sym_loads_from_motor["q_specified"] = q_spec
 
         #  If input data of loads has already been filled then extend it with data of motors. If it is empty and there
         #  is no data about loads,then assign motor data to it
@@ -1613,7 +1617,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             links = self.pgm_output_data["link"]
             # For links, i_from = i_to = i_ka / 1e3
             link_ids = self._get_pp_ids("switch", links["id"], "b2b_switches")
-            pp_switches_output["i_ka"][link_ids] = links["i_from"] * 1e-3
+            pp_switches_output.loc[link_ids, "i_ka"] = links["i_from"] * 1e-3
 
         assert "res_switch" not in self.pp_output_data
         self.pp_output_data["res_switch"] = pp_switches_output

@@ -5,3 +5,4 @@
 import pandas as pd
 
 pd.set_option("future.no_silent_downcasting", True)
+# pd.set_option("mode.copy_on_write", True)

@@ -562,8 +562,7 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     )
     pgm.assert_any_call(
         "i_n",
-        _get_pp_attr("line", "max_i_ka", expected_type="f8", default=np.nan)
-        * 1e3
+        (_get_pp_attr("line", "max_i_ka", expected_type="f8", default=np.nan) * 1e3)
         * _get_pp_attr("line", "df", expected_type="f8", default=1)
         * _get_pp_attr("line", "parallel", expected_type="u4", default=1),
     )
@@ -823,6 +822,11 @@ def test_create_pgm_input_shunts(mock_init_array: MagicMock, two_pp_objs, conver
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 @patch("power_grid_model_io.converters.pandapower_converter.np.round", new=lambda x: x)
+@patch("power_grid_model_io.converters.pandapower_converter.np.divide", new=lambda x, _, **kwargs: x)
+@patch("power_grid_model_io.converters.pandapower_converter.np.bitwise_and", new=lambda x, _: x)
+@patch("power_grid_model_io.converters.pandapower_converter.np.logical_and", new=lambda x, _: x)
+@patch("power_grid_model_io.converters.pandapower_converter.np.allclose", new=lambda x, _: x)
+@patch("power_grid_model_io.converters.pandapower_converter.np.isnan", new=lambda x: x)
 def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
     converter.pp_input_data["trafo"] = two_pp_objs
@@ -938,7 +942,7 @@ def test_create_pgm_input_transformers__default() -> None:
         pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_step_percent=1, tap_side=None
     )
     tap_pos_trafo = pp.create_transformer_from_parameters(pp_net, *args, tap_neutral=12.0, tap_size=1, tap_side="hv")
-    pp_net["trafo"]["tap_pos"][tap_pos_trafo] = np.nan
+    pp_net["trafo"].loc[tap_pos_trafo, "tap_pos"] = np.nan
     pp.create_transformer_from_parameters(pp_net, *args, tap_neutral=np.nan, tap_pos=34.0, tap_side="hv")
     pp.create_transformer_from_parameters(
         pp_net, *args, tap_neutral=12, tap_step_percent=np.nan, tap_pos=34.0, tap_side="hv"
@@ -1290,7 +1294,7 @@ def test_create_pgm_input_transformers3w__default() -> None:
     nan_trafo = pp.create_transformer3w_from_parameters(
         pp_net, *args, tap_neutral=12.0, tap_step_percent=1, tap_pos=np.nan, tap_side="hv"
     )
-    pp_net["trafo3w"]["tap_pos"][nan_trafo] = np.nan
+    pp_net["trafo3w"].loc[nan_trafo, "tap_pos"] = np.nan
     pp.create_transformer3w_from_parameters(
         pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_step_percent=np.nan, tap_side="hv"
     )
@@ -1615,6 +1619,9 @@ def test_create_pgm_input_dclines(mock_init_array: MagicMock, two_pp_objs, conve
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
+@patch("power_grid_model_io.converters.pandapower_converter.np.divide", new=lambda x, _, **kwargs: x)
+@patch("power_grid_model_io.converters.pandapower_converter.np.power", new=lambda x, _, **kwargs: x)
+@patch("power_grid_model_io.converters.pandapower_converter.np.sqrt", new=lambda x, **kwargs: x)
 def test_create_pgm_input_motors(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
     converter.pp_input_data["motor"] = two_pp_objs

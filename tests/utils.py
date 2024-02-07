@@ -172,21 +172,38 @@ class MockFn:
                 return False
 
         def eq(left, right) -> bool:
-            if isinstance(left, pd.DataFrame):
-                if left.columns != right.columns:
-                    return False
-            if isinstance(left, pd.Series):
-                if left.name != right.name:
-                    return False
+            if type(left) != type(right):
+                return False
+            if isinstance(left, pd.DataFrame) and left.columns != right.columns:
+                return False
+            if isinstance(left, pd.Series) and left.name != right.name:
+                return False
             if isinstance(left, NDFrame):
                 return (left == right).all()
             if isinstance(right, NDFrame):
                 return False
+
             if isinstance(left, np.ndarray) and left.size == 0:
                 return isinstance(right, np.ndarray) and right.size == 0
-            if isnan(left) and isnan(right):
+
+            if left == right:
                 return True
-            return left == right
+
+            left_nans = isnan(left)
+            right_nans = isnan(right)
+
+            if np.any(left_nans != right_nans):
+                return False
+
+            infinite = np.logical_and(left_nans, right_nans)
+            if isinstance(left, np.ndarray):
+                finite = np.logical_not(infinite)
+                return bool(np.all(np.equal(left[finite], right[finite])))
+
+            if isinstance(infinite, np.ndarray) and np.any(infinite):
+                return True
+
+            return infinite
 
         if not eq(self.fn, other.fn):
             return False
