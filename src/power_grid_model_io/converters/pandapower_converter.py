@@ -729,7 +729,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # Default vector group for odd clocks = DYn and for even clocks = YNyn
         no_vector_groups = np.isnan(winding_types["winding_from"]) | np.isnan(winding_types["winding_to"])
         no_vector_groups_dyn = no_vector_groups & (clocks % 2)
-        winding_types[no_vector_groups] = WindingType.wye_n
+        winding_types.loc[no_vector_groups] = WindingType.wye_n
         winding_types.loc[no_vector_groups_dyn, "winding_from"] = WindingType.delta
 
         # Create PGM array
@@ -2418,7 +2418,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if any(nan_values):
             attr_data = attr_data.fillna(value=default, inplace=False)
 
-        return attr_data.to_numpy(dtype=exp_dtype)
+        return attr_data.to_numpy(dtype=exp_dtype, copy=True)
 
     def get_id(self, pp_table: str, pp_idx: int, name: Optional[str] = None) -> int:
         """

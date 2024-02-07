@@ -85,7 +85,7 @@ def test_get_column__numpy_is_a_reference(nodes_np: np.ndarray):
 
     # Act
     col_data = data.get_column(table_name="nodes", column_name="u_rated")
-    col_data[0] = 123.0  # << should update the source data
+    col_data.loc[0] = 123.0  # << should update the source data
 
     # Assert
     np.testing.assert_array_equal(nodes_np["u_rated"], np.array([123.0, 10.5e3, 400.0]))

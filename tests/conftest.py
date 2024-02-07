@@ -5,4 +5,6 @@
 import pandas as pd
 
 pd.set_option("future.no_silent_downcasting", True)
+
+# TODO(mgovers) We're ready for Pandas 3.x, but pandapower is not. Enable this option when it is.
 # pd.set_option("mode.copy_on_write", True)

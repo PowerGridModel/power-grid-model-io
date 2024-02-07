@@ -46,6 +46,7 @@ dev = [
     "pytest",
     "pytest-cov",
     "pydantic>2", # Used in unit tests
+    "numba",
 ]
 examples = [
     "pandapower>2.11.1",
