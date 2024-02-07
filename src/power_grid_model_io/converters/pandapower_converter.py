@@ -21,7 +21,6 @@ from power_grid_model_io.utils.parsing import is_node_ref, parse_trafo3_connecti
 
 PandaPowerData = MutableMapping[str, pd.DataFrame]
 
-pd.set_option('future.no_silent_downcasting', True)
 logger = structlog.get_logger(__file__)
 
 

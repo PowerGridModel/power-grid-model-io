@@ -45,7 +45,7 @@ dev = [
     "pylint",
     "pytest",
     "pytest-cov",
-    "pydantic", # Used in unit tests
+    "pydantic>2", # Used in unit tests
 ]
 examples = [
     "pandapower>2.11.1",
