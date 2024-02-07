@@ -2251,7 +2251,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             the "closed" value of a Switch
         """
-        switch_state = (
+        switch_status = (
             component[["index", bus]]
             .merge(
                 switches,
@@ -2259,10 +2259,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 left_on=["index", bus],
                 right_on=["element", "bus"],
             )
-            .fillna(True)
-            .set_index(component.index)
+            .set_index(component.index)["closed"]
         )
-        return pd.Series(switch_state["closed"])
+
+        # no need to fill na because bool(NaN) == True
+        return pd.Series(switch_status.astype(bool, copy=False))
 
     def get_switch_states(self, pp_table: str) -> pd.DataFrame:
         """

@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
-import re
+
 from typing import Callable
 from unittest.mock import ANY, MagicMock, call, patch
 
