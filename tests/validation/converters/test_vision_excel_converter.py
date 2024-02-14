@@ -22,6 +22,7 @@ SOURCE_FILE = DATA_PATH / "vision_{language:s}.xlsx"
 VALIDATION_FILE = DATA_PATH / "pgm_input_data_{language:s}.json"
 LANGUAGES = ["en", "nl"]
 VALIDATION_EN = Path(str(VALIDATION_FILE).format(language="en"))
+CUSTOM_MAPPING_FILE = DATA_PATH / "vision_9_5_{language:s}.yaml"
 
 
 @lru_cache
@@ -81,6 +82,22 @@ def test_input_data(input_data: Tuple[SingleDataset, SingleDataset]):
     actual, expected = input_data
     # Assert
     assert len(expected) <= len(actual)
+
+
+def test_input_data_custom_yaml():
+    """
+    Unit test to preload the expected and actual data, using a different mapping file other than the one in the default location
+    """
+    for language in LANGUAGES:
+        # Arrange
+        actual, _ = VisionExcelConverter(
+            Path(str(SOURCE_FILE).format(language=language)),
+            language=language,
+            mapping_file=Path(str(CUSTOM_MAPPING_FILE).format(language=language)),
+        ).load_input_data()
+        expected, _ = load_validation_data(language=language)
+        # Assert
+        assert len(expected) <= len(actual)
 
 
 @pytest.mark.parametrize(("component", "attribute"), component_attributes(VALIDATION_EN, data_type="input"))
