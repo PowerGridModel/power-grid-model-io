@@ -32,13 +32,20 @@ class VisionExcelConverter(TabularConverter):
     Vision Excel Converter: Load data from a Vision Excel export file and use a mapping file to convert the data to PGM
     """
 
-    def __init__(self, source_file: Optional[Union[Path, str]] = None, language: str = "en"):
-        mapping_file = Path(str(DEFAULT_MAPPING_FILE).format(language=language))
-        if not mapping_file.exists():
+    def __init__(
+        self,
+        source_file: Optional[Union[Path, str]] = None,
+        language: str = "en",
+        mapping_file: Optional[Path] = None,
+    ):
+        _mapping_file = _mapping_file = (
+            mapping_file if mapping_file is not None else Path(str(DEFAULT_MAPPING_FILE).format(language=language))
+        )
+        if not _mapping_file.exists():
             raise FileNotFoundError(f"No Vision Excel mapping available for language '{language}'")
         self._id_reference: Optional[IdReferenceFields] = None
         source = VisionExcelFileStore(file_path=Path(source_file)) if source_file else None
-        super().__init__(mapping_file=mapping_file, source=source)
+        super().__init__(mapping_file=_mapping_file, source=source)
 
     def set_mapping(self, mapping: Mapping[str, Any]) -> None:
         super().set_mapping(mapping)

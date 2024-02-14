@@ -5,7 +5,8 @@
 Automatic ID generator class
 """
 import collections
-from typing import Any, Dict, Hashable, List, Optional, Union
+from collections.abc import Hashable
+from typing import Any, Dict, List, Optional, Union
 
 
 class AutoID:
