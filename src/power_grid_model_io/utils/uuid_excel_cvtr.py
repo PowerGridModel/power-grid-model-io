@@ -8,8 +8,8 @@
     a light weight tool to run before running the PGM-IO conversion scripts.
     Example usage:
 
-    convert_guid_vision_excel("vision_97_en.xlsx", number="Number")
-    convert_guid_vision_excel("vision_97_nl.xlsx", number="Nummer")
+    new_file = convert_guid_vision_excel("vision_97_en.xlsx", number="Number", {"N1": "Grounding1"})
+    nieuw_bestand = convert_guid_vision_excel("vision_97_nl.xlsx", number="Nummer", {"N1": "Arding1"})
 
 """
 
@@ -108,7 +108,7 @@ def get_guid_columns(df: pd.DataFrame) -> list:
     Returns:
         list: list of columns containing the word "GUID"
     """
-    guid_regex = re.compile(r".*GUID")
+    guid_regex = re.compile(r".*GUID$")
     return df.filter(regex=guid_regex).columns
 
 
@@ -128,7 +128,7 @@ def insert_or_update_number_column(df: pd.DataFrame, guid_column: str, cvtr: UUI
 
     Args:
         df (pd.DataFrame): panda dataframe
-        guid_column (str): column name containing the word "GUID"
+        guid_column (str): column name containing the substring "GUID"
         cvtr (UUID2IntCvtr): the UUID2IntCvtr object
         number (str): "Number" or "Nummer" depending on the language
     """
@@ -137,6 +137,16 @@ def insert_or_update_number_column(df: pd.DataFrame, guid_column: str, cvtr: UUI
         df.insert(df.columns.get_loc(guid_column) + 1, new_column_name, df[guid_column].apply(cvtr.query))
     except ValueError:
         df[new_column_name] = df[guid_column].apply(cvtr.query)
+
+
+def update_column_names(df: pd.DataFrame, terms_changed: dict) -> None:
+    """Update column names according to user input dictionary
+
+    Args:
+        df (pd.DataFrame): Pandas dataframe
+        terms_changed (dict): the dictionary containing the terms to be changed
+    """
+    df.rename(columns=terms_changed, inplace=True)
 
 
 def save_df_to_excel(df: pd.DataFrame, file_name: str, sheet_name: str, i: int) -> None:
@@ -155,22 +165,30 @@ def save_df_to_excel(df: pd.DataFrame, file_name: str, sheet_name: str, i: int) 
             df.to_excel(writer, sheet_name=sheet_name, index=False)
 
 
-def convert_guid_vision_excel(excel_file: str, number: str = "Number") -> None:
+def convert_guid_vision_excel(excel_file: str, number: str = "Number", terms_changed: dict = {}) -> str:
     """Main entry function. Convert the GUID based Vision excel files to a number based format
 
     Args:
         excel_file (str): Vision excel file name
         number (str): "Number" or "Nummer" depending on the language. Defaults to "Number".
+        terms_changed (dict): the dictionary containing the terms to be changed. Defaults to {}.
+    
+    Returns:
+        str: the new excel file name
     """
     xls = load_excel_file(excel_file)
     cvtr = UUID2IntCvtr()
+    new_excel_name = f"new_{excel_file}"
 
     for i, sheet_name in enumerate(xls.sheet_names):
         df = xls.parse(sheet_name)
+        update_column_names(df, terms_changed)
         guid_columns = get_guid_columns(df)
 
         for guid_column in guid_columns:
             add_guid_values_to_cvtr(df, guid_column, cvtr)
             insert_or_update_number_column(df, guid_column, cvtr, number)
 
-        save_df_to_excel(df, f"new_{excel_file}", sheet_name, i)
+        save_df_to_excel(df, new_excel_name, sheet_name, i)
+    
+    return new_excel_name
