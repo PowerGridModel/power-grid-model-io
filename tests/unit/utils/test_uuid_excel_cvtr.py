@@ -5,7 +5,7 @@
 from pathlib import Path
 
 from power_grid_model_io.converters import VisionExcelConverter
-from power_grid_model_io.utils.uuid_excel_cvtr import convert_guid_vision_excel
+from power_grid_model_io.scripts.uuid_excel_cvtr import convert_guid_vision_excel
 
 terms_chaged = {"Grounding1": "N1", "Grounding2": "N2", "Grounding3": "N3", "Load.Behaviour": "Behaviour"}
 
