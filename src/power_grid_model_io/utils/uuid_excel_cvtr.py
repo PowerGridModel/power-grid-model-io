@@ -13,10 +13,34 @@
 
 """
 
+import os
 import re
 from typing import Optional
 
 import pandas as pd
+
+special_nodes_en = [
+    "Transformer loads",
+    "Sources",
+    "Synchronous generators",
+    "Wind turbines",
+    "Loads",
+    "Capacitors",
+    "Reactors",
+    "Zigzag transformers",
+    "Pvs",
+]
+special_nodes_nl = [
+    "Transformatorbelastingen",
+    "Netvoedingen",
+    "Synchrone generatoren",
+    "Windturbines",
+    "Belastingen",
+    "Condensatoren",
+    "Spoelen",
+    "Nulpuntstransformatoren",
+    "Pv's",
+]
 
 
 class UUID2IntCvtr:
@@ -52,11 +76,11 @@ class UUID2IntCvtr:
         Args:
             uuid (str): A single GUID in Vision excel
         """
-        if uuid not in self._uuids_int:
+        if uuid not in self._uuids_int and str(uuid).lower() != "nan":
             self._uuids_int[uuid] = self._counter
             self._counter += 1
 
-    def query(self, uuid: str) -> int:
+    def query(self, uuid: str) -> Optional[int]:
         """Get the singular integer value respective of a UUID input
 
         Args:
@@ -68,7 +92,7 @@ class UUID2IntCvtr:
         try:
             return self._uuids_int[uuid]
         except KeyError:
-            return -1
+            return None
 
     def get_keys(self) -> list:
         """Get the keys in the dictionary
@@ -123,7 +147,9 @@ def add_guid_values_to_cvtr(df: pd.DataFrame, guid_column: str, cvtr: UUID2IntCv
     cvtr.add_list(df[guid_column].tolist())
 
 
-def insert_or_update_number_column(df: pd.DataFrame, guid_column: str, cvtr: UUID2IntCvtr, number: str) -> None:
+def insert_or_update_number_column(
+    df: pd.DataFrame, guid_column: str, sheet_name: str, cvtr: UUID2IntCvtr, number: str
+) -> None:
     """Insert the number column or update the number column if it already exists
 
     Args:
@@ -133,6 +159,11 @@ def insert_or_update_number_column(df: pd.DataFrame, guid_column: str, cvtr: UUI
         number (str): "Number" or "Nummer" depending on the language
     """
     new_column_name = guid_column.replace("GUID", number)
+    if guid_column == "GUID":
+        if sheet_name in special_nodes_en:
+            new_column_name = guid_column.replace("GUID", "Subnumber")
+        elif sheet_name in special_nodes_nl:
+            new_column_name = guid_column.replace("GUID", "Subnummer")
     try:
         df.insert(df.columns.get_loc(guid_column) + 1, new_column_name, df[guid_column].apply(cvtr.query))
     except ValueError:
@@ -165,20 +196,23 @@ def save_df_to_excel(df: pd.DataFrame, file_name: str, sheet_name: str, i: int) 
             df.to_excel(writer, sheet_name=sheet_name, index=False)
 
 
-def convert_guid_vision_excel(excel_file: str, number: str = "Number", terms_changed: dict = {}) -> str:
+def convert_guid_vision_excel(excel_file: str, number: str = "Number", terms_changed: Optional[dict] = None) -> str:
     """Main entry function. Convert the GUID based Vision excel files to a number based format
 
     Args:
         excel_file (str): Vision excel file name
         number (str): "Number" or "Nummer" depending on the language. Defaults to "Number".
         terms_changed (dict): the dictionary containing the terms to be changed. Defaults to {}.
-    
+
     Returns:
         str: the new excel file name
     """
+    if terms_changed is None:
+        terms_changed = {}
     xls = load_excel_file(excel_file)
     cvtr = UUID2IntCvtr()
-    new_excel_name = f"new_{excel_file}"
+    dir_name, file_name = os.path.split(excel_file)
+    new_excel_name = os.path.join(dir_name, f"new_{file_name}")
 
     for i, sheet_name in enumerate(xls.sheet_names):
         df = xls.parse(sheet_name)
@@ -187,8 +221,8 @@ def convert_guid_vision_excel(excel_file: str, number: str = "Number", terms_cha
 
         for guid_column in guid_columns:
             add_guid_values_to_cvtr(df, guid_column, cvtr)
-            insert_or_update_number_column(df, guid_column, cvtr, number)
+            insert_or_update_number_column(df, guid_column, sheet_name, cvtr, number)
 
         save_df_to_excel(df, new_excel_name, sheet_name, i)
-    
+
     return new_excel_name
