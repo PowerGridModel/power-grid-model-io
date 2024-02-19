@@ -30,7 +30,7 @@ class BaseConverter(Generic[T], ABC):
         """
         Initialize a logger
         """
-        self._logger = logging.getLogger(type(self).__name__)
+        self._logger = logging.getLogger(f"{__name__}_{id(self)}")
         self._logger.setLevel(log_level)
         self._log = structlog.wrap_logger(self._logger, wrapper_class=structlog.make_filtering_bound_logger(log_level))
         self._source = source
