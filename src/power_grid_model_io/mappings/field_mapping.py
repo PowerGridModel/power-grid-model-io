@@ -22,7 +22,7 @@ class FieldMapping(Generic[T]):
 
     def __init__(self, mapping: Optional[Dict[str, T]] = None, logger=None):
         if logger is None:
-            self._log = structlog.get_logger(type(self).__name__)
+            self._log = structlog.get_logger(f"{__name__}_{id(self)}")
         else:
             self._log = logger
         self._values: Dict[str, T] = mapping or {}

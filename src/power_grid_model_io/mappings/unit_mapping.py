@@ -30,7 +30,7 @@ class UnitMapping:
 
     def __init__(self, mapping: Optional[Units] = None, logger=None):
         if logger is None:
-            self._log = structlog.get_logger(type(self).__name__)
+            self._log = structlog.get_logger(f"{__name__}_{id(self)}")
         else:
             self._log = logger
         self._si_units: Set[str] = set()

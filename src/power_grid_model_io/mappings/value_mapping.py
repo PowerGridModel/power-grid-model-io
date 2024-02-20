@@ -25,7 +25,7 @@ class ValueMapping(FieldMapping[Dict[Value, Value]]):
     def __init__(self, mapping: Optional[Values] = None, logger=None):
         super().__init__(mapping=mapping)
         if logger is None:
-            self._log = structlog.get_logger(type(self).__name__)
+            self._log = structlog.get_logger(f"{__name__}_{id(self)}")
         else:
             self._log = logger
         if mapping is not None:
