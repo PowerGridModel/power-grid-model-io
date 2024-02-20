@@ -264,3 +264,38 @@ def test_get_get_virtual_id(language: str, table: str, name: str, columns: List[
             "name": name,
             "key": {columns[0]: node_number, columns[1]: sub_number},
         }
+
+
+import logging
+
+
+def test_log_levels(capsys):
+    """Test the log levels of the VisionExcelConverter class.
+    The VisionExcelConverter made heavy use of tabular converter, which contains several debug log in their code
+    This test is to ensure that the log level of VisionExcelConverter is passed to TabularConverter so that we could
+    expect a more uniform performance of the log level across the converters.
+    """
+    cvtr1 = VisionExcelConverter()
+    cvtr1.set_log_level(logging.WARNING)
+    assert cvtr1.get_log_level() == logging.WARNING
+    cvtr2 = VisionExcelConverter()
+    cvtr2.set_log_level(logging.ERROR)
+    assert cvtr1.get_log_level() == logging.WARNING
+    assert cvtr2.get_log_level() == logging.ERROR
+    cvtr3 = VisionExcelConverter()
+    cvtr3.set_log_level(logging.DEBUG)
+    assert cvtr1.get_log_level() == logging.WARNING
+    assert cvtr2.get_log_level() == logging.ERROR
+    assert cvtr3.get_log_level() == logging.DEBUG
+    cvtr4 = VisionExcelConverter()
+    cvtr4.set_log_level(logging.CRITICAL)
+    assert cvtr1.get_log_level() == logging.WARNING
+    assert cvtr2.get_log_level() == logging.ERROR
+    assert cvtr3.get_log_level() == logging.DEBUG
+    assert cvtr4.get_log_level() == logging.CRITICAL
+
+    source_file = Path(str(SOURCE_FILE).format(language="en"))
+    cvtr5 = VisionExcelConverter(source_file, language="en")
+    cvtr5.set_log_level(logging.CRITICAL)
+    outerr = capsys.readouterr()
+    assert "debug" not in outerr.out

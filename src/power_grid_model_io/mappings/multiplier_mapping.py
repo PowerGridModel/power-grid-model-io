@@ -18,8 +18,8 @@ class MultiplierMapping(FieldMapping[float]):
     Field multiplier helper class
     """
 
-    def __init__(self, mapping: Optional[Multipliers] = None):
-        super().__init__(mapping=mapping)
+    def __init__(self, mapping: Optional[Multipliers] = None, logger=None):
+        super().__init__(mapping=mapping, logger=logger)
         if mapping is not None:
             self._log.debug("Set multiplier mapping", n_attributes=len(mapping))
 

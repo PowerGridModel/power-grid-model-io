@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import logging
+
 import numpy as np
 import pytest
 from power_grid_model import initialize_array
@@ -18,6 +20,7 @@ from ...utils import assert_log_match
 @pytest.fixture
 def converter():
     converter = PgmJsonConverter()
+    converter.set_log_level(logging.DEBUG)
     return converter
 
 
