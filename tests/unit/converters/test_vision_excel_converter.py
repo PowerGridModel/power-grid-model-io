@@ -8,6 +8,7 @@ import pytest
 
 from power_grid_model_io.converters.vision_excel_converter import DEFAULT_MAPPING_FILE, VisionExcelConverter
 
+
 @pytest.fixture
 def converter() -> VisionExcelConverter:
     # Arrange

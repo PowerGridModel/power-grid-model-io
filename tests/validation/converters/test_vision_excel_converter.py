@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import json
+import logging
 from functools import lru_cache
 from pathlib import Path
 from typing import List, Tuple
@@ -264,9 +265,6 @@ def test_get_get_virtual_id(language: str, table: str, name: str, columns: List[
             "name": name,
             "key": {columns[0]: node_number, columns[1]: sub_number},
         }
-
-
-import logging
 
 
 def test_log_levels(capsys):

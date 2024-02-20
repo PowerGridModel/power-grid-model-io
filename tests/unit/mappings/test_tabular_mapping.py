@@ -3,9 +3,9 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
-import structlog
 
 import pytest
+import structlog
 from pytest import fixture
 
 from power_grid_model_io.mappings.tabular_mapping import TabularMapping
@@ -73,9 +73,12 @@ def test_instances__exception():
     with pytest.raises(TypeError, match="Invalid table mapping for Nodes; expected a dictionary got list"):
         next(mapping.instances(table="Nodes"))
 
+
 def test_mapping_logger():
     log_level = logging.DEBUG
     logger = logging.getLogger(__name__)
     logger.setLevel(log_level)
-    mapping = TabularMapping({}, logger=structlog.wrap_logger(logger, wrapper_class=structlog.make_filtering_bound_logger(log_level)))
+    mapping = TabularMapping(
+        {}, logger=structlog.wrap_logger(logger, wrapper_class=structlog.make_filtering_bound_logger(log_level))
+    )
     assert mapping._log._logger.getEffectiveLevel() == log_level

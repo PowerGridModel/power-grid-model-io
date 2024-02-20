@@ -2,9 +2,9 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import logging
-import structlog
 
 import pytest
+import structlog
 from pytest import fixture
 
 from power_grid_model_io.mappings.value_mapping import ValueMapping
@@ -39,9 +39,12 @@ def test_get_substitutions__no_match(mapping: ValueMapping):
     with pytest.raises(KeyError):
         mapping.get_substitutions("N2")
 
+
 def test_mapping_logger():
     log_level = logging.DEBUG
     logger = logging.getLogger(__name__)
     logger.setLevel(log_level)
-    mapping = ValueMapping(logger=structlog.wrap_logger(logger, wrapper_class=structlog.make_filtering_bound_logger(log_level)))
+    mapping = ValueMapping(
+        logger=structlog.wrap_logger(logger, wrapper_class=structlog.make_filtering_bound_logger(log_level))
+    )
     assert mapping._log._logger.getEffectiveLevel() == log_level

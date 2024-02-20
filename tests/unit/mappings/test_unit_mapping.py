@@ -2,11 +2,10 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import logging
-import structlog
-
 from unittest.mock import MagicMock, patch
 
 import pytest
+import structlog
 from pytest import fixture
 
 from power_grid_model_io.mappings.unit_mapping import UnitMapping, Units
@@ -76,9 +75,12 @@ def test_get_unit_multiplier(units: Units):
     with pytest.raises(KeyError):
         mapping.get_unit_multiplier("I")
 
+
 def test_mapping_logger():
     log_level = logging.DEBUG
     logger = logging.getLogger(__name__)
     logger.setLevel(log_level)
-    mapping = UnitMapping(logger=structlog.wrap_logger(logger, wrapper_class=structlog.make_filtering_bound_logger(log_level)))
+    mapping = UnitMapping(
+        logger=structlog.wrap_logger(logger, wrapper_class=structlog.make_filtering_bound_logger(log_level))
+    )
     assert mapping._log._logger.getEffectiveLevel() == log_level
