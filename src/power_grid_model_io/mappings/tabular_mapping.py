@@ -19,8 +19,11 @@ class TabularMapping:
     Tabular data mapping helper class
     """
 
-    def __init__(self, mapping: Tables):
-        self._log = structlog.get_logger(type(self).__name__)
+    def __init__(self, mapping: Tables, logger=None):
+        if logger is None:
+            self._log = structlog.get_logger(f"{__name__}_{id(self)}")
+        else:
+            self._log = logger
         self._log.debug("Set tabular mapping", n_mappings=len(mapping))
         self._mapping: Tables = mapping
 

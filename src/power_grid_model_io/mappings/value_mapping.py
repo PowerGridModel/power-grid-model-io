@@ -4,8 +4,9 @@
 """
 Value substitution helper class
 """
-
 from typing import Dict, Optional, Union
+
+import structlog
 
 from power_grid_model_io.mappings.field_mapping import FieldMapping
 
@@ -21,8 +22,12 @@ class ValueMapping(FieldMapping[Dict[Value, Value]]):
     Value substitution helper class
     """
 
-    def __init__(self, mapping: Optional[Values] = None):
+    def __init__(self, mapping: Optional[Values] = None, logger=None):
         super().__init__(mapping=mapping)
+        if logger is None:
+            self._log = structlog.get_logger(f"{__name__}_{id(self)}")
+        else:
+            self._log = logger
         if mapping is not None:
             self._log.debug(
                 "Set value mapping", n_attributes=len(mapping), n_mappings=sum(len(m) for m in mapping.values())

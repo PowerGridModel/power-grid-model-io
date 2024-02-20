@@ -20,8 +20,11 @@ class FieldMapping(Generic[T]):
     RegEx attribute based mapping class
     """
 
-    def __init__(self, mapping: Optional[Dict[str, T]] = None):
-        self._log = structlog.get_logger(type(self).__name__)
+    def __init__(self, mapping: Optional[Dict[str, T]] = None, logger=None):
+        if logger is None:
+            self._log = structlog.get_logger(f"{__name__}_{id(self)}")
+        else:
+            self._log = logger
         self._values: Dict[str, T] = mapping or {}
         self._values_re: Dict[re.Pattern, T] = {re.compile(pattern): value for pattern, value in self._values.items()}
 

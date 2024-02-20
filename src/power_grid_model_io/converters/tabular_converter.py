@@ -40,7 +40,7 @@ class TabularConverter(BaseConverter[TabularData]):
             mapping_file: A yaml file containing the mapping.
         """
         super().__init__(source=source, destination=destination)
-        self._mapping: TabularMapping = TabularMapping(mapping={})
+        self._mapping: TabularMapping = TabularMapping(mapping={}, logger=self._log)
         self._units: Optional[UnitMapping] = None
         self._substitutions: Optional[ValueMapping] = None
         self._multipliers: Optional[MultiplierMapping] = None
@@ -78,13 +78,13 @@ class TabularConverter(BaseConverter[TabularData]):
 
         """
         if "grid" in mapping:
-            self._mapping = TabularMapping(cast(Tables, mapping["grid"]))
+            self._mapping = TabularMapping(cast(Tables, mapping["grid"]), logger=self._log)
         if "units" in mapping:
-            self._units = UnitMapping(cast(Units, mapping["units"]))
+            self._units = UnitMapping(cast(Units, mapping["units"]), logger=self._log)
         if "substitutions" in mapping:
-            self._substitutions = ValueMapping(cast(Values, mapping["substitutions"]))
+            self._substitutions = ValueMapping(cast(Values, mapping["substitutions"]), logger=self._log)
         if "multipliers" in mapping:
-            self._multipliers = MultiplierMapping(cast(Multipliers, mapping["multipliers"]))
+            self._multipliers = MultiplierMapping(cast(Multipliers, mapping["multipliers"]), logger=self._log)
 
     def _parse_data(self, data: TabularData, data_type: str, extra_info: Optional[ExtraInfo]) -> Dataset:
         """This function parses tabular data and returns power-grid-model data
