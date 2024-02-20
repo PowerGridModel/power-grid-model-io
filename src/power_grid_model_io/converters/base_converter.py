@@ -25,7 +25,7 @@ class BaseConverter(Generic[T], ABC):
         self,
         source: Optional[BaseDataStore[T]] = None,
         destination: Optional[BaseDataStore[T]] = None,
-        log_level: int = logging.DEBUG,
+        log_level: int = logging.WARNING,
     ):
         """
         Initialize a logger

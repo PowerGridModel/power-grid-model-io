@@ -192,7 +192,9 @@ def save_df_to_excel(df: pd.DataFrame, file_name: str, sheet_name: str, i: int) 
     if i == 0:
         df.to_excel(file_name, sheet_name=sheet_name, index=False)
     else:
-        with pd.ExcelWriter(file_name, engine="openpyxl", mode="a") as writer:
+        with pd.ExcelWriter(
+            file_name, engine="openpyxl", mode="a"
+        ) as writer:  # pylint: disable=abstract-class-instantiated
             df.to_excel(writer, sheet_name=sheet_name, index=False)
 
 
