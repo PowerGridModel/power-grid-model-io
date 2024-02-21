@@ -5,6 +5,7 @@
 """
 Panda Power Converter
 """
+import logging
 from functools import lru_cache
 from typing import Dict, List, MutableMapping, Optional, Tuple, Type, Union
 
@@ -32,14 +33,14 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
     __slots__ = ("pp_input_data", "pgm_input_data", "idx", "idx_lookup", "next_idx", "system_frequency")
 
-    def __init__(self, system_frequency: float = 50.0, trafo_loading: str = "current"):
+    def __init__(self, system_frequency: float = 50.0, trafo_loading: str = "current", log_level: int = logging.INFO):
         """
         Prepare some member variables
 
         Args:
             system_frequency: fundamental frequency of the alternating current and voltage in the Network measured in Hz
         """
-        super().__init__(source=None, destination=None)
+        super().__init__(source=None, destination=None, log_level=log_level)
         self.trafo_loading = trafo_loading
         self.system_frequency: float = system_frequency
         self.pp_input_data: PandaPowerData = {}

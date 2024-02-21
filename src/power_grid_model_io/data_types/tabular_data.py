@@ -6,6 +6,7 @@ The TabularData class is a wrapper around Dict[str, Union[pd.DataFrame, np.ndarr
 which supports unit conversions and value substitutions
 """
 
+import logging
 from typing import Callable, Dict, Generator, Iterable, Optional, Tuple, Union
 
 import numpy as np
@@ -24,7 +25,7 @@ class TabularData:
     which supports unit conversions and value substitutions
     """
 
-    def __init__(self, **tables: Union[pd.DataFrame, np.ndarray, LazyDataFrame]):
+    def __init__(self, logger=None, **tables: Union[pd.DataFrame, np.ndarray, LazyDataFrame]):
         """
         Tabular data can either be a collection of pandas DataFrames and/or numpy structured arrays.
         The key word arguments will define the keys of the data.
@@ -35,6 +36,12 @@ class TabularData:
         Args:
             **tables: A collection of pandas DataFrames and/or numpy structured arrays
         """
+        if logger is None:
+            self._logger = logging.getLogger(f"{__name__}_{id(self)}")
+            self._logger.setLevel(logging.INFO)
+            self._log = structlog.wrap_logger(self._logger)
+        else:
+            self._log = logger
         for table_name, table_data in tables.items():
             if not isinstance(table_data, (pd.DataFrame, np.ndarray)) and not callable(table_data):
                 raise TypeError(
@@ -44,7 +51,6 @@ class TabularData:
         self._data: Dict[str, Union[pd.DataFrame, np.ndarray, LazyDataFrame]] = tables
         self._units: Optional[UnitMapping] = None
         self._substitution: Optional[ValueMapping] = None
-        self._log = structlog.get_logger(type(self).__name__)
 
     def set_unit_multipliers(self, units: UnitMapping) -> None:
         """
