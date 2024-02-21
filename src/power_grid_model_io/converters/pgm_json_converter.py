@@ -6,6 +6,7 @@ Power Grid Model 'Converter': Load and store power grid model data in the native
 """
 
 import json
+import logging
 import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
@@ -37,11 +38,14 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
     """
 
     def __init__(
-        self, source_file: Optional[Union[Path, str]] = None, destination_file: Optional[Union[Path, str]] = None
+        self,
+        source_file: Optional[Union[Path, str]] = None,
+        destination_file: Optional[Union[Path, str]] = None,
+        log_level: int = logging.INFO,
     ):
         source = JsonFileStore(file_path=Path(source_file)) if source_file else None
         destination = JsonFileStore(file_path=Path(destination_file)) if destination_file else None
-        super().__init__(source=source, destination=destination)
+        super().__init__(source=source, destination=destination, log_level=log_level)
 
     def _parse_data(self, data: StructuredData, data_type: str, extra_info: Optional[ExtraInfo]) -> Dataset:
         """This function expects Structured data, which can either be a dictionary (single dataset) or a list of

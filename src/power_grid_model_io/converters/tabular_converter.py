@@ -5,6 +5,7 @@
 Tabular Data Converter: Load data from multiple tables and use a mapping file to convert the data to PGM
 """
 import inspect
+import logging
 from pathlib import Path
 from typing import Any, Collection, Dict, List, Mapping, Optional, Union, cast
 
@@ -32,6 +33,7 @@ class TabularConverter(BaseConverter[TabularData]):
         mapping_file: Optional[Path] = None,
         source: Optional[BaseDataStore[TabularData]] = None,
         destination: Optional[BaseDataStore[TabularData]] = None,
+        log_level: int = logging.INFO,
     ):
         """
         Prepare some member variables and optionally load a mapping file
@@ -39,7 +41,7 @@ class TabularConverter(BaseConverter[TabularData]):
         Args:
             mapping_file: A yaml file containing the mapping.
         """
-        super().__init__(source=source, destination=destination)
+        super().__init__(source=source, destination=destination, log_level=log_level)
         self._mapping: TabularMapping = TabularMapping(mapping={}, logger=self._log)
         self._units: Optional[UnitMapping] = None
         self._substitutions: Optional[ValueMapping] = None
@@ -334,7 +336,7 @@ class TabularConverter(BaseConverter[TabularData]):
             raise NotImplementedError("Extra info can not (yet) be stored for tabular data")
         if isinstance(data, list):
             raise NotImplementedError("Batch data can not (yet) be stored for tabular data")
-        return TabularData(**data)
+        return TabularData(logger=self._log, **data)
 
     def _parse_col_def(
         self, data: TabularData, table: str, col_def: Any, extra_info: Optional[ExtraInfo]
