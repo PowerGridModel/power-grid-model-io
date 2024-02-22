@@ -66,15 +66,17 @@ Notice that this log level only belongs to the logger within the converter.
 Users need to set their basic configuration of the `logging` module to a level that is below what is configuired for the converters.
  
 ```python
-# This is an example in your script
+# Examplary usage in your script
 import logging
 from power_grid_model_io.converters import VisionExcelConverter
  
 logging.basicConfig(level=logging.INFO) # Only levels INFO and above will be logged
  
 converter_warning = VisionExcelConverter(input_file, log_level=logging.WARNING) # If there is any logs above WARNING, they will be logged
- 
+converter_info = VisionExcelConverter(input_file) # Uses default INFO level
+
 logging.basicConfig(level=logging.WARNING) # Only levels WARNING and above will be logged
- 
+assert converter_info.get_log_level() == logging.INFO # Previously created converters will retain their original log level, regardless of system wide configuration 
+
 converter_debug = VisionExcelConverter(input_file, log_level=logging.DEBUG) # Any logs on DEBUG and INFO level will not be logged
 ```
