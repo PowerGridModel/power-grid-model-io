@@ -58,3 +58,23 @@ You can also add additional information about each component in the form of `ext
 ```python
 converter.save(example_data, extra_info=example_extra_info, destination=destination_path)
 ```
+
+## Configuring The Log Output
+ 
+We have provided an interface to configure the log level of the converter.
+Notice that this log level only belongs to the logger within the converter.
+Users need to set their basic configuration of the `logging` module to a level that is below what is configuired for the converters.
+ 
+```python
+# This is an example in your script
+import logging
+from power_grid_model_io.converters import VisionExcelConverter
+ 
+logging.basicConfig(level=logging.INFO) # Only levels INFO and above will be logged
+ 
+converter_warning = VisionExcelConverter(input_file, log_level=logging.WARNING) # If there is any logs above WARNING, they will be logged
+ 
+logging.basicConfig(level=logging.WARNING) # Only levels WARNING and above will be logged
+ 
+converter_debug = VisionExcelConverter(input_file, log_level=logging.DEBUG) # Any logs on DEBUG and INFO level will not be logged
+```
