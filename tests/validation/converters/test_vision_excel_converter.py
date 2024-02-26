@@ -19,9 +19,11 @@ from power_grid_model_io.utils.json import JsonEncoder
 from ..utils import compare_extra_info, component_attributes, component_objects, load_json_single_dataset, select_values
 
 DATA_PATH = Path(__file__).parents[2] / "data" / "vision"
-SOURCE_FILE = DATA_PATH / "vision_{language:s}.xlsx"
+# SOURCE_FILE = DATA_PATH / "vision_{language:s}.xlsx"
+SOURCE_FILE = DATA_PATH / "vision_97_{language:s}.xlsx"
 VALIDATION_FILE = DATA_PATH / "pgm_input_data_{language:s}.json"
-LANGUAGES = ["en", "nl"]
+# LANGUAGES = ["en", "nl"]
+LANGUAGES = ["en"]
 VALIDATION_EN = Path(str(VALIDATION_FILE).format(language="en"))
 CUSTOM_MAPPING_FILE = DATA_PATH / "vision_9_5_{language:s}.yaml"
 

@@ -17,10 +17,10 @@ class VisionExcelFileStore(ExcelFileStore):
     Therefore, row 1 (which is row 2 in Excel) is added to the header_rows in the constructor.
     """
 
-    def __init__(self, file_path: Path):
+    def __init__(self, file_path: Path, language: str = "en"):
         """
         Args:
             file_path: The main Vision Excel export file
         """
-        super().__init__(file_path)
+        super().__init__(file_path, language=language)
         self._header_rows.append(1)  # Units are stored in the row below the column names

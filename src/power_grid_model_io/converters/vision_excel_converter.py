@@ -46,7 +46,7 @@ class VisionExcelConverter(TabularConverter):
         if not _mapping_file.exists():
             raise FileNotFoundError(f"No Vision Excel mapping available for language '{language}'")
         self._id_reference: Optional[IdReferenceFields] = None
-        source = VisionExcelFileStore(file_path=Path(source_file)) if source_file else None
+        source = VisionExcelFileStore(file_path=Path(source_file), language=language) if source_file else None
         super().__init__(mapping_file=_mapping_file, source=source, log_level=log_level)
 
     def set_mapping(self, mapping: Mapping[str, Any]) -> None:
