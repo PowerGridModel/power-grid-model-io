@@ -53,4 +53,3 @@ class FieldMapping(Generic[T]):
 
         # If no match was found, raise a key error
         raise KeyError(keys.pop())
-        # return keys.pop()

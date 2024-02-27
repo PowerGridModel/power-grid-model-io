@@ -13,7 +13,7 @@ import pandas as pd
 
 from power_grid_model_io.data_stores.base_data_store import BaseDataStore
 from power_grid_model_io.data_types import LazyDataFrame, TabularData
-from power_grid_model_io.utils.uuid_excel_cvtr import (  # get_guid_columns,; insert_or_update_number_column,
+from power_grid_model_io.utils.uuid_excel_cvtr import ( 
     UUID2IntCvtr,
     add_guid_values_to_cvtr,
     special_nodes_en,
