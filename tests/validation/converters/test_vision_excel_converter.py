@@ -19,13 +19,14 @@ from power_grid_model_io.utils.json import JsonEncoder
 from ..utils import compare_extra_info, component_attributes, component_objects, load_json_single_dataset, select_values
 
 DATA_PATH = Path(__file__).parents[2] / "data" / "vision"
-# SOURCE_FILE = DATA_PATH / "vision_{language:s}.xlsx"
-SOURCE_FILE = DATA_PATH / "vision_97_{language:s}.xlsx"
+SOURCE_FILE = DATA_PATH / "vision_{language:s}.xlsx"
+SOURCE_FILE_97 = DATA_PATH / "vision_97_{language:s}.xlsx"
 VALIDATION_FILE = DATA_PATH / "pgm_input_data_{language:s}.json"
-# LANGUAGES = ["en", "nl"]
-LANGUAGES = ["en"]
+LANGUAGES = ["en", "nl"]
+LANGUAGES_97 = ["en"]
 VALIDATION_EN = Path(str(VALIDATION_FILE).format(language="en"))
 CUSTOM_MAPPING_FILE = DATA_PATH / "vision_9_5_{language:s}.yaml"
+terms_chaged = {"Grounding1": "N1", "Grounding2": "N2", "Grounding3": "N3", "Load.Behaviour": "Behaviour"}
 
 
 @lru_cache
@@ -299,3 +300,11 @@ def test_log_levels(capsys):
     cvtr5.set_log_level(logging.CRITICAL)
     outerr = capsys.readouterr()
     assert "debug" not in outerr.out
+
+
+def test_uuid_excel_input():
+    source_file = Path(str(SOURCE_FILE_97).format(language="en"))
+    data, _ = VisionExcelConverter(source_file, language="en", terms_changed=terms_chaged).load_input_data()
+    expected, _ = load_validation_data(language="en")
+    assert len(expected) <= len(data)
+
