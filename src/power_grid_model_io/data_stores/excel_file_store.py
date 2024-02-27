@@ -13,14 +13,12 @@ import pandas as pd
 
 from power_grid_model_io.data_stores.base_data_store import BaseDataStore
 from power_grid_model_io.data_types import LazyDataFrame, TabularData
-from power_grid_model_io.utils.uuid_excel_cvtr import (
+from power_grid_model_io.utils.uuid_excel_cvtr import (  # get_guid_columns,; insert_or_update_number_column,
     UUID2IntCvtr,
-    # get_guid_columns,
     add_guid_values_to_cvtr,
-    # insert_or_update_number_column,
-    update_column_names,
     special_nodes_en,
     special_nodes_nl,
+    update_column_names,
 )
 
 
@@ -41,11 +39,12 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         self,
         file_path: Optional[Path] = None,
         language: str = "en",
-        terms_changed: dict = None,
+        terms_changed: Optional[dict] = None,
         **extra_paths: Path,
     ):
         super().__init__()
-
+        if not isinstance(language, str):
+            raise TypeError("Expects 1 to 2 positional arguments, at least 3 were given")
         # Create a dictionary of all supplied file paths:
         # {"": file_path, extra_name[0]: extra_path[0], extra_name[1]: extra_path[1], ...}
         self._file_paths: Dict[str, Path] = {}
@@ -237,12 +236,10 @@ class ExcelFileStore(BaseDataStore[TabularData]):
                 data[new_column_name] = data[guid_column].apply(self._uuid_cvtr.query)
 
         return data
-    
 
     def _update_column_names(self, data: pd.DataFrame) -> pd.DataFrame:
         update_column_names(data, self._terms_changed)
         return data
-
 
     @staticmethod
     def _group_columns_by_index(data: pd.DataFrame) -> Dict[Union[str, Tuple[str, ...]], Set[int]]:

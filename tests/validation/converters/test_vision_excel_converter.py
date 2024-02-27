@@ -15,6 +15,7 @@ from power_grid_model.data_types import SingleDataset
 from power_grid_model_io.converters import VisionExcelConverter
 from power_grid_model_io.data_types import ExtraInfo
 from power_grid_model_io.utils.json import JsonEncoder
+from power_grid_model_io.utils.uuid_excel_cvtr import convert_guid_vision_excel
 
 from ..utils import compare_extra_info, component_attributes, component_objects, load_json_single_dataset, select_values
 
@@ -304,7 +305,8 @@ def test_log_levels(capsys):
 
 def test_uuid_excel_input():
     source_file = Path(str(SOURCE_FILE_97).format(language="en"))
-    data, _ = VisionExcelConverter(source_file, language="en", terms_changed=terms_chaged).load_input_data()
-    expected, _ = load_validation_data(language="en")
-    assert len(expected) <= len(data)
+    ref_file_97 = convert_guid_vision_excel(source_file, number="Number", terms_changed=terms_chaged)
+    data_native, _ = VisionExcelConverter(source_file, language="en", terms_changed=terms_chaged).load_input_data()
+    data_convtd, _ = VisionExcelConverter(source_file=ref_file_97).load_input_data()
 
+    assert len(data_native) == len(data_convtd)
