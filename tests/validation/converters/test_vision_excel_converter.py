@@ -30,7 +30,7 @@ LANGUAGES = ["en", "nl"]
 LANGUAGES_97 = ["en"]
 VALIDATION_EN = Path(str(VALIDATION_FILE).format(language="en"))
 CUSTOM_MAPPING_FILE = DATA_PATH / "vision_9_5_{language:s}.yaml"
-terms_chaged = {"Grounding1": "N1", "Grounding2": "N2", "Grounding3": "N3", "Load.Behaviour": "Behaviour"}
+terms_changed = {"Grounding1": "N1", "Grounding2": "N2", "Grounding3": "N3", "Load.Behaviour": "Behaviour"}
 
 
 @lru_cache
@@ -309,9 +309,9 @@ def test_log_levels(capsys):
 def test_uuid_excel_input():
     source_file = Path(str(SOURCE_FILE_97).format(language=LANGUAGE_EN))
     ref_file_97 = convert_guid_vision_excel(
-        source_file, number=VISION_EXCEL_LAN_DICT[LANGUAGE_EN][DICT_KEY_NUMBER], terms_changed=terms_chaged
+        excel_file=source_file, number=VISION_EXCEL_LAN_DICT[LANGUAGE_EN][DICT_KEY_NUMBER], terms_changed=terms_changed
     )
-    data_native, _ = VisionExcelConverter(source_file, language="en", terms_changed=terms_chaged).load_input_data()
+    data_native, _ = VisionExcelConverter(source_file, language="en", terms_changed=terms_changed).load_input_data()
     data_convtd, _ = VisionExcelConverter(source_file=ref_file_97).load_input_data()
 
     assert len(data_native) == len(data_convtd)

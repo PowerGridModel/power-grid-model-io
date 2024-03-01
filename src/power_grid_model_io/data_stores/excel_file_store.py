@@ -14,8 +14,6 @@ import pandas as pd
 from power_grid_model_io.data_stores.base_data_store import (
     DICT_KEY_NUMBER,
     DICT_KEY_SUBNUMBER,
-    LANGUAGE_EN,
-    LANGUAGE_NL,
     VISION_EXCEL_LAN_DICT,
     BaseDataStore,
 )
@@ -23,6 +21,7 @@ from power_grid_model_io.data_types import LazyDataFrame, TabularData
 from power_grid_model_io.utils.uuid_excel_cvtr import (
     UUID2IntCvtr,
     add_guid_values_to_cvtr,
+    get_special_key_map,
     special_nodes_en,
     special_nodes_nl,
     update_column_names,
@@ -66,7 +65,8 @@ class ExcelFileStore(BaseDataStore[TabularData]):
                 raise ValueError(f"{name} file should be a .xls or .xlsx file, {path.suffix} provided.")
 
         self._header_rows: List[int] = [0]
-        self._languange = language
+        self._language = language
+        self._vision_excel_key_mapping = VISION_EXCEL_LAN_DICT[self._language]
         self._terms_changed = terms_changed if terms_changed is not None else {}
         self._uuid_cvtr = UUID2IntCvtr()
 
@@ -227,19 +227,16 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         first_level = data.columns.get_level_values(0)
         guid_columns = first_level[first_level.str.endswith("GUID")]
 
+        sheet_key_mapping = get_special_key_map(
+            sheet_name=sheet_name, nodes_en=special_nodes_en, nodes_nl=special_nodes_nl
+        )
+
         for guid_column in guid_columns:
-            nr = VISION_EXCEL_LAN_DICT[self._languange][DICT_KEY_NUMBER]
+            nr = VISION_EXCEL_LAN_DICT[self._language][DICT_KEY_NUMBER]
             add_guid_values_to_cvtr(data, guid_column, self._uuid_cvtr)
             new_column_name = guid_column.replace("GUID", nr)
-            if guid_column == "GUID":
-                if sheet_name in special_nodes_en:
-                    new_column_name = guid_column.replace(
-                        "GUID", VISION_EXCEL_LAN_DICT[LANGUAGE_EN][DICT_KEY_SUBNUMBER]
-                    )
-                elif sheet_name in special_nodes_nl:
-                    new_column_name = guid_column.replace(
-                        "GUID", VISION_EXCEL_LAN_DICT[LANGUAGE_NL][DICT_KEY_SUBNUMBER]
-                    )
+            if guid_column == "GUID" and sheet_key_mapping not in (None, {}):
+                new_column_name = guid_column.replace("GUID", sheet_key_mapping[DICT_KEY_SUBNUMBER])
             guid_column_pos = first_level.tolist().index(guid_column)
             try:
                 data.insert(guid_column_pos + 1, new_column_name, data[guid_column].apply(self._uuid_cvtr.query))

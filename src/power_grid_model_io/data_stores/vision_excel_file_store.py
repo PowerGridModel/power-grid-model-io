@@ -7,7 +7,8 @@ Vision Excel file store
 from pathlib import Path
 from typing import Optional
 
-from power_grid_model_io.data_stores.excel_file_store import LANGUAGE_EN, ExcelFileStore
+from power_grid_model_io.data_stores.base_data_store import LANGUAGE_EN
+from power_grid_model_io.data_stores.excel_file_store import ExcelFileStore
 
 
 class VisionExcelFileStore(ExcelFileStore):

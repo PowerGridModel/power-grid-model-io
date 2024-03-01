@@ -15,7 +15,8 @@
 
 import os
 import re
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Union
 
 import pandas as pd
 
@@ -119,7 +120,7 @@ class UUID2IntCvtr:
         return self._counter
 
 
-def load_excel_file(file_name: str) -> pd.ExcelFile:
+def load_excel_file(file_name: Union[Path, str]) -> pd.ExcelFile:
     """Load an excel file
 
     Args:
@@ -155,6 +156,20 @@ def add_guid_values_to_cvtr(df: pd.DataFrame, guid_column: str, cvtr: UUID2IntCv
     cvtr.add_list(df[guid_column].tolist())
 
 
+def get_special_key_map(sheet_name: str, nodes_en: list[str], nodes_nl: list[str]) -> dict:
+    """Get the special nodes for English and Dutch
+
+    Args:
+        sheet_name (str): the sheet name
+        mapping (dict): the mapping dictionary
+    """
+    if sheet_name in nodes_en:
+        return VISION_EXCEL_LAN_DICT[LANGUAGE_EN]
+    if sheet_name in nodes_nl:
+        return VISION_EXCEL_LAN_DICT[LANGUAGE_NL]
+    return {}
+
+
 def insert_or_update_number_column(
     df: pd.DataFrame, guid_column: str, sheet_name: str, cvtr: UUID2IntCvtr, number: str
 ) -> None:
@@ -167,11 +182,10 @@ def insert_or_update_number_column(
         number (str): "Number" or "Nummer" depending on the language
     """
     new_column_name = guid_column.replace("GUID", number)
-    if guid_column == "GUID":
-        if sheet_name in special_nodes_en:
-            new_column_name = guid_column.replace("GUID", VISION_EXCEL_LAN_DICT[LANGUAGE_EN][DICT_KEY_SUBNUMBER])
-        elif sheet_name in special_nodes_nl:
-            new_column_name = guid_column.replace("GUID", VISION_EXCEL_LAN_DICT[LANGUAGE_NL][DICT_KEY_SUBNUMBER])
+    special_key_mapping = get_special_key_map(sheet_name, special_nodes_en, special_nodes_nl)
+
+    if guid_column == "GUID" and special_key_mapping not in (None, {}):
+        new_column_name = guid_column.replace("GUID", special_key_mapping[DICT_KEY_SUBNUMBER])
     try:
         df.insert(df.columns.get_loc(guid_column) + 1, new_column_name, df[guid_column].apply(cvtr.query))
     except ValueError:
@@ -205,14 +219,14 @@ def save_df_to_excel(df: pd.DataFrame, file_name: str, sheet_name: str, i: int) 
 
 
 def convert_guid_vision_excel(
-    excel_file: str,
+    excel_file: Union[Path, str],
     number: str = VISION_EXCEL_LAN_DICT[LANGUAGE_EN][DICT_KEY_NUMBER],
     terms_changed: Optional[dict] = None,
 ) -> str:
     """Main entry function. Convert the GUID based Vision excel files to a number based format
 
     Args:
-        excel_file (str): Vision excel file name
+        excel_file (Path | str): Vision excel file name
         number (str): "Number" or "Nummer" depending on the language. Defaults to "Number".
         terms_changed (dict): the dictionary containing the terms to be changed. Defaults to {}.
 
