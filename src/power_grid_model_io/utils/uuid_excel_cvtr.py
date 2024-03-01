@@ -19,6 +19,14 @@ from typing import Optional
 
 import pandas as pd
 
+from power_grid_model_io.data_stores.base_data_store import (
+    DICT_KEY_NUMBER,
+    DICT_KEY_SUBNUMBER,
+    LANGUAGE_EN,
+    LANGUAGE_NL,
+    VISION_EXCEL_LAN_DICT,
+)
+
 special_nodes_en = [
     "Transformer loads",
     "Sources",
@@ -162,9 +170,9 @@ def insert_or_update_number_column(
     # pylint: disable=duplicate-code
     if guid_column == "GUID":
         if sheet_name in special_nodes_en:
-            new_column_name = guid_column.replace("GUID", "Subnumber")
+            new_column_name = guid_column.replace("GUID", VISION_EXCEL_LAN_DICT[LANGUAGE_EN][DICT_KEY_SUBNUMBER])
         elif sheet_name in special_nodes_nl:
-            new_column_name = guid_column.replace("GUID", "Subnummer")
+            new_column_name = guid_column.replace("GUID", VISION_EXCEL_LAN_DICT[LANGUAGE_NL][DICT_KEY_SUBNUMBER])
     try:
         df.insert(df.columns.get_loc(guid_column) + 1, new_column_name, df[guid_column].apply(cvtr.query))
     except ValueError:
@@ -197,7 +205,11 @@ def save_df_to_excel(df: pd.DataFrame, file_name: str, sheet_name: str, i: int) 
             df.to_excel(writer, sheet_name=sheet_name, index=False)
 
 
-def convert_guid_vision_excel(excel_file: str, number: str = "Number", terms_changed: Optional[dict] = None) -> str:
+def convert_guid_vision_excel(
+    excel_file: str,
+    number: str = VISION_EXCEL_LAN_DICT[LANGUAGE_EN][DICT_KEY_NUMBER],
+    terms_changed: Optional[dict] = None,
+) -> str:
     """Main entry function. Convert the GUID based Vision excel files to a number based format
 
     Args:

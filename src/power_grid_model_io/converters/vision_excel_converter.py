@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Mapping, Optional, Union
 
 from power_grid_model_io.converters.tabular_converter import TabularConverter
+from power_grid_model_io.data_stores.base_data_store import LANGUAGE_EN
 from power_grid_model_io.data_stores.vision_excel_file_store import VisionExcelFileStore
 
 DEFAULT_MAPPING_FILE = Path(__file__).parent.parent / "config" / "excel" / "vision_{language:s}.yaml"
@@ -36,13 +37,13 @@ class VisionExcelConverter(TabularConverter):
     def __init__(
         self,
         source_file: Optional[Union[Path, str]] = None,
-        language: str = "en",
+        language: str = LANGUAGE_EN,
         terms_changed: Optional[dict] = None,
-        mapping_file: Optional[Path] = None,
+        mapping_file: Optional[Union[Path, str]] = None,
         log_level: int = logging.INFO,
     ):  # pylint: disable=too-many-arguments
-        _mapping_file = _mapping_file = (
-            mapping_file if mapping_file is not None else Path(str(DEFAULT_MAPPING_FILE).format(language=language))
+        _mapping_file = Path(
+            mapping_file if mapping_file is not None else str(DEFAULT_MAPPING_FILE).format(language=language)
         )
         if not _mapping_file.exists():
             raise FileNotFoundError(f"No Vision Excel mapping available for language '{language}'")

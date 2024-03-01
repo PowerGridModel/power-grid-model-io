@@ -11,9 +11,16 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 
 import pandas as pd
 
-from power_grid_model_io.data_stores.base_data_store import BaseDataStore
+from power_grid_model_io.data_stores.base_data_store import (
+    DICT_KEY_NUMBER,
+    DICT_KEY_SUBNUMBER,
+    LANGUAGE_EN,
+    LANGUAGE_NL,
+    VISION_EXCEL_LAN_DICT,
+    BaseDataStore,
+)
 from power_grid_model_io.data_types import LazyDataFrame, TabularData
-from power_grid_model_io.utils.uuid_excel_cvtr import ( 
+from power_grid_model_io.utils.uuid_excel_cvtr import (
     UUID2IntCvtr,
     add_guid_values_to_cvtr,
     special_nodes_en,
@@ -221,14 +228,18 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         guid_columns = first_level[first_level.str.endswith("GUID")]
 
         for guid_column in guid_columns:
-            nr = "Number" if self._languange == "en" else "Nummer"
+            nr = VISION_EXCEL_LAN_DICT[self._languange][DICT_KEY_NUMBER]
             add_guid_values_to_cvtr(data, guid_column, self._uuid_cvtr)
             new_column_name = guid_column.replace("GUID", nr)
             if guid_column == "GUID":
                 if sheet_name in special_nodes_en:
-                    new_column_name = guid_column.replace("GUID", "Subnumber")
+                    new_column_name = guid_column.replace(
+                        "GUID", VISION_EXCEL_LAN_DICT[LANGUAGE_EN][DICT_KEY_SUBNUMBER]
+                    )
                 elif sheet_name in special_nodes_nl:
-                    new_column_name = guid_column.replace("GUID", "Subnummer")
+                    new_column_name = guid_column.replace(
+                        "GUID", VISION_EXCEL_LAN_DICT[LANGUAGE_NL][DICT_KEY_SUBNUMBER]
+                    )
             guid_column_pos = first_level.tolist().index(guid_column)
             try:
                 data.insert(guid_column_pos + 1, new_column_name, data[guid_column].apply(self._uuid_cvtr.query))

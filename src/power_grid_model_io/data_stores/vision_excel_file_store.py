@@ -7,7 +7,7 @@ Vision Excel file store
 from pathlib import Path
 from typing import Optional
 
-from power_grid_model_io.data_stores.excel_file_store import ExcelFileStore
+from power_grid_model_io.data_stores.excel_file_store import LANGUAGE_EN, ExcelFileStore
 
 
 class VisionExcelFileStore(ExcelFileStore):
@@ -21,7 +21,7 @@ class VisionExcelFileStore(ExcelFileStore):
     def __init__(
         self,
         file_path: Path,
-        language: str = "en",
+        language: str = LANGUAGE_EN,
         terms_changed: Optional[dict] = None,
     ):
         """
