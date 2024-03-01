@@ -167,7 +167,6 @@ def insert_or_update_number_column(
         number (str): "Number" or "Nummer" depending on the language
     """
     new_column_name = guid_column.replace("GUID", number)
-    # pylint: disable=duplicate-code
     if guid_column == "GUID":
         if sheet_name in special_nodes_en:
             new_column_name = guid_column.replace("GUID", VISION_EXCEL_LAN_DICT[LANGUAGE_EN][DICT_KEY_SUBNUMBER])
