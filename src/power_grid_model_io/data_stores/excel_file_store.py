@@ -11,8 +11,21 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 
 import pandas as pd
 
-from power_grid_model_io.data_stores.base_data_store import BaseDataStore
+from power_grid_model_io.data_stores.base_data_store import (
+    DICT_KEY_NUMBER,
+    DICT_KEY_SUBNUMBER,
+    VISION_EXCEL_LAN_DICT,
+    BaseDataStore,
+)
 from power_grid_model_io.data_types import LazyDataFrame, TabularData
+from power_grid_model_io.utils.uuid_excel_cvtr import (
+    UUID2IntCvtr,
+    add_guid_values_to_cvtr,
+    get_special_key_map,
+    special_nodes_en,
+    special_nodes_nl,
+    update_column_names,
+)
 
 
 class ExcelFileStore(BaseDataStore[TabularData]):
@@ -28,9 +41,15 @@ class ExcelFileStore(BaseDataStore[TabularData]):
 
     _unnamed_pattern: re.Pattern = re.compile(r"Unnamed: \d+_level_\d+")
 
-    def __init__(self, file_path: Optional[Path] = None, **extra_paths: Path):
+    def __init__(
+        self,
+        file_path: Optional[Path] = None,
+        *,
+        language: str = "en",
+        terms_changed: Optional[dict] = None,
+        **extra_paths: Path,
+    ):
         super().__init__()
-
         # Create a dictionary of all supplied file paths:
         # {"": file_path, extra_name[0]: extra_path[0], extra_name[1]: extra_path[1], ...}
         self._file_paths: Dict[str, Path] = {}
@@ -45,6 +64,10 @@ class ExcelFileStore(BaseDataStore[TabularData]):
                 raise ValueError(f"{name} file should be a .xls or .xlsx file, {path.suffix} provided.")
 
         self._header_rows: List[int] = [0]
+        self._language = language
+        self._vision_excel_key_mapping = VISION_EXCEL_LAN_DICT[self._language]
+        self._terms_changed = terms_changed if terms_changed is not None else {}
+        self._uuid_cvtr = UUID2IntCvtr()
 
     def files(self) -> Dict[str, Path]:
         """
@@ -68,6 +91,8 @@ class ExcelFileStore(BaseDataStore[TabularData]):
                 sheet_data = xls_file.parse(xls_sheet_name, header=self._header_rows)
                 sheet_data = self._remove_unnamed_column_placeholders(data=sheet_data)
                 sheet_data = self._handle_duplicate_columns(data=sheet_data, sheet_name=xls_sheet_name)
+                sheet_data = self._process_uuid_columns(data=sheet_data, sheet_name=xls_sheet_name)
+                sheet_data = self._update_column_names(data=sheet_data)
                 return sheet_data
 
             return sheet_loader
@@ -196,6 +221,32 @@ class ExcelFileStore(BaseDataStore[TabularData]):
                     to_rename[dup_idx] = f"{col_name[0]}_{counter}"
 
         return to_rename
+
+    def _process_uuid_columns(self, data: pd.DataFrame, sheet_name: str) -> pd.DataFrame:
+        first_level = data.columns.get_level_values(0)
+        guid_columns = first_level[first_level.str.endswith("GUID")]
+
+        sheet_key_mapping = get_special_key_map(
+            sheet_name=sheet_name, nodes_en=special_nodes_en, nodes_nl=special_nodes_nl
+        )
+
+        for guid_column in guid_columns:
+            nr = VISION_EXCEL_LAN_DICT[self._language][DICT_KEY_NUMBER]
+            add_guid_values_to_cvtr(data, guid_column, self._uuid_cvtr)
+            new_column_name = guid_column.replace("GUID", nr)
+            if guid_column == "GUID" and sheet_key_mapping not in (None, {}):
+                new_column_name = guid_column.replace("GUID", sheet_key_mapping[DICT_KEY_SUBNUMBER])
+            guid_column_pos = first_level.tolist().index(guid_column)
+            try:
+                data.insert(guid_column_pos + 1, new_column_name, data[guid_column].apply(self._uuid_cvtr.query))
+            except ValueError:
+                data[new_column_name] = data[guid_column].apply(self._uuid_cvtr.query)
+
+        return data
+
+    def _update_column_names(self, data: pd.DataFrame) -> pd.DataFrame:
+        update_column_names(data, self._terms_changed)
+        return data
 
     @staticmethod
     def _group_columns_by_index(data: pd.DataFrame) -> Dict[Union[str, Tuple[str, ...]], Set[int]]:

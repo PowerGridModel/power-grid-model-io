@@ -12,6 +12,21 @@ import structlog
 
 T = TypeVar("T")
 
+LANGUAGE_EN = "en"
+LANGUAGE_NL = "nl"
+DICT_KEY_NUMBER = "key_number"
+DICT_KEY_SUBNUMBER = "key_subnumber"
+VISION_EXCEL_LAN_DICT = {
+    LANGUAGE_EN: {
+        DICT_KEY_NUMBER: "Number",
+        DICT_KEY_SUBNUMBER: "Subnumber",
+    },
+    LANGUAGE_NL: {
+        DICT_KEY_NUMBER: "Nummer",
+        DICT_KEY_SUBNUMBER: "Subnummer",
+    },
+}
+
 
 class BaseDataStore(Generic[T], ABC):
     """
