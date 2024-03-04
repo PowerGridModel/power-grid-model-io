@@ -44,13 +44,12 @@ class ExcelFileStore(BaseDataStore[TabularData]):
     def __init__(
         self,
         file_path: Optional[Path] = None,
+        *,
         language: str = "en",
         terms_changed: Optional[dict] = None,
         **extra_paths: Path,
     ):
         super().__init__()
-        if not isinstance(language, str):
-            raise TypeError("Expects 1 to 2 positional arguments, at least 3 were given")
         # Create a dictionary of all supplied file paths:
         # {"": file_path, extra_name[0]: extra_path[0], extra_name[1]: extra_path[1], ...}
         self._file_paths: Dict[str, Path] = {}
