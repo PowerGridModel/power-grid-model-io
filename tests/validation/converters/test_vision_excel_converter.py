@@ -13,8 +13,6 @@ import pytest
 from power_grid_model.data_types import SingleDataset
 
 from power_grid_model_io.converters import VisionExcelConverter
-from power_grid_model_io.data_stores.base_data_store import DICT_KEY_SUBNUMBER  # pylint: disable=unused-import
-from power_grid_model_io.data_stores.base_data_store import LANGUAGE_NL  # pylint: disable=unused-import
 from power_grid_model_io.data_stores.base_data_store import DICT_KEY_NUMBER, LANGUAGE_EN, VISION_EXCEL_LAN_DICT
 from power_grid_model_io.data_types import ExtraInfo
 from power_grid_model_io.utils.json import JsonEncoder

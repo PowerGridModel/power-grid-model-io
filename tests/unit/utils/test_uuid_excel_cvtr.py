@@ -5,8 +5,6 @@
 from pathlib import Path
 
 from power_grid_model_io.converters import VisionExcelConverter
-from power_grid_model_io.data_stores.base_data_store import DICT_KEY_SUBNUMBER  # pylint: disable=unused-import
-from power_grid_model_io.data_stores.base_data_store import LANGUAGE_NL  # pylint: disable=unused-import
 from power_grid_model_io.data_stores.base_data_store import DICT_KEY_NUMBER, LANGUAGE_EN, VISION_EXCEL_LAN_DICT
 from power_grid_model_io.utils.uuid_excel_cvtr import convert_guid_vision_excel
 
