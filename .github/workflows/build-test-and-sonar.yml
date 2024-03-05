@@ -9,7 +9,6 @@ on:
   push:
     branches:
       - main
-      - 'release/**'
   # run pipeline on pull request
   pull_request:
   # Allows you to run this workflow manually from the Actions tab
@@ -18,7 +17,6 @@ on:
 jobs:
 
   build-python:
-    if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch') || !startsWith(github.head_ref,  'release')
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -49,8 +47,6 @@ jobs:
           path: wheelhouse/
 
   sonar-cloud:
-    # only run sonar server in push event or pull request event from own repo
-    if: (github.event_name == 'push') || (github.event_name == 'workflow_dispatch') || (!startsWith(github.head_ref, 'release') && (github.event.pull_request.head.repo.owner.login == 'PowerGridModel'))
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -184,6 +180,6 @@ jobs:
           files: |
             ./wheelhouse/*
           tag_name: v${{ needs.build-python.outputs.version }}
-          prerelease: ${{ contains(needs.build-python.outputs.version, 'rc') || contains(needs.build-python.outputs.version, 'a') }}
+          prerelease: ${{github.ref != 'refs/heads/main'}}
           generate_release_notes: true
           target_commitish: ${{ github.sha }}
