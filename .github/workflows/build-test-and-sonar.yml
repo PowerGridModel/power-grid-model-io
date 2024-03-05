@@ -180,6 +180,6 @@ jobs:
           files: |
             ./wheelhouse/*
           tag_name: v${{ needs.build-python.outputs.version }}
-          prerelease: github.ref != "refs/heads/main"
+          prerelease: github.ref != 'refs/heads/main'
           generate_release_notes: true
           target_commitish: ${{ github.sha }}
