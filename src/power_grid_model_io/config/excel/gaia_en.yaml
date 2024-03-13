@@ -13,7 +13,7 @@ grid:
       id:
         auto_id:
           key: Number
-      u_rated: Unom
+      u_rated: Unom_LL
       extra:
         - ID
         - Name
@@ -182,11 +182,11 @@ grid:
       pk: Pk
       i0:
         power_grid_model_io.functions.phase_to_phase.relative_no_load_current:
-          i_0: Io
-          p_0: Po
+          i_0: Inul #Io
+          p_0: Pnul #Po
           s_nom: Snom
           u_nom: Unom2
-      p0: Po
+      p0: Pnul #Po
       winding_from:
         power_grid_model_io.functions.phase_to_phase.get_winding_from:
           conn_str: Connection
@@ -226,8 +226,8 @@ grid:
       pk_max: Pk
 #      r_grounding_from: Re1
 #      x_grounding_from: Xe1
-#      r_grounding_to: Re2
-#      x_grounding_to: Xe2   test
+      r_grounding_to: Re
+#      x_grounding_to: Xe2
       extra:
         - ID
         - Name
