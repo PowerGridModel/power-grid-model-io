@@ -12,8 +12,8 @@ on:
   # Any other signals are handled by the actual DCO plugin
 
 jobs:
-  dco:
-    name: DCO for merge groups
+  dco-merge-group:
+    name: DCO
     runs-on: ubuntu-latest
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
