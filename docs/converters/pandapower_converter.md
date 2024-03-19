@@ -22,14 +22,14 @@ If a `vector_group` is not available for transformer then a default is set in co
 Similarly for three winding transformer, `YNynyn` is set for even clocks of `shift_mv_degree` and `shift_lv_degree`.
 If the clocks are odd, then the vector group is converted as `YNynd`, `YNdyn` or `YNdd`.
 
-## Modelling differences
+## modeling differences
 
 The user must be aware of following unsupported features or differences in conversion. 
 
 * Currently, the conversions only support powerflow calculations and their relevant attributes.
 * Any feature involving a PV bus, i.e., generator, DC line are unsupported as of now.
 
-In addition, the following component-specific modelling differences exist.
+In addition, the following component-specific modeling differences exist.
 
 ### Load
 
