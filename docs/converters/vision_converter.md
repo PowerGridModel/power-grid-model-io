@@ -34,7 +34,7 @@ This can be done by first selecting the transformer loads: [Start | Select | Obj
 
 Note that in symmetrical calculations, Vision does not include clock angles of transformers in the result of voltage angles. power-grid-model, however, does consider them. Therefore when doing a direct comparison of angle results, this needs to be taken into consideration.
 
-## modeling differences or unsupported attributes
+## Modeling differences or unsupported attributes
 
 Some components are yet to be modeled for conversions because they might not have a straightforward mapping in power-grid-model. Those are listed here.
 
