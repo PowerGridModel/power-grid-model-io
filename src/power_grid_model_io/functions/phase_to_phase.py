@@ -7,6 +7,8 @@ These functions can be used in the mapping files to apply functions to vision da
 
 import math
 
+import numpy as np
+import pandas as pd
 import structlog
 from power_grid_model import WindingType
 
@@ -30,17 +32,17 @@ def reactive_power(p: float, cos_phi: float) -> float:
     """
     Calculate the reactive power, based on p, cosine phi.
     """
-    return p * math.sqrt(1 - cos_phi**2) / cos_phi
+    return p * math.sqrt(1 - cos_phi ** 2) / cos_phi
 
 
 def power_wind_speed(  # pylint: disable=too-many-arguments
-    p_nom: float,
-    wind_speed: float,
-    cut_in_wind_speed: float = 3.0,
-    nominal_wind_speed: float = 14.0,
-    cutting_out_wind_speed: float = 25.0,
-    cut_out_wind_speed: float = 30.0,
-    axis_height: float = 30.0,
+        p_nom: float,
+        wind_speed: float,
+        cut_in_wind_speed: float = 3.0,
+        nominal_wind_speed: float = 14.0,
+        cutting_out_wind_speed: float = 25.0,
+        cut_out_wind_speed: float = 30.0,
+        axis_height: float = 30.0,
 ) -> float:
     """
     Estimate p_ref based on p_nom and wind_speed.
@@ -101,7 +103,6 @@ get_winding_1 = _get_winding(parse_trafo3_connection, "winding_1")
 get_winding_2 = _get_winding(parse_trafo3_connection, "winding_2")
 get_winding_3 = _get_winding(parse_trafo3_connection, "winding_3")
 
-
 get_clock = _get_clock(parse_trafo_connection, "clock")
 get_clock_12 = _get_clock(parse_trafo3_connection, "clock_12")
 get_clock_13 = _get_clock(parse_trafo3_connection, "clock_13")
@@ -130,3 +131,10 @@ def pvs_power_adjustment(p: float, efficiency_type: str) -> float:
         return p * 0.95
 
     return p
+
+
+def three_phase_array(power_a: float, power_b: float, power_c: float) -> pd.Series:
+    """
+    Calculate the reactive power, based on p, cosine phi.
+    """
+    return pd.Series([power_a, power_b, power_c])

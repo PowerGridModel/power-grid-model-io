@@ -226,7 +226,7 @@ grid:
       pk_max: Pk
 #      r_grounding_from: Re1
 #      x_grounding_from: Xe1
-      r_grounding_to: Re
+#      r_grounding_to: Re
 #      x_grounding_to: Xe2
       extra:
         - ID
@@ -553,7 +553,40 @@ grid:
 #        - ID
 #        - Name
   Loads:
-    sym_load:
+#    sym_load:
+#      id:
+#        auto_id:
+#          key:
+#            - Node.Number
+#            - Subnumber
+#      node:
+#        auto_id:
+#          table: Nodes
+#          key:
+#            Number: Node.Number
+#      status: Switch state
+#      type: Behaviour
+#      p_specified: Ptotal
+##        multiply:
+##          - Ptotal
+##          - reference:
+##              query_column: Node.Number
+##              other_table: Nodes
+##              key_column: Number
+##              value_column: Simultaneity
+#      q_specified: Qtotal
+##        multiply:
+##          - Qtotal
+##          - reference:
+##              query_column: Node.Number
+##              other_table: Nodes
+##              key_column: Number
+##              value_column: Simultaneity
+#      extra:
+#        - ID
+#        - Name
+
+    asym_load:
       id:
         auto_id:
           key:
@@ -567,50 +600,56 @@ grid:
       status: Switch state
       type: Behaviour
       p_specified:
-        multiply:
-          - Ptotal
-          - reference:
-              query_column: Node.Number
-              other_table: Nodes
-              key_column: Number
-              value_column: Simultaneity
+#        multiply:
+          power_grid_model_io.functions.phase_to_phase.three_phase_array:
+            power_a: Pa
+            power_b: Pb
+            power_c: Pc
+#          - reference:
+#              query_column: Node.Number
+#              other_table: Nodes
+#              key_column: Number
+#              value_column: Simultaneity
       q_specified:
-        multiply:
-          - Qtotal
-          - reference:
-              query_column: Node.Number
-              other_table: Nodes
-              key_column: Number
-              value_column: Simultaneity
+#        multiply:
+          power_grid_model_io.functions.phase_to_phase.three_phase_array:
+            power_a: Qa
+            power_b: Qb
+            power_c: Qc
+#          - reference:
+#              query_column: Node.Number
+#              other_table: Nodes
+#              key_column: Number
+#              value_column: Simultaneity
       extra:
         - ID
         - Name
-#  Zigzag transformers:
-#    shunt:
-#      id:
-#        auto_id:
-#          key:
-#            - Node.Number
-#            - Subnumber
-#      node:
-#        auto_id:
-#          table: Nodes
-#          key:
-#            Number: Node.Number
-#      status: Switch state
-#      g1: 0
-#      b1: 0
-#      g0:
-#        power_grid_model_io.functions.complex_inverse_real_part:
-#          real: R0
-#          imag: X0
-#      b0:
-#        power_grid_model_io.functions.complex_inverse_imaginary_part:
-#          real: R0
-#          imag: X0
-#      extra:
-#        - ID
-#        - Name
+  Zigzag transformers:
+    shunt:
+      id:
+        auto_id:
+          key:
+            - Node.Number
+            - Subnumber
+      node:
+        auto_id:
+          table: Nodes
+          key:
+            Number: Node.Number
+      status: Switch state
+      g1: 0
+      b1: 0
+      g0:
+        power_grid_model_io.functions.complex_inverse_real_part:
+          real: R0
+          imag: X0
+      b0:
+        power_grid_model_io.functions.complex_inverse_imaginary_part:
+          real: R0
+          imag: X0
+      extra:
+        - ID
+        - Name
   Capacitors:
     shunt:
       id:

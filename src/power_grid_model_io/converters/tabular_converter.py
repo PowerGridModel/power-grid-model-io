@@ -255,10 +255,14 @@ class TabularConverter(BaseConverter[TabularData]):
 
         attr_data = self._parse_col_def(data=data, table=table, col_def=col_def, extra_info=extra_info)
 
-        if len(attr_data.columns) != 1:
+        if len(attr_data.columns) == 1:
+            pgm_data[attr] = attr_data.iloc[:, 0]
+        elif component == 'asym_load':
+            pgm_data[attr] = attr_data.iloc[:, 0:3]
+        else:
             raise ValueError(f"DataFrame for {component}.{attr} should contain a single column ({attr_data.columns})")
 
-        pgm_data[attr] = attr_data.iloc[:, 0]
+
 
     def _handle_extra_info(
         self,
