@@ -27,7 +27,7 @@ If the clocks are odd, then the vector group is converted as `YNynd`, `YNdyn` or
 The user must be aware of following unsupported features or differences in conversion. 
 
 * Currently, the conversions only support powerflow calculations and their relevant attributes.
-* Any feature involving a PV bus, ie. generator, DC line are unsupported as of now.
+* Any feature involving a PV bus, i.e., generator, DC line are unsupported as of now.
 
 In addition, the following component-specific modelling differences exist.
 
@@ -41,7 +41,7 @@ The features regarding `in_ka` and `z_ohm` attributes are currently unsupported.
 
 ### External grid
 
-The external grid is modelled with a source impedance all sequence components in power-grid-model.
+The external grid is modeled with a source impedance all sequence components in power-grid-model.
 Whereas it is only present in negative and zero sequence networks in pandapower.
 Hence, this impedance value has to be mentioned in the power-flow calculation when using the power-grid-model power flow calculation.
 
@@ -57,4 +57,4 @@ The default for transformer model to be used in pandapower is `t` model but powe
 ### Three  winding transformer
 
 The differences defined in [Transformer](#transformer) are applicable here as well.
-Additionally, tap connection at star point, ie. `tap_at_star_point` is not supported.
+Additionally, tap connection at star point, i.e., `tap_at_star_point` is not supported.
