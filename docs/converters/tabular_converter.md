@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridm
 SPDX-License-Identifier: MPL-2.0
 -->
 # Tabular converter
-Tabular data are commonly stored in spreadsheet files: Excel files, CSV files, GNF files, databases, pandas DataFrames, etc.
+Tabular data is commonly stored in spreadsheet files: Excel files, CSV files, GNF files, databases, pandas DataFrames, etc.
 The similarity between all tabular data is that it contains multiple `tables`, each with multiple `columns`, possibly with a specific `unit` row.
 Others may have categorical values that need to be further mapped (i.e., open: 0, closed: 1).
 These attributes are referred to as `substitutions`.
@@ -132,8 +132,8 @@ Power Grid Model uses SI units (e.g., "W" for Watts), but source data may be sup
 If units are supplied in the tabular data, the data stored using pandas DataFrame is expected to have `MultiIndexes` for columns.
 For our application, a `MultiIndex` can be interpreted as a tuple; the first element is the column name, the second element is the column unit. For example: `("C0", "µF")`.
 
-If a unit is supplied, it should be defined in the unit section of the mapping.
-Undefined units are not allowed.
+If an optional unit is supplied, it should be defined in the unit section of the mapping.
+Undefined units that do not exist in mapping are not allowed.
 
 ```yaml
 units:
@@ -173,7 +173,7 @@ The definitions above can be interpreted as:
 ## AutoID
 The `id` field is special in the sense that each object should have a unique numerical id in power grid model. 
 Therefore, each id definition is mapped to a numerical (integer) ID.
-Field names that end with `node` are also mapped to corresponding numerical ID's.
+Field names that end with `node` are also mapped to corresponding numerical IDs.
 
 ```python
 from power_grid_model_io.utils.auto_id import AutoID

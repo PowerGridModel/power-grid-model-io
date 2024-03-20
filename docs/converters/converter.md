@@ -37,7 +37,7 @@ converter = PgmJsonConverter(source_file=source, destination_file=destination)
 
 ## Common methods for converters
 
-The commonly methods across different converters, including data IO and log level configurations, are described below.
+The common methods across different converters, including data IO and log level configurations, are described below.
 Converter specific methods are presented in corresponding sections.
 
 ### Loading data
