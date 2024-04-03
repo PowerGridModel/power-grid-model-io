@@ -25,16 +25,27 @@ WINDING_TYPES = {
 }
 
 MEASURED_TERMINAL_TYPE_MAP = {
-    "transformer_from": MeasuredTerminalType.branch_from,
-    "transformer_to": MeasuredTerminalType.branch_to,
     "cable_from": MeasuredTerminalType.branch_from,
     "cable_to": MeasuredTerminalType.branch_to,
-    "transformer_load_to": MeasuredTerminalType.branch_to,
-    "load_to": MeasuredTerminalType.branch_to,
-    "earthing_transformer_to": MeasuredTerminalType.branch_to,
+    "line_from": MeasuredTerminalType.branch_from,
+    "line_to": MeasuredTerminalType.branch_to, 
+    "reactance_coil_from": MeasuredTerminalType.branch_from,
+    "reactance_coil_to": MeasuredTerminalType.branch_to,
+    "special_transformer_from": MeasuredTerminalType.branch_from,
+    "special_transformer_to": MeasuredTerminalType.branch_to,
+    "transformer_from": MeasuredTerminalType.branch_from,
+    "transformer_to": MeasuredTerminalType.branch_to,
+    "transformer_load": MeasuredTerminalType.branch_to,
+    "earthing_transformer": MeasuredTerminalType.branch_to,
     "transformer3_1": MeasuredTerminalType.branch3_1,
     "transformer3_2": MeasuredTerminalType.branch3_2,
     "transformer3_3": MeasuredTerminalType.branch3_3,
+    "source": MeasuredTerminalType.source,
+    "shunt_capacitor": MeasuredTerminalType.shunt,
+    "shunt_reactor": MeasuredTerminalType.shunt,
+    "pv": MeasuredTerminalType.generator,
+    "wind_turbine": MeasuredTerminalType.generator,
+    "load": MeasuredTerminalType.load,
 }
  
 
@@ -134,5 +145,5 @@ def find_terminal_type(**kwargs) -> MeasuredTerminalType:
     for key, id in kwargs.items():
         if id is not None:
             return MEASURED_TERMINAL_TYPE_MAP[key]
-    _LOG.warning("No proper measured terminal type is found!")
+    _LOG.warning("No measured terminal type is found!")
     return float("nan")
