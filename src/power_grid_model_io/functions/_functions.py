@@ -11,7 +11,7 @@ from typing import Any, Optional, TypeVar, cast
 import numpy as np
 import structlog
 from power_grid_model import WindingType
-
+from power_grid_model import MeasuredTerminalType
 T = TypeVar("T")
 
 _LOG = structlog.get_logger(__file__)
@@ -24,13 +24,27 @@ WINDING_TYPES = {
     "ZN": WindingType.zigzag_n,
 }
 
+MEASURED_TERMINAL_TYPE_MAP = {
+    "transformer_from": MeasuredTerminalType.branch_from,
+    "transformer_to": MeasuredTerminalType.branch_to,
+    "cable_from": MeasuredTerminalType.branch_from,
+    "cable_to": MeasuredTerminalType.branch_to,
+    "transformer_load_to": MeasuredTerminalType.branch_to,
+    "load_to": MeasuredTerminalType.branch_to,
+    "earthing_transformer_to": MeasuredTerminalType.branch_to,
+    "transformer3_1": MeasuredTerminalType.branch3_1,
+    "transformer3_2": MeasuredTerminalType.branch3_2,
+    "transformer3_3": MeasuredTerminalType.branch3_3,
+}
+ 
+
 
 def has_value(value: Any) -> bool:
     """
     Return True if the value is not None, NaN or empty string.
     """
     if value is None:
-        return False
+        return False 
     if isinstance(value, float):
         return not np.isnan(value)
     return value != ""
@@ -104,3 +118,21 @@ def both_zeros_to_nan(value: float, other_value: float) -> float:
         _LOG.warning("0 replaced to nan")
         return float("nan")
     return value
+
+def find_terminal_type(**kwargs) -> MeasuredTerminalType:
+    """
+    Return 'branch_from' if any argument contains 'from' in its name.
+    Return 'branch_to' if any argument contains 'to' in its name.
+    Return the name of the first argument that evaluates to True otherwise.
+
+    Parameters:
+    - args: Variable number of input values.
+
+    Returns:
+    - String representation based on the conditions mentioned above.
+    """ 
+    for key, id in kwargs.items():
+        if id is not None:
+            return MEASURED_TERMINAL_TYPE_MAP[key]
+    _LOG.warning("No proper measured terminal type is found!")
+    return float("nan")
