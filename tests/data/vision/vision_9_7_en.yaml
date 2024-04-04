@@ -900,32 +900,32 @@ grid:
             auto_id:
               table: Sources
               key:
-                Node.Number: NearToNode.Number  
+                Node.Number: NearToNode.Number
           shunt_capacitor:
             auto_id:
               table: Shunt capacitors
               key:
-                Node.Number: NearToNode.Number  
+                Node.Number: NearToNode.Number
           shunt_reactor:
             auto_id:
               table: Shunt reactors
               key:
-                Node.Number: NearToNode.Number  
+                Node.Number: NearToNode.Number
           pv:
             auto_id:
               table: Pvs
               key:
-                Node.Number: NearToNode.Number  
+                Node.Number: NearToNode.Number
           wind_turbine:
             auto_id:
               table: Wind turbines
               key:
-                Node.Number: NearToNode.Number   
+                Node.Number: NearToNode.Number
           load:
             auto_id:
               table: Loads
               key:
-                Node.Number: NearToNode.Number        
+                Node.Number: NearToNode.Number
       p_measured: nan
       q_measured: nan
       p_sigma: nan
@@ -958,6 +958,36 @@ grid:
               table: Cables
               key:
                 To.Number: NearToNode.Number
+          line_from:
+            auto_id:
+              table: Lines
+              key:
+                From.Number: NearToNode.Number
+          line_to:
+            auto_id:
+              table: Lines
+              key:
+                To.Number: NearToNode.Number
+          reactance_coil_from:
+            auto_id:
+              table: Reactance coils
+              key:
+                From.Number: NearToNode.Number
+          reactance_coil_to:
+            auto_id:
+              table: Reactance coils
+              key:
+                To.Number: NearToNode.Number
+          special_transformer_from:
+            auto_id:
+              table: Special transformers
+              key:
+                From.Number: NearToNode.Number
+          special_transformer_to:
+            auto_id:
+              table: Special transformers
+              key:
+                To.Number: NearToNode.Number
           transformer_from:
             auto_id:
               table: Transformers
@@ -968,19 +998,14 @@ grid:
               table: Transformers
               key:
                 To.Number: NearToNode.Number
-          transformer_load_to:
+          transformer_load:
             auto_id:
               table: Transformer loads
               key:
                 Node.Number: NearToNode.Number
-          load_to:
+          earthing_transformer:
             auto_id:
-              table: Loads
-              key:
-                Node.Number: NearToNode.Number
-          earthing_transformer_to:
-            auto_id:
-              table: Earthing transformers loads
+              table: Earthing transformers
               key:
                 Node.Number: NearToNode.Number
           transformer3_1:
@@ -997,7 +1022,37 @@ grid:
             auto_id:
               table: Three winding transformers
               key:
-                Node3.Number: NearToNode.Number          
+                Node3.Number: NearToNode.Number
+          source:
+            auto_id:
+              table: Sources
+              key:
+                Node.Number: NearToNode.Number
+          shunt_capacitor:
+            auto_id:
+              table: Shunt capacitors
+              key:
+                Node.Number: NearToNode.Number
+          shunt_reactor:
+            auto_id:
+              table: Shunt reactors
+              key:
+                Node.Number: NearToNode.Number
+          pv:
+            auto_id:
+              table: Pvs
+              key:
+                Node.Number: NearToNode.Number
+          wind_turbine:
+            auto_id:
+              table: Wind turbines
+              key:
+                Node.Number: NearToNode.Number
+          load:
+            auto_id:
+              table: Loads
+              key:
+                Node.Number: NearToNode.Number
       p_measured: nan
       q_measured: nan
       p_sigma: nan
@@ -1030,6 +1085,36 @@ grid:
               table: Cables
               key:
                 To.Number: NearToNode.Number
+          line_from:
+            auto_id:
+              table: Lines
+              key:
+                From.Number: NearToNode.Number
+          line_to:
+            auto_id:
+              table: Lines
+              key:
+                To.Number: NearToNode.Number
+          reactance_coil_from:
+            auto_id:
+              table: Reactance coils
+              key:
+                From.Number: NearToNode.Number
+          reactance_coil_to:
+            auto_id:
+              table: Reactance coils
+              key:
+                To.Number: NearToNode.Number
+          special_transformer_from:
+            auto_id:
+              table: Special transformers
+              key:
+                From.Number: NearToNode.Number
+          special_transformer_to:
+            auto_id:
+              table: Special transformers
+              key:
+                To.Number: NearToNode.Number
           transformer_from:
             auto_id:
               table: Transformers
@@ -1040,19 +1125,14 @@ grid:
               table: Transformers
               key:
                 To.Number: NearToNode.Number
-          transformer_load_to:
+          transformer_load:
             auto_id:
               table: Transformer loads
               key:
                 Node.Number: NearToNode.Number
-          load_to:
+          earthing_transformer:
             auto_id:
-              table: Loads
-              key:
-                Node.Number: NearToNode.Number
-          earthing_transformer_to:
-            auto_id:
-              table: Earthing transformers loads
+              table: Earthing transformers
               key:
                 Node.Number: NearToNode.Number
           transformer3_1:
@@ -1069,7 +1149,37 @@ grid:
             auto_id:
               table: Three winding transformers
               key:
-                Node3.Number: NearToNode.Number          
+                Node3.Number: NearToNode.Number
+          source:
+            auto_id:
+              table: Sources
+              key:
+                Node.Number: NearToNode.Numbe
+          shunt_capacitor:
+            auto_id:
+              table: Shunt capacitors
+              key:
+                Node.Number: NearToNode.Number
+          shunt_reactor:
+            auto_id:
+              table: Shunt reactors
+              key:
+                Node.Number: NearToNode.Number
+          pv:
+            auto_id:
+              table: Pvs
+              key:
+                Node.Number: NearToNode.Number
+          wind_turbine:
+            auto_id:
+              table: Wind turbines
+              key:
+                Node.Number: NearToNode.Number
+          load:
+            auto_id:
+              table: Loads
+              key:
+                Node.Number: NearToNode.Number
       p_measured: nan
       q_measured: nan
       p_sigma: nan
