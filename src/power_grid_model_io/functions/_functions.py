@@ -140,13 +140,6 @@ def find_terminal_type(**kwargs) -> MeasuredTerminalType:
     _LOG.warning("No measured terminal type is found!")
     return float("nan")
 
-
-def if_not_link(input_string) -> bool:
-    """
-    Check if the measurement field is applied on a link
-    """
-    return input_string != "link"
-
 def filter_if_object(object_name: str, excl_object: str) -> bool:
     """
     Return false if the measured object should be excluded.

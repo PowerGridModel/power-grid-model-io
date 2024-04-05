@@ -180,7 +180,7 @@ class TabularConverter(BaseConverter[TabularData]):
 
         table_mask = np.arary(True)  * len(data[table])
         if "filter" in attributes:
-            table_mask = self._parse_filter()
+            table_mask = self._parse_filters()
             pass
 
         n_records = np.sum(table_mask)
@@ -271,11 +271,11 @@ class TabularConverter(BaseConverter[TabularData]):
 
         pgm_data[attr] = attr_data.iloc[:, 0]
 
-    def _parse_filters() -> pd.Series[bool]:
-        mask = True * len(data) * 483
-        for function, args in mapping["filter"]  {
+    def _parse_filters(self) -> pd.Series:
+        mask = True * pd.DataFrame(True, shape=data.shape)
+        for function, args in mapping["filter"].items():
             mask &= data.apply(function, arg)
-        }
+        
         return pd.Series()
     
     def _handle_extra_info(
