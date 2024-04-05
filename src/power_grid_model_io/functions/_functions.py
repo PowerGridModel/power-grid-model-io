@@ -10,8 +10,7 @@ from typing import Any, Optional, TypeVar, cast
 
 import numpy as np
 import structlog
-from power_grid_model import WindingType
-from power_grid_model import MeasuredTerminalType
+from power_grid_model import MeasuredTerminalType, WindingType
 
 T = TypeVar("T")
 
@@ -29,7 +28,7 @@ MEASURED_TERMINAL_TYPE_MAP = {
     "cable_from": MeasuredTerminalType.branch_from,
     "cable_to": MeasuredTerminalType.branch_to,
     "line_from": MeasuredTerminalType.branch_from,
-    "line_to": MeasuredTerminalType.branch_to, 
+    "line_to": MeasuredTerminalType.branch_to,
     "reactance_coil_from": MeasuredTerminalType.branch_from,
     "reactance_coil_to": MeasuredTerminalType.branch_to,
     "special_transformer_from": MeasuredTerminalType.branch_from,
@@ -48,7 +47,8 @@ MEASURED_TERMINAL_TYPE_MAP = {
     "wind_turbine": MeasuredTerminalType.generator,
     "load": MeasuredTerminalType.load,
 }
- 
+
+
 def has_value(value: Any) -> bool:
     """
     Return True if the value is not None, NaN or empty string.
@@ -129,12 +129,26 @@ def both_zeros_to_nan(value: float, other_value: float) -> float:
         return float("nan")
     return value
 
+
 def find_terminal_type(**kwargs) -> MeasuredTerminalType:
     """
     Return the measured terminal type, based on the string representation
-    """ 
+    """
     for key, id in kwargs.items():
         if id is not None:
             return MEASURED_TERMINAL_TYPE_MAP[key]
     _LOG.warning("No measured terminal type is found!")
     return float("nan")
+
+
+def if_not_link(input_string) -> bool:
+    """
+    Check if the measurement field is applied on a link
+    """
+    return input_string != "link"
+
+def filter_if_object(object_name: str, excl_object: str) -> bool:
+    """
+    Return false if the measured object should be excluded.
+    """
+    return object_name != excl_object

@@ -178,7 +178,15 @@ class TabularConverter(BaseConverter[TabularData]):
         if table not in data:
             return None
 
-        n_records = len(data[table])
+        table_mask = np.arary(True)  * len(data[table])
+        if "filter" in attributes:
+            table_mask = self._parse_filter()
+            pass
+
+        n_records = np.sum(table_mask)
+
+        if n_records == 0:
+            return None
 
         try:
             pgm_data = initialize_array(data_type=data_type, component_type=component, shape=n_records)
@@ -193,7 +201,7 @@ class TabularConverter(BaseConverter[TabularData]):
 
         for attr, col_def in sorted_attributes:
             self._convert_col_def_to_attribute(
-                data=data,
+                data=data[table_mask],
                 pgm_data=pgm_data,
                 table=table,
                 component=component,
@@ -213,6 +221,7 @@ class TabularConverter(BaseConverter[TabularData]):
         component: str,
         attr: str,
         col_def: Any,
+        table_mask: np.ndarray,
         extra_info: Optional[ExtraInfo],
     ):
         """This function updates one of the attributes of pgm_data, based on the corresponding table/column in a tabular
@@ -242,7 +251,7 @@ class TabularConverter(BaseConverter[TabularData]):
         """
         # To avoid mistakes, the attributes in the mapping should exist. There is one extra attribute called
         # 'extra' in which extra information can be captured.
-        if attr not in pgm_data.dtype.names and attr != "extra":
+        if attr not in pgm_data.dtype.names and attr not in ["extra", "filter"]:
             attrs = ", ".join(pgm_data.dtype.names)
             raise KeyError(f"Could not find attribute '{attr}' for '{component}s'. (choose from: {attrs})")
 
@@ -250,18 +259,25 @@ class TabularConverter(BaseConverter[TabularData]):
             # Extra info must be linked to the object IDs, therefore the uuids should be known before extra info can
             # be parsed. Before this for loop, it is checked that "id" exists and it is placed at the front.
             self._handle_extra_info(
-                data=data, table=table, col_def=col_def, uuids=pgm_data["id"], extra_info=extra_info
+                data=data[table_mask], table=table, col_def=col_def, uuids=pgm_data["id"], extra_info=extra_info
             )
             # Extra info should not be added to the numpy arrays, so let's continue to the next attribute
             return
 
-        attr_data = self._parse_col_def(data=data, table=table, col_def=col_def, extra_info=extra_info)
+        attr_data = self._parse_col_def(data=data[table_mask], table=table, col_def=col_def, extra_info=extra_info)
 
         if len(attr_data.columns) != 1:
             raise ValueError(f"DataFrame for {component}.{attr} should contain a single column ({attr_data.columns})")
 
         pgm_data[attr] = attr_data.iloc[:, 0]
 
+    def _parse_filters() -> pd.Series[bool]:
+        mask = True * len(data) * 483
+        for function, args in mapping["filter"]  {
+            mask &= data.apply(function, arg)
+        }
+        return pd.Series()
+    
     def _handle_extra_info(
         self,
         data: TabularData,
@@ -517,7 +533,7 @@ class TabularConverter(BaseConverter[TabularData]):
             key_col_def: A column definition which should be unique for each object within the current table
 
         Returns: A single column containing numerical ids
-
+    
         """
 
         # Handle reference table

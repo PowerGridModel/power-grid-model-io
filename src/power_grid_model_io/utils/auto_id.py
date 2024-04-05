@@ -119,4 +119,4 @@ class AutoID:
         Returns:
             The original item
         """
-        return getattr(self._items[idx], None)
+        return self._items.get(idx)

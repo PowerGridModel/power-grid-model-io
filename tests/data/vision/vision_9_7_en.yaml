@@ -804,10 +804,11 @@ grid:
       u_angle_measured: nan
       u_sigma: nan
       filter:
-        - power_grid_model_io.functions.filter_if_empty:
+        - power_grid_model_io.functions.has_value:
           - power_1
-        - power_grid_model_io.functions.filter_if_link:
-          - InObject.Sort
+        - power_grid_model_io.functions.filter_if_object:
+          object: InObject.Sort
+          excl_object: link
       extra:
         - ID
         - Name
@@ -931,10 +932,11 @@ grid:
       p_sigma: nan
       q_sigma: nan
       filter:
-        - power_grid_model_io.functions.filter_if_empty:
+        - power_grid_model_io.functions.has_value:
           - power_2
-        - power_grid_model_io.functions.filter_if_link:
-          - InObject.Sort
+        - power_grid_model_io.functions.filter_if_object:
+          object: InObject.Sort
+          excl_object: link
       extra:
         - ID
         - Name
@@ -1058,10 +1060,11 @@ grid:
       p_sigma: nan
       q_sigma: nan
       filter:
-        - power_grid_model_io.functions.filter_if_empty:
+        - power_grid_model_io.functions.has_value:
           - power_3
-        - power_grid_model_io.functions.filter_if_link:
-          - InObject.Sort
+        - power_grid_model_io.functions.filter_if_object:
+          object: InObject.Sort
+          excl_object: link
       extra:
         - ID
         - Name
@@ -1185,10 +1188,11 @@ grid:
       p_sigma: nan
       q_sigma: nan
       filter:
-        - power_grid_model_io.functions.filter_if_empty:
+        - power_grid_model_io.functions.has_value:
           - power_4
-        - power_grid_model_io.functions.filter_if_link:
-          - InObject.Sort
+        - power_grid_model_io.functions.filter_if_object:
+          object: InObject.Sort
+          excl_object: link
       extra:
         - ID
         - Name
