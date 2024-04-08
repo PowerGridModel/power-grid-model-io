@@ -24,30 +24,6 @@ WINDING_TYPES = {
     "ZN": WindingType.zigzag_n,
 }
 
-MEASURED_TERMINAL_TYPE_MAP = {
-    "cable_from": MeasuredTerminalType.branch_from,
-    "cable_to": MeasuredTerminalType.branch_to,
-    "line_from": MeasuredTerminalType.branch_from,
-    "line_to": MeasuredTerminalType.branch_to,
-    "reactance_coil_from": MeasuredTerminalType.branch_from,
-    "reactance_coil_to": MeasuredTerminalType.branch_to,
-    "special_transformer_from": MeasuredTerminalType.branch_from,
-    "special_transformer_to": MeasuredTerminalType.branch_to,
-    "transformer_from": MeasuredTerminalType.branch_from,
-    "transformer_to": MeasuredTerminalType.branch_to,
-    "transformer_load": MeasuredTerminalType.branch_to,
-    "earthing_transformer": MeasuredTerminalType.branch_from,
-    "transformer3_1": MeasuredTerminalType.branch3_1,
-    "transformer3_2": MeasuredTerminalType.branch3_2,
-    "transformer3_3": MeasuredTerminalType.branch3_3,
-    "source": MeasuredTerminalType.source,
-    "shunt_capacitor": MeasuredTerminalType.shunt,
-    "shunt_reactor": MeasuredTerminalType.shunt,
-    "pv": MeasuredTerminalType.generator,
-    "wind_turbine": MeasuredTerminalType.generator,
-    "load": MeasuredTerminalType.load,
-}
-
 
 def has_value(value: Any) -> bool:
     """
@@ -129,19 +105,9 @@ def both_zeros_to_nan(value: float, other_value: float) -> float:
         return float("nan")
     return value
 
-
-def find_terminal_type(**kwargs) -> MeasuredTerminalType:
-    """
-    Return the measured terminal type, based on the string representation
-    """
-    for key, id in kwargs.items():
-        if id is not None:
-            return MEASURED_TERMINAL_TYPE_MAP[key]
-    _LOG.warning("No measured terminal type is found!")
-    return float("nan")
-
 def filter_if_object(object_name: str, excl_object: str) -> bool:
     """
     Return false if the measured object should be excluded.
     """
     return object_name != excl_object
+

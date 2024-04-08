@@ -805,8 +805,8 @@ grid:
       u_sigma: nan
       filter:
         - power_grid_model_io.functions.has_value:
-          - power_1
-        - power_grid_model_io.functions.filter_if_object:
+          value: power_1
+        - power_grid_model_io.phase_to_phase.filter_if_object:
           object: InObject.Sort
           excl_object: link
       extra:
@@ -821,7 +821,7 @@ grid:
           table: Nodes
             GUID: InObject.Number
       measured_terminal_type:
-        - power_grid_model_io.functions.find_terminal_type:
+        - power_grid_model_io.phase_to_phase.get_measured_terminal_type:
           cable_from:
             auto_id:
               table: Cables
@@ -933,7 +933,7 @@ grid:
       q_sigma: nan
       filter:
         - power_grid_model_io.functions.has_value:
-          - power_2
+          value: power_2
         - power_grid_model_io.functions.filter_if_object:
           object: InObject.Sort
           excl_object: link
@@ -949,7 +949,7 @@ grid:
           table: Nodes
             GUID: InObject.Number
       measured_terminal_type:
-        - power_grid_model_io.functions.find_terminal_type:
+        - power_grid_model_io.phase_to_phase.get_measured_terminal_type:
           cable_from:
             auto_id:
               table: Cables
@@ -1061,7 +1061,7 @@ grid:
       q_sigma: nan
       filter:
         - power_grid_model_io.functions.has_value:
-          - power_3
+          value: power_3
         - power_grid_model_io.functions.filter_if_object:
           object: InObject.Sort
           excl_object: link
@@ -1077,7 +1077,7 @@ grid:
           table: Nodes
             GUID: InObject.Number
       measured_terminal_type:
-        - power_grid_model_io.functions.find_terminal_type:
+        - power_grid_model_io.phase_to_phase.get_measured_terminal_type:
           cable_from:
             auto_id:
               table: Cables
@@ -1189,9 +1189,9 @@ grid:
       q_sigma: nan
       filter:
         - power_grid_model_io.functions.has_value:
-          - power_4
+          value: power_4
         - power_grid_model_io.functions.filter_if_object:
-          object: InObject.Sort
+          object_name: InObject.Sort
           excl_object: link
       extra:
         - ID

@@ -67,14 +67,14 @@ def test_set_mapping_file(converter: TabularConverter):
     with pytest.raises(ValueError, match="Mapping file should be a .yaml file, .txt provided."):
         converter.set_mapping_file(mapping_file=Path("dummy/path.txt"))
 
-    dummy_path = Path(__file__).parents[2] / "data" / "config" / "dummy_mapping.yaml"
+    dummy_path = Path(__file__).parents[2] / "data" / "config" / "dummy.yaml"
     with pytest.raises(KeyError, match="Missing 'grid' mapping in mapping_file"):
         converter.set_mapping_file(mapping_file=dummy_path)
 
     converter.set_mapping_file(mapping_file=MAPPING_FILE)
 
 
-def test_parse_data(converter: TabularConverter, tabular_data: TabularData):
+def test_parse_data(converter: TabularConverter, tabular_data: TabularData, table_mask):
     data = MagicMock()
     converter._parse_data(data=data, data_type="dummy", extra_info=None)
     data.set_unit_multipliers.assert_called_once()

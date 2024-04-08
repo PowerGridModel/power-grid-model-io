@@ -12,8 +12,33 @@ from power_grid_model import WindingType
 
 from power_grid_model_io.functions import get_winding
 from power_grid_model_io.utils.parsing import parse_pvs_efficiency_type, parse_trafo3_connection, parse_trafo_connection
+from power_grid_model import MeasuredTerminalType
 
 _LOG = structlog.get_logger(__file__)
+
+MEASURED_TERMINAL_TYPE_MAP = {
+    "cable_from": MeasuredTerminalType.branch_from,
+    "cable_to": MeasuredTerminalType.branch_to,
+    "line_from": MeasuredTerminalType.branch_from,
+    "line_to": MeasuredTerminalType.branch_to,
+    "reactance_coil_from": MeasuredTerminalType.branch_from,
+    "reactance_coil_to": MeasuredTerminalType.branch_to,
+    "special_transformer_from": MeasuredTerminalType.branch_from,
+    "special_transformer_to": MeasuredTerminalType.branch_to,
+    "transformer_from": MeasuredTerminalType.branch_from,
+    "transformer_to": MeasuredTerminalType.branch_to,
+    "transformer_load": MeasuredTerminalType.branch_to,
+    "earthing_transformer": MeasuredTerminalType.branch_from,
+    "transformer3_1": MeasuredTerminalType.branch3_1,
+    "transformer3_2": MeasuredTerminalType.branch3_2,
+    "transformer3_3": MeasuredTerminalType.branch3_3,
+    "source": MeasuredTerminalType.source,
+    "shunt_capacitor": MeasuredTerminalType.shunt,
+    "shunt_reactor": MeasuredTerminalType.shunt,
+    "pv": MeasuredTerminalType.generator,
+    "wind_turbine": MeasuredTerminalType.generator,
+    "load": MeasuredTerminalType.load,
+}
 
 
 def relative_no_load_current(i_0: float, p_0: float, s_nom: float, u_nom: float) -> float:
@@ -130,3 +155,14 @@ def pvs_power_adjustment(p: float, efficiency_type: str) -> float:
         return p * 0.95
 
     return p
+
+def get_measured_terminal_type(**kwargs) -> MeasuredTerminalType:
+    """
+    Return the measured terminal type, based on the string representation
+    """
+    for key, id in kwargs.items():
+        if id is not None:
+            return MEASURED_TERMINAL_TYPE_MAP[key]
+    _LOG.warning("No measured terminal type is found!")
+    return float("nan")
+
