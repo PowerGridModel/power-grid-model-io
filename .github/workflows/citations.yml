@@ -11,8 +11,18 @@ on:
       - main
     paths:
       - CITATION.cff
+      - .github/workflows/citations.yml
+
+  pull_request:
+    paths:
+      - CITATION.cff
+      - .github/workflows/citations.yml
 
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   validate-citations:
