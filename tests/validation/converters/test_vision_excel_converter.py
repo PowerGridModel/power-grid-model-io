@@ -28,6 +28,9 @@ LANGUAGES = ["en", "nl"]
 LANGUAGES_97 = ["en"]
 VALIDATION_EN = Path(str(VALIDATION_FILE).format(language="en"))
 CUSTOM_MAPPING_FILE = DATA_PATH / "vision_9_5_{language:s}.yaml"
+VISION_97_MAPPING_FILE = (
+    Path(__file__).parent.parent.parent.parent / "src/power_grid_model_io/config/excel" / "vision_en_9_7.yaml"
+)
 terms_changed = {"Grounding1": "N1", "Grounding2": "N2", "Grounding3": "N3", "Load.Behaviour": "Behaviour"}
 
 
@@ -304,12 +307,36 @@ def test_log_levels(capsys):
     assert "debug" not in outerr.out
 
 
-def test_uuid_excel_input():
+def prep_vision_97(language: str) -> VisionExcelConverter:
     source_file = Path(str(SOURCE_FILE_97).format(language=LANGUAGE_EN))
-    ref_file_97 = convert_guid_vision_excel(
-        excel_file=source_file, number=VISION_EXCEL_LAN_DICT[LANGUAGE_EN][DICT_KEY_NUMBER], terms_changed=terms_changed
+    return VisionExcelConverter(
+        source_file, language="en", mapping_file=VISION_97_MAPPING_FILE, terms_changed=terms_changed
     )
-    data_native, _ = VisionExcelConverter(source_file, language="en", terms_changed=terms_changed).load_input_data()
+
+
+def test_uuid_excel_input():
+    ref_file_97 = convert_guid_vision_excel(
+        excel_file=Path(str(SOURCE_FILE_97).format(language=LANGUAGE_EN)),
+        number=VISION_EXCEL_LAN_DICT[LANGUAGE_EN][DICT_KEY_NUMBER],
+        terms_changed=terms_changed,
+    )
     data_convtd, _ = VisionExcelConverter(source_file=ref_file_97).load_input_data()
+    vision_cvtr = prep_vision_97(language=LANGUAGE_EN)
+    data_native, _ = vision_cvtr.load_input_data()
 
     assert len(data_native) == len(data_convtd)
+
+
+def test_guid_extra_info():
+    print("extra_info")
+    vision_cvtr = prep_vision_97(language=LANGUAGE_EN)
+    _, extra_info = vision_cvtr.load_input_data()
+
+    assert extra_info[0]["GUID"] == "{8110C18E-7FDF-4A43-B868-E05E1DD7909F}"
+    assert extra_info[1]["GUID"] == "{D507B771-AC81-41F5-A292-91CF6119BE70}"
+    assert extra_info[2]["GUID"] == "{C92556BA-57E6-4780-A69E-DDDCA759BFBE}"
+    assert extra_info[3]["GUID"] == "{23C17CB9-7C1F-4AD0-B3C9-9B4AB99DB400}"
+    assert extra_info[4]["GUID"] == "{915748FF-2EE0-4C5E-806A-DBBFC433BEA4}"
+
+    for i in range(5, len(extra_info)):
+        assert "GUID" not in extra_info[i]
