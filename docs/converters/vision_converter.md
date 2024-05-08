@@ -49,3 +49,11 @@ Some components are yet to be modeled for conversions because they might not hav
 Vision introduced UUID based identifier system since version 9.7. It is implemented following the Microsoft naming scheme by replacing all the original identifier fields (i.e., '*Number', '*Subnumber', '*Nummber' and '*Subnummer') to GUID. This change brings the many benefits of UUIDs in general while on the other hand adds certain work on the conversion side. Since computations in PGM alone do not benefit from a string based identifier, we hence made the descision to perform UUID to integer conversion while maintaining the 'GUID' information in the `extra_info` field. Note that existing mapping files can still be used without significant changes, apart from adding `GUID` to the `extra` fields of interest.
 
 An examplery usage can be found in the example notebook as well as in the test cases.
+
+## Common/Known issues related to Vision 
+So far we have the following issue known to us related to Vision exported spreed sheets. We provide a solution from user perspective to the best of our knowledge.
+
+### Duplicated `P` columns
+Vision can export sheets with duplicated `P` columns, one of which being unitless additional information. This field is of no actual purpose within PGM calculation. 
+
+**Tip:** We advice user to uncheck the `specifics` when exporting from Vision.
