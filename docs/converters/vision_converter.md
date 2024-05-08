@@ -51,7 +51,7 @@ Vision introduced UUID based identifier system since version 9.7. It is implemen
 An examplery usage can be found in the example notebook as well as in the test cases.
 
 ## Common/Known issues related to Vision 
-So far we have the following issue known to us related to Vision exported spreed sheets. We provide a solution from user perspective to the best of our knowledge.
+So far we have the following issue known to us related to Vision exported spread sheets. We provide a solution from user perspective to the best of our knowledge.
 
 ### Duplicated `P` columns
 Vision can export sheets with duplicated `P` columns, one of which being unitless additional information. This field is of no actual purpose within PGM calculation. 
