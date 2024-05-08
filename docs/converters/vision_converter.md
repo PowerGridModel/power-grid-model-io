@@ -56,4 +56,4 @@ So far we have the following issue known to us related to Vision exported spread
 ### Duplicated `P` columns
 Vision can export sheets with duplicated `P` columns, one of which being unitless additional information. This field is of no actual purpose within PGM calculation. 
 
-**Tip:** We advice user to uncheck the `specifics` when exporting from Vision.
+**Tip:** We advice users to uncheck the `specifics` when exporting from Vision.
