@@ -223,6 +223,22 @@ grid:
       extra:
         - ID
         - Name
+    transformer_tap_regulator:
+      id:
+        auto_id: 
+          key: Number
+      status: 
+        multiply:
+          - Control
+          - State
+      control_side: Measuring side
+      u_set: Uset
+      u_band: Uband
+      line_drop_compensation_r: Rc
+      line_drop_compensation_x: Xc
+      extra:
+        - ID
+        - Name
   Special transformers:
     transformer:
       id:
@@ -293,6 +309,22 @@ grid:
       x_grounding_from: 0
       r_grounding_to: 0
       x_grounding_to: 0
+      extra:
+        - ID
+        - Name
+    transformer_tap_regulator:
+      id:
+        auto_id: 
+          key: Number
+      status: 
+        multiply:
+          - Control
+          - At
+      control_side: Measure side
+      u_set: Uset
+      u_band: Uband
+      line_drop_compensation_r: Rc
+      line_drop_compensation_x: Xc
       extra:
         - ID
         - Name
@@ -860,3 +892,15 @@ substitutions:
   Synchronous generators.Q:
     absorb: -1
     supply: 1
+  Measuring side:
+    1: 0
+    2: 1
+  Control:
+    FALSE: 0
+    TRUE: 1
+  At:
+    FALSE: 0
+    TRUE: 1
+  Back_c:
+    FALSE: 0
+    TRUE: 1
