@@ -57,3 +57,6 @@ So far we have the following issue known to us related to Vision exported spread
 Vision can export sheets with duplicated `P` columns, one of which being unitless additional information. This field is of no actual purpose within PGM calculation. 
 
 **Tip:** We advice users to uncheck the `specifics` when exporting from Vision.
+
+### Different names for columns
+In different versions of exports, user can sometimes find different names for columns. For example, the column name `N1` might be represented as `Grounding1` in some exports. To address this, the `VisionExcelConverter`'s `terms_changed` argument can be used.
