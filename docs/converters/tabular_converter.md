@@ -304,26 +304,27 @@ Then the following IDs will be generated / retrieved:
 ## Secure Handling
 Mapping files enable the specification of custom mappings or filter functions. These functions can come from the power-grid-model-io library, be user-provided, or even supplied by third parties. To ensure security, we have implemented several measures and recommend best practices to prevent malicious code execution.
 
-## Safe Loading of Configuration Files
-* YAML Safe Load
+### Safe Loading of Configuration Files
 We use the yaml.safe_load functionality from the PyYAML library to load configuration files securely. This method prevents the execution of potentially malicious code during the loading process.
-## Secure Function Handling
-* No Eval-like Functionality
-We do not use eval or similar functions that can execute arbitrary code.
+### Secure Function Handling
+* No Eval-like Functionality: 
+  
+  We do not use eval or similar functions that can execute arbitrary code.
 * Loadable/Loaded Functions Only
-Only functions and symbols that are explicitly loadable or loaded are allowed. These must be:
-* Python Builtins
-Such as max.
-* Prefixed by Import Path
-Functions must include their relative or absolute import path, ensuring they are importable using import_module. For example, numpy.max is allowed, but np.max is not.
-## Prevention of Malicious Code Injection
+  
+  Only functions and symbols that are explicitly loadable or loaded are allowed. These must be:
+  ** Python Builtins: Such as `max`.
+  ** Prefixed by Import Path: Functions must include their relative or absolute import path, ensuring they are importable using `import_module`. For example, `numpy.max` is allowed, but `np.max` is not.
+### Prevention of Malicious Code Injection
 By enforcing the rules mentioned above, we prevent the inclusion of malicious code like:
 ```python
 lambda x: return (malicious_code(), normal_code(x))[1]
 ```
 In normal operation, this would be provided as normal_code, avoiding any side effects from malicious_code.
-## Best Practices for Production Environments
+### Best Practices for Production Environments
 * File Permissions
-Configuration files should be treated similarly to Python source files, with appropriate file permissions.
+
+  onfiguration files should be treated similarly to Python source files, with appropriate file permissions.
 * Controlled Access
-Only users or services with the correct privileges should be allowed to modify the configuration files.
+
+  Only users or services with the correct privileges should be allowed to modify the configuration files.
