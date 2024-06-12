@@ -301,10 +301,12 @@ Then the following IDs will be generated / retrieved:
 * `sym_load.node`:
   `{"table": "Transformer loads", "name": "internal_node", "key" {"Node_Number": 103, "Subnumber": 1} -> 6`
 
-## Secure Handling
+## Security Considerations
 Mapping files enable the specification of custom mappings or filter functions. These functions can come from the `power-grid-model-io` library, be user-provided, or even supplied by third parties. To ensure security, we have implemented several measures and recommend best practices to prevent malicious code execution.
+
 ### Safe Loading of Configuration Files
-We use the `yaml.safe_load` functionality from PyYAML library to load configuration files securely. This method prevents the execution of potentially malicious code during the loading process.
+We use the `yaml.safe_load` functionality from the PyYAML library to load configuration files securely. This method prevents the execution of potentially malicious code during the loading process.
+
 ### Secure Function Handling
 * No `eval`-like Functionality: 
   
@@ -320,12 +322,16 @@ We use the `yaml.safe_load` functionality from PyYAML library to load configurat
   * Prefixed by Import Path: 
   
     Functions must include their relative or absolute import path, ensuring they are importable using `import_module`. For example, `numpy.max` is allowed, but `np.max` is not.
+
 ### Prevention of Malicious Code Injection
-By enforcing the rules mentioned above, we prevent the inclusion of malicious code like:
+The rules mentioned above prevent the inclusion of malicious code like:
 ```python
 lambda x: return (malicious_code(), normal_code(x))[1]
 ```
-In normal operation, this would be provided as normal_code, preventing harm from `malicious_code`.
+which, in normal operation without any malicious intentions, would be provided as plainly `normal_code`.
+
+We enforce above mentioned rules, completely rejecting the malicious snippet, and therefore prevent any potential harm from `malicious_code`.
+
 ### Best Practices for Production Environments
 * File Permissions
 
