@@ -313,7 +313,9 @@ We use the `yaml.safe_load` functionality from PyYAML library to load configurat
   
   Only functions and symbols that are explicitly loadable or loaded are allowed. These must be:
 
-  * Python Builtins: Such as `max`.
+  * Python Builtins: 
+  
+    Such as `max`.
 
   * Prefixed by Import Path: 
   
