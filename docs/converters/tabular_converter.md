@@ -314,7 +314,6 @@ We use the `yaml.safe_load` functionality from PyYAML library to load configurat
   Only functions and symbols that are explicitly loadable or loaded are allowed. These must be:
 
   * Python Builtins: 
-  
     Such as `max`.
 
   * Prefixed by Import Path: 
@@ -325,7 +324,7 @@ By enforcing the rules mentioned above, we prevent the inclusion of malicious co
 ```python
 lambda x: return (malicious_code(), normal_code(x))[1]
 ```
-In normal operation, this would be provided as normal_code, avoiding any side effects from malicious_code.
+In normal operation, this would be provided as normal_code, preventing harm from malicious_code.
 ### Best Practices for Production Environments
 * File Permissions
 
