@@ -127,6 +127,7 @@ You can use the following `column` definitions:
       cos_phi=1.0
     )
     ```
+
 ## Units
 Power Grid Model uses SI units (e.g., "W" for Watts), but source data may be supplied in different units (e.g., "MW" for Mega Watts).
 If units are supplied in the tabular data, the data stored using pandas DataFrame is expected to have `MultiIndexes` for columns.
@@ -303,6 +304,7 @@ Then the following IDs will be generated / retrieved:
 
 ## Security Considerations
 Mapping files enable the specification of custom mappings or filter functions. These functions can come from the `power-grid-model-io` library, be user-provided, or even supplied by third parties. To ensure security, we have implemented several measures. Best practices are recommended to prevent malicious code execution.
+
 ### Safe Loading of Configuration Files
 We use the `yaml.safe_load` functionality from the PyYAML library to load configuration files securely. This method prevents the execution of potentially malicious code during the loading process.
 
