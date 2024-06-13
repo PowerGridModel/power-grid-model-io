@@ -301,7 +301,7 @@ Then the following IDs will be generated / retrieved:
 * `sym_load.node`:
   `{"table": "Transformer loads", "name": "internal_node", "key" {"Node_Number": 103, "Subnumber": 1} -> 6`
 
-## Security Considerationsv
+## Security Considerations
 Mapping files enable the specification of custom mappings or filter functions. These functions can come from the `power-grid-model-io` library, be user-provided, or even supplied by third parties. To ensure security, we have implemented several measures. Best practices are recommended to prevent malicious code execution.
 ### Safe Loading of Configuration Files
 We use the `yaml.safe_load` functionality from the PyYAML library to load configuration files securely. This method prevents the execution of potentially malicious code during the loading process.
