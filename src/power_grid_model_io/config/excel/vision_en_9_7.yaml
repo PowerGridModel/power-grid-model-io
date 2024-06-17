@@ -578,7 +578,7 @@ grid:
       extra:
         - ID
         - Name
-  Zigzag transformers:
+  Earthing transformers:
     shunt:
       id:
         auto_id:
@@ -604,7 +604,7 @@ grid:
       extra:
         - ID
         - Name
-  Capacitors:
+  Shunt capacitors:
     shunt:
       id:
         auto_id:
@@ -627,7 +627,7 @@ grid:
       extra:
         - ID
         - Name
-  Reactors:
+  Shunt reactors:
     shunt:
       id:
         auto_id:
