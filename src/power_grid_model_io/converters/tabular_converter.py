@@ -178,9 +178,10 @@ class TabularConverter(BaseConverter[TabularData]):
         if table not in data:
             return None
 
-        table_mask = np.ones(len(data[table]), dtype=bool)
         if "filter" in attributes:
-            table_mask = self._parse_filters(data, table)
+            table_mask = self._parse_table_filters(data, table, attributes["filter"])
+        else:
+            table_mask = np.ones(len(data[table]), dtype=bool)
 
         try:
             pgm_data = initialize_array(data_type=data_type, component_type=component, shape=np.sum(table_mask))
@@ -191,7 +192,8 @@ class TabularConverter(BaseConverter[TabularData]):
             raise KeyError(f"No mapping for the attribute 'id' for '{component}s'!")
 
         # Make sure that the "id" column is always parsed first (at least before "extra" is parsed)
-        sorted_attributes = sorted(attributes.items(), key=lambda x: "" if x[0] == "id" else x[0])
+        attributes_without_filter = {k: v for k, v in attributes.items() if k != "filter"}
+        sorted_attributes = sorted(attributes_without_filter.items(), key=lambda x: "" if x[0] == "id" else x[0])
 
         for attr, col_def in sorted_attributes:
             self._convert_col_def_to_attribute(
@@ -207,11 +209,15 @@ class TabularConverter(BaseConverter[TabularData]):
 
         return pgm_data
 
-    def _parse_filters(self, data: TabularData, table: str) -> np.ndarray:
+    def _parse_table_filters(self, data: TabularData, table: str, filtering_functions: Any) -> np.ndarray:
+        assert isinstance(data[table], pd.DataFrame)
+
         table_mask = np.ones(len(data[table]), dtype=bool)
-        # for filter_col, functions in self._mapping["filter"].items():
-        #     for fn, kwargs in functions.items():
-        #         table_mask &= data[table][filter_col].apply(fn, **dict(zip(kwargs)))
+
+        for filtering_fn in filtering_functions:
+            for fn_name, kwargs in filtering_fn.items():
+                fn_ptr = get_function(fn_name)
+                table_mask &= data[table].apply(fn_ptr, axis=1, **kwargs).values
         return table_mask
 
     # pylint: disable = too-many-arguments
@@ -253,7 +259,7 @@ class TabularConverter(BaseConverter[TabularData]):
         """
         # To avoid mistakes, the attributes in the mapping should exist. There is one extra attribute called
         # 'extra' in which extra information can be captured.
-        if attr not in pgm_data.dtype.names and attr != "extra":
+        if attr not in pgm_data.dtype.names and attr not in ["extra", "filter"]:
             attrs = ", ".join(pgm_data.dtype.names)
             raise KeyError(f"Could not find attribute '{attr}' for '{component}s'. (choose from: {attrs})")
 
@@ -401,9 +407,11 @@ class TabularConverter(BaseConverter[TabularData]):
 
         """
         assert isinstance(col_def, (int, float))
+        const_df = pd.DataFrame([col_def] * len(data[table]))
         if table_mask is not None:
-            return pd.DataFrame([col_def] * len(data[table][table_mask]))
-        return pd.DataFrame([col_def] * len(data[table]))
+            # Required to retain indices before filter
+            return const_df[table_mask]
+        return const_df
 
     def _parse_col_def_column_name(
         self, data: TabularData, table: str, col_def: str, table_mask: Optional[np.ndarray] = None
@@ -420,16 +428,18 @@ class TabularConverter(BaseConverter[TabularData]):
 
         """
         assert isinstance(col_def, str)
-        if table_mask is None:
-            table_data = data[table]
-        else:
-            table_data = data[table][table_mask]
+
+        table_data = data[table]
+        if table_mask is not None:
+            table_data = table_data[table_mask]
 
         # If multiple columns are given in col_def, return the first column that exists in the dataset
         columns = [col_name.strip() for col_name in col_def.split("|")]
         for col_name in columns:
             if col_name in table_data or col_name == "index":
                 col_data = data.get_column(table_name=table, column_name=col_name)
+                if table_mask is not None:
+                    col_data = col_data[table_mask]
                 col_data = self._apply_multiplier(table=table, column=col_name, data=col_data)
                 return pd.DataFrame(col_data)
 
