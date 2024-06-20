@@ -453,6 +453,15 @@ def test_parse_col_def_const(converter: TabularConverter, tabular_data_no_units_
     assert_frame_equal(col_int, pd.DataFrame([3.0, 3.0]))
 
 
+def test_parse_col_def_const__no_filter(
+    converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
+):
+    col_int = converter._parse_col_def_const(
+        data=tabular_data_no_units_no_substitutions, table="nodes", table_mask=None, col_def=3.0
+    )
+    assert_frame_equal(col_int, pd.DataFrame([3.0, 3.0]))
+
+
 def test_parse_col_def_column_name(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
     with pytest.raises(AssertionError):
         converter._parse_col_def_column_name(
