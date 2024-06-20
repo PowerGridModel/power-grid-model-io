@@ -6,8 +6,9 @@ import json
 import logging
 from functools import lru_cache
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
+import numpy as np
 import pandas as pd
 import pytest
 from power_grid_model.data_types import SingleDataset
@@ -242,27 +243,31 @@ def test_get_get_appliance_id(language: str, table: str, columns: List[str]):
 
 
 @pytest.mark.parametrize(
-    ("language", "table", "name", "columns"),
+    ("language", "table", "name", "columns", "filtering_mask"),
     [
-        ("en", "Transformer loads", "transformer", ["Node.Number", "Subnumber"]),
-        ("en", "Transformer loads", "internal_node", ["Node.Number", "Subnumber"]),
-        ("en", "Transformer loads", "load", ["Node.Number", "Subnumber"]),
-        ("en", "Transformer loads", "generation", ["Node.Number", "Subnumber"]),
-        ("en", "Transformer loads", "pv_generation", ["Node.Number", "Subnumber"]),
-        ("nl", "Transformatorbelastingen", "transformer", ["Knooppunt.Nummer", "Subnummer"]),
-        ("nl", "Transformatorbelastingen", "internal_node", ["Knooppunt.Nummer", "Subnummer"]),
-        ("nl", "Transformatorbelastingen", "load", ["Knooppunt.Nummer", "Subnummer"]),
-        ("nl", "Transformatorbelastingen", "generation", ["Knooppunt.Nummer", "Subnummer"]),
-        ("nl", "Transformatorbelastingen", "pv_generation", ["Knooppunt.Nummer", "Subnummer"]),
+        ("en", "Transformer loads", "transformer", ["Node.Number", "Subnumber"], None),
+        ("en", "Transformer loads", "internal_node", ["Node.Number", "Subnumber"], None),
+        ("en", "Transformer loads", "load", ["Node.Number", "Subnumber"], None),
+        ("en", "Transformer loads", "generation", ["Node.Number", "Subnumber"], np.array([False, True])),
+        ("en", "Transformer loads", "pv_generation", ["Node.Number", "Subnumber"], np.array([False, True])),
+        ("nl", "Transformatorbelastingen", "transformer", ["Knooppunt.Nummer", "Subnummer"], None),
+        ("nl", "Transformatorbelastingen", "internal_node", ["Knooppunt.Nummer", "Subnummer"], None),
+        ("nl", "Transformatorbelastingen", "load", ["Knooppunt.Nummer", "Subnummer"], None),
+        ("nl", "Transformatorbelastingen", "generation", ["Knooppunt.Nummer", "Subnummer"], np.array([False, True])),
+        ("nl", "Transformatorbelastingen", "pv_generation", ["Knooppunt.Nummer", "Subnummer"], np.array([False, True])),
     ],
 )
-def test_get_get_virtual_id(language: str, table: str, name: str, columns: List[str]):
+def test_get_get_virtual_id(
+    language: str, table: str, name: str, columns: List[str], filtering_mask: Optional[np.ndarray]
+):
     # Arrange
     converter = vision_excel_converter(language=language)
     _, extra_info = load_and_convert_excel_file(language=language)
 
     assert converter._source is not None
     source_data = converter._source.load()[table][columns]
+    if filtering_mask is not None:
+        source_data = source_data[filtering_mask]
 
     # Act/Assert
     assert isinstance(source_data, pd.DataFrame)
