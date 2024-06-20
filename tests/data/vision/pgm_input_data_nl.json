@@ -30,30 +30,28 @@
     [
       {"id": 15, "node": 13, "id_reference": {"table": "Transformatorbelastingen", "name": "load", "key": {"Knooppunt.Nummer": 3, "Subnummer": 4}}, "Naam": "transformer_load_2"},
       {"id": 16, "node": 14, "id_reference": {"table": "Transformatorbelastingen", "name": "load", "key": {"Knooppunt.Nummer": 3, "Subnummer": 2}}, "Naam": "transformer_load_1"},
-      {"id": 24, "node": 2, "id_reference": {"table": "Belastingen", "key": {"Knooppunt.Nummer": 3, "Subnummer": 6}}, "Naam": "load1"}
+      {"id": 22, "node": 2, "id_reference": {"table": "Belastingen", "key": {"Knooppunt.Nummer": 3, "Subnummer": 6}}, "Naam": "load1"}
     ],
   "sym_gen":
     [
-      {"id": 17, "node": 13, "id_reference": {"table": "Transformatorbelastingen", "name": "generation", "key": {"Knooppunt.Nummer": 3, "Subnummer": 4}}, "Naam": "transformer_load_2"},
-      {"id": 18, "node": 14, "id_reference": {"table": "Transformatorbelastingen", "name": "generation", "key": {"Knooppunt.Nummer": 3, "Subnummer": 2}}, "Naam": "transformer_load_1"},
-      {"id": 19, "node": 13, "id_reference": {"table": "Transformatorbelastingen", "name": "pv_generation", "key": {"Knooppunt.Nummer": 3, "Subnummer": 4}}, "Naam": "transformer_load_2"},
-      {"id": 20, "node": 14, "id_reference": {"table": "Transformatorbelastingen", "name": "pv_generation", "key": {"Knooppunt.Nummer": 3, "Subnummer": 2}}, "Naam": "transformer_load_1"},
-      {"id": 22, "node": 3, "id_reference": {"table": "Synchrone generatoren", "key": {"Knooppunt.Nummer": 4, "Subnummer": 2}}, "Naam": "syngen1"},
-      {"id": 23, "node": 2, "id_reference": {"table": "Windturbines", "key": {"Knooppunt.Nummer": 3, "Subnummer": 3}}, "Naam": "wind1"},
-      {"id": 28, "node": 2, "id_reference": {"table": "Pv's", "key": {"Knooppunt.Nummer": 3, "Subnummer": 1}}, "Naam": "pv1"}
+      {"id": 17, "node": 14, "id_reference": {"table": "Transformatorbelastingen", "name": "generation", "key": {"Knooppunt.Nummer": 3, "Subnummer": 2}}, "Naam": "transformer_load_1"},
+      {"id": 18, "node": 14, "id_reference": {"table": "Transformatorbelastingen", "name": "pv_generation", "key": {"Knooppunt.Nummer": 3, "Subnummer": 2}}, "Naam": "transformer_load_1"},
+      {"id": 20, "node": 3, "id_reference": {"table": "Synchrone generatoren", "key": {"Knooppunt.Nummer": 4, "Subnummer": 2}}, "Naam": "syngen1"},
+      {"id": 21, "node": 2, "id_reference": {"table": "Windturbines", "key": {"Knooppunt.Nummer": 3, "Subnummer": 3}}, "Naam": "wind1"},
+      {"id": 26, "node": 2, "id_reference": {"table": "Pv's", "key": {"Knooppunt.Nummer": 3, "Subnummer": 1}}, "Naam": "pv1"}
     ],
   "source":
     [
-      {"id": 21, "node": 0, "id_reference": {"table": "Netvoedingen", "key": {"Knooppunt.Nummer": 1, "Subnummer": 1}}, "Naam": "source1"}
+      {"id": 19, "node": 0, "id_reference": {"table": "Netvoedingen", "key": {"Knooppunt.Nummer": 1, "Subnummer": 1}}, "Naam": "source1"}
     ],
   "shunt":
     [
-      {"id": 25, "node": 2, "id_reference": {"table": "Nulpuntstransformatoren", "key": {"Knooppunt.Nummer": 3, "Subnummer": 5}}, "Naam": "zztrans1"},
-      {"id": 26, "node": 3, "id_reference": {"table": "Condensatoren", "key": {"Knooppunt.Nummer": 4, "Subnummer": 9}}, "Naam": "shunt1"},
-      {"id": 27, "node": 3, "id_reference": {"table": "Spoelen", "key": {"Knooppunt.Nummer": 4, "Subnummer": 1}}}
+      {"id": 23, "node": 2, "id_reference": {"table": "Nulpuntstransformatoren", "key": {"Knooppunt.Nummer": 3, "Subnummer": 5}}, "Naam": "zztrans1"},
+      {"id": 24, "node": 3, "id_reference": {"table": "Condensatoren", "key": {"Knooppunt.Nummer": 4, "Subnummer": 9}}, "Naam": "shunt1"},
+      {"id": 25, "node": 3, "id_reference": {"table": "Spoelen", "key": {"Knooppunt.Nummer": 4, "Subnummer": 1}}}
     ],
   "three_winding_transformer":
     [
-      {"id": 29, "node_1": 1, "node_2": 2, "node_3": 4, "id_reference": {"table": "Driewikkelingstransformatoren", "key": {"Nummer": 1}}}
+      {"id": 27, "node_1": 1, "node_2": 2, "node_3": 4, "id_reference": {"table": "Driewikkelingstransformatoren", "key": {"Nummer": 1}}}
     ]
 }
