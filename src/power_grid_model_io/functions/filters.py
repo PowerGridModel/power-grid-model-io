@@ -19,9 +19,9 @@ def filter_empty(row: pd.Series, col: str) -> bool:
     return has_value(row[col]).values[0]
 
 
-def filter_by_value(row: pd.Series, col: str, value: float) -> bool:
+def filter_by_value(row: pd.Series, col: str, value: float | str) -> bool:
     """
-    filter out  by match value
+    filter out by match value
     """
     return (row[col] != value).values[0]
 

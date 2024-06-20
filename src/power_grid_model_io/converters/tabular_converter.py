@@ -179,7 +179,7 @@ class TabularConverter(BaseConverter[TabularData]):
             return None
 
         if "filter" in attributes:
-            table_mask = self._parse_table_filters(data, table, attributes["filter"])
+            table_mask = self._parse_table_filters(data=data, table=table, filtering_functions=attributes["filter"])
         else:
             table_mask = np.ones(len(data[table]), dtype=bool)
 
@@ -210,9 +210,10 @@ class TabularConverter(BaseConverter[TabularData]):
         return pgm_data
 
     def _parse_table_filters(self, data: TabularData, table: str, filtering_functions: Any) -> np.ndarray:
-        assert isinstance(data[table], pd.DataFrame)
-
         table_mask = np.ones(len(data[table]), dtype=bool)
+
+        if not isinstance(data[table], pd.DataFrame):
+            return table_mask
 
         for filtering_fn in filtering_functions:
             for fn_name, kwargs in filtering_fn.items():

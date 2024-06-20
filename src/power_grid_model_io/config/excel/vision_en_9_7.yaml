@@ -425,6 +425,11 @@ grid:
       extra:
         - ID
         - Name
+      filter:
+        - power_grid_model_io.functions.filters.filter_all_columns_empty_or_zero:
+            cols: 
+            - Load.P
+            - Load.Q
     sym_gen:
       - id:
           auto_id:
@@ -445,6 +450,11 @@ grid:
         extra:
           - ID
           - Name
+        filter:
+          - power_grid_model_io.functions.filters.filter_all_columns_empty_or_zero:
+              cols: 
+              - Generation.P
+              - Generation.Q
       - id:
           auto_id:
             name: pv_generation
@@ -467,6 +477,10 @@ grid:
         extra:
           - ID
           - Name
+        filter:
+          - power_grid_model_io.functions.filters.filter_all_columns_empty_or_zero:
+              cols: 
+              - PV.Pnom
   Sources:
     source:
       id:

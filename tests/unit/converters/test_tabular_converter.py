@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 from pathlib import Path
-from typing import Tuple
+from typing import Callable, Tuple
 from unittest.mock import MagicMock, call, patch
 
 import numpy as np
@@ -152,6 +152,27 @@ def test_convert_table_to_component(converter: TabularConverter, tabular_data_no
     assert len(pgm_node_data) == 2
     assert (pgm_node_data["id"] == [1, 2]).all()
     assert (pgm_node_data["u_rated"] == [10.5e3, 400]).all()
+
+
+def test_convert_table_to_component__filters(
+    converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
+):
+    converter._convert_col_def_to_attribute = MagicMock()
+    converter._parse_table_filters = MagicMock()
+    node_attributes_with_filter = {"id": "id_number", "u_rated": "u_nom", "filter": [{"test_fn": {}}]}
+    converter._convert_table_to_component(
+        data=tabular_data_no_units_no_substitutions,
+        data_type="input",
+        table="nodes",
+        component="node",
+        attributes=node_attributes_with_filter,
+        extra_info=None,
+    )
+    converter._parse_table_filters.assert_called_once_with(
+        data=tabular_data_no_units_no_substitutions,
+        table="nodes",
+        filtering_functions=node_attributes_with_filter["filter"],
+    )
 
 
 def test_convert_col_def_to_attribute(
@@ -1135,3 +1156,40 @@ def test_lookup_ids__duplicate_keys(converter: TabularConverter):
 
     # Assert
     pd.testing.assert_frame_equal(reference, pd.DataFrame([[123, 456]], columns=["table", "name"], index=[0]))
+
+
+@pytest.mark.parametrize(
+    ("bool_fn", "expected"),
+    [((True), np.array([True, True])), ((False), np.array([False, False]))],
+)
+@patch("power_grid_model_io.converters.tabular_converter.get_function")
+def test_parse_table_filters(
+    mock_get_function: MagicMock,
+    converter: TabularConverter,
+    tabular_data: TabularData,
+    bool_fn: Callable,
+    expected: np.ndarray,
+):
+    filtering_functions = [{"test_fn": {"kwarg_1": "a"}}]
+
+    def bool_fn_filter(row: pd.Series, **kwargs):
+        assert kwargs == {"kwarg_1": "a"}
+        return bool_fn
+
+    mock_get_function.return_value = bool_fn_filter
+
+    actual = converter._parse_table_filters(data=tabular_data, table="nodes", filtering_functions=filtering_functions)
+
+    mock_get_function.assert_called_once_with("test_fn")
+    # check if return value is a 1d bool np array
+    assert isinstance(actual, np.ndarray)
+    assert actual.ndim == 1
+    assert actual.dtype == bool
+    assert all(actual == expected)
+
+
+def test_parse_table_filters__ndarray_data(converter: TabularConverter):
+    numpy_tabular_data = TabularData(numpy_table=np.ones((4, 3)))
+    actual = converter._parse_table_filters(data=numpy_tabular_data, table="numpy_table", filtering_functions=[])
+    assert all(actual)
+    assert len(actual) == 4
