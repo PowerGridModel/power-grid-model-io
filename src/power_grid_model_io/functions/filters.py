@@ -5,7 +5,7 @@
 These functions can be used in the mapping files to apply filter functions to vision data
 """
 
-from typing import List
+from typing import List, Union
 
 import pandas as pd
 
@@ -16,14 +16,14 @@ def filter_empty(row: pd.Series, col: str) -> bool:
     """
     filter out empty
     """
-    return has_value(row[col]).values[0]
+    return has_value(row[col].values[0])
 
 
-def filter_by_value(row: pd.Series, col: str, value: float | str) -> bool:
+def filter_by_value(row: pd.Series, col: str, value: Union[float, str]) -> bool:
     """
     filter out by match value
     """
-    return (row[col] != value).values[0]
+    return row[col].values[0] != value
 
 
 def filter_all_columns_empty_or_zero(row: pd.Series, cols: List[str]) -> bool:
