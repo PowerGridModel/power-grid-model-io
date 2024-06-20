@@ -337,11 +337,11 @@ def test_guid_extra_info():
     vision_cvtr = prep_vision_97(language=LANGUAGE_EN)
     _, extra_info = vision_cvtr.load_input_data()
 
-    assert extra_info[0]["GUID"] == "{8110C18E-7FDF-4A43-B868-E05E1DD7909F}"
-    assert extra_info[1]["GUID"] == "{D507B771-AC81-41F5-A292-91CF6119BE70}"
-    assert extra_info[2]["GUID"] == "{C92556BA-57E6-4780-A69E-DDDCA759BFBE}"
-    assert extra_info[3]["GUID"] == "{23C17CB9-7C1F-4AD0-B3C9-9B4AB99DB400}"
-    assert extra_info[4]["GUID"] == "{915748FF-2EE0-4C5E-806A-DBBFC433BEA4}"
+    assert extra_info[0]["GUID"] == "{7FF722ED-33B3-4761-84AC-A164310D3C86}"
+    assert extra_info[1]["GUID"] == "{1ED177A7-1F5D-4D81-8DE7-AB3E58512E0B}"
+    assert extra_info[2]["GUID"] == "{DDE3457B-DB9A-4DA9-9564-6F49E0F296BD}"
+    assert extra_info[3]["GUID"] == "{A79AFDE9-4096-4BEB-AB63-2B851D7FC6D1}"
+    assert extra_info[4]["GUID"] == "{7848DBC8-9685-452C-89AF-9AB308224689}"
 
     for i in range(5, len(extra_info)):
         assert "GUID" not in extra_info[i]
