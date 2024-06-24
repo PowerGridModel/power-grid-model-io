@@ -159,7 +159,7 @@ def test_convert_table_to_component__filters(
 ):
     converter._convert_col_def_to_attribute = MagicMock()
     converter._parse_table_filters = MagicMock()
-    node_attributes_with_filter = {"id": "id_number", "u_rated": "u_nom", "filter": [{"test_fn": {}}]}
+    node_attributes_with_filter = {"id": "id_number", "u_rated": "u_nom", "exclude_filter": [{"test_fn": {}}]}
     converter._convert_table_to_component(
         data=tabular_data_no_units_no_substitutions,
         data_type="input",
@@ -171,7 +171,7 @@ def test_convert_table_to_component__filters(
     converter._parse_table_filters.assert_called_once_with(
         data=tabular_data_no_units_no_substitutions,
         table="nodes",
-        filtering_functions=node_attributes_with_filter["filter"],
+        filtering_functions=node_attributes_with_filter["exclude_filter"],
     )
 
 

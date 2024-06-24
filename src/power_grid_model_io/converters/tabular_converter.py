@@ -178,8 +178,10 @@ class TabularConverter(BaseConverter[TabularData]):
         if table not in data:
             return None
 
-        if "filter" in attributes:
-            table_mask = self._parse_table_filters(data=data, table=table, filtering_functions=attributes["filter"])
+        if "exclude_filter" in attributes:
+            table_mask = self._parse_table_filters(
+                data=data, table=table, filtering_functions=attributes["exclude_filter"]
+            )
         else:
             table_mask = np.ones(len(data[table]), dtype=bool)
 
@@ -192,7 +194,7 @@ class TabularConverter(BaseConverter[TabularData]):
             raise KeyError(f"No mapping for the attribute 'id' for '{component}s'!")
 
         # Make sure that the "id" column is always parsed first (at least before "extra" is parsed)
-        attributes_without_filter = {k: v for k, v in attributes.items() if k != "filter"}
+        attributes_without_filter = {k: v for k, v in attributes.items() if k != "exclude_filter"}
         sorted_attributes = sorted(attributes_without_filter.items(), key=lambda x: "" if x[0] == "id" else x[0])
 
         for attr, col_def in sorted_attributes:
@@ -260,7 +262,7 @@ class TabularConverter(BaseConverter[TabularData]):
         """
         # To avoid mistakes, the attributes in the mapping should exist. There is one extra attribute called
         # 'extra' in which extra information can be captured.
-        if attr not in pgm_data.dtype.names and attr not in ["extra", "filter"]:
+        if attr not in pgm_data.dtype.names and attr not in ["extra", "exclude_filter"]:
             attrs = ", ".join(pgm_data.dtype.names)
             raise KeyError(f"Could not find attribute '{attr}' for '{component}s'. (choose from: {attrs})")
 
