@@ -7,14 +7,10 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 from pytest import approx, mark
 
-from power_grid_model_io.functions.exclude_filters import (
-    exclude_all_columns_empty_or_zero,
-    exclude_empty,
-    exclude_value,
-)
+from power_grid_model_io.functions.filters import exclude_all_columns_empty_or_zero, exclude_empty, exclude_value
 
 
-@patch("power_grid_model_io.functions.exclude_filters.has_value")
+@patch("power_grid_model_io.functions.filters.has_value")
 def test_exclude_empty(mock_has_value: MagicMock):
     col = "foo"
     row = pd.Series({"foo": 1, "bar": "xyz"})

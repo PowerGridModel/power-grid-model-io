@@ -415,8 +415,8 @@ grid:
       extra:
         - ID
         - Naam
-      exclude_filter:
-        - power_grid_model_io.functions.exclude_filters.exclude_all_columns_empty_or_zero:
+      filters:
+        - power_grid_model_io.functions.filters.exclude_all_columns_empty_or_zero:
             cols: 
             - Belasting.P
             - Belasting.Q
@@ -440,8 +440,8 @@ grid:
         extra:
           - ID
           - Naam
-        exclude_filter:
-          - power_grid_model_io.functions.exclude_filters.exclude_all_columns_empty_or_zero:
+        filters:
+          - power_grid_model_io.functions.filters.exclude_all_columns_empty_or_zero:
               cols: 
               - Opwekking.P
               - Opwekking.Q
@@ -467,8 +467,8 @@ grid:
         extra:
           - ID
           - Naam
-        exclude_filter:
-          - power_grid_model_io.functions.exclude_filters.exclude_all_columns_empty_or_zero:
+        filters:
+          - power_grid_model_io.functions.filters.exclude_all_columns_empty_or_zero:
               cols: 
               - PV.Pnom
   Netvoedingen:

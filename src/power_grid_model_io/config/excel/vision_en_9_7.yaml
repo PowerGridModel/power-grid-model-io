@@ -425,8 +425,8 @@ grid:
       extra:
         - ID
         - Name
-      exclude_filter:
-        - power_grid_model_io.functions.exclude_filters.exclude_all_columns_empty_or_zero:
+      filters:
+        - power_grid_model_io.functions.filters.exclude_all_columns_empty_or_zero:
             cols: 
             - Load.P
             - Load.Q
@@ -450,8 +450,8 @@ grid:
         extra:
           - ID
           - Name
-        exclude_filter:
-          - power_grid_model_io.functions.exclude_filters.exclude_all_columns_empty_or_zero:
+        filters:
+          - power_grid_model_io.functions.filters.exclude_all_columns_empty_or_zero:
               cols: 
               - Generation.P
               - Generation.Q
@@ -477,8 +477,8 @@ grid:
         extra:
           - ID
           - Name
-        exclude_filter:
-          - power_grid_model_io.functions.exclude_filters.exclude_all_columns_empty_or_zero:
+        filters:
+          - power_grid_model_io.functions.filters.exclude_all_columns_empty_or_zero:
               cols: 
               - PV.Pnom
   Sources:
