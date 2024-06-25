@@ -183,10 +183,12 @@ class TabularConverter(BaseConverter[TabularData]):
                 data=data, table=table, filtering_functions=attributes["exclude_filter"]
             )
         else:
-            table_mask = np.ones(len(data[table]), dtype=bool)
+            table_mask = None
+
+        n_records = np.sum(table_mask) if table_mask is not None else len(data[table])
 
         try:
-            pgm_data = initialize_array(data_type=data_type, component_type=component, shape=np.sum(table_mask))
+            pgm_data = initialize_array(data_type=data_type, component_type=component, shape=n_records)
         except KeyError as ex:
             raise KeyError(f"Invalid component type '{component}' or data type '{data_type}'") from ex
 
@@ -202,21 +204,20 @@ class TabularConverter(BaseConverter[TabularData]):
                 data=data,
                 pgm_data=pgm_data,
                 table=table,
-                table_mask=table_mask,
                 component=component,
                 attr=attr,
                 col_def=col_def,
+                table_mask=table_mask,
                 extra_info=extra_info,
             )
 
         return pgm_data
 
-    def _parse_table_filters(self, data: TabularData, table: str, filtering_functions: Any) -> np.ndarray:
-        table_mask = np.ones(len(data[table]), dtype=bool)
-
+    def _parse_table_filters(self, data: TabularData, table: str, filtering_functions: Any) -> Optional[np.ndarray]:
         if not isinstance(data[table], pd.DataFrame):
-            return table_mask
+            return None
 
+        table_mask = np.ones(len(data[table]), dtype=bool)
         for filtering_fn in filtering_functions:
             for fn_name, kwargs in filtering_fn.items():
                 fn_ptr = get_function(fn_name)
@@ -229,10 +230,10 @@ class TabularConverter(BaseConverter[TabularData]):
         data: TabularData,
         pgm_data: np.ndarray,
         table: str,
-        table_mask: np.ndarray,
         component: str,
         attr: str,
         col_def: Any,
+        table_mask: Optional[np.ndarray],
         extra_info: Optional[ExtraInfo],
     ):
         """This function updates one of the attributes of pgm_data, based on the corresponding table/column in a tabular
@@ -272,9 +273,9 @@ class TabularConverter(BaseConverter[TabularData]):
             self._handle_extra_info(
                 data=data,
                 table=table,
-                table_mask=table_mask,
                 col_def=col_def,
                 uuids=pgm_data["id"],
+                table_mask=table_mask,
                 extra_info=extra_info,
             )
             # Extra info should not be added to the numpy arrays, so let's continue to the next attribute
@@ -293,9 +294,9 @@ class TabularConverter(BaseConverter[TabularData]):
         self,
         data: TabularData,
         table: str,
-        table_mask: np.ndarray,
         col_def: Any,
         uuids: np.ndarray,
+        table_mask: Optional[np.ndarray],
         extra_info: Optional[ExtraInfo],
     ) -> None:
         """This function can extract extra info from the tabular data and store it in the extra_info dict
@@ -369,7 +370,12 @@ class TabularConverter(BaseConverter[TabularData]):
         return TabularData(logger=self._log, **data)
 
     def _parse_col_def(
-        self, data: TabularData, table: str, table_mask: np.ndarray, col_def: Any, extra_info: Optional[ExtraInfo]
+        self,
+        data: TabularData,
+        table: str,
+        col_def: Any,
+        table_mask: Optional[np.ndarray],
+        extra_info: Optional[ExtraInfo],
     ) -> pd.DataFrame:
         """Interpret the column definition and extract/convert/create the data as a pandas DataFrame.
 
@@ -391,7 +397,7 @@ class TabularConverter(BaseConverter[TabularData]):
                 data=data, table=table, table_mask=table_mask, col_def=col_def, extra_info=extra_info
             )
         if isinstance(col_def, list):
-            return self._parse_col_def_composite(data=data, table=table, table_mask=table_mask, col_def=col_def)
+            return self._parse_col_def_composite(data=data, table=table, col_def=col_def, table_mask=table_mask)
         raise TypeError(f"Invalid column definition: {col_def}")
 
     @staticmethod
@@ -469,11 +475,11 @@ class TabularConverter(BaseConverter[TabularData]):
         self,
         data: TabularData,
         table: str,
-        table_mask: np.ndarray,
         other_table: str,
         query_column: str,
         key_column: str,
         value_column: str,
+        table_mask: Optional[np.ndarray],
     ) -> pd.DataFrame:
         """
         Find and extract a column from a different table.
@@ -500,8 +506,8 @@ class TabularConverter(BaseConverter[TabularData]):
         self,
         data: TabularData,
         table: str,
-        table_mask: np.ndarray,
         col_def: Dict[str, Any],
+        table_mask: Optional[np.ndarray],
         extra_info: Optional[ExtraInfo],
     ) -> pd.DataFrame:
         """
@@ -562,10 +568,10 @@ class TabularConverter(BaseConverter[TabularData]):
         self,
         data: TabularData,
         table: str,
-        table_mask: np.ndarray,
         ref_table: Optional[str],
         ref_name: Optional[str],
         key_col_def: Union[str, List[str], Dict[str, str]],
+        table_mask: Optional[np.ndarray],
         extra_info: Optional[ExtraInfo],
     ) -> pd.DataFrame:
         """
@@ -625,7 +631,7 @@ class TabularConverter(BaseConverter[TabularData]):
         return col_data.apply(auto_id, axis=1, raw=True)
 
     def _parse_pandas_function(
-        self, data: TabularData, table: str, table_mask: np.ndarray, fn_name: str, col_def: List[Any]
+        self, data: TabularData, table: str, fn_name: str, col_def: List[Any], table_mask: Optional[np.ndarray]
     ) -> pd.DataFrame:
         """Special vectorized functions.
 
@@ -644,7 +650,7 @@ class TabularConverter(BaseConverter[TabularData]):
         if fn_name == "multiply":
             fn_name = "prod"
 
-        col_data = self._parse_col_def(data=data, table=table, table_mask=table_mask, col_def=col_def, extra_info=None)
+        col_data = self._parse_col_def(data=data, table=table, col_def=col_def, table_mask=table_mask, extra_info=None)
 
         try:
             fn_ptr = getattr(col_data, fn_name)
@@ -668,7 +674,7 @@ class TabularConverter(BaseConverter[TabularData]):
         return pd.DataFrame(fn_ptr(axis=1))
 
     def _parse_function(
-        self, data: TabularData, table: str, table_mask: np.ndarray, function: str, col_def: Dict[str, Any]
+        self, data: TabularData, table: str, function: str, col_def: Dict[str, Any], table_mask: Optional[np.ndarray]
     ) -> pd.DataFrame:
         """Import the function by name and apply it to each row.
 
@@ -686,7 +692,7 @@ class TabularConverter(BaseConverter[TabularData]):
         fn_ptr = get_function(function)
         key_words = list(col_def.keys())
         sub_def = list(col_def.values())
-        col_data = self._parse_col_def(data=data, table=table, table_mask=table_mask, col_def=sub_def, extra_info=None)
+        col_data = self._parse_col_def(data=data, table=table, col_def=sub_def, table_mask=table_mask, extra_info=None)
 
         if col_data.empty:
             raise ValueError(f"Cannot apply function {function} to an empty DataFrame")
@@ -695,7 +701,7 @@ class TabularConverter(BaseConverter[TabularData]):
         return pd.DataFrame(col_data)
 
     def _parse_col_def_composite(
-        self, data: TabularData, table: str, table_mask: np.ndarray, col_def: list
+        self, data: TabularData, table: str, col_def: list, table_mask: Optional[np.ndarray]
     ) -> pd.DataFrame:
         """Select multiple columns (each is created from a column definition) and return them as a new DataFrame.
 
@@ -709,7 +715,7 @@ class TabularConverter(BaseConverter[TabularData]):
         """
         assert isinstance(col_def, list)
         columns = [
-            self._parse_col_def(data=data, table=table, table_mask=table_mask, col_def=sub_def, extra_info=None)
+            self._parse_col_def(data=data, table=table, col_def=sub_def, table_mask=table_mask, extra_info=None)
             for sub_def in col_def
         ]
         return pd.concat(columns, axis=1)
