@@ -415,6 +415,11 @@ grid:
       extra:
         - ID
         - Naam
+      filters:
+        - power_grid_model_io.functions.filters.exclude_all_columns_empty_or_zero:
+            cols: 
+            - Belasting.P
+            - Belasting.Q
     sym_gen:
       - id:
           auto_id:
@@ -435,6 +440,11 @@ grid:
         extra:
           - ID
           - Naam
+        filters:
+          - power_grid_model_io.functions.filters.exclude_all_columns_empty_or_zero:
+              cols: 
+              - Opwekking.P
+              - Opwekking.Q
       - id:
           auto_id:
             name: pv_generation
@@ -457,6 +467,10 @@ grid:
         extra:
           - ID
           - Naam
+        filters:
+          - power_grid_model_io.functions.filters.exclude_all_columns_empty_or_zero:
+              cols: 
+              - PV.Pnom
   Netvoedingen:
     source:
       id:
