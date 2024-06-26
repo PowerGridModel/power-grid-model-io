@@ -146,6 +146,7 @@ grid:
     transformer:
       id:
         auto_id:
+          name: transformer
           key: Number
       from_node:
         auto_id:
@@ -226,10 +227,11 @@ grid:
     transformer_tap_regulator:
       id:
         auto_id: 
+          name: transformer_tap_regulator
           key: Number
       regulated_object:
         auto_id:
-          table: Transformers
+          name: transformer
           key:
             Number: Number
       status: 1
@@ -249,6 +251,7 @@ grid:
     transformer:
       id:
         auto_id:
+          name: transformer
           key: Number
       from_node:
         auto_id:
@@ -321,10 +324,11 @@ grid:
     transformer_tap_regulator:
       id:
         auto_id: 
+          name: transformer_tap_regulator
           key: Number
       regulated_object:
         auto_id:
-          table: Special transformers
+          name: transformer
           key:
             Number: Number
       status: 1
@@ -748,6 +752,7 @@ grid:
     three_winding_transformer:
       id:
         auto_id:
+          name: three_winding_transformer
           key: Number
       node_1:
         auto_id:
@@ -852,10 +857,11 @@ grid:
     transformer_tap_regulator:
       id:
         auto_id: 
+          name: transformer_tap_regulator
           key: Number
       regulated_object:
         auto_id:
-          table: Three Winding transformers
+          name: three_winding_transformer
           key:
             Number: Number
       status: 1
