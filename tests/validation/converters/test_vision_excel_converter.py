@@ -6,8 +6,9 @@ import json
 import logging
 from functools import lru_cache
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
+import numpy as np
 import pandas as pd
 import pytest
 from power_grid_model.data_types import SingleDataset
@@ -242,27 +243,31 @@ def test_get_get_appliance_id(language: str, table: str, columns: List[str]):
 
 
 @pytest.mark.parametrize(
-    ("language", "table", "name", "columns"),
+    ("language", "table", "name", "columns", "filtering_mask"),
     [
-        ("en", "Transformer loads", "transformer", ["Node.Number", "Subnumber"]),
-        ("en", "Transformer loads", "internal_node", ["Node.Number", "Subnumber"]),
-        ("en", "Transformer loads", "load", ["Node.Number", "Subnumber"]),
-        ("en", "Transformer loads", "generation", ["Node.Number", "Subnumber"]),
-        ("en", "Transformer loads", "pv_generation", ["Node.Number", "Subnumber"]),
-        ("nl", "Transformatorbelastingen", "transformer", ["Knooppunt.Nummer", "Subnummer"]),
-        ("nl", "Transformatorbelastingen", "internal_node", ["Knooppunt.Nummer", "Subnummer"]),
-        ("nl", "Transformatorbelastingen", "load", ["Knooppunt.Nummer", "Subnummer"]),
-        ("nl", "Transformatorbelastingen", "generation", ["Knooppunt.Nummer", "Subnummer"]),
-        ("nl", "Transformatorbelastingen", "pv_generation", ["Knooppunt.Nummer", "Subnummer"]),
+        ("en", "Transformer loads", "transformer", ["Node.Number", "Subnumber"], None),
+        ("en", "Transformer loads", "internal_node", ["Node.Number", "Subnumber"], None),
+        ("en", "Transformer loads", "load", ["Node.Number", "Subnumber"], None),
+        ("en", "Transformer loads", "generation", ["Node.Number", "Subnumber"], np.array([False, True])),
+        ("en", "Transformer loads", "pv_generation", ["Node.Number", "Subnumber"], np.array([False, True])),
+        ("nl", "Transformatorbelastingen", "transformer", ["Knooppunt.Nummer", "Subnummer"], None),
+        ("nl", "Transformatorbelastingen", "internal_node", ["Knooppunt.Nummer", "Subnummer"], None),
+        ("nl", "Transformatorbelastingen", "load", ["Knooppunt.Nummer", "Subnummer"], None),
+        ("nl", "Transformatorbelastingen", "generation", ["Knooppunt.Nummer", "Subnummer"], np.array([False, True])),
+        ("nl", "Transformatorbelastingen", "pv_generation", ["Knooppunt.Nummer", "Subnummer"], np.array([False, True])),
     ],
 )
-def test_get_get_virtual_id(language: str, table: str, name: str, columns: List[str]):
+def test_get_get_virtual_id(
+    language: str, table: str, name: str, columns: List[str], filtering_mask: Optional[np.ndarray]
+):
     # Arrange
     converter = vision_excel_converter(language=language)
     _, extra_info = load_and_convert_excel_file(language=language)
 
     assert converter._source is not None
     source_data = converter._source.load()[table][columns]
+    if filtering_mask is not None:
+        source_data = source_data[filtering_mask]
 
     # Act/Assert
     assert isinstance(source_data, pd.DataFrame)
@@ -332,11 +337,11 @@ def test_guid_extra_info():
     vision_cvtr = prep_vision_97(language=LANGUAGE_EN)
     _, extra_info = vision_cvtr.load_input_data()
 
-    assert extra_info[0]["GUID"] == "{8110C18E-7FDF-4A43-B868-E05E1DD7909F}"
-    assert extra_info[1]["GUID"] == "{D507B771-AC81-41F5-A292-91CF6119BE70}"
-    assert extra_info[2]["GUID"] == "{C92556BA-57E6-4780-A69E-DDDCA759BFBE}"
-    assert extra_info[3]["GUID"] == "{23C17CB9-7C1F-4AD0-B3C9-9B4AB99DB400}"
-    assert extra_info[4]["GUID"] == "{915748FF-2EE0-4C5E-806A-DBBFC433BEA4}"
+    assert extra_info[0]["GUID"] == "{7FF722ED-33B3-4761-84AC-A164310D3C86}"
+    assert extra_info[1]["GUID"] == "{1ED177A7-1F5D-4D81-8DE7-AB3E58512E0B}"
+    assert extra_info[2]["GUID"] == "{DDE3457B-DB9A-4DA9-9564-6F49E0F296BD}"
+    assert extra_info[3]["GUID"] == "{A79AFDE9-4096-4BEB-AB63-2B851D7FC6D1}"
+    assert extra_info[4]["GUID"] == "{7848DBC8-9685-452C-89AF-9AB308224689}"
 
     for i in range(5, len(extra_info)):
         assert "GUID" not in extra_info[i]
