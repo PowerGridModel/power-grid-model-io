@@ -228,10 +228,12 @@ grid:
       id:
         auto_id: 
           key: Number
-      status: 
-        multiply:
-          - Own control
-          - State
+      regulated_object:
+        auto_id:
+          table: Transformers
+          key:
+            Number: Number
+      status: State
       control_side: Measure side
       u_set: Uset
       u_band: Uband
@@ -240,6 +242,10 @@ grid:
       extra:
         - ID
         - Name
+      filters:
+        - power_grid_model_io.functions.filters.exclude_value:
+            col: Own control
+            value: FALSE
   Special transformers:
     transformer:
       id:
@@ -317,10 +323,12 @@ grid:
       id:
         auto_id: 
           key: Number
-      status: 
-        multiply:
-          - Control
-          - At
+      regulated_object:
+        auto_id:
+          table: Special transformers
+          key:
+            Number: Number
+      status: At
       control_side: Measure side
       u_set: Uset
       u_band: Uband
@@ -329,6 +337,10 @@ grid:
       extra:
         - ID
         - Name
+      filters:
+        - power_grid_model_io.functions.filters.exclude_value:
+            col: Control
+            value: FALSE
   Transformer loads:
     transformer:
       id:
@@ -838,7 +850,28 @@ grid:
       extra:
         - ID
         - Name
-
+    transformer_tap_regulator:
+      id:
+        auto_id: 
+          key: Number
+      regulated_object:
+        auto_id:
+          table: Three winding transformers
+          key:
+            Number: Number
+      status: 1
+      control_side: Measure side
+      u_set: Uset
+      u_band: Uband
+      line_drop_compensation_r: Rc
+      line_drop_compensation_x: Xc
+      extra:
+        - ID
+        - Name
+      filters:
+        - power_grid_model_io.functions.filters.exclude_value:
+            col: Control
+            value: 0
 units:
   A: null
   F:
@@ -910,15 +943,6 @@ substitutions:
   Measure side:
     1: 0
     2: 1
-  Own control:
-    FALSE: 0
-    TRUE: 1
-  Control:
-    FALSE: 0
-    TRUE: 1
   At:
-    FALSE: 0
-    TRUE: 1
-  Back_c:
     FALSE: 0
     TRUE: 1

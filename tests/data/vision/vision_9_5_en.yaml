@@ -223,6 +223,28 @@ grid:
       extra:
         - ID
         - Name
+    transformer_tap_regulator:
+      id:
+        auto_id: 
+          key: Number
+      regulated_object:
+        auto_id:
+          table: Transformers
+          key:
+            Number: Number
+      status: 1
+      control_side: Measuring side
+      u_set: Uset
+      u_band: Uband
+      line_drop_compensation_r: Rc
+      line_drop_compensation_x: Xc
+      extra:
+        - ID
+        - Name
+      filters:
+        - power_grid_model_io.functions.filters.exclude_value:
+            col: Control
+            value: 0
   Special transformers:
     transformer:
       id:
@@ -296,6 +318,28 @@ grid:
       extra:
         - ID
         - Name
+    transformer_tap_regulator:
+      id:
+        auto_id: 
+          key: Number
+      regulated_object:
+        auto_id:
+          table: Special transformers
+          key:
+            Number: Number
+      status: 1
+      control_side: Measuring side
+      u_set: Uset
+      u_band: Uband
+      line_drop_compensation_r: Rc
+      line_drop_compensation_x: Xc
+      extra:
+        - ID
+        - Name
+      filters:
+        - power_grid_model_io.functions.filters.exclude_value:
+            col: Control
+            value: FALSE
   Transformer loads:
     transformer:
       id:
@@ -791,7 +835,28 @@ grid:
       extra:
         - ID
         - Name
-
+    transformer_tap_regulator:
+      id:
+        auto_id: 
+          key: Number
+      regulated_object:
+        auto_id:
+          table: Three Winding transformers
+          key:
+            Number: Number
+      status: 1
+      control_side: Measuring side
+      u_set: Uset
+      u_band: Uband
+      line_drop_compensation_r: Rc
+      line_drop_compensation_x: Xc
+      extra:
+        - ID
+        - Name
+      filters:
+        - power_grid_model_io.functions.filters.exclude_value:
+            col: Control
+            value: 0
 units:
   A: null
   F:
@@ -860,3 +925,6 @@ substitutions:
   Synchronous generators.Q:
     absorb: -1
     supply: 1
+  Measuring side:
+    1: 0
+    2: 1

@@ -26,6 +26,12 @@
       {"id": 11, "from_node": 2, "to_node": 13, "id_reference": {"table": "Transformer loads", "name": "transformer", "key": {"Node.Number": 3, "Subnumber": 4}}, "Name": "transformer_load_2"},
       {"id": 12, "from_node": 2, "to_node": 14, "id_reference": {"table": "Transformer loads", "name": "transformer", "key": {"Node.Number": 3, "Subnumber": 2}}, "Name": "transformer_load_1"}
     ],
+  "transformer_tap_regulator":
+    [
+      {"id": 9, "id_reference": {"table": "Transformers", "key": {"Number": 1}}, "Name": "transformer1"},
+      {"id": 10, "id_reference": {"table": "Special transformers", "key": {"Number": 1}}, "Name": "special_trans1"},
+      {"id": 27, "id_reference": {"table": "Three winding transformers", "key": {"Number": 1}}}
+    ],
   "sym_load":
     [
       {"id": 15, "node": 13, "id_reference": {"table": "Transformer loads", "name": "load", "key": {"Node.Number": 3, "Subnumber": 4}}, "Name": "transformer_load_2"},
