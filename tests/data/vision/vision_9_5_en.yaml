@@ -146,7 +146,6 @@ grid:
     transformer:
       id:
         auto_id:
-          name: transformer
           key: Number
       from_node:
         auto_id:
@@ -231,7 +230,6 @@ grid:
           key: Number
       regulated_object:
         auto_id:
-          name: transformer
           key:
             Number: Number
       status: 1
@@ -251,7 +249,6 @@ grid:
     transformer:
       id:
         auto_id:
-          name: transformer
           key: Number
       from_node:
         auto_id:
@@ -328,7 +325,6 @@ grid:
           key: Number
       regulated_object:
         auto_id:
-          name: transformer
           key:
             Number: Number
       status: 1
@@ -738,7 +734,6 @@ grid:
     three_winding_transformer:
       id:
         auto_id:
-          name: three_winding_transformer
           key: Number
       node_1:
         auto_id:
@@ -847,7 +842,6 @@ grid:
           key: Number
       regulated_object:
         auto_id:
-          name: three_winding_transformer
           key:
             Number: Number
       status: 1

@@ -21,8 +21,8 @@
     ],
   "transformer":
     [
-      {"id": 9, "from_node": 1, "to_node": 2, "id_reference": {"table": "Transformatoren", "name": "transformer", "key": {"Nummer": 1}}, "Naam": "transformer1"},
-      {"id": 11, "from_node": 1, "to_node": 3, "id_reference": {"table": "Speciale transformatoren", "name": "transformer", "key": {"Nummer": 1}}, "Naam": "special_trans1"},
+      {"id": 9, "from_node": 1, "to_node": 2, "id_reference": {"table": "Transformatoren", "key": {"Nummer": 1}}, "Naam": "transformer1"},
+      {"id": 11, "from_node": 1, "to_node": 3, "id_reference": {"table": "Speciale transformatoren", "key": {"Nummer": 1}}, "Naam": "special_trans1"},
       {"id": 13, "from_node": 2, "to_node": 15, "id_reference": {"table": "Transformatorbelastingen", "name": "transformer", "key": {"Knooppunt.Nummer": 3, "Subnummer": 4}}, "Naam": "transformer_load_2"},
       {"id": 14, "from_node": 2, "to_node": 16, "id_reference": {"table": "Transformatorbelastingen", "name": "transformer", "key": {"Knooppunt.Nummer": 3, "Subnummer": 2}}, "Naam": "transformer_load_1"}
     ],
@@ -58,6 +58,6 @@
     ],
   "three_winding_transformer":
     [
-      {"id": 29, "node_1": 1, "node_2": 2, "node_3": 4, "id_reference": {"table": "Driewikkelingstransformatoren", "name": "three_winding_transformer", "key": {"Nummer": 1}}}
+      {"id": 29, "node_1": 1, "node_2": 2, "node_3": 4, "id_reference": {"table": "Driewikkelingstransformatoren", "key": {"Nummer": 1}}}
     ]
 }

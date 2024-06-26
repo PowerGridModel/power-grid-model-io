@@ -21,8 +21,8 @@
     ],
   "transformer":
     [
-      {"id": 9, "from_node": 1, "to_node": 2, "id_reference": {"table": "Transformers", "name": "transformer", "key": {"Number": 1}}, "Name": "transformer1"},
-      {"id": 11, "from_node": 1, "to_node": 3, "id_reference": {"table": "Special transformers", "name": "transformer", "key": {"Number": 1}}, "Name": "special_trans1"},
+      {"id": 9, "from_node": 1, "to_node": 2, "id_reference": {"table": "Transformers", "key": {"Number": 1}}, "Name": "transformer1"},
+      {"id": 11, "from_node": 1, "to_node": 3, "id_reference": {"table": "Special transformers", "key": {"Number": 1}}, "Name": "special_trans1"},
       {"id": 13, "from_node": 2, "to_node": 15, "id_reference": {"table": "Transformer loads", "name": "transformer", "key": {"Node.Number": 3, "Subnumber": 4}}, "Name": "transformer_load_2"},
       {"id": 14, "from_node": 2, "to_node": 16, "id_reference": {"table": "Transformer loads", "name": "transformer", "key": {"Node.Number": 3, "Subnumber": 2}}, "Name": "transformer_load_1"}
     ],
@@ -58,6 +58,6 @@
     ],
   "three_winding_transformer":
     [
-      {"id": 29, "node_1": 1, "node_2": 2, "node_3": 4, "id_reference": {"table": "Three winding transformers", "name": "three_winding_transformer", "key": {"Number": 1}}}
+      {"id": 29, "node_1": 1, "node_2": 2, "node_3": 4, "id_reference": {"table": "Three winding transformers", "key": {"Number": 1}}}
     ]
 }
