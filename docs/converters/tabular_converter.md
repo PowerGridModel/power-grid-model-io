@@ -302,6 +302,34 @@ Then the following IDs will be generated / retrieved:
 * `sym_load.node`:
   `{"table": "Transformer loads", "name": "internal_node", "key" {"Node_Number": 103, "Subnumber": 1} -> 6`
 
+## Table filters
+
+Consider for example, the mapping is supplied in the folllowing way:
+
+```yaml
+Transformer Load:
+  transformer: ...
+  node: ...
+  sym_load: ...
+  sym_gen: ...
+  sym_gen: ...
+```
+
+Then for each row in `Transformer Load` table, all 5 corresponding PGM components are created. But if it is the intention is to make some of these components optional, then it is possible to do so with the help of `filters` functions. These functions apply a mask based on the rules provided by the funciton. The filters start from all components selected and the `filters` are applied in a recursive `and` way.
+
+For example, `exclude_value` excludes all rows which match at the `value` for the `col` specified.
+
+```yaml
+Transformers:
+  transformers: ...
+  transformer_tap_regulator:
+    filters:
+      - power_grid_model_io.functions.filters.exclude_value:
+          col: Control
+          value: 0
+```
+
+
 ## Security Considerations
 Mapping files enable the specification of custom mappings or filter functions. These functions can come from the `power-grid-model-io` library, be user-provided, or even supplied by third parties. To ensure security, we have implemented several measures. Best practices are recommended to prevent malicious code execution.
 
