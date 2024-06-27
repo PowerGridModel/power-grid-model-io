@@ -224,6 +224,28 @@ grid:
       extra:
         - ID
         - Name
+    transformer_tap_regulator:
+      id:
+        auto_id: 
+          name: transformer_tap_regulator
+          key: Number
+      regulated_object:
+        auto_id:
+          key:
+            Number: Number
+      status: State
+      control_side: Measure side
+      u_set: Uset
+      u_band: Uband
+      line_drop_compensation_r: Rc
+      line_drop_compensation_x: Xc
+      extra:
+        - ID
+        - Name
+      filters:
+        - power_grid_model_io.functions.filters.exclude_value:
+            col: Own control
+            value: FALSE
   Special transformers:
     transformer:
       id:
@@ -297,6 +319,28 @@ grid:
       extra:
         - ID
         - Name
+    transformer_tap_regulator:
+      id:
+        auto_id: 
+          name: transformer_tap_regulator
+          key: Number
+      regulated_object:
+        auto_id:
+          key:
+            Number: Number
+      status: At
+      control_side: Measure side
+      u_set: Uset
+      u_band: Uband
+      line_drop_compensation_r: Rc
+      line_drop_compensation_x: Xc
+      extra:
+        - ID
+        - Name
+      filters:
+        - power_grid_model_io.functions.filters.exclude_value:
+            col: Control
+            value: FALSE
   Transformer loads:
     transformer:
       id:
@@ -806,7 +850,28 @@ grid:
       extra:
         - ID
         - Name
-
+    transformer_tap_regulator:
+      id:
+        auto_id: 
+          name: transformer_tap_regulator
+          key: Number
+      regulated_object:
+        auto_id:
+          key:
+            Number: Number
+      status: 1
+      control_side: Measure side
+      u_set: Uset
+      u_band: Uband
+      line_drop_compensation_r: Rc
+      line_drop_compensation_x: Xc
+      extra:
+        - ID
+        - Name
+      filters:
+        - power_grid_model_io.functions.filters.exclude_value:
+            col: Control
+            value: 0
 units:
   A: null
   F:
@@ -875,3 +940,9 @@ substitutions:
   Synchronous generators.Q:
     absorb: -1
     supply: 1
+  Measure side:
+    1: 0
+    2: 1
+  At:
+    FALSE: 0
+    TRUE: 1

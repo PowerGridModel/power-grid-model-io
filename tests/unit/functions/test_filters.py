@@ -5,7 +5,7 @@ from typing import Tuple
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
-from pytest import approx, mark
+import pytest
 
 from power_grid_model_io.functions.filters import exclude_all_columns_empty_or_zero, exclude_empty, exclude_value
 
@@ -19,7 +19,13 @@ def test_exclude_empty(mock_has_value: MagicMock):
     assert actual == mock_has_value.return_value
 
 
-@mark.parametrize(
+def test_exclude_empty__invalid_col():
+    row = pd.Series({"foo": 1})
+    with pytest.raises(ValueError, match="The column: 'bar' cannot be found for the filter"):
+        exclude_empty(row=row, col="bar")
+
+
+@pytest.mark.parametrize(
     ("row_value", "check_value", "expected"),
     [
         (4.0, "x", True),
@@ -33,7 +39,13 @@ def test_exclude_value(row_value: float, check_value: float, expected: bool):
     assert actual == expected
 
 
-@mark.parametrize(
+def test_exclude_value__invalid_col():
+    row = pd.Series({"foo": 1})
+    with pytest.raises(ValueError, match="The column: 'bar' cannot be found for the filter"):
+        exclude_value(row=row, col="bar", value=2)
+
+
+@pytest.mark.parametrize(
     ("row_value", "expected"),
     [
         ((1.0, 2.0), True),

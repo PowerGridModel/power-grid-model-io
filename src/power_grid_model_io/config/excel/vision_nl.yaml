@@ -220,6 +220,28 @@ grid:
       extra:
         - ID
         - Naam
+    transformer_tap_regulator:
+      id:
+        auto_id: 
+          name: transformer_tap_regulator
+          key: Nummer
+      regulated_object:
+        auto_id:
+          key:
+            Nummer: Nummer
+      status: 1
+      control_side: Meetzijde
+      u_set: Uset
+      u_band: Uband
+      line_drop_compensation_r: Rc
+      line_drop_compensation_x: Xc
+      extra:
+        - ID
+        - Naam
+      filters:
+        - power_grid_model_io.functions.filters.exclude_value:
+            col: Regeling
+            value: 0
   Speciale transformatoren:
     transformer:
       id:
@@ -290,6 +312,28 @@ grid:
       extra:
         - ID
         - Naam
+    transformer_tap_regulator:
+      id:
+        auto_id: 
+          name: transformer_tap_regulator
+          key: Nummer
+      regulated_object:
+        auto_id:
+          key:
+            Nummer: Nummer
+      status: 1
+      control_side: Meetzijde
+      u_set: Uset
+      u_band: Uband
+      line_drop_compensation_r: Rc
+      line_drop_compensation_x: Xc
+      extra:
+        - ID
+        - Naam
+      filters:
+        - power_grid_model_io.functions.filters.exclude_value:
+            col: Regeling
+            value: FALSE
   Transformatorbelastingen:
     transformer:
       id:
@@ -793,7 +837,28 @@ grid:
       extra:
         - ID
         - Naam
-
+    transformer_tap_regulator:
+      id:
+        auto_id: 
+          name: transformer_tap_regulator
+          key: Nummer
+      regulated_object:
+        auto_id:
+          key:
+            Nummer: Nummer
+      status: 1
+      control_side: Meetzijde
+      u_set: Uset
+      u_band: Uband
+      line_drop_compensation_r: Rc
+      line_drop_compensation_x: Xc
+      extra:
+        - ID
+        - Naam
+      filters:
+        - power_grid_model_io.functions.filters.exclude_value:
+            col: Regeling
+            value: 0
 units:
   A: null
   F:
@@ -858,3 +923,6 @@ substitutions:
   Synchrone generatoren.Q:
     terugleveren: -1
     leveren: 1
+  Meetzijde:
+    1: 0
+    2: 1
