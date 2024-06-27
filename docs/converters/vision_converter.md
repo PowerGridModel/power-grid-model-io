@@ -44,3 +44,19 @@ Some components are yet to be modeled for conversions because they might not hav
 - The source bus in power-grid-model is mapped with a source impedance. `Sk"nom`, `R/X` and `Z0/Z1` are the attributes used in modeling source impedance. In Vision, these attributes are used only for short circuit calculations
 - The load rate for transformer is calculated in Vision by current i.e., `load_rate = max(u1 * I1, u2 * I2) * sqrt(3) / Snom * 100`. Whereas in power-grid-model, loading is calculated by power, i.e., `loading = max(s1,s2)/sn`. (Note: The attribute names are as per relevant notation in Vision and PGM respectively). This gives a slight difference in load rate of transformer.
 - A minor difference in results is expected since Vision uses a power mismatch in p.u. as convergence criteria whereas power-grid-model uses voltage mismatch.
+
+## Accomdation of UUID-based id system since Vision 9.7
+Vision introduced UUID based identifier system since version 9.7. It is implemented following the Microsoft naming scheme by replacing all the original identifier fields (i.e., '*Number', '*Subnumber', '*Nummber' and '*Subnummer') to GUID. This change brings the many benefits of UUIDs in general while on the other hand adds certain work on the conversion side. Since computations in PGM alone do not benefit from a string based identifier, we hence made the descision to perform UUID to integer conversion while maintaining the 'GUID' information in the `extra_info` field. Note that existing mapping files can still be used without significant changes, apart from adding `GUID` to the `extra` fields of interest.
+
+An examplery usage can be found in the example notebook as well as in the test cases.
+
+## Common/Known issues related to Vision 
+So far we have the following issue known to us related to Vision exported spread sheets. We provide a solution from user perspective to the best of our knowledge.
+
+### Duplicated `P` columns
+Vision can export sheets with duplicated `P` columns, one of which being unitless additional information. This field is of no actual purpose within PGM calculation. 
+
+**Tip:** We advice users to uncheck the `specifics` when exporting from Vision.
+
+### Different names for columns
+In different versions of exports, user can sometimes find different names for columns. For example, the column name `N1` might be represented as `Grounding1` in some exports. To address this, the `VisionExcelConverter`'s `terms_changed` argument can be used.

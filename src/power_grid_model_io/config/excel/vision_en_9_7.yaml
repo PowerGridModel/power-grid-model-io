@@ -17,6 +17,7 @@ grid:
       extra:
         - ID
         - Name
+        - GUID
   Cables:
     line:
       id:
@@ -427,8 +428,8 @@ grid:
       filters:
         - power_grid_model_io.functions.filters.exclude_all_columns_empty_or_zero:
             cols: 
-              - Load.P
-              - Load.Q
+            - Load.P
+            - Load.Q
     sym_gen:
       - id:
           auto_id:
@@ -451,7 +452,7 @@ grid:
           - Name
         filters:
           - power_grid_model_io.functions.filters.exclude_all_columns_empty_or_zero:
-             cols: 
+              cols: 
               - Generation.P
               - Generation.Q
       - id:
@@ -478,7 +479,7 @@ grid:
           - Name
         filters:
           - power_grid_model_io.functions.filters.exclude_all_columns_empty_or_zero:
-             cols: 
+              cols: 
               - PV.Pnom
   Sources:
     source:

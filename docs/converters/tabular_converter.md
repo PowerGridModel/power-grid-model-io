@@ -127,6 +127,7 @@ You can use the following `column` definitions:
       cos_phi=1.0
     )
     ```
+
 ## Units
 Power Grid Model uses SI units (e.g., "W" for Watts), but source data may be supplied in different units (e.g., "MW" for Mega Watts).
 If units are supplied in the tabular data, the data stored using pandas DataFrame is expected to have `MultiIndexes` for columns.
@@ -300,3 +301,42 @@ Then the following IDs will be generated / retrieved:
   `{"table": "Transformer loads", "name": "load", "key" {"Node_Number": 103, "Subnumber": 1} -> 7`
 * `sym_load.node`:
   `{"table": "Transformer loads", "name": "internal_node", "key" {"Node_Number": 103, "Subnumber": 1} -> 6`
+
+## Security Considerations
+Mapping files enable the specification of custom mappings or filter functions. These functions can come from the `power-grid-model-io` library, be user-provided, or even supplied by third parties. To ensure security, we have implemented several measures. Best practices are recommended to prevent malicious code execution.
+
+### Safe Loading of Configuration Files
+We use the `yaml.safe_load` functionality from the PyYAML library to load configuration files securely. This method prevents the execution of potentially malicious code during the loading process.
+
+### Secure Function Handling
+* No `eval`-like Functionality: 
+  
+  We do not use `eval` or similar functions that can execute arbitrary code.
+* Loadable/Loaded Functions Only
+  
+  Only functions and symbols that are explicitly loadable or loaded are allowed. These must be:
+
+  * Python Builtins: 
+    
+    Such as `max`.
+
+  * Prefixed by Import Path: 
+  
+    Functions must include their relative or absolute import path, ensuring they are importable using `import_module`. For example, `numpy.max` is allowed, but `np.max` is not.
+
+### Prevention of Malicious Code Injection
+The rules mentioned above prevent the inclusion of malicious code like:
+```python
+lambda x: return (malicious_code(), normal_code(x))[1]
+```
+which, in normal operation without any malicious intentions, would be provided as plainly `normal_code`.
+
+We enforce above mentioned rules, completely rejecting the malicious snippet, and therefore prevent any potential harm from `malicious_code`.
+
+### Best Practices for Production Environments
+* File Permissions
+
+  Configuration files should be treated similarly to Python source files, with appropriate file permissions.
+* Controlled Access
+
+  Only users or services with the correct privileges should be allowed to modify the configuration files.

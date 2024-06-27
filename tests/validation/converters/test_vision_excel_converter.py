@@ -6,8 +6,9 @@ import json
 import logging
 from functools import lru_cache
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
+import numpy as np
 import pandas as pd
 import pytest
 from power_grid_model.data_types import SingleDataset
@@ -28,6 +29,9 @@ LANGUAGES = ["en", "nl"]
 LANGUAGES_97 = ["en"]
 VALIDATION_EN = Path(str(VALIDATION_FILE).format(language="en"))
 CUSTOM_MAPPING_FILE = DATA_PATH / "vision_9_5_{language:s}.yaml"
+VISION_97_MAPPING_FILE = (
+    Path(__file__).parent.parent.parent.parent / "src/power_grid_model_io/config/excel" / "vision_en_9_7.yaml"
+)
 terms_changed = {"Grounding1": "N1", "Grounding2": "N2", "Grounding3": "N3", "Load.Behaviour": "Behaviour"}
 
 
@@ -239,27 +243,31 @@ def test_get_get_appliance_id(language: str, table: str, columns: List[str]):
 
 
 @pytest.mark.parametrize(
-    ("language", "table", "name", "columns"),
+    ("language", "table", "name", "columns", "filtering_mask"),
     [
-        ("en", "Transformer loads", "transformer", ["Node.Number", "Subnumber"]),
-        ("en", "Transformer loads", "internal_node", ["Node.Number", "Subnumber"]),
-        ("en", "Transformer loads", "load", ["Node.Number", "Subnumber"]),
-        ("en", "Transformer loads", "generation", ["Node.Number", "Subnumber"]),
-        ("en", "Transformer loads", "pv_generation", ["Node.Number", "Subnumber"]),
-        ("nl", "Transformatorbelastingen", "transformer", ["Knooppunt.Nummer", "Subnummer"]),
-        ("nl", "Transformatorbelastingen", "internal_node", ["Knooppunt.Nummer", "Subnummer"]),
-        ("nl", "Transformatorbelastingen", "load", ["Knooppunt.Nummer", "Subnummer"]),
-        ("nl", "Transformatorbelastingen", "generation", ["Knooppunt.Nummer", "Subnummer"]),
-        ("nl", "Transformatorbelastingen", "pv_generation", ["Knooppunt.Nummer", "Subnummer"]),
+        ("en", "Transformer loads", "transformer", ["Node.Number", "Subnumber"], None),
+        ("en", "Transformer loads", "internal_node", ["Node.Number", "Subnumber"], None),
+        ("en", "Transformer loads", "load", ["Node.Number", "Subnumber"], None),
+        ("en", "Transformer loads", "generation", ["Node.Number", "Subnumber"], np.array([False, True])),
+        ("en", "Transformer loads", "pv_generation", ["Node.Number", "Subnumber"], np.array([False, True])),
+        ("nl", "Transformatorbelastingen", "transformer", ["Knooppunt.Nummer", "Subnummer"], None),
+        ("nl", "Transformatorbelastingen", "internal_node", ["Knooppunt.Nummer", "Subnummer"], None),
+        ("nl", "Transformatorbelastingen", "load", ["Knooppunt.Nummer", "Subnummer"], None),
+        ("nl", "Transformatorbelastingen", "generation", ["Knooppunt.Nummer", "Subnummer"], np.array([False, True])),
+        ("nl", "Transformatorbelastingen", "pv_generation", ["Knooppunt.Nummer", "Subnummer"], np.array([False, True])),
     ],
 )
-def test_get_get_virtual_id(language: str, table: str, name: str, columns: List[str]):
+def test_get_get_virtual_id(
+    language: str, table: str, name: str, columns: List[str], filtering_mask: Optional[np.ndarray]
+):
     # Arrange
     converter = vision_excel_converter(language=language)
     _, extra_info = load_and_convert_excel_file(language=language)
 
     assert converter._source is not None
     source_data = converter._source.load()[table][columns]
+    if filtering_mask is not None:
+        source_data = source_data[filtering_mask]
 
     # Act/Assert
     assert isinstance(source_data, pd.DataFrame)
@@ -304,12 +312,36 @@ def test_log_levels(capsys):
     assert "debug" not in outerr.out
 
 
-def test_uuid_excel_input():
+def prep_vision_97(language: str) -> VisionExcelConverter:
     source_file = Path(str(SOURCE_FILE_97).format(language=LANGUAGE_EN))
-    ref_file_97 = convert_guid_vision_excel(
-        excel_file=source_file, number=VISION_EXCEL_LAN_DICT[LANGUAGE_EN][DICT_KEY_NUMBER], terms_changed=terms_changed
+    return VisionExcelConverter(
+        source_file, language="en", mapping_file=VISION_97_MAPPING_FILE, terms_changed=terms_changed
     )
-    data_native, _ = VisionExcelConverter(source_file, language="en", terms_changed=terms_changed).load_input_data()
+
+
+def test_uuid_excel_input():
+    ref_file_97 = convert_guid_vision_excel(
+        excel_file=Path(str(SOURCE_FILE_97).format(language=LANGUAGE_EN)),
+        number=VISION_EXCEL_LAN_DICT[LANGUAGE_EN][DICT_KEY_NUMBER],
+        terms_changed=terms_changed,
+    )
     data_convtd, _ = VisionExcelConverter(source_file=ref_file_97).load_input_data()
+    vision_cvtr = prep_vision_97(language=LANGUAGE_EN)
+    data_native, _ = vision_cvtr.load_input_data()
 
     assert len(data_native) == len(data_convtd)
+
+
+def test_guid_extra_info():
+    print("extra_info")
+    vision_cvtr = prep_vision_97(language=LANGUAGE_EN)
+    _, extra_info = vision_cvtr.load_input_data()
+
+    assert extra_info[0]["GUID"] == "{7FF722ED-33B3-4761-84AC-A164310D3C86}"
+    assert extra_info[1]["GUID"] == "{1ED177A7-1F5D-4D81-8DE7-AB3E58512E0B}"
+    assert extra_info[2]["GUID"] == "{DDE3457B-DB9A-4DA9-9564-6F49E0F296BD}"
+    assert extra_info[3]["GUID"] == "{A79AFDE9-4096-4BEB-AB63-2B851D7FC6D1}"
+    assert extra_info[4]["GUID"] == "{7848DBC8-9685-452C-89AF-9AB308224689}"
+
+    for i in range(5, len(extra_info)):
+        assert "GUID" not in extra_info[i]
