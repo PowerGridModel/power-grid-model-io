@@ -640,9 +640,7 @@ grid:
     shunt:
       id:
         auto_id:
-          key:
-            - Node.Number
-            - Subnumber
+          key: Number
       node:
         auto_id:
           table: Nodes
@@ -666,9 +664,7 @@ grid:
     shunt:
       id:
         auto_id:
-          key:
-            - Node.Number
-            - Subnumber
+          key: Number
       node:
         auto_id:
           table: Nodes
@@ -689,9 +685,7 @@ grid:
     shunt:
       id:
         auto_id:
-          key:
-            - Node.Number
-            - Subnumber
+          key: Number
       node:
         auto_id:
           table: Nodes
