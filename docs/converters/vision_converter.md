@@ -44,7 +44,7 @@ Some components are yet to be modeled for conversions because they might not hav
 - The source bus in power-grid-model is mapped with a source impedance. `Sk"nom`, `R/X` and `Z0/Z1` are the attributes used in modeling source impedance. In Vision, these attributes are used only for short circuit calculations
 - The load rate for transformer is calculated in Vision by current i.e., `load_rate = max(u1 * I1, u2 * I2) * sqrt(3) / Snom * 100`. Whereas in power-grid-model, loading is calculated by power, i.e., `loading = max(s1,s2)/sn`. (Note: The attribute names are as per relevant notation in Vision and PGM respectively). This gives a slight difference in load rate of transformer.
 - A minor difference in results is expected since Vision uses a power mismatch in p.u. as convergence criteria whereas power-grid-model uses voltage mismatch.
-- The Voltage Control option in vision is modelled by `transoformer_tap_regulator` in PGM. Currently, PGM only supports line drop compesnation on both loading and generating direction.
+- The Voltage Control option in vision is modelled by `transformer_tap_regulator` in PGM. Currently, PGM only supports line drop compensation on both loading and generating direction.
 So the unchecking of `Also in backw. direction`. `Load Dependent` compensation and a master-slave configuration for control under the `State` section are both not supported.
 
 ## Accomdation of UUID-based id system since Vision 9.7
