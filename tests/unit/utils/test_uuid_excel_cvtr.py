@@ -13,14 +13,18 @@ terms_chaged = {"Grounding1": "N1", "Grounding2": "N2", "Grounding3": "N3", "Loa
 DATA_DIR = Path(__file__).parents[2] / "data" / "vision"
 SOURCE_FILE = DATA_DIR / "vision_97_en.xlsx"
 REFERENCE_FILE = DATA_DIR / "vision_en.xlsx"
+SRC_CONFIG_DIR = Path("src") / "power_grid_model_io" / "config" / "excel"
+MAPPING_FILE_DIR = Path(__file__).parents[3] / SRC_CONFIG_DIR 
+VISION_95_MAPPING_FILE = MAPPING_FILE_DIR / "vision_en.yaml"
+VISION_97_MAPPING_FILE = MAPPING_FILE_DIR / "vision_en_9_7.yaml"
 
 
 def test_convert_guid_vision_excel():
     new_file = convert_guid_vision_excel(
         SOURCE_FILE, number=VISION_EXCEL_LAN_DICT[LANGUAGE_EN][DICT_KEY_NUMBER], terms_changed=terms_chaged
     )
-    vision_cvtr_new = VisionExcelConverter(source_file=new_file)
-    vision_cvtr_ref = VisionExcelConverter(source_file=REFERENCE_FILE)
+    vision_cvtr_new = VisionExcelConverter(source_file=new_file, mapping_file=VISION_97_MAPPING_FILE)
+    vision_cvtr_ref = VisionExcelConverter(source_file=REFERENCE_FILE, mapping_file=VISION_95_MAPPING_FILE)
 
     data_new = vision_cvtr_new.load_input_data()
     data_ref = vision_cvtr_ref.load_input_data()

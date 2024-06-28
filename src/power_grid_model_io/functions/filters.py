@@ -16,6 +16,8 @@ def exclude_empty(row: pd.Series, col: str) -> bool:
     """
     filter out empty
     """
+    if col not in row:        
+        raise ValueError(f"The column: '{col}' cannot be found for the filter")
     result = has_value(row[col])
     if isinstance(result, pd.Series):
         return result.item()
@@ -26,6 +28,8 @@ def exclude_value(row: pd.Series, col: str, value: Union[float, str]) -> bool:
     """
     filter out by match value
     """
+    if col not in row:
+        raise ValueError(f"The column: '{col}' cannot be found for the filter")
     result = row[col] != value
     if isinstance(result, pd.Series):
         return result.item()

@@ -325,7 +325,9 @@ def test_uuid_excel_input():
         number=VISION_EXCEL_LAN_DICT[LANGUAGE_EN][DICT_KEY_NUMBER],
         terms_changed=terms_changed,
     )
-    data_convtd, _ = VisionExcelConverter(source_file=ref_file_97).load_input_data()
+    data_convtd, _ = VisionExcelConverter(
+        source_file=ref_file_97, mapping_file=VISION_97_MAPPING_FILE
+    ).load_input_data()
     vision_cvtr = prep_vision_97(language=LANGUAGE_EN)
     data_native, _ = vision_cvtr.load_input_data()
 

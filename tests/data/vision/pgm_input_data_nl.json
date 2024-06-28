@@ -6,8 +6,8 @@
       {"id": 2, "id_reference": {"table": "Knooppunten", "key": {"Nummer": 3}}, "Naam": "node3"},
       {"id": 3, "id_reference": {"table": "Knooppunten", "key": {"Nummer": 4}}, "Naam": "node4"},
       {"id": 4, "id_reference": {"table": "Knooppunten", "key": {"Nummer": 5}}},
-      {"id": 13, "id_reference": {"table": "Transformatorbelastingen", "name": "internal_node", "key": {"Knooppunt.Nummer": 3, "Subnummer": 4}}, "Naam": "transformer_load_2"},
-      {"id": 14, "id_reference": {"table": "Transformatorbelastingen", "name": "internal_node", "key": {"Knooppunt.Nummer": 3, "Subnummer": 2}}, "Naam": "transformer_load_1"}
+      {"id": 15, "id_reference": {"table": "Transformatorbelastingen", "name": "internal_node", "key": {"Knooppunt.Nummer": 3, "Subnummer": 4}}, "Naam": "transformer_load_2"},
+      {"id": 16, "id_reference": {"table": "Transformatorbelastingen", "name": "internal_node", "key": {"Knooppunt.Nummer": 3, "Subnummer": 2}}, "Naam": "transformer_load_1"}
     ],
   "line":
     [
@@ -22,36 +22,42 @@
   "transformer":
     [
       {"id": 9, "from_node": 1, "to_node": 2, "id_reference": {"table": "Transformatoren", "key": {"Nummer": 1}}, "Naam": "transformer1"},
-      {"id": 10, "from_node": 1, "to_node": 3, "id_reference": {"table": "Speciale transformatoren", "key": {"Nummer": 1}}, "Naam": "special_trans1"},
-      {"id": 11, "from_node": 2, "to_node": 13, "id_reference": {"table": "Transformatorbelastingen", "name": "transformer", "key": {"Knooppunt.Nummer": 3, "Subnummer": 4}}, "Naam": "transformer_load_2"},
-      {"id": 12, "from_node": 2, "to_node": 14, "id_reference": {"table": "Transformatorbelastingen", "name": "transformer", "key": {"Knooppunt.Nummer": 3, "Subnummer": 2}}, "Naam": "transformer_load_1"}
+      {"id": 11, "from_node": 1, "to_node": 3, "id_reference": {"table": "Speciale transformatoren", "key": {"Nummer": 1}}, "Naam": "special_trans1"},
+      {"id": 13, "from_node": 2, "to_node": 15, "id_reference": {"table": "Transformatorbelastingen", "name": "transformer", "key": {"Knooppunt.Nummer": 3, "Subnummer": 4}}, "Naam": "transformer_load_2"},
+      {"id": 14, "from_node": 2, "to_node": 16, "id_reference": {"table": "Transformatorbelastingen", "name": "transformer", "key": {"Knooppunt.Nummer": 3, "Subnummer": 2}}, "Naam": "transformer_load_1"}
+    ],
+  "transformer_tap_regulator":
+    [
+      {"id": 10, "regulated_object": 9, "id_reference": {"table": "Transformatoren", "name": "transformer_tap_regulator", "key": {"Nummer": 1}}, "Naam": "transformer1"},
+      {"id": 12, "regulated_object": 11, "id_reference": {"table": "Speciale transformatoren", "name": "transformer_tap_regulator", "key": {"Nummer": 1}}, "Naam": "special_trans1"},
+      {"id": 30, "regulated_object": 29, "id_reference": {"table": "Driewikkelingstransformatoren", "name": "transformer_tap_regulator", "key": {"Nummer": 1}}}
     ],
   "sym_load":
     [
-      {"id": 15, "node": 13, "id_reference": {"table": "Transformatorbelastingen", "name": "load", "key": {"Knooppunt.Nummer": 3, "Subnummer": 4}}, "Naam": "transformer_load_2"},
-      {"id": 16, "node": 14, "id_reference": {"table": "Transformatorbelastingen", "name": "load", "key": {"Knooppunt.Nummer": 3, "Subnummer": 2}}, "Naam": "transformer_load_1"},
-      {"id": 22, "node": 2, "id_reference": {"table": "Belastingen", "key": {"Knooppunt.Nummer": 3, "Subnummer": 6}}, "Naam": "load1"}
+      {"id": 17, "node": 15, "id_reference": {"table": "Transformatorbelastingen", "name": "load", "key": {"Knooppunt.Nummer": 3, "Subnummer": 4}}, "Naam": "transformer_load_2"},
+      {"id": 18, "node": 16, "id_reference": {"table": "Transformatorbelastingen", "name": "load", "key": {"Knooppunt.Nummer": 3, "Subnummer": 2}}, "Naam": "transformer_load_1"},
+      {"id": 24, "node": 2, "id_reference": {"table": "Belastingen", "key": {"Knooppunt.Nummer": 3, "Subnummer": 6}}, "Naam": "load1"}
     ],
   "sym_gen":
     [
-      {"id": 17, "node": 14, "id_reference": {"table": "Transformatorbelastingen", "name": "generation", "key": {"Knooppunt.Nummer": 3, "Subnummer": 2}}, "Naam": "transformer_load_1"},
-      {"id": 18, "node": 14, "id_reference": {"table": "Transformatorbelastingen", "name": "pv_generation", "key": {"Knooppunt.Nummer": 3, "Subnummer": 2}}, "Naam": "transformer_load_1"},
-      {"id": 20, "node": 3, "id_reference": {"table": "Synchrone generatoren", "key": {"Knooppunt.Nummer": 4, "Subnummer": 2}}, "Naam": "syngen1"},
-      {"id": 21, "node": 2, "id_reference": {"table": "Windturbines", "key": {"Knooppunt.Nummer": 3, "Subnummer": 3}}, "Naam": "wind1"},
-      {"id": 26, "node": 2, "id_reference": {"table": "Pv's", "key": {"Knooppunt.Nummer": 3, "Subnummer": 1}}, "Naam": "pv1"}
+      {"id": 19, "node": 16, "id_reference": {"table": "Transformatorbelastingen", "name": "generation", "key": {"Knooppunt.Nummer": 3, "Subnummer": 2}}, "Naam": "transformer_load_1"},
+      {"id": 20, "node": 16, "id_reference": {"table": "Transformatorbelastingen", "name": "pv_generation", "key": {"Knooppunt.Nummer": 3, "Subnummer": 2}}, "Naam": "transformer_load_1"},
+      {"id": 22, "node": 3, "id_reference": {"table": "Synchrone generatoren", "key": {"Knooppunt.Nummer": 4, "Subnummer": 2}}, "Naam": "syngen1"},
+      {"id": 23, "node": 2, "id_reference": {"table": "Windturbines", "key": {"Knooppunt.Nummer": 3, "Subnummer": 3}}, "Naam": "wind1"},
+      {"id": 28, "node": 2, "id_reference": {"table": "Pv's", "key": {"Knooppunt.Nummer": 3, "Subnummer": 1}}, "Naam": "pv1"}
     ],
   "source":
     [
-      {"id": 19, "node": 0, "id_reference": {"table": "Netvoedingen", "key": {"Knooppunt.Nummer": 1, "Subnummer": 1}}, "Naam": "source1"}
+      {"id": 21, "node": 0, "id_reference": {"table": "Netvoedingen", "key": {"Knooppunt.Nummer": 1, "Subnummer": 1}}, "Naam": "source1"}
     ],
   "shunt":
     [
-      {"id": 23, "node": 2, "id_reference": {"table": "Nulpuntstransformatoren", "key": {"Knooppunt.Nummer": 3, "Subnummer": 5}}, "Naam": "zztrans1"},
-      {"id": 24, "node": 3, "id_reference": {"table": "Condensatoren", "key": {"Knooppunt.Nummer": 4, "Subnummer": 9}}, "Naam": "shunt1"},
-      {"id": 25, "node": 3, "id_reference": {"table": "Spoelen", "key": {"Knooppunt.Nummer": 4, "Subnummer": 1}}}
+      {"id": 25, "node": 2, "id_reference": {"table": "Nulpuntstransformatoren", "key": {"Knooppunt.Nummer": 3, "Subnummer": 5}}, "Naam": "zztrans1"},
+      {"id": 26, "node": 3, "id_reference": {"table": "Condensatoren", "key": {"Knooppunt.Nummer": 4, "Subnummer": 9}}, "Naam": "shunt1"},
+      {"id": 27, "node": 3, "id_reference": {"table": "Spoelen", "key": {"Knooppunt.Nummer": 4, "Subnummer": 1}}}
     ],
   "three_winding_transformer":
     [
-      {"id": 27, "node_1": 1, "node_2": 2, "node_3": 4, "id_reference": {"table": "Driewikkelingstransformatoren", "key": {"Nummer": 1}}}
+      {"id": 29, "node_1": 1, "node_2": 2, "node_3": 4, "id_reference": {"table": "Driewikkelingstransformatoren", "key": {"Nummer": 1}}}
     ]
 }
