@@ -14,7 +14,7 @@ DATA_DIR = Path(__file__).parents[2] / "data" / "vision"
 SOURCE_FILE = DATA_DIR / "vision_97_en.xlsx"
 REFERENCE_FILE = DATA_DIR / "vision_en.xlsx"
 SRC_CONFIG_DIR = Path("src") / "power_grid_model_io" / "config" / "excel"
-MAPPING_FILE_DIR = Path(__file__).parent[3] / SRC_CONFIG_DIR 
+MAPPING_FILE_DIR = Path(__file__).parents[3] / SRC_CONFIG_DIR 
 VISION_95_MAPPING_FILE = MAPPING_FILE_DIR / "vision_en.yaml"
 VISION_97_MAPPING_FILE = MAPPING_FILE_DIR / "vision_en_9_7.yaml"
 
