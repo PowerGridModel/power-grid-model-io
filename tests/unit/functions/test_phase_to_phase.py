@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 import numpy as np
 from power_grid_model.enum import WindingType
+from power_grid_model.enum import MeasuredTerminalType
 from pytest import approx, mark, param, raises
 
 from power_grid_model_io.functions.phase_to_phase import (
@@ -19,6 +20,7 @@ from power_grid_model_io.functions.phase_to_phase import (
     reactive_power,
     reactive_power_to_susceptance,
     relative_no_load_current,
+    get_measured_terminal_type,
 )
 
 
@@ -401,3 +403,21 @@ def test_reactive_power_to_susceptance(q_var: float, u_nom: float, expected: flo
 def test_pvs_power_adjustment(p: float, efficiency_type: str, expected: float):
     actual = pvs_power_adjustment(p, efficiency_type)
     assert actual == approx(expected) or (np.isnan(actual) and np.isnan(expected))
+
+
+@mark.parametrize(
+    ("code", "measured_terminal_type"),
+    [
+        ("cable_from", MeasuredTerminalType.branch_from),
+        ("transformer_load", MeasuredTerminalType.branch_to),
+        ("earthing_transformer", MeasuredTerminalType.branch_from),
+        ("source", MeasuredTerminalType.source),
+        ("shunt_capacitor", MeasuredTerminalType.shunt),
+        ("shunt_reactor", MeasuredTerminalType.shunt),
+        ("pv", MeasuredTerminalType.generator),
+        ("wind_turbine", MeasuredTerminalType.generator),
+        ("load", MeasuredTerminalType.load),
+    ],
+)
+def test_get_measured_terminal_type(code: str, measured_terminal_type: MeasuredTerminalType):
+    assert get_measured_terminal_type(code) == measured_terminal_type
