@@ -315,7 +315,7 @@ Transformer Load:
   sym_gen: ...
 ```
 
-Then for each row in `Transformer Load` table, all 5 corresponding PGM components are created. But if it is the intention is to make some of these components optional, then it is possible to do so with the help of `filters` functions. These functions apply a mask based on the rules provided by the funciton. The filters start from all components selected and the `filters` are applied in a recursive `and` way.
+Then for each row in `Transformer Load` table, all 5 corresponding PGM components are created. But if it is the intention is to make some of these components optional, then it is possible to do so with the help of `filters` functions. These functions apply a mask based on the rules provided by the funciton. All components are selected from the start and the `filters` are then applied in a recursive `and` way.
 
 For example, `exclude_value` excludes all rows which match at the `value` for the `col` specified.
 
