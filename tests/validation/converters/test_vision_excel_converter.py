@@ -14,6 +14,7 @@ import pytest
 from power_grid_model.data_types import SingleDataset
 
 from power_grid_model_io.converters import VisionExcelConverter
+from power_grid_model_io.converters.vision_excel_converter import CONFIG_PATH
 from power_grid_model_io.data_stores.base_data_store import DICT_KEY_NUMBER, LANGUAGE_EN, VISION_EXCEL_LAN_DICT
 from power_grid_model_io.data_types import ExtraInfo
 from power_grid_model_io.utils.json import JsonEncoder
@@ -29,9 +30,7 @@ LANGUAGES = ["en", "nl"]
 LANGUAGES_97 = ["en"]
 VALIDATION_EN = Path(str(VALIDATION_FILE).format(language="en"))
 CUSTOM_MAPPING_FILE = DATA_PATH / "vision_9_5_{language:s}.yaml"
-VISION_97_MAPPING_FILE = (
-    Path(__file__).parent.parent.parent.parent / "src/power_grid_model_io/config/excel" / "vision_en_9_7.yaml"
-)
+VISION_97_MAPPING_FILE = CONFIG_PATH / "vision_en_9_7.yaml"
 terms_changed = {"Grounding1": "N1", "Grounding2": "N2", "Grounding3": "N3", "Load.Behaviour": "Behaviour"}
 
 
