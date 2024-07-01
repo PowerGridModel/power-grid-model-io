@@ -26,7 +26,7 @@ classifiers=[
     "Operating System :: MacOS",
     "Topic :: Scientific/Engineering :: Physics",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "numpy>=1.20",
     "openpyxl",
@@ -84,7 +84,7 @@ addopts = ["--cov=power_grid_model_io", "--cov-report=term", "--cov-report=html:
 
 [tool.black]
 line-length = 120
-target-version = ["py39", "py310", "py311"]
+target-version = ["py310", "py311"]
 
 [tool.isort]
 profile = "black"

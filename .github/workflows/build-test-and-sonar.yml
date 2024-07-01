@@ -97,10 +97,10 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python: ["3.9", "3.10", "3.11", "3.12"]
+        python: ["3.10", "3.11", "3.12"]
         exclude:
           - os: macos-latest
-            python: "3.9"
+            python: "3.10"
       fail-fast: false
     runs-on: ${{ matrix.os }}
 
@@ -131,10 +131,10 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python: ["3.9", "3.10", "3.11", "3.12"]
+        python: ["3.10", "3.11", "3.12"]
         exclude:
           - os: macos-latest
-            python: "3.9"
+            python: "3.10"
       fail-fast: false
     runs-on: ${{ matrix.os }}
 
