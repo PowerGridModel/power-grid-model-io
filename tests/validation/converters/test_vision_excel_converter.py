@@ -24,7 +24,7 @@ from ..utils import compare_extra_info, component_attributes, component_objects,
 
 DATA_PATH = Path(__file__).parents[2] / "data" / "vision"
 SOURCE_FILE = DATA_PATH / "vision_{language:s}.xlsx"
-SOURCE_FILE_97 = DATA_PATH / "vision_97_{language:s}.xlsx"
+SOURCE_FILE_97 = DATA_PATH / "vision_{language:s}_9_7.xlsx"
 VALIDATION_FILE = DATA_PATH / "pgm_input_data_{language:s}.json"
 LANGUAGES = ["en", "nl"]
 LANGUAGES_97 = ["en"]
