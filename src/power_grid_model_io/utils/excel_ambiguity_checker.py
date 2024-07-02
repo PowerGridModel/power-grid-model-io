@@ -1,10 +1,29 @@
 # SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
+"""
+This module provides the ExcelAmbiguityChecker class, which is designed to identify and report ambiguous column names
+within the sheets of an Excel (.xlsx) file. It parses the Excel file, extracts the names of columns from a specified
+row across all sheets, and checks for any duplicates within those names to flag them as ambiguous.
 
+Usage:
+    checker = ExcelAmbiguityChecker(file_path='path/to/excel/file.xlsx', column_name_in_row=0)
+    has_ambiguity, ambiguous_columns = checker.check_ambiguity()
+    if has_ambiguity:
+        print("Ambiguous column names found:", ambiguous_columns)
+    else:
+        print("No ambiguous column names found.")
+
+Requirements:
+    - Python 3.6 or higher
+    - xml.etree.ElementTree for parsing XML structures within the Excel file.
+    - zipfile to handle the Excel file as a ZIP archive for parsing.
+"""
+import os
 import xml.etree.ElementTree as ET
 import zipfile
 from collections import Counter
+from typing import Dict, List, Optional, Tuple
 
 XML_NAME_SPACE = {"": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
 
@@ -33,12 +52,14 @@ class ExcelAmbiguityChecker:
             file_path (str): The path to the Excel file.
             column_name_in_row (int): The row index (0-based) where column names are expected. Default is 0.
         """
-        self._file_path = file_path
-        self._col_name_in_row = column_name_in_row
-        self.sheets = {}
-        self._parse_excel_file()
+        self._valid_file = file_path.endswith(".xlsx") and os.path.exists(file_path)
+        if self._valid_file:
+            self._file_path = file_path
+            self._col_name_in_row = column_name_in_row
+            self.sheets: Dict[str, List[str]] = {}
+            self._parse_excel_file()
 
-    def _parse_zip(self, zip_file) -> list:
+    def _parse_zip(self, zip_file) -> List[Optional[str]]:
         """
         Parses the shared strings XML file within the Excel ZIP archive to extract all shared strings.
 
@@ -56,7 +77,7 @@ class ExcelAmbiguityChecker:
                 shared_strings.append(si.text)
         return shared_strings
 
-    def _get_column_names_from_row(self, row, shared_strings) -> list:
+    def _get_column_names_from_row(self, row, shared_strings) -> List[Optional[str]]:
         """
         Extracts column names from a specified row using shared strings for strings stored in the shared string table.
 
@@ -90,7 +111,7 @@ class ExcelAmbiguityChecker:
             sheets = xml_tree.findall(".//sheet", namespaces=XML_NAME_SPACE)
 
             for index, sheet in enumerate(sheets, start=1):
-                sheet_name = sheet.get("name")
+                sheet_name = str(sheet.get("name"))
                 sheet_file_path = f"xl/worksheets/sheet{index}.xml"
 
                 with z.open(sheet_file_path) as f:
@@ -98,23 +119,34 @@ class ExcelAmbiguityChecker:
                     rows = sheet_tree.findall(".//row", namespaces=XML_NAME_SPACE)
                     if rows:
                         column_names = self._get_column_names_from_row(rows[self._col_name_in_row], shared_strings)
-                        self.sheets[sheet_name] = column_names
+                        self.sheets[sheet_name] = [name for name in column_names if name is not None]
 
-    def check_ambiguity(self) -> bool:
+    def list_sheets(self) -> List[str]:
+        """
+        Get the list of all sheet names in the Excel file.
+
+        Returns:
+            List[str]: list of all sheet names
+        """
+        return list(self.sheets.keys())
+
+    def check_ambiguity(self) -> Tuple[bool, Dict[str, List[str]]]:
         """
         Check if there is ambiguity in column names across sheets.
 
         Returns:
-            bool: result
+            Tuple[bool, Dict[str, List[str]]]: A tuple containing a boolean indicating if any ambiguity was found,
+            and a dictionary with sheet names as keys and lists of ambiguous column names as values.
         """
-        res = False
+        res: Dict[str, List[str]] = {}
+        if not self._valid_file:
+            return False, res
         for sheet_name, column_names in self.sheets.items():
             column_name_counts = Counter(column_names)
             duplicates = [name for name, count in column_name_counts.items() if count > 1]
             if duplicates:
-                print(f"In sheet: {sheet_name}, ambiguious column names: {duplicates}\n")
-                res = True
-        return res
+                res[sheet_name] = duplicates
+        return bool(res), res
 
 
 # Example usage

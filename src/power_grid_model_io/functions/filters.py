@@ -16,7 +16,7 @@ def exclude_empty(row: pd.Series, col: str) -> bool:
     """
     filter out empty
     """
-    if col not in row:        
+    if col not in row:
         raise ValueError(f"The column: '{col}' cannot be found for the filter")
     result = has_value(row[col])
     if isinstance(result, pd.Series):
