@@ -139,3 +139,9 @@ def test_get_appliance_id(converter: VisionExcelConverter):
 
     with pytest.raises(KeyError):
         converter.get_appliance_id(table="Sources", node_number=1, sub_number=3)
+
+@pytest.mark.parametrize("language", ["nl"])
+def test_ambiguity_in_vision_excel():
+    test_file = Path(__file__).parent.parent / "data" / "vision" / "OS_RAUWERD_Definitief_netwerk_1.xlsx"
+    converter = VisionExcelConverter(source_file=test_file, mapping_file=DEFAULT_MAPPING_FILE, language="nl")
+    converter.convert()
