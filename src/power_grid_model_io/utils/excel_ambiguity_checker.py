@@ -24,6 +24,7 @@ class ExcelAmbiguityChecker:
         _get_column_names_from_row(self, row, shared_strings): Extracts column names from a specified row.
         _parse_excel_file(self): Parses the Excel file to extract sheet names and their corresponding column names.
     """
+
     def __init__(self, file_path, column_name_in_row=0) -> None:
         """
         Initializes the ExcelAmbiguityChecker with the path to an Excel file and the row index for column names.
