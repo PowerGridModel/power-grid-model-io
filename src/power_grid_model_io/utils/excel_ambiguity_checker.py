@@ -25,7 +25,7 @@ import zipfile
 from collections import Counter
 from typing import Dict, List, Optional, Tuple
 
-XML_NAME_SPACE = {"": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
+XML_NAME_SPACE = {"": "https://schemas.openxmlformats.org/spreadsheetml/2006/main"}
 
 
 class ExcelAmbiguityChecker:
