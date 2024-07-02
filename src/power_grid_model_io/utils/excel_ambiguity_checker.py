@@ -138,15 +138,17 @@ class ExcelAmbiguityChecker:
             Tuple[bool, Dict[str, List[str]]]: A tuple containing a boolean indicating if any ambiguity was found,
             and a dictionary with sheet names as keys and lists of ambiguous column names as values.
         """
-        res: Dict[str, List[str]] = {}
+        if self.res:
+            return bool(self.res), self.res
+        self.res: Dict[str, List[str]] = {}
         if not self._valid_file:
-            return False, res
+            return False, self.res
         for sheet_name, column_names in self.sheets.items():
             column_name_counts = Counter(column_names)
             duplicates = [name for name, count in column_name_counts.items() if count > 1]
             if duplicates:
-                res[sheet_name] = duplicates
-        return bool(res), res
+                self.res[sheet_name] = duplicates
+        return bool(self.res), self.res
 
 
 # Example usage
