@@ -7,6 +7,7 @@ from unittest.mock import patch
 import pytest
 
 from power_grid_model_io.converters.vision_excel_converter import DEFAULT_MAPPING_FILE, VisionExcelConverter
+from power_grid_model_io.utils.excel_ambiguity_checker import ExcelAmbiguityChecker
 
 
 @pytest.fixture
@@ -141,9 +142,8 @@ def test_get_appliance_id(converter: VisionExcelConverter):
         converter.get_appliance_id(table="Sources", node_number=1, sub_number=3)
 
 
-# @pytest.mark.parametrize("language", ["nl"])
 def test_ambiguity_in_vision_excel():
-    # test_file = Path(__file__).parent.parent / "data" / "vision" / "OS_RAUWERD_Definitief_netwerk_1.xlsx"
-    # converter = VisionExcelConverter(source_file=test_file, mapping_file=DEFAULT_MAPPING_FILE, language=language)
-    # converter.convert()
-    pass
+    test_file = Path(__file__).parents[2] / "data" / "vision" / "data.xlsx"
+    converter = ExcelAmbiguityChecker(file_path=test_file.as_posix())
+    res, _ = converter.check_ambiguity()
+    assert res == True

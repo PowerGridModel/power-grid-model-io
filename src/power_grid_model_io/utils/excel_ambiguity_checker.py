@@ -25,7 +25,7 @@ import zipfile
 from collections import Counter
 from typing import Dict, List, Optional, Tuple
 
-XML_NAME_SPACE = {"": "https://schemas.openxmlformats.org/spreadsheetml/2006/main"}
+XML_NAME_SPACE = {"": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}  # NOSONAR
 
 
 class ExcelAmbiguityChecker:
@@ -138,17 +138,15 @@ class ExcelAmbiguityChecker:
             Tuple[bool, Dict[str, List[str]]]: A tuple containing a boolean indicating if any ambiguity was found,
             and a dictionary with sheet names as keys and lists of ambiguous column names as values.
         """
-        if self.res:
-            return bool(self.res), self.res
-        self.res: Dict[str, List[str]] = {}
+        res: Dict[str, List[str]] = {}
         if not self._valid_file:
-            return False, self.res
+            return False, res
         for sheet_name, column_names in self.sheets.items():
             column_name_counts = Counter(column_names)
             duplicates = [name for name, count in column_name_counts.items() if count > 1]
             if duplicates:
-                self.res[sheet_name] = duplicates
-        return bool(self.res), self.res
+                res[sheet_name] = duplicates
+        return bool(res), res
 
 
 # Example usage
