@@ -167,14 +167,16 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         if to_rename:
             columns = data.columns.values.copy()
             for col_idx, new_name in to_rename.items():
+                new_name = new_name[0] if isinstance(new_name, tuple) else new_name
+                full_new_name = (new_name, columns[col_idx][1])
                 self._log.warning(
                     "Column is renamed",
                     sheet_name=sheet_name,
                     col_name=columns[col_idx],
-                    new_name=new_name,
+                    new_name=full_new_name,
                     col_idx=col_idx,
                 )
-                columns[col_idx] = new_name
+                columns[col_idx] = full_new_name
 
             if data.columns.nlevels == 1:
                 data.columns = pd.Index(columns)
@@ -218,7 +220,7 @@ class ExcelFileStore(BaseDataStore[TabularData]):
                 if isinstance(col_name, tuple):
                     to_rename[dup_idx] = (f"{col_name[0]}_{counter}",) + col_name[1:]
                 else:
-                    to_rename[dup_idx] = f"{col_name[0]}_{counter}"
+                    to_rename[dup_idx] = f"{col_name}_{counter}"
 
         return to_rename
 
@@ -253,7 +255,7 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         grouped: Dict[Union[str, Tuple[str, ...]], Set[int]] = {}
         columns = data.columns.values
         for col_idx, col_name in enumerate(columns):
-            if col_name not in grouped:
-                grouped[col_name] = set()
-            grouped[col_name].add(col_idx)
+            if col_name[0] not in grouped:
+                grouped[col_name[0]] = set()
+            grouped[col_name[0]].add(col_idx)
         return grouped
