@@ -14,6 +14,7 @@ import pytest
 from power_grid_model.data_types import SingleDataset
 
 from power_grid_model_io.converters import VisionExcelConverter
+from power_grid_model_io.converters.vision_excel_converter import CONFIG_PATH
 from power_grid_model_io.data_stores.base_data_store import DICT_KEY_NUMBER, LANGUAGE_EN, VISION_EXCEL_LAN_DICT
 from power_grid_model_io.data_types import ExtraInfo
 from power_grid_model_io.utils.json import JsonEncoder
@@ -23,15 +24,13 @@ from ..utils import compare_extra_info, component_attributes, component_objects,
 
 DATA_PATH = Path(__file__).parents[2] / "data" / "vision"
 SOURCE_FILE = DATA_PATH / "vision_{language:s}.xlsx"
-SOURCE_FILE_97 = DATA_PATH / "vision_97_{language:s}.xlsx"
+SOURCE_FILE_97 = DATA_PATH / "vision_{language:s}_9_7.xlsx"
 VALIDATION_FILE = DATA_PATH / "pgm_input_data_{language:s}.json"
 LANGUAGES = ["en", "nl"]
 LANGUAGES_97 = ["en"]
 VALIDATION_EN = Path(str(VALIDATION_FILE).format(language="en"))
 CUSTOM_MAPPING_FILE = DATA_PATH / "vision_9_5_{language:s}.yaml"
-VISION_97_MAPPING_FILE = (
-    Path(__file__).parent.parent.parent.parent / "src/power_grid_model_io/config/excel" / "vision_en_9_7.yaml"
-)
+VISION_97_MAPPING_FILE = CONFIG_PATH / "vision_en_9_7.yaml"
 terms_changed = {"Grounding1": "N1", "Grounding2": "N2", "Grounding3": "N3", "Load.Behaviour": "Behaviour"}
 
 
@@ -325,7 +324,9 @@ def test_uuid_excel_input():
         number=VISION_EXCEL_LAN_DICT[LANGUAGE_EN][DICT_KEY_NUMBER],
         terms_changed=terms_changed,
     )
-    data_convtd, _ = VisionExcelConverter(source_file=ref_file_97).load_input_data()
+    data_convtd, _ = VisionExcelConverter(
+        source_file=ref_file_97, mapping_file=VISION_97_MAPPING_FILE
+    ).load_input_data()
     vision_cvtr = prep_vision_97(language=LANGUAGE_EN)
     data_native, _ = vision_cvtr.load_input_data()
 

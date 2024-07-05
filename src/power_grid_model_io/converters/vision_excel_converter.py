@@ -14,7 +14,8 @@ from power_grid_model_io.converters.tabular_converter import TabularConverter
 from power_grid_model_io.data_stores.base_data_store import LANGUAGE_EN
 from power_grid_model_io.data_stores.vision_excel_file_store import VisionExcelFileStore
 
-DEFAULT_MAPPING_FILE = Path(__file__).parent.parent / "config" / "excel" / "vision_{language:s}.yaml"
+CONFIG_PATH = Path(__file__).parent.parent / "config" / "excel"
+DEFAULT_MAPPING_FILE = CONFIG_PATH / "vision_{language:s}.yaml"
 
 
 @dataclass
