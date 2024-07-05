@@ -15,7 +15,7 @@ Usage:
         print("No ambiguous column names found.")
 
 Requirements:
-    - Python 3.6 or higher
+    - Python 3.9 or higher (PGM library dependencies)
     - xml.etree.ElementTree for parsing XML structures within the Excel file.
     - zipfile to handle the Excel file as a ZIP archive for parsing.
 """
@@ -26,7 +26,16 @@ from collections import Counter
 from typing import Dict, List, Optional, Tuple
 
 XML_NAME_SPACE = {"": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}  # NOSONAR
-
+WORK_BOOK = "xl/workbook.xml"
+SHARED_STR_PATH = "xl/sharedStrings.xml"
+FIND_T = ".//t"
+FIND_C = ".//c"
+FIND_V = ".//v"
+NAME = "name"
+FIND_ROW = ".//row"
+FIND_SHEET = ".//sheet"
+FIND_TYPE = "t"
+TYPE_STR = "s"
 
 class ExcelAmbiguityChecker:
     """
@@ -69,11 +78,11 @@ class ExcelAmbiguityChecker:
         Returns:
             list: A list of shared strings used in the Excel file.
         """
-        shared_strings_path = "xl/sharedStrings.xml"
+        shared_strings_path = SHARED_STR_PATH
         shared_strings = []
         with zip_file.open(shared_strings_path) as f:
             tree = ET.parse(f)
-            for si in tree.findall(".//t", namespaces=XML_NAME_SPACE):
+            for si in tree.findall(FIND_T, namespaces=XML_NAME_SPACE):
                 shared_strings.append(si.text)
         return shared_strings
 
@@ -89,10 +98,10 @@ class ExcelAmbiguityChecker:
             list: A list of column names found in the row.
         """
         column_names = []
-        for c in row.findall(".//c", namespaces=XML_NAME_SPACE):
-            cell_type = c.get("t")
-            value = c.find(".//v", namespaces=XML_NAME_SPACE)
-            if cell_type == "s" and value is not None:
+        for c in row.findall(FIND_C, namespaces=XML_NAME_SPACE):
+            cell_type = c.get(FIND_TYPE)
+            value = c.find(FIND_V, namespaces=XML_NAME_SPACE)
+            if cell_type == TYPE_STR and value is not None:
                 column_names.append(shared_strings[int(value.text)])
             elif value is not None:
                 column_names.append(value.text)
@@ -106,17 +115,17 @@ class ExcelAmbiguityChecker:
         """
         with zipfile.ZipFile(self._file_path) as z:
             shared_strings = self._parse_zip(z)
-            workbook_xml = z.read("xl/workbook.xml")
+            workbook_xml = z.read(WORK_BOOK)
             xml_tree = ET.fromstring(workbook_xml)
-            sheets = xml_tree.findall(".//sheet", namespaces=XML_NAME_SPACE)
+            sheets = xml_tree.findall(FIND_SHEET, namespaces=XML_NAME_SPACE)
 
             for index, sheet in enumerate(sheets, start=1):
-                sheet_name = str(sheet.get("name"))
+                sheet_name = str(sheet.get(NAME))
                 sheet_file_path = f"xl/worksheets/sheet{index}.xml"
 
                 with z.open(sheet_file_path) as f:
                     sheet_tree = ET.parse(f)
-                    rows = sheet_tree.findall(".//row", namespaces=XML_NAME_SPACE)
+                    rows = sheet_tree.findall(FIND_ROW, namespaces=XML_NAME_SPACE)
                     if rows:
                         column_names = self._get_column_names_from_row(rows[self._col_name_in_row], shared_strings)
                         self.sheets[sheet_name] = [name for name in column_names if name is not None]
@@ -151,5 +160,5 @@ class ExcelAmbiguityChecker:
 
 # Example usage
 if __name__ == "__main__":
-    excel_file_checker = ExcelAmbiguityChecker("data.xlsx")
+    excel_file_checker = ExcelAmbiguityChecker("excel_ambiguity_check_data.xlsx")
     excel_file_checker.check_ambiguity()
