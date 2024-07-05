@@ -37,6 +37,7 @@ FIND_SHEET = ".//sheet"
 FIND_TYPE = "t"
 TYPE_STR = "s"
 
+
 class ExcelAmbiguityChecker:
     """
     A class to check for ambiguous column names within the sheets of an Excel (.xlsx) file.

@@ -319,12 +319,13 @@ def test_handle_duplicate_columns(mock_check_duplicate_values: MagicMock):
 
     # Assert
     assert len(cap_log) == 3
-    assert_log_exists(cap_log, "warning", "Column is renamed", col_name=("A", ""), new_name="A_2", col_idx=3)
-    assert_log_exists(cap_log, "warning", "Column is renamed", col_name=("B", ""), new_name="B_2", col_idx=4)
-    assert_log_exists(cap_log, "warning", "Column is renamed", col_name=("A", "KW"), new_name="A_3", col_idx=5)
+    assert_log_exists(cap_log, "warning", "Column is renamed", col_name=("A", ""), new_name=("A_2", ""), col_idx=3)
+    assert_log_exists(cap_log, "warning", "Column is renamed", col_name=("B", ""), new_name=("B_2", ""), col_idx=4)
+    assert_log_exists(cap_log, "warning", "Column is renamed", col_name=("A", "KW"), new_name=("A_3", "KW"), col_idx=5)
 
     expected = pd.DataFrame(
         [  # A    B    C   A_2  B_2  A_3
+            #                         KW
             [101, 201, 301, 101, 201, 101],
             [102, 202, 302, 111, 202, 102],
             [103, 203, 303, 103, 203, 103],

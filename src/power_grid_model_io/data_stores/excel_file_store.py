@@ -167,15 +167,16 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         if to_rename:
             columns = data.columns.values.copy()
             for col_idx, new_name in to_rename.items():
+                new_name = new_name[0] if isinstance(new_name, tuple) else new_name
+                full_new_name = (new_name, columns[col_idx][1])
                 self._log.warning(
                     "Column is renamed",
                     sheet_name=sheet_name,
                     col_name=columns[col_idx],
-                    new_name=new_name,
+                    new_name=full_new_name,
                     col_idx=col_idx,
                 )
-                new_name = new_name[0] if isinstance(new_name, tuple) else new_name
-                columns[col_idx] = (new_name, columns[col_idx][1])
+                columns[col_idx] = full_new_name
 
             if data.columns.nlevels == 1:
                 data.columns = pd.Index(columns)
