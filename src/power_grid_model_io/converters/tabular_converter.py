@@ -626,6 +626,8 @@ class TabularConverter(BaseConverter[TabularData]):
 
             return pgm_id
 
+        if col_data.empty:
+            return col_data
         return col_data.apply(auto_id, axis=1, raw=True)
 
     def _parse_pandas_function(
