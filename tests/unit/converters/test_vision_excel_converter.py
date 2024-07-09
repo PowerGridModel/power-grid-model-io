@@ -7,6 +7,7 @@ from unittest.mock import patch
 import pytest
 
 from power_grid_model_io.converters.vision_excel_converter import DEFAULT_MAPPING_FILE, VisionExcelConverter
+from power_grid_model_io.utils.excel_ambiguity_checker import ExcelAmbiguityChecker
 
 
 @pytest.fixture
@@ -139,3 +140,10 @@ def test_get_appliance_id(converter: VisionExcelConverter):
 
     with pytest.raises(KeyError):
         converter.get_appliance_id(table="Sources", node_number=1, sub_number=3)
+
+
+def test_ambiguity_in_vision_excel():
+    ambiguious_test_file = Path(__file__).parents[2] / "data" / "vision" / "excel_ambiguity_check_data.xlsx"
+    excel_file_checker = ExcelAmbiguityChecker(file_path=ambiguious_test_file.as_posix())
+    res, _ = excel_file_checker.check_ambiguity()
+    assert res == True

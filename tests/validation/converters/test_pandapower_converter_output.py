@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import os
+from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
 from typing import Tuple
@@ -19,6 +21,14 @@ from ..utils import component_attributes_df, load_json_single_dataset
 
 PGM_OUTPUT_FILE = Path(__file__).parents[2] / "data" / "pandapower" / "pgm_output_data.json"
 PGM_ASYM_OUTPUT_FILE = Path(__file__).parents[2] / "data" / "pandapower" / "pgm_asym_output_data.json"
+
+
+@contextmanager
+def temporary_file_cleanup(file_path):
+    try:
+        yield
+    finally:
+        os.remove(file_path)
 
 
 @lru_cache
@@ -92,8 +102,10 @@ def test_generate_output():  # TODO: REMOVE THIS FUNCTION
     assert_valid_input_data(input_data=input_data)
     pgm = PowerGridModel(input_data=input_data)
     output_data = pgm.calculate_power_flow()
-    json_converter = PgmJsonConverter(destination_file=PGM_OUTPUT_FILE)
-    json_converter.save(data=output_data, extra_info=extra_info)
+    temp_file = PGM_OUTPUT_FILE.with_name(PGM_OUTPUT_FILE.stem + "_temp").with_suffix(".json")
+    with temporary_file_cleanup(temp_file):
+        json_converter = PgmJsonConverter(destination_file=temp_file)
+        json_converter.save(data=output_data, extra_info=extra_info)
 
 
 def test_generate_output_3ph():  # TODO: REMOVE THIS FUNCTION
@@ -107,8 +119,10 @@ def test_generate_output_3ph():  # TODO: REMOVE THIS FUNCTION
     assert_valid_input_data(input_data=input_data, symmetric=False)
     pgm = PowerGridModel(input_data=input_data)
     output_data_asym = pgm.calculate_power_flow(symmetric=False)
-    json_converter = PgmJsonConverter(destination_file=PGM_ASYM_OUTPUT_FILE)
-    json_converter.save(data=output_data_asym, extra_info=extra_info)
+    temp_file = PGM_ASYM_OUTPUT_FILE.with_name(PGM_ASYM_OUTPUT_FILE.stem + "_temp").with_suffix(".json")
+    with temporary_file_cleanup(temp_file):
+        json_converter = PgmJsonConverter(destination_file=temp_file)
+        json_converter.save(data=output_data_asym, extra_info=extra_info)
 
 
 def test_output_data(output_data: Tuple[PandaPowerData, PandaPowerData]):

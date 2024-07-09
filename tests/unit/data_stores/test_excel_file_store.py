@@ -308,7 +308,7 @@ def test_handle_duplicate_columns(mock_check_duplicate_values: MagicMock):
             [102, 202, 302, 111, 202, 102],
             [103, 203, 303, 103, 203, 103],
         ],
-        columns=["A", "B", "C", "A", "B", "A"],
+        columns=[("A", ""), ("B", ""), ("C", ""), ("A", ""), ("B", ""), ("A", "KW")],
     )
     store = ExcelFileStore()
     mock_check_duplicate_values.return_value = {3: "A_2", 4: "B_2", 5: "A_3"}
@@ -319,17 +319,18 @@ def test_handle_duplicate_columns(mock_check_duplicate_values: MagicMock):
 
     # Assert
     assert len(cap_log) == 3
-    assert_log_exists(cap_log, "warning", "Column is renamed", col_name="A", new_name="A_2", col_idx=3)
-    assert_log_exists(cap_log, "warning", "Column is renamed", col_name="B", new_name="B_2", col_idx=4)
-    assert_log_exists(cap_log, "warning", "Column is renamed", col_name="A", new_name="A_3", col_idx=5)
+    assert_log_exists(cap_log, "warning", "Column is renamed", col_name=("A", ""), new_name=("A_2", ""), col_idx=3)
+    assert_log_exists(cap_log, "warning", "Column is renamed", col_name=("B", ""), new_name=("B_2", ""), col_idx=4)
+    assert_log_exists(cap_log, "warning", "Column is renamed", col_name=("A", "KW"), new_name=("A_3", "KW"), col_idx=5)
 
     expected = pd.DataFrame(
         [  # A    B    C   A_2  B_2  A_3
+            #                         KW
             [101, 201, 301, 101, 201, 101],
             [102, 202, 302, 111, 202, 102],
             [103, 203, 303, 103, 203, 103],
         ],
-        columns=["A", "B", "C", "A_2", "B_2", "A_3"],
+        columns=[("A", ""), ("B", ""), ("C", ""), ("A_2", ""), ("B_2", ""), ("A_3", "KW")],
     )
     pd.testing.assert_frame_equal(actual, expected)
 
@@ -455,10 +456,10 @@ def test_group_columns_by_index():
 
 def test_group_columns_by_index__multi():
     # Arrange
-    data = pd.DataFrame(columns=pd.MultiIndex.from_tuples([("A", 1), ("B", 2), ("C", 3), ("A", 1), ("B", 2), ("A", 1)]))
+    data = pd.DataFrame(columns=pd.MultiIndex.from_tuples([("A", 1), ("B", 2), ("C", 3), ("A", 4), ("B", 5), ("A", 6)]))
 
     # Act
     grouped = ExcelFileStore._group_columns_by_index(data=data)
 
     # Assert
-    assert grouped == {("A", 1): {0, 3, 5}, ("B", 2): {1, 4}, ("C", 3): {2}}
+    assert grouped == {"A": {0, 3, 5}, "B": {1, 4}, "C": {2}}
