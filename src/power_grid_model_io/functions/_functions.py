@@ -10,7 +10,7 @@ from typing import Any, Optional, TypeVar, cast
 
 import numpy as np
 import structlog
-from power_grid_model import WindingType
+from power_grid_model import MeasuredTerminalType, WindingType
 
 T = TypeVar("T")
 
@@ -104,3 +104,10 @@ def both_zeros_to_nan(value: float, other_value: float) -> float:
         _LOG.warning("0 replaced to nan")
         return float("nan")
     return value
+
+def filter_if_object(object_name: str, excl_object: str) -> bool:
+    """
+    Return false if the measured object should be excluded.
+    """
+    return object_name != excl_object
+
