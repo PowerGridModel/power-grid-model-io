@@ -822,6 +822,22 @@ def test_parse_auto_id__invalid_key_definition(
         )
 
 
+@patch("power_grid_model_io.converters.tabular_converter.TabularConverter._get_id")
+def test_parse_auto_id__empty_col_data(
+    mock_get_id: MagicMock, converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
+):
+    converter._parse_auto_id(
+        data=tabular_data_no_units_no_substitutions,
+        table="lines",
+        ref_table=None,
+        ref_name=None,
+        key_col_def={"id": "id_number", "node": "from_node_side"},
+        table_mask=np.array([False, False]),
+        extra_info={},
+    )
+    mock_get_id.assert_not_called()
+
+
 @pytest.mark.parametrize(
     ("function", "expected"),
     [
