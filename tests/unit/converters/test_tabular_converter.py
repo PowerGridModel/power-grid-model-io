@@ -51,16 +51,16 @@ def tabular_data():
     )
     lines = pd.DataFrame(data=[[1, 100], [2, 200]], columns=["id_number", "from_node_side"])
     loads = pd.DataFrame(data=[[1, 1, 1], [2, 2, 0]], columns=["id_number", "node_id", "switching_status"])
-    tabular_data = TabularData(nodes=nodes, lines=lines, loads=loads)
-    return tabular_data
+    sources = pd.DataFrame(columns=["id_number", "node_side"])
+    return TabularData(nodes=nodes, lines=lines, loads=loads, sources=sources)
 
 
 @pytest.fixture
 def tabular_data_no_units_no_substitutions():
     nodes = pd.DataFrame(data=[[1, 10.5e3], [2, 400.0]], columns=["id_number", "u_nom"])
     lines = pd.DataFrame(data=[[1, 2], [3, 1]], columns=["id_number", "from_node_side"])
-    tabular_data = TabularData(nodes=nodes, lines=lines)
-    return tabular_data
+    sources = pd.DataFrame(columns=["id_number", "node_side"])
+    return TabularData(nodes=nodes, lines=lines, sources=sources)
 
 
 def test_set_mapping_file(converter: TabularConverter):
@@ -182,7 +182,7 @@ def test_convert_table_to_component__filters_all_false(
     converter._parse_table_filters = MagicMock()
     converter._parse_table_filters.side_effect = np.array([False, False])
     node_attributes_with_filter = {"id": "id_number", "u_rated": "u_nom", "filters": [{"test_fn": {}}]}
-    converter._convert_table_to_component(
+    actual = converter._convert_table_to_component(
         data=tabular_data_no_units_no_substitutions,
         data_type="input",
         table="nodes",
@@ -191,6 +191,7 @@ def test_convert_table_to_component__filters_all_false(
         extra_info=None,
     )
 
+    assert actual is None
     converter._parse_table_filters.assert_called_once_with(
         data=tabular_data_no_units_no_substitutions,
         table="nodes",
