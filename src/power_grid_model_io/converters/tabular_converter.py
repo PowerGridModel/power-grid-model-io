@@ -180,6 +180,8 @@ class TabularConverter(BaseConverter[TabularData]):
 
         if "filters" in attributes:
             table_mask = self._parse_table_filters(data=data, table=table, filtering_functions=attributes["filters"])
+            if table_mask is not None and not table_mask.any():
+                return None
         else:
             table_mask = None
 

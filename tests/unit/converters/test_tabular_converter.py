@@ -175,6 +175,30 @@ def test_convert_table_to_component__filters(
     )
 
 
+def test_convert_table_to_component__filters_all_false(
+    converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
+):
+    converter._convert_col_def_to_attribute = MagicMock()
+    converter._parse_table_filters = MagicMock()
+    converter._parse_table_filters.side_effect = np.array([False, False])
+    node_attributes_with_filter = {"id": "id_number", "u_rated": "u_nom", "filters": [{"test_fn": {}}]}
+    converter._convert_table_to_component(
+        data=tabular_data_no_units_no_substitutions,
+        data_type="input",
+        table="nodes",
+        component="node",
+        attributes=node_attributes_with_filter,
+        extra_info=None,
+    )
+
+    converter._parse_table_filters.assert_called_once_with(
+        data=tabular_data_no_units_no_substitutions,
+        table="nodes",
+        filtering_functions=node_attributes_with_filter["filters"],
+    )
+    converter._convert_col_def_to_attribute.assert_not_called()
+
+
 def test_convert_col_def_to_attribute(
     converter: TabularConverter,
     tabular_data_no_units_no_substitutions: TabularData,
