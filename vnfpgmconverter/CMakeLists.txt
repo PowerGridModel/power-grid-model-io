@@ -13,24 +13,12 @@ set(CMAKE_C_VISIBILITY_PRESET hidden)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Find the Power Grid Model C API library
-# find_library(POWER_GRID_MODEL_LIB power_grid_model_c)
-# set(POWER_GRID_MODEL_LIB "path")
-
-set(ADDITIONAL_LIBRARY_PATH "path")
-
-set(ADDITIONAL_INCLUDE_PATH "path")
-set(SUB_INCLUDE_PATH "path")
-
-message(STATUS "Additional Library Path: ${ADDITIONAL_LIBRARY_PATH}")
-message(STATUS "Additional Include Path: ${ADDITIONAL_INCLUDE_PATH}")
-message(STATUS "Sub Include Path: ${SUB_INCLUDE_PATH}")
-
-find_library(POWER_GRID_MODEL_LIB NAMES power_grid_model_c PATHS ${ADDITIONAL_LIBRARY_PATH})
+find_library(POWER_GRID_MODEL_LIB power_grid_model)
 
 if (NOT POWER_GRID_MODEL_LIB)
-    message(FATAL_ERROR "PowerGridModel library not found. Ensure it is in the specified path: ${ADDITIONAL_LIBRARY_PATH}")
+    message(FATAL_ERROR "PowerGridModel library not found.")
 else()
-    message(STATUS "PowerGridModel library found: ${POWER_GRID_MODEL_LIB}")
+    message(STATUS "PowerGridModel library found.")
 endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/include ${ADDITIONAL_INCLUDE_PATH} ${SUB_INCLUDE_PATH})
