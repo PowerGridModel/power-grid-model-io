@@ -1,0 +1,3 @@
+[submodule "power-grid-model"]
+	path = power-grid-model
+	url = https://github.com/PowerGridModel/power-grid-model
