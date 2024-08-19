@@ -12,19 +12,15 @@ set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_C_VISIBILITY_PRESET hidden)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Find the Power Grid Model C API library
-find_library(POWER_GRID_MODEL_LIB power_grid_model)
+find_package(Eigen3 CONFIG REQUIRED)
+find_package(Boost REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(msgpack-cxx REQUIRED)
 
-if (NOT POWER_GRID_MODEL_LIB)
-    message(FATAL_ERROR "PowerGridModel library not found.")
-else()
-    message(STATUS "PowerGridModel library found.")
-endif()
+add_subdirectory(power-grid-model)
 
-include_directories(${CMAKE_SOURCE_DIR}/include ${ADDITIONAL_INCLUDE_PATH} ${SUB_INCLUDE_PATH})
+message(STATUS "CMAKE_SOURCE_DIR is set to: ${CMAKE_SOURCE_DIR}")
 
-message(STATUS "Source Directory Include Path: ${CMAKE_SOURCE_DIR}/include")
+add_executable(PgmVnfConverter src/main.cpp)
 
-add_executable(PgmVnfConverter src/vnf_pgm_converter.cpp src/c_converter_api.cpp)
-
-target_link_libraries(PgmVnfConverter ${POWER_GRID_MODEL_LIB})
+target_link_libraries(PgmVnfConverter PRIVATE power_grid_model)
