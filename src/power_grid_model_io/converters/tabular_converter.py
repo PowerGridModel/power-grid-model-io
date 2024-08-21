@@ -180,6 +180,8 @@ class TabularConverter(BaseConverter[TabularData]):
 
         if "filters" in attributes:
             table_mask = self._parse_table_filters(data=data, table=table, filtering_functions=attributes["filters"])
+            if table_mask is not None and not table_mask.any():
+                return None
         else:
             table_mask = None
 
@@ -626,6 +628,8 @@ class TabularConverter(BaseConverter[TabularData]):
 
             return pgm_id
 
+        if col_data.empty:
+            return col_data
         return col_data.apply(auto_id, axis=1, raw=True)
 
     def _parse_pandas_function(
