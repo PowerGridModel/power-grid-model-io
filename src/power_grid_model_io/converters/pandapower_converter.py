@@ -747,8 +747,13 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_transformers["sn"] = sn_mva * parallel * 1e6
         pgm_transformers["uk"] = vk_percent * 1e-2
         pgm_transformers["pk"] = vkr_percent * sn_mva * parallel * (1e6 * 1e-2)
-        pgm_transformers["i0"] = i_no_load * 1e-2
         pgm_transformers["p0"] = pfe * parallel * 1e3
+        pgm_transformers["i0"] = i_no_load * 1e-2
+        if any(np.less(pgm_transformers["i0"], pgm_transformers["p0"] / pgm_transformers["sn"])):
+            logger.warning("Minimum value of i0 is clipped to p0/sn")
+            pgm_transformers["i0"] = np.clip(
+                pgm_transformers["i0"], a_min=pgm_transformers["p0"] / pgm_transformers["sn"], a_max=None
+            )
         pgm_transformers["clock"] = clocks
         pgm_transformers["winding_from"] = winding_types["winding_from"]
         pgm_transformers["winding_to"] = winding_types["winding_to"]

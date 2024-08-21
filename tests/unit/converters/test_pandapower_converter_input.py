@@ -822,6 +822,7 @@ def test_create_pgm_input_shunts(mock_init_array: MagicMock, two_pp_objs, conver
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 @patch("power_grid_model_io.converters.pandapower_converter.np.round", new=lambda x: x)
+@patch("power_grid_model_io.converters.pandapower_converter.np.less", new=lambda x, _, **kwargs: x)
 @patch("power_grid_model_io.converters.pandapower_converter.np.divide", new=lambda x, _, **kwargs: x)
 @patch("power_grid_model_io.converters.pandapower_converter.np.bitwise_and", new=lambda x, _: x)
 @patch("power_grid_model_io.converters.pandapower_converter.np.logical_and", new=lambda x, _: x)
