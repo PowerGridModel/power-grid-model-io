@@ -747,8 +747,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_transformers["sn"] = sn_mva * parallel * 1e6
         pgm_transformers["uk"] = vk_percent * 1e-2
         pgm_transformers["pk"] = vkr_percent * sn_mva * parallel * (1e6 * 1e-2)
-        pgm_transformers["i0"] = i_no_load * 1e-2
         pgm_transformers["p0"] = pfe * parallel * 1e3
+        pgm_transformers["i0"] = i_no_load * 1e-2
+        i0_min_threshold = pgm_transformers["p0"] / pgm_transformers["sn"]
+        if any(np.less(pgm_transformers["i0"], i0_min_threshold)):
+            logger.warning("Minimum value of i0_percent is clipped to p0/sn")
+            pgm_transformers["i0"] = np.clip(pgm_transformers["i0"], a_min=i0_min_threshold, a_max=None)
         pgm_transformers["clock"] = clocks
         pgm_transformers["winding_from"] = winding_types["winding_from"]
         pgm_transformers["winding_to"] = winding_types["winding_to"]
@@ -875,8 +879,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_3wtransformers["pk_13"] = vkr_lv_percent * np.minimum(sn_hv_mva, sn_lv_mva) * (1e-2 * 1e6)
         pgm_3wtransformers["pk_23"] = vkr_mv_percent * np.minimum(sn_mv_mva, sn_lv_mva) * (1e-2 * 1e6)
 
-        pgm_3wtransformers["i0"] = self._get_pp_attr("trafo3w", "i0_percent", expected_type="f8") * 1e-2
         pgm_3wtransformers["p0"] = self._get_pp_attr("trafo3w", "pfe_kw", expected_type="f8") * 1e3
+        pgm_3wtransformers["i0"] = self._get_pp_attr("trafo3w", "i0_percent", expected_type="f8") * 1e-2
+        i0_min_threshold = pgm_3wtransformers["p0"] / pgm_3wtransformers["sn_1"]
+        if any(np.less(pgm_3wtransformers["i0"], i0_min_threshold)):
+            logger.warning("Minimum value of i0_percent is clipped to p0/sn_1")
+            pgm_3wtransformers["i0"] = np.clip(pgm_3wtransformers["i0"], a_min=i0_min_threshold, a_max=None)
         pgm_3wtransformers["clock_12"] = clocks_12
         pgm_3wtransformers["clock_13"] = clocks_13
         pgm_3wtransformers["winding_1"] = winding_types["winding_1"]
