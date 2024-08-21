@@ -12,7 +12,15 @@ from typing import Dict, List, MutableMapping, Optional, Tuple, Type, Union
 import numpy as np
 import pandas as pd
 import structlog
-from power_grid_model import Branch3Side, BranchSide, LoadGenType, WindingType, initialize_array, power_grid_meta_data
+from power_grid_model import (
+    Branch3Side,
+    BranchSide,
+    DatasetType,
+    LoadGenType,
+    WindingType,
+    initialize_array,
+    power_grid_meta_data,
+)
 from power_grid_model.data_types import Dataset, SingleDataset
 
 from power_grid_model_io.converters.base_converter import BaseConverter
@@ -113,10 +121,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             self._extra_info_to_pgm_input_data(extra_info)
 
         # Convert
-        def pgm_output_dtype_checker(check_type: str) -> bool:
+        def pgm_output_dtype_checker(check_type: DatasetType | str) -> bool:
             return all(
                 (
-                    comp_array.dtype == power_grid_meta_data[check_type][component]
+                    comp_array.dtype == power_grid_meta_data[DatasetType[check_type]][component]
                     for component, comp_array in self.pgm_output_data.items()
                 )
             )
@@ -248,7 +256,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         nan = np.iinfo(dtype).min
         all_other_cols = ["i_n"]
         for component, data in self.pgm_output_data.items():
-            input_cols = power_grid_meta_data["input"][component].dtype.names
+            input_cols = power_grid_meta_data[DatasetType.input][component].dtype.names
+            if input_cols is None:
+                input_cols = tuple()
+
             node_cols = [col for col in input_cols if is_node_ref(col)]
             other_cols = [col for col in input_cols if col in all_other_cols]
             if not node_cols + other_cols:
@@ -1594,9 +1605,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # Combine all branch bus, current and et in one dataframe
         all_i_df = pd.concat(
             [
-                join_currents(table, bus_name, i_name)
-                if not rest_switches_absent[table]
-                else pd.DataFrame(columns=["bus", "element", "et", "i_ka"])
+                (
+                    join_currents(table, bus_name, i_name)
+                    if not rest_switches_absent[table]
+                    else pd.DataFrame(columns=["bus", "element", "et", "i_ka"])
+                )
                 for table, attr_names in switch_attrs.items()
                 for bus_name, i_name in attr_names.items()
             ]
