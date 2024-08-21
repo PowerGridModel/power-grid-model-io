@@ -1032,7 +1032,14 @@ def test_create_pgm_input_sym_gens(mock_init_array: MagicMock, two_pp_objs, conv
 
 @pytest.mark.parametrize(
     "kwargs",
-    [{"vk0_percent": 2}, {"vkr0_percent": 1}, {"mag0_percent": 5}, {"mag0_rx": 0.2}, {"si0_hv_partial": 0.3}],
+    [
+        {"pfe_kw": 2},
+        {"vk0_percent": 2},
+        {"vkr0_percent": 1},
+        {"mag0_percent": 5},
+        {"mag0_rx": 0.2},
+        {"si0_hv_partial": 0.3},
+    ],
 )
 @patch(
     "power_grid_model_io.converters.pandapower_converter.PandaPowerConverter.get_switch_states",
@@ -1050,11 +1057,14 @@ def test_create_pgm_input_sym_gens(mock_init_array: MagicMock, two_pp_objs, conv
     "power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._get_pgm_ids",
     new=MagicMock(return_value=pd.Series([0])),
 )
-def test_create_pgm_input_transformers__zero_sequence(kwargs) -> None:
+def test_create_pgm_input_transformers__warnings(kwargs) -> None:
     # Arrange
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
     args = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    if "pfe_kw" in kwargs:
+        args[-2] = kwargs["pfe_kw"]
+        kwargs = {}
     pp.create_transformer_from_parameters(pp_net, *args, **kwargs)
 
     converter = PandaPowerConverter()
@@ -1388,6 +1398,7 @@ def test_create_pgm_input_transformers3w__default() -> None:
 @pytest.mark.parametrize(
     "kwargs",
     [
+        {"pfe_kw": 2},
         {"vk0_hv_percent": 1},
         {"vkr0_hv_percent": 2},
         {"vk0_mv_percent": 3},
@@ -1412,11 +1423,14 @@ def test_create_pgm_input_transformers3w__default() -> None:
     "power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._get_pgm_ids",
     new=MagicMock(return_value=pd.Series([0])),
 )
-def test_create_pgm_input_transformers3w__zero_sequence(kwargs) -> None:
+def test_create_pgm_input_transformers3w__warnings(kwargs) -> None:
     # Arrange
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
     args = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    if "pfe_kw" in kwargs:
+        args[-2] = kwargs["pfe_kw"]
+        kwargs = {}
     pp.create_transformer3w_from_parameters(pp_net, *args, **kwargs)
 
     converter = PandaPowerConverter()
