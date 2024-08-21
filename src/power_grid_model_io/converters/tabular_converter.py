@@ -221,7 +221,7 @@ class TabularConverter(BaseConverter[TabularData]):
         for filtering_fn in filtering_functions:
             for fn_name, kwargs in filtering_fn.items():
                 fn_ptr = get_function(fn_name)
-                table_mask &= data[table].apply(fn_ptr, axis=1, **kwargs).values
+                table_mask &= cast(pd.DataFrame, data[table]).apply(fn_ptr, axis=1, **kwargs).values
         return table_mask
 
     # pylint: disable = too-many-arguments

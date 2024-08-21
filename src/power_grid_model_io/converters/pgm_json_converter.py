@@ -151,9 +151,12 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
 
                 # If an attribute doesn't exist, it is added to the extra_info lookup table
                 elif extra_info is not None:
-                    if obj["id"] not in extra_info:
-                        extra_info[obj["id"]] = {}
-                    extra_info[obj["id"]][attribute] = value
+                    obj_id = obj["id"]
+                    if not isinstance(obj_id, int):
+                        raise ValueError(f"Invalid 'id' value for {component} {data_type} data")
+                    if obj_id not in extra_info:
+                        extra_info[obj_id] = {}
+                    extra_info[obj_id][attribute] = value
         return array
 
     def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfo]) -> StructuredData:
@@ -271,7 +274,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
                 self._extract_extra_component_info(component, entry, reserialized_data, extra_info)
 
     def _extract_extra_component_info(
-        self, component: str, attributes: Dict[str, Any], reserialized_data: SingleDataset, extra_info: ExtraInfo
+        self, component: str, attributes: Dict[str, Any], reserialized_data: SinglePythonDataset, extra_info: ExtraInfo
     ):
         entry_id = attributes["id"]
         reserialized_entry = self._get_first_by(reserialized_data[component], "id", entry_id)
