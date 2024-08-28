@@ -5,6 +5,38 @@ grid:
         auto_id:
           key: GUID
       u_rated: Unom
+  CABLE:
+    line:
+      id:
+        auto_id:
+          key: GUID
+      from_node:
+        auto_id:
+          table: NODE
+          key:
+            GUID: Node1
+      from_status: SwitchState1
+      to_node:
+        auto_id:
+          table: NODE
+          key:
+            GUID: Node2
+      to_status: SwitchState2
+      r1: R
+      x1: X
+      c1: C
+      tan1: 0
+      r0:
+        power_grid_model_io.functions.both_zeros_to_nan:
+          value: R0
+          other_value: X0
+      x0:
+        power_grid_model_io.functions.both_zeros_to_nan:
+          value: X0
+          other_value: R0
+      c0: C0
+      tan0: 0
+      i_n: Inom1
   LINE:
     line:
       id:
