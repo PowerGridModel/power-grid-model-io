@@ -68,7 +68,7 @@ You can use the following `column` definitions:
     ```yaml
     p_specified: Inverter.Pnom | Inverter.Snom
     ```
-  * Automatic IDs `Dict[str, Dict[str, Any]]` with single key `reference`, required attribute `key` and optinal
+  * Automatic IDs `Dict[str, Dict[str, Any]]` with single key `reference`, required attribute `key` and optional
     attributes `table` and `name`. More extensive examples are shown in the section [AutoID Mapping](##autois-mapping).
     ```yaml
     id:
