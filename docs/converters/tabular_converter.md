@@ -30,13 +30,13 @@ grid:
         auto_id:
           table: Nodes
           key:
-            Number: From.Number      
+            Number: From.Number
       from_status: From.Switch state
       to_node:
         auto_id:
           table: Nodes
           key:
-            Number: To.Number      
+            Number: To.Number
       to_status: To.Switch state
 
 units:
@@ -58,7 +58,7 @@ The for each PGM `column` the source column is supplied (e.g., u_rated: Unom, fr
 ## Field Definitions
 If the `column` definition is a one-on-one mapping, the value is simply the name of the source column (e.g., u_rated: Unom).
 In many other cases, however, mappings can be a bit more complex.
-You can use the following `column` definitions: 
+You can use the following `column` definitions:
 
   * Column name `str`
     ```yaml
@@ -68,15 +68,15 @@ You can use the following `column` definitions:
     ```yaml
     p_specified: Inverter.Pnom | Inverter.Snom
     ```
-  * Automatic IDs `Dict[str, Dict[str, Any]]` with single key `reference`, required attribute `key` and optinal 
+  * Automatic IDs `Dict[str, Dict[str, Any]]` with single key `reference`, required attribute `key` and optional
     attributes `table` and `name`. More extensive examples are shown in the section [AutoID Mapping](##autois-mapping).
     ```yaml
     id:
       auto_id:
         key: Number
     ```
- 
-  * Reference to a column on another sheet `Dict[str, Dict[str, Any]]` with single key `reference` and the 
+
+  * Reference to a column on another sheet `Dict[str, Dict[str, Any]]` with single key `reference` and the
     ```yaml
     r1:
       reference:
@@ -118,7 +118,7 @@ You can use the following `column` definitions:
     Is similar to something like:
     ```python
     from power_grid_model_io.functions.phase_to_phase import reactive_power
-    
+
     q_specified = reactive_power(
       p=min(
         table["Pnom"],
@@ -147,13 +147,13 @@ units:
 The definitions above can be interpreted as:
   * **A** is a valid SI unit
   * **F** is a valid SI unit
-    * 1 **µF** = 0.000001 **A**
+    * 1 **µF** = 0.000001 **F**
   * **ohm/m** is a valid SI unit
     * 1 **ohm/km** = 0.001 **ohm/m**
 
 ## Substitutions
-Some columns may contain categorical values (enums) that should be mapped. The column names can be defined as 
-regular expressions. 
+Some columns may contain categorical values (enums) that should be mapped. The column names can be defined as
+regular expressions.
 ```yaml
 substitutions:
   ".*Switch state":
@@ -172,7 +172,7 @@ The definitions above can be interpreted as:
     and the word "own" boolean value `true`.
 
 ## AutoID
-The `id` field is special in the sense that each object should have a unique numerical id in power grid model. 
+The `id` field is special in the sense that each object should have a unique numerical id in power grid model.
 Therefore, each id definition is mapped to a numerical (integer) ID.
 Field names that end with `node` are also mapped to corresponding numerical IDs.
 
@@ -185,7 +185,7 @@ b = auto_id("Bravo")   # b = 1
 c = auto_id("Alpha")   # c = 0 (because key "Alpha" already existed)
 item = auto_id[1]      # item = "Bravo"
  ```
-  
+
 See also {py:class}`power_grid_model_io.utils.AutoID`
 
 ## AutoID Mapping
@@ -215,9 +215,9 @@ Let's consider a very common example of the usage of `auto_id` in a mapping file
 ```
 This basically reads:
 * For each row in the Nodes table, a PGM node instance is created.
-  * For each node instance, a numerical id is generated, which is unique for each value in the Number column. This 
-    assumes that the Number column is unique in the source table. Let's say tha values of the Number column in that 
-    Nodes source table are `[101, 102, 103]`, then the generated IDs will be `[0, 1, 2]`. However, if the source 
+  * For each node instance, a numerical id is generated, which is unique for each value in the Number column. This
+    assumes that the Number column is unique in the source table. Let's say tha values of the Number column in that
+    Nodes source table are `[101, 102, 103]`, then the generated IDs will be `[0, 1, 2]`. However, if the source
     column is not unique, the pgm ids won't be unique as well: `[101, 102, 103, 101] -> [0, 1, 2, 0]`.
   * Under the hood, the table name `Nodes` and the column name `Number` are used to generate these IDs:
     * `{"table": "Nodes", "key" {"Number": 101} -> 0`
@@ -225,13 +225,13 @@ This basically reads:
     * `{"table": "Nodes", "key" {"Number": 103} -> 2`
 * For each row in the Cables table, a PGM line instance is created.
   * For each line instance, a numerical id is generated, just like for the nodes.
-    Let's say there are two Cables `[201, 202]` and the corresponding lines will have IDs `[3, 4]`.  
+    Let's say there are two Cables `[201, 202]` and the corresponding lines will have IDs `[3, 4]`.
     * `{"table": "Cables", "key" {"Number": 201} -> 3`
     * `{"table": "Cables", "key" {"Number": 202} -> 4`
   * A Cable connects to two Nodes.
     In this example Cable `201` connects Node `101` and `102`, and Cable `201` connects Node `102` and `103`.
     These Node Numbers are stored in the columns `From_Number` and `To_Number`.
-    In order to retrieve the right PGM IDs, we have to explicitly state that the table in which the Nodes are 
+    In order to retrieve the right PGM IDs, we have to explicitly state that the table in which the Nodes are
     defined is called `Nodes` and the original column storing the Node Numbers is called `Number`.
   * On the 'from' side of the cables:
     * `{"table": "Nodes", "key" {"Number": 101} -> 0`
@@ -337,19 +337,19 @@ Mapping files enable the specification of custom mappings or filter functions. T
 We use the `yaml.safe_load` functionality from the PyYAML library to load configuration files securely. This method prevents the execution of potentially malicious code during the loading process.
 
 ### Secure Function Handling
-* No `eval`-like Functionality: 
-  
+* No `eval`-like Functionality:
+
   We do not use `eval` or similar functions that can execute arbitrary code.
 * Loadable/Loaded Functions Only
-  
+
   Only functions and symbols that are explicitly loadable or loaded are allowed. These must be:
 
-  * Python Builtins: 
-    
+  * Python Builtins:
+
     Such as `max`.
 
-  * Prefixed by Import Path: 
-  
+  * Prefixed by Import Path:
+
     Functions must include their relative or absolute import path, ensuring they are importable using `import_module`. For example, `numpy.max` is allowed, but `np.max` is not.
 
 ### Prevention of Malicious Code Injection
