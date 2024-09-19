@@ -195,18 +195,6 @@ def parse_link(vnf_txt: str) -> pd.DataFrame:
     links_df = pd.DataFrame(links_list, columns=["GUID", "Node1", "Node2", "SwitchState1", "SwitchState2"])
     return links_df
 
-
-# component_dict = parse_vnf(vnf)
-# for comp, df in component_dict.items():
-#     print("===", comp, "===")
-#     print(df)
-#     print()
-
-# component_data = TabularData(NODE=component_dict["NODE"], LINE=component_dict["LINE"], SOURCE=component_dict["SOURCE"], LOAD=component_dict["LOAD"], CABLE=component_dict["CABLE"])
-# converter = TabularConverter(mapping_file=mapping)
-# input_data, extra_info = converter.load_input_data(data=component_data)
-# print(input_data)
-
 # Ensure the tmp directory exists
 tmp_dir = file_path / "tmp"
 tmp_dir.mkdir(exist_ok=True)
