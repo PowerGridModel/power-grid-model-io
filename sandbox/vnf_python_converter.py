@@ -211,3 +211,14 @@ result = model.calculate_power_flow()
 print("======== Result ========")
 print(result['node'])
 print(result['line'])
+
+
+"""
+TODO
+create a vnv converter class (from base?) that:
+- loads in vnf
+- makes a tmp dir
+- converts vnf to pgm json through vnf_to_pgm_json (later: pgm-io-native)
+- deserializes the pgm json to input data
+- returns the input data    
+"""
