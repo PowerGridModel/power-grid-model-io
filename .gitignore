@@ -23,6 +23,7 @@ venv*/
 
 # Data:
 data/
+tmp/
 
 # IDE
 .idea/

@@ -8,29 +8,28 @@ from power_grid_model_io.converters.tabular_converter import TabularConverter
 from power_grid_model_io.data_types.tabular_data import TabularData
 
 from power_grid_model import PowerGridModel
-from power_grid_model.utils import json_serialize
+from power_grid_model.utils import json_serialize_to_file, json_deserialize_from_file
 
 file_path = Path(__file__).parent 
 vnf = file_path / "data/vision_validation.vnf"
 mapping = file_path / "vnf_mapping.yaml"
 
-def vnv_to_pgm_json(vnf: str|Path) -> dict:
+def vnf_to_pgm_json(vnf: str|Path, json_path: Path):
     """
     This function will mimmick the vnf to pgm json conversion in pgm-io-native.
     Input vnf converter in pgm-io-native: 
     - .vnf file path
+    - location for serialized json file
 
     Output vnf converter in pgm-io-native:
-    - PGM json file with input data (no update, no extra info)
+    - write PGM json file with input data (no update, no extra info)
     """
     component_dict = parse_vnf(vnf)
     component_data = TabularData(NODE=component_dict["NODE"], LINE=component_dict["LINE"], SOURCE=component_dict["SOURCE"], LOAD=component_dict["LOAD"], CABLE=component_dict["CABLE"])
     converter = TabularConverter(mapping_file=mapping)
     input_data, extra_info = converter.load_input_data(data=component_data)
     # since pgm-io-native returns a json file, we have to do serialization here, even though we already have input_data
-    serialized_data = json_serialize(input_data)
-    return serialized_data
-
+    json_serialize_to_file(file_path=json_path, data=input_data)
 
 
 def parse_vnf(file_path: str|Path) -> pd.DataFrame:
@@ -197,22 +196,30 @@ def parse_link(vnf_txt: str) -> pd.DataFrame:
     return links_df
 
 
-component_dict = parse_vnf(vnf)
-for comp, df in component_dict.items():
-    print("===", comp, "===")
-    print(df)
-    print()
+# component_dict = parse_vnf(vnf)
+# for comp, df in component_dict.items():
+#     print("===", comp, "===")
+#     print(df)
+#     print()
 
-component_data = TabularData(NODE=component_dict["NODE"], LINE=component_dict["LINE"], SOURCE=component_dict["SOURCE"], LOAD=component_dict["LOAD"], CABLE=component_dict["CABLE"])
-converter = TabularConverter(mapping_file=mapping)
-input_data, extra_info = converter.load_input_data(data=component_data)
-print(input_data)
+# component_data = TabularData(NODE=component_dict["NODE"], LINE=component_dict["LINE"], SOURCE=component_dict["SOURCE"], LOAD=component_dict["LOAD"], CABLE=component_dict["CABLE"])
+# converter = TabularConverter(mapping_file=mapping)
+# input_data, extra_info = converter.load_input_data(data=component_data)
+# print(input_data)
 
+# Ensure the tmp directory exists
+tmp_dir = file_path / "tmp"
+tmp_dir.mkdir(exist_ok=True)
+
+# Serialize the input data to a JSON file
+vnf_to_pgm_json(vnf, tmp_dir / "input.json")
+input_data = json_deserialize_from_file(tmp_dir / "input.json")
+
+# Initialize the PowerGridModel with the input data
 model = PowerGridModel(input_data)
+
+# Calculate the power flow and print the results
 result = model.calculate_power_flow()
 print("======== Result ========")
 print(result['node'])
 print(result['line'])
-
-
-
