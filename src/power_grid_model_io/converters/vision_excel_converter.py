@@ -35,14 +35,14 @@ class VisionExcelConverter(TabularConverter):
     Vision Excel Converter: Load data from a Vision Excel export file and use a mapping file to convert the data to PGM
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         source_file: Optional[Union[Path, str]] = None,
         language: str = LANGUAGE_EN,
         terms_changed: Optional[dict] = None,
         mapping_file: Optional[Union[Path, str]] = None,
         log_level: int = logging.INFO,
-    ):  # pylint: disable=too-many-arguments
+    ):
         _mapping_file = Path(
             mapping_file if mapping_file is not None else str(DEFAULT_MAPPING_FILE).format(language=language)
         )
