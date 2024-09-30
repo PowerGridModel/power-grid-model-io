@@ -7,6 +7,9 @@ SPDX-License-Identifier: MPL-2.0
 [![PyPI version](https://badge.fury.io/py/power-grid-model-io.svg?no-cache)](https://badge.fury.io/py/power-grid-model-io)
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/power-grid-model-io/badges/version.svg?no-cache)](https://anaconda.org/conda-forge/power-grid-model-io)
 [![License: MIT](https://img.shields.io/badge/License-MPL2.0-informational.svg)](https://github.com/PowerGridModel/power-grid-model-io/blob/main/LICENSE)
+[![Downloads](https://static.pepy.tech/badge/power-grid-model-io)](https://pepy.tech/project/power-grid-model-io)
+[![Downloads](https://static.pepy.tech/badge/power-grid-model-io/month)](https://pepy.tech/project/power-grid-model-io)
+
 [![Build and Test Python](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/build-test-and-sonar.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/build-test-and-sonar.yml)
 [![Check Code Quality](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/check-code-quality.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/check-code-quality.yml)
 [![REUSE Compliance Check](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/reuse-compliance.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/reuse-compliance.yml)
@@ -20,6 +23,8 @@ SPDX-License-Identifier: MPL-2.0
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model-io&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model-io)
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8059257.svg)](https://zenodo.org/record/8059257)
+
+[![Nightly build](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/nightly.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/nightly.yml)
 
 [![](https://github.com/PowerGridModel/.github/blob/main/artwork/svg/color.svg)](#)
 
