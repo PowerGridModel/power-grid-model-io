@@ -4,6 +4,7 @@
 """
 Tabular Data Converter: Load data from multiple tables and use a mapping file to convert the data to PGM
 """
+
 import inspect
 import logging
 from pathlib import Path
@@ -141,8 +142,7 @@ class TabularConverter(BaseConverter[TabularData]):
         )
         return input_data
 
-    # pylint: disable = too-many-arguments
-    def _convert_table_to_component(
+    def _convert_table_to_component(  # pylint: disable = too-many-arguments,too-many-positional-arguments
         self,
         data: TabularData,
         data_type: str,
@@ -197,7 +197,10 @@ class TabularConverter(BaseConverter[TabularData]):
 
         # Make sure that the "id" column is always parsed first (at least before "extra" is parsed)
         attributes_without_filter = {k: v for k, v in attributes.items() if k != "filters"}
-        sorted_attributes = sorted(attributes_without_filter.items(), key=lambda x: "" if x[0] == "id" else x[0])
+        sorted_attributes = sorted(
+            attributes_without_filter.items(),
+            key=lambda x: "" if x[0] == "id" else x[0],
+        )
 
         for attr, col_def in sorted_attributes:
             self._convert_col_def_to_attribute(
@@ -224,8 +227,7 @@ class TabularConverter(BaseConverter[TabularData]):
                 table_mask &= cast(pd.DataFrame, data[table]).apply(fn_ptr, axis=1, **kwargs).values
         return table_mask
 
-    # pylint: disable = too-many-arguments
-    def _convert_col_def_to_attribute(
+    def _convert_col_def_to_attribute(  # pylint: disable = too-many-arguments,too-many-positional-arguments
         self,
         data: TabularData,
         pgm_data: np.ndarray,
@@ -282,7 +284,11 @@ class TabularConverter(BaseConverter[TabularData]):
             return
 
         attr_data = self._parse_col_def(
-            data=data, table=table, table_mask=table_mask, col_def=col_def, extra_info=extra_info
+            data=data,
+            table=table,
+            table_mask=table_mask,
+            col_def=col_def,
+            extra_info=extra_info,
         )
 
         if len(attr_data.columns) != 1:
@@ -290,7 +296,7 @@ class TabularConverter(BaseConverter[TabularData]):
 
         pgm_data[attr] = attr_data.iloc[:, 0]
 
-    def _handle_extra_info(
+    def _handle_extra_info(  # pylint: disable = too-many-arguments,too-many-positional-arguments
         self,
         data: TabularData,
         table: str,
@@ -322,7 +328,11 @@ class TabularConverter(BaseConverter[TabularData]):
             return
 
         extra = self._parse_col_def(
-            data=data, table=table, table_mask=table_mask, col_def=col_def, extra_info=None
+            data=data,
+            table=table,
+            table_mask=table_mask,
+            col_def=col_def,
+            extra_info=None,
         ).to_dict(orient="records")
         for i, xtr in zip(uuids, extra):
             xtr = {
@@ -369,7 +379,7 @@ class TabularConverter(BaseConverter[TabularData]):
             raise NotImplementedError("Batch data can not (yet) be stored for tabular data")
         return TabularData(logger=self._log, **data)
 
-    def _parse_col_def(
+    def _parse_col_def(  # pylint: disable = too-many-arguments,too-many-positional-arguments
         self,
         data: TabularData,
         table: str,
@@ -394,7 +404,11 @@ class TabularConverter(BaseConverter[TabularData]):
             return self._parse_col_def_column_name(data=data, table=table, col_def=col_def, table_mask=table_mask)
         if isinstance(col_def, dict):
             return self._parse_col_def_filter(
-                data=data, table=table, table_mask=table_mask, col_def=col_def, extra_info=extra_info
+                data=data,
+                table=table,
+                table_mask=table_mask,
+                col_def=col_def,
+                extra_info=extra_info,
             )
         if isinstance(col_def, list):
             return self._parse_col_def_composite(data=data, table=table, col_def=col_def, table_mask=table_mask)
@@ -402,7 +416,10 @@ class TabularConverter(BaseConverter[TabularData]):
 
     @staticmethod
     def _parse_col_def_const(
-        data: TabularData, table: str, col_def: Union[int, float], table_mask: Optional[np.ndarray] = None
+        data: TabularData,
+        table: str,
+        col_def: Union[int, float],
+        table_mask: Optional[np.ndarray] = None,
     ) -> pd.DataFrame:
         """Create a single column pandas DataFrame containing the const value.
 
@@ -423,7 +440,11 @@ class TabularConverter(BaseConverter[TabularData]):
         return const_df
 
     def _parse_col_def_column_name(
-        self, data: TabularData, table: str, col_def: str, table_mask: Optional[np.ndarray] = None
+        self,
+        data: TabularData,
+        table: str,
+        col_def: str,
+        table_mask: Optional[np.ndarray] = None,
     ) -> pd.DataFrame:
         """Extract a column from the data. If the column doesn't exist, check if the col_def is a special float value,
         like 'inf'. If that's the case, create a single column pandas DataFrame containing the const value.
@@ -471,7 +492,7 @@ class TabularConverter(BaseConverter[TabularData]):
         except KeyError:
             return data
 
-    def _parse_reference(
+    def _parse_reference(  # pylint: disable = too-many-arguments,too-many-positional-arguments
         self,
         data: TabularData,
         table: str,
@@ -502,7 +523,7 @@ class TabularConverter(BaseConverter[TabularData]):
         result = queries.merge(other, how="left", left_on=query_column, right_on=key_column)
         return result[[value_column]]
 
-    def _parse_col_def_filter(
+    def _parse_col_def_filter(  # pylint: disable = too-many-arguments,too-many-positional-arguments
         self,
         data: TabularData,
         table: str,
@@ -553,18 +574,26 @@ class TabularConverter(BaseConverter[TabularData]):
                 )
             elif isinstance(sub_def, list):
                 col_data = self._parse_pandas_function(
-                    data=data, table=table, table_mask=table_mask, fn_name=name, col_def=sub_def
+                    data=data,
+                    table=table,
+                    table_mask=table_mask,
+                    fn_name=name,
+                    col_def=sub_def,
                 )
             elif isinstance(sub_def, dict):
                 col_data = self._parse_function(
-                    data=data, table=table, table_mask=table_mask, function=name, col_def=sub_def
+                    data=data,
+                    table=table,
+                    table_mask=table_mask,
+                    function=name,
+                    col_def=sub_def,
                 )
             else:
                 raise TypeError(f"Invalid {name} definition: {sub_def}")
             data_frames.append(col_data)
         return pd.concat(data_frames, axis=1)
 
-    def _parse_auto_id(
+    def _parse_auto_id(  # pylint: disable = too-many-arguments,too-many-positional-arguments
         self,
         data: TabularData,
         table: str,
@@ -606,7 +635,11 @@ class TabularConverter(BaseConverter[TabularData]):
             raise TypeError(f"Invalid key definition type '{type(key_col_def).__name__}': {key_col_def}")
 
         col_data = self._parse_col_def(
-            data=data, table=table, table_mask=table_mask, col_def=key_col_def, extra_info=None
+            data=data,
+            table=table,
+            table_mask=table_mask,
+            col_def=key_col_def,
+            extra_info=None,
         )
 
         def auto_id(row: np.ndarray):
@@ -622,7 +655,13 @@ class TabularConverter(BaseConverter[TabularData]):
             #    the first argument to be parsed.
             if extra_info is not None and ref_table_str == table and pgm_id not in extra_info:
                 if ref_name is not None:
-                    extra_info[pgm_id] = {"id_reference": {"table": ref_table_str, "name": ref_name, "key": key}}
+                    extra_info[pgm_id] = {
+                        "id_reference": {
+                            "table": ref_table_str,
+                            "name": ref_name,
+                            "key": key,
+                        }
+                    }
                 else:
                     extra_info[pgm_id] = {"id_reference": {"table": ref_table_str, "key": key}}
 
@@ -632,8 +671,13 @@ class TabularConverter(BaseConverter[TabularData]):
             return col_data
         return col_data.apply(auto_id, axis=1, raw=True)
 
-    def _parse_pandas_function(
-        self, data: TabularData, table: str, fn_name: str, col_def: List[Any], table_mask: Optional[np.ndarray]
+    def _parse_pandas_function(  # pylint: disable = too-many-arguments,too-many-positional-arguments
+        self,
+        data: TabularData,
+        table: str,
+        fn_name: str,
+        col_def: List[Any],
+        table_mask: Optional[np.ndarray],
     ) -> pd.DataFrame:
         """Special vectorized functions.
 
@@ -652,7 +696,13 @@ class TabularConverter(BaseConverter[TabularData]):
         if fn_name == "multiply":
             fn_name = "prod"
 
-        col_data = self._parse_col_def(data=data, table=table, col_def=col_def, table_mask=table_mask, extra_info=None)
+        col_data = self._parse_col_def(
+            data=data,
+            table=table,
+            col_def=col_def,
+            table_mask=table_mask,
+            extra_info=None,
+        )
 
         try:
             fn_ptr = getattr(col_data, fn_name)
@@ -675,8 +725,13 @@ class TabularConverter(BaseConverter[TabularData]):
 
         return pd.DataFrame(fn_ptr(axis=1))
 
-    def _parse_function(
-        self, data: TabularData, table: str, function: str, col_def: Dict[str, Any], table_mask: Optional[np.ndarray]
+    def _parse_function(  # pylint: disable = too-many-arguments,too-many-positional-arguments
+        self,
+        data: TabularData,
+        table: str,
+        function: str,
+        col_def: Dict[str, Any],
+        table_mask: Optional[np.ndarray],
     ) -> pd.DataFrame:
         """Import the function by name and apply it to each row.
 
@@ -694,7 +749,13 @@ class TabularConverter(BaseConverter[TabularData]):
         fn_ptr = get_function(function)
         key_words = list(col_def.keys())
         sub_def = list(col_def.values())
-        col_data = self._parse_col_def(data=data, table=table, col_def=sub_def, table_mask=table_mask, extra_info=None)
+        col_data = self._parse_col_def(
+            data=data,
+            table=table,
+            col_def=sub_def,
+            table_mask=table_mask,
+            extra_info=None,
+        )
 
         if col_data.empty:
             raise ValueError(f"Cannot apply function {function} to an empty DataFrame")
@@ -703,7 +764,11 @@ class TabularConverter(BaseConverter[TabularData]):
         return pd.DataFrame(col_data)
 
     def _parse_col_def_composite(
-        self, data: TabularData, table: str, col_def: list, table_mask: Optional[np.ndarray]
+        self,
+        data: TabularData,
+        table: str,
+        col_def: list,
+        table_mask: Optional[np.ndarray],
     ) -> pd.DataFrame:
         """Select multiple columns (each is created from a column definition) and return them as a new DataFrame.
 
@@ -717,7 +782,13 @@ class TabularConverter(BaseConverter[TabularData]):
         """
         assert isinstance(col_def, list)
         columns = [
-            self._parse_col_def(data=data, table=table, col_def=sub_def, table_mask=table_mask, extra_info=None)
+            self._parse_col_def(
+                data=data,
+                table=table,
+                col_def=sub_def,
+                table_mask=table_mask,
+                extra_info=None,
+            )
             for sub_def in col_def
         ]
         return pd.concat(columns, axis=1)
@@ -748,7 +819,12 @@ class TabularConverter(BaseConverter[TabularData]):
             raise KeyError((table, key, name))
         return self._auto_id(item=(table, key, name), key=auto_id_key)
 
-    def get_ids(self, keys: pd.DataFrame, table: Optional[str] = None, name: Optional[str] = None) -> List[int]:
+    def get_ids(
+        self,
+        keys: pd.DataFrame,
+        table: Optional[str] = None,
+        name: Optional[str] = None,
+    ) -> List[int]:
         """
         Get a the numerical ID previously associated with the supplied name / key combination
         Args:
