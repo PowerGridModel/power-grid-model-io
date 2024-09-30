@@ -8,6 +8,7 @@
 
 import os
 from pathlib import Path
+from typing import cast
 
 import requests
 
@@ -43,7 +44,7 @@ def set_version(pkg_dir: Path):
 def get_pypi_latest():
     request = requests.get("https://pypi.org/pypi/power-grid-model-io/json")
     data = request.json()
-    version: str = data["info"]["version"]
+    version = str(data["info"]["version"])
     return (int(x) for x in version.split("."))
 
 

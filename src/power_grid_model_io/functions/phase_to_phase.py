@@ -33,7 +33,7 @@ def reactive_power(p: float, cos_phi: float) -> float:
     return p * math.sqrt(1 - cos_phi**2) / cos_phi
 
 
-def power_wind_speed(  # pylint: disable=too-many-arguments
+def power_wind_speed(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     p_nom: float,
     wind_speed: float,
     cut_in_wind_speed: float = 3.0,
