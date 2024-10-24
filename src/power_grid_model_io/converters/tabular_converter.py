@@ -838,7 +838,7 @@ class TabularConverter(BaseConverter[TabularData]):
             key = row.dropna().to_dict()
             row_table = key.pop("table") if table is None and "table" in key else table
             row_name = key.pop("name") if name is None and "name" in key else name
-            return self.get_id(table=row_table, key=key, name=row_name)
+            return self.get_id(table=cast(str, row_table), key=key, name=row_name)
 
         return keys.apply(get_id, axis=1).to_list()
 
