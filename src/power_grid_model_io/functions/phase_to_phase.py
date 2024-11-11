@@ -7,7 +7,6 @@ These functions can be used in the mapping files to apply functions to vision da
 
 import math
 
-import numpy as np
 import pandas as pd
 import structlog
 from power_grid_model import WindingType
