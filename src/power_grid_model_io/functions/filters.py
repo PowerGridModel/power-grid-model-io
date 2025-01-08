@@ -31,7 +31,8 @@ def exclude_value(row: pd.Series, col: str, value: Union[float, str]) -> bool:
     if col not in row:
         raise ValueError(f"The column: '{col}' cannot be found for the filter")
     result = row[col] != value
-    if isinstance(result, pd.Series):
+    # Sonar cloud false positive (S2583): result can be a pd.Series of bool
+    if isinstance(result, pd.Series):  # NOSONAR
         return result.item()
     return result
 
