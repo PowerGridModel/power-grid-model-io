@@ -9,9 +9,9 @@ sphinx:
   configuration: docs/conf.py
 
 build:
-  os: "ubuntu-20.04"
+  os: "ubuntu-latest"
   tools:
-    python: "3.10"
+    python: "3.11"
   jobs:
     post_install:
       # Build package with doc requirements from pyproject.optional-dependencies
