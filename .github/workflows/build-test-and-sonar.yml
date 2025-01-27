@@ -77,10 +77,10 @@ jobs:
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
 
-      - name: Setup Python 3.10
+      - name: Setup Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Install in develop mode
         run: |
@@ -106,10 +106,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python: ["3.10", "3.11", "3.12"]
-        exclude:
-          - os: macos-latest
-            python: "3.10"
+        python: ["3.11", "3.12"]
       fail-fast: false
     runs-on: ${{ matrix.os }}
 
@@ -140,10 +137,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python: ["3.10", "3.11", "3.12"]
-        exclude:
-          - os: macos-latest
-            python: "3.10"
+        python: ["3.11", "3.12"]
       fail-fast: false
     runs-on: ${{ matrix.os }}
 
@@ -182,10 +176,10 @@ jobs:
       TWINE_PASSWORD: ${{ secrets.PYPI_PASS }}
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Python 3.10
+      - name: Setup Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Load built wheel file
         uses: actions/download-artifact@v4
