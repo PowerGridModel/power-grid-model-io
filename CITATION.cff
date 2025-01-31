@@ -60,7 +60,7 @@ authors:
   - name: "Contributors to the LF Energy project Power Grid Model"
 contact:
   - name: "LF Energy project Power Grid Model"
-    email: "powergridmodel+help@lists.lfenergy.org"
+    email: "powergridmodel@lists.lfenergy.org"
 
 references:
   - title: "PowerGridModel/power-grid-model"
