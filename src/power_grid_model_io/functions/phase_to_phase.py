@@ -90,7 +90,8 @@ def _get_clock(trafo_connection_parser, clock_ref: str):
         """
         Extract the clock part of the conn_str
         """
-        return int(trafo_connection_parser(conn_str)[clock_ref])
+
+        return int(trafo_connection_parser(conn_str)[clock_ref]) % 12
 
     return _get_clock_impl
 
