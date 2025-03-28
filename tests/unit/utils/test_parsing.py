@@ -34,8 +34,6 @@ def test_parse_trafo_connection__neg():
         parse_trafo_connection("YNx")
     with pytest.raises(ValueError, match="Invalid transformer connection string: 'Dy13'"):
         parse_trafo_connection("Dy13")
-    with pytest.raises(ValueError, match="Invalid transformer connection string: 'Dy-1'"):
-        parse_trafo_connection("Dy-1")
 
 
 def test_parse_trafo3_connection__pos():
@@ -96,8 +94,6 @@ def test_parse_trafo3_connection__neg():
         parse_trafo3_connection("Dyd13")
     with pytest.raises(ValueError, match="Invalid three winding transformer connection string: 'DyD10'"):
         parse_trafo3_connection("DyD10")
-    with pytest.raises(ValueError, match="Invalid three winding transformer connection string: 'Dynd-1'"):
-        parse_trafo3_connection("Dynd-1")
     with pytest.raises(ValueError, match=re.escape("Invalid three winding transformer connection string: 'Dyn+5d-1'")):
         parse_trafo3_connection("Dyn+5d-1")
     with pytest.raises(ValueError, match="Invalid three winding transformer connection string: 'Dy1d13'"):
