@@ -820,7 +820,7 @@ grid:
           conn_str: Connection
           neutral_grounding: N2
       winding_3:
-        power_grid_model_io.functions.phase_to_phase.get_winding_2:
+        power_grid_model_io.functions.phase_to_phase.get_winding_3:
           conn_str: Connection
           neutral_grounding: N3
       clock_12:
