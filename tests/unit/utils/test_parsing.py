@@ -21,6 +21,7 @@ def test_parse_trafo_connection__pos():
     assert parse_trafo_connection("YNy") == {"winding_from": "YN", "winding_to": "y", "clock": None}
     assert parse_trafo_connection("Dy5") == {"winding_from": "D", "winding_to": "y", "clock": "5"}
     assert parse_trafo_connection("Dy11") == {"winding_from": "D", "winding_to": "y", "clock": "11"}
+    assert parse_trafo_connection("Dyn-1") == {"winding_from": "D", "winding_to": "yn", "clock": "-1"}
 
 
 def test_parse_trafo_connection__neg():
@@ -78,6 +79,13 @@ def test_parse_trafo3_connection__pos():
         "clock_12": "5",
         "winding_3": "d",
         "clock_13": "11",
+    }
+    assert parse_trafo3_connection("Dyn-1yn-1") == {
+        "winding_1": "D",
+        "winding_2": "yn",
+        "clock_12": "-1",
+        "winding_3": "yn",
+        "clock_13": "-1",
     }
 
 
