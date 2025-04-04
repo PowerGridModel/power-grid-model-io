@@ -3,13 +3,13 @@
 # SPDX-License-Identifier: MPL-2.0
 
 """
-    This is a stand-alone conversion script that converts the GUID based Vision 
-    excel files to a number based format. The script is designed to be used as 
-    a light weight tool to run before running the PGM-IO conversion scripts.
-    Example usage:
+This is a stand-alone conversion script that converts the GUID based Vision
+excel files to a number based format. The script is designed to be used as
+a light weight tool to run before running the PGM-IO conversion scripts.
+Example usage:
 
-    new_file = convert_guid_vision_excel("vision_97_en.xlsx", number="Number", {"N1": "Grounding1"})
-    nieuw_bestand = convert_guid_vision_excel("vision_97_nl.xlsx", number="Nummer", {"N1": "Arding1"})
+new_file = convert_guid_vision_excel("vision_97_en.xlsx", number="Number", {"N1": "Grounding1"})
+nieuw_bestand = convert_guid_vision_excel("vision_97_nl.xlsx", number="Nummer", {"N1": "Arding1"})
 
 """
 
