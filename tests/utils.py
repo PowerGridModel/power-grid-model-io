@@ -71,6 +71,7 @@ class MockFn:
     __slots__ = ["fn", "args", "kwargs", "postfix"]
 
     __array_struct__ = np.array([]).__array_struct__
+    __array_prepare__ = np.array([]).__array_prepare__
 
     def __init__(self, fn: str, *args, **kwargs):
         self.fn = fn
