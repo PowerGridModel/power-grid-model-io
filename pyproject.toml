@@ -28,7 +28,7 @@ classifiers=[
 ]
 requires-python = ">=3.11"
 dependencies = [
-    "numpy>=1.20",
+    "numpy>=1.20, <2.0",
     "openpyxl",
     "pandas",
     "power_grid_model>=1.8",
@@ -40,7 +40,7 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
-    "pandapower>2.11.1",
+    "pandapower>2.11.1, <3.0",
     "pre-commit",
     "pylint",
     "pytest",
@@ -50,7 +50,7 @@ dev = [
 ]
 examples = [
     "power-grid-model>1.9.80",
-    "pandapower>2.11.1",
+    "pandapower>2.11.1, <3.0",
     "pyarrow", # Pyarrow support for Python 3.12 scheduled for 14.0.0: https://github.com/apache/arrow/issues/37880
 ]
 doc = [
