@@ -53,7 +53,7 @@ def parse_trafo3_connection(string: str) -> Dict[str, str]:
     ^                         Start of the string
     (Y|YN|D|Z|ZN)             First winding type
     (y|yn|d|z|zn)             Second winding type
-    (-?\d|1[0-2]|-1[0-2])     Clock number (-12-12)
+    (-?\d|1[0-2]|-1[0-2])     Clock number (-12-12) 
     (y|yn|d|z|zn)             Third winding type
     (-?\d|1[0-2]|-1[0-2])     Clock number (-12-12)
     $                         End of the string
