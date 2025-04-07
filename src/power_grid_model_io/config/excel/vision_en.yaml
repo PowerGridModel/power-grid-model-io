@@ -825,7 +825,7 @@ grid:
           conn_str: Connection
           neutral_grounding: N2
       winding_3:
-        power_grid_model_io.functions.phase_to_phase.get_winding_2:
+        power_grid_model_io.functions.phase_to_phase.get_winding_3:
           conn_str: Connection
           neutral_grounding: N3
       clock_12:
@@ -936,6 +936,14 @@ substitutions:
   Tap side:
     1: 0
     2: 1
+  Tap side a:
+    1: 0
+    2: 1
+    3: 2
+  Tap side c:
+    1: 0
+    2: 1
+    3: 2
   Synchronous generators.Q:
     absorb: -1
     supply: 1
