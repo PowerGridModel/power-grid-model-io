@@ -179,14 +179,16 @@ def test_get_winding_to__exception():
     [
         ("YNd0", 0),
         ("YNyn5", 5),
-        ("YNd12", 12),
+        ("YNd12", 0),
+        ("Dyn-1", 11),
+        ("Dd-4", 8),
     ],
 )
 def test_get_clock(code: str, clock: int):
     assert get_clock(code) == clock
 
 
-@mark.parametrize("code", ["YNd-1", "YNd13"])
+@mark.parametrize("code", ["YNd-15", "YNd13"])
 def test_get_clock__exception(code):
     with raises(ValueError):
         get_clock(code)
@@ -344,7 +346,8 @@ def test_get_winding_3__exception():
     [
         ("YNd0y4", 0),
         ("YNyn5d3", 5),
-        ("YNd12d1", 12),
+        ("YNd12d1", 0),
+        ("YNd-5d1", 7),
     ],
 )
 def test_get_clock_12(code: str, clock: int):
@@ -363,6 +366,7 @@ def test_get_clock_12__exception(code):
         ("YNd0y4", 4),
         ("YNyn5d3", 3),
         ("YNd12d1", 1),
+        ("YNd12d-1", 11),
     ],
 )
 def test_get_clock_13(code: str, clock: int):

@@ -3,37 +3,38 @@
 # SPDX-License-Identifier: MPL-2.0
 ---
 id_reference:
-  nodes_table: Knooppunten
-  number: Nummer
-  node_number: Knooppunt.Nummer
-  sub_number: Subnummer
+  nodes_table: Nodes
+  number: Number
+  node_number: Node.Number
+  sub_number: Subnumber
 grid:
-  Knooppunten:
+  Nodes:
     node:
       id:
         auto_id:
-          key: Nummer
+          key: Number
       u_rated: Unom
       extra:
         - ID
-        - Naam
-  Kabels:
+        - Name
+        - GUID
+  Cables:
     line:
       id:
         auto_id:
-          key: Nummer
+          key: Number
       from_node:
         auto_id:
-          table: Knooppunten
+          table: Nodes
           key:
-            Nummer: Van.Nummer
-      from_status: Van.Schakelstand
+            Number: From.Number
+      from_status: From.Switch state
       to_node:
         auto_id:
-          table: Knooppunten
+          table: Nodes
           key:
-            Nummer: Naar.Nummer
-      to_status: Naar.Schakelstand
+            Number: To.Number
+      to_status: To.Switch state
       r1: R
       x1: X
       c1: C
@@ -51,24 +52,24 @@ grid:
       i_n: Inom'
       extra:
         - ID
-        - Naam
-  Verbindingen:
+        - Name
+  Lines:
     line:
       id:
         auto_id:
-          key: Nummer
+          key: Number
       from_node:
         auto_id:
-          table: Knooppunten
+          table: Nodes
           key:
-            Nummer: Van.Nummer
-      from_status: Van.Schakelstand
+            Number: From.Number
+      from_status: From.Switch state
       to_node:
         auto_id:
-          table: Knooppunten
+          table: Nodes
           key:
-            Nummer: Naar.Nummer
-      to_status: Naar.Schakelstand
+            Number: To.Number
+      to_status: To.Switch state
       r1: R
       x1: X
       c1: C
@@ -86,44 +87,44 @@ grid:
       i_n: Inom'
       extra:
         - ID
-        - Naam
+        - Name
   Links:
     link:
       id:
         auto_id:
-          key: Nummer
+          key: Number
       from_node:
         auto_id:
-          table: Knooppunten
+          table: Nodes
           key:
-            Nummer: Van.Nummer
-      from_status: Van.Schakelstand
+            Number: From.Number
+      from_status: From.Switch state
       to_node:
         auto_id:
-          table: Knooppunten
+          table: Nodes
           key:
-            Nummer: Naar.Nummer
-      to_status: Naar.Schakelstand
+            Number: To.Number
+      to_status: To.Switch state
       extra:
         - ID
-        - Naam
-  Smoorspoelen:
+        - Name
+  Reactance coils:
     line:
       id:
         auto_id:
-          key: Nummer
+          key: Number
       from_node:
         auto_id:
-          table: Knooppunten
+          table: Nodes
           key:
-            Nummer: Van.Nummer
-      from_status: Van.Schakelstand
+            Number: From.Number
+      from_status: From.Switch state
       to_node:
         auto_id:
-          table: Knooppunten
+          table: Nodes
           key:
-            Nummer: Naar.Nummer
-      to_status: Naar.Schakelstand
+            Number: To.Number
+      to_status: To.Switch state
       r1: R
       x1: X
       c1: 0
@@ -141,24 +142,24 @@ grid:
       i_n: Inom
       extra:
         - ID
-        - Naam
-  Transformatoren:
+        - Name
+  Transformers:
     transformer:
       id:
         auto_id:
-          key: Nummer
+          key: Number
       from_node:
         auto_id:
-          table: Knooppunten
+          table: Nodes
           key:
-            Nummer: Van.Nummer
-      from_status: Van.Schakelstand
+            Number: From.Number
+      from_status: From.Switch state
       to_node:
         auto_id:
-          table: Knooppunten
+          table: Nodes
           key:
-            Nummer: Naar.Nummer
-      to_status: Naar.Schakelstand
+            Number: To.Number
+      to_status: To.Switch state
       u1: Unom1
       u2: Unom2
       sn: Snom
@@ -170,31 +171,32 @@ grid:
           - power_grid_model_io.functions.value_or_default:
               value: uk
               default: 0.001
+          - 0.001
       pk: Pk
       i0:
         power_grid_model_io.functions.phase_to_phase.relative_no_load_current:
-          i_0: Inul
-          p_0: Pnul
+          i_0: Io
+          p_0: Po
           s_nom: Snom
           u_nom: Unom2
-      p0: Pnul
+      p0: Po
       winding_from:
         power_grid_model_io.functions.phase_to_phase.get_winding_from:
-          conn_str: Schakeling
-          neutral_grounding: N1
+          conn_str: Connection
+          neutral_grounding: Grounding1
       winding_to:
         power_grid_model_io.functions.phase_to_phase.get_winding_to:
-          conn_str: Schakeling
-          neutral_grounding: N1
+          conn_str: Connection
+          neutral_grounding: Earthing2
       clock:
         power_grid_model_io.functions.phase_to_phase.get_clock:
-          conn_str: Schakeling
-      tap_side: Trapzijde
-      tap_pos: Trapstand
-      tap_min: Trapmin
-      tap_max: Trapmax
-      tap_nom: Trapnom
-      tap_size: Trapgrootte
+          conn_str: Connection
+      tap_side: Tap side
+      tap_pos: Tap
+      tap_min: Tap min
+      tap_max: Tap max
+      tap_nom: Tap nom
+      tap_size: Tap size
       uk_min:
         max:
           - divide:
@@ -203,6 +205,7 @@ grid:
           - power_grid_model_io.functions.value_or_default:
               value: uk
               default: 0.001
+          - 0.001
       uk_max:
         max:
           - divide:
@@ -211,54 +214,55 @@ grid:
           - power_grid_model_io.functions.value_or_default:
               value: uk
               default: 0.001
+          - 0.001
       pk_min: Pk
       pk_max: Pk
-      r_grounding_from: Ra1
-      x_grounding_from: Xa1
-      r_grounding_to: Ra2
-      x_grounding_to: Xa2
+      r_grounding_from: Re1
+      x_grounding_from: Xe1
+      r_grounding_to: Re2
+      x_grounding_to: Xe2
       extra:
         - ID
-        - Naam
+        - Name
     transformer_tap_regulator:
       id:
         auto_id: 
           name: transformer_tap_regulator
-          key: Nummer
+          key: Number
       regulated_object:
         auto_id:
           key:
-            Nummer: Nummer
-      status: 1
-      control_side: Meetzijde
+            Number: Number
+      status: State
+      control_side: Measure side
       u_set: Uset
       u_band: Uband
       line_drop_compensation_r: Rc
       line_drop_compensation_x: Xc
       extra:
         - ID
-        - Naam
+        - Name
       filters:
         - power_grid_model_io.functions.filters.exclude_value:
-            col: Regeling
-            value: 0
-  Speciale transformatoren:
+            col: Own control
+            value: FALSE
+  Special transformers:
     transformer:
       id:
         auto_id:
-          key: Nummer
+          key: Number
       from_node:
         auto_id:
-          table: Knooppunten
+          table: Nodes
           key:
-            Nummer: Van.Nummer
-      from_status: Van.Schakelstand
+            Number: From.Number
+      from_status: From.Switch state
       to_node:
         auto_id:
-          table: Knooppunten
+          table: Nodes
           key:
-            Nummer: Naar.Nummer
-      to_status: Naar.Schakelstand
+            Number: To.Number
+      to_status: To.Switch state
       u1: Unom1
       u2: Unom2
       sn: Snom
@@ -270,23 +274,24 @@ grid:
           - power_grid_model_io.functions.value_or_default:
               value: uknom
               default: 0.001
+          - 0.001
       pk: Pknom
       i0:
         power_grid_model_io.functions.phase_to_phase.relative_no_load_current:
-          i_0: Inul
-          p_0: Pnul
+          i_0: Io
+          p_0: Po
           s_nom: Snom
           u_nom: Unom2
-      p0: Pnul
+      p0: Po
       winding_from: 0
       winding_to: 0
       clock: 0
-      tap_side: Trapzijde
-      tap_pos: Trapstand
-      tap_min: Trapmin
-      tap_max: Trapmax
-      tap_nom: Trapnom
-      tap_size: Trapgrootte
+      tap_side: Tap side
+      tap_pos: Tap
+      tap_min: Tap min
+      tap_max: Tap max
+      tap_nom: Tap nom
+      tap_size: Tap size
       uk_min:
         max:
           - divide:
@@ -295,6 +300,7 @@ grid:
           - power_grid_model_io.functions.value_or_default:
               value: ukmin
               default: 0.001
+          - 0.001
       uk_max:
         max:
           - divide:
@@ -303,6 +309,7 @@ grid:
           - power_grid_model_io.functions.value_or_default:
               value: ukmax
               default: 0.001
+          - 0.001
       pk_min: Pkmin
       pk_max: Pkmax
       r_grounding_from: 0
@@ -311,49 +318,49 @@ grid:
       x_grounding_to: 0
       extra:
         - ID
-        - Naam
+        - Name
     transformer_tap_regulator:
       id:
         auto_id: 
           name: transformer_tap_regulator
-          key: Nummer
+          key: Number
       regulated_object:
         auto_id:
           key:
-            Nummer: Nummer
-      status: 1
-      control_side: Meetzijde
+            Number: Number
+      status: At
+      control_side: Measure side
       u_set: Uset
       u_band: Uband
       line_drop_compensation_r: Rc
       line_drop_compensation_x: Xc
       extra:
         - ID
-        - Naam
+        - Name
       filters:
         - power_grid_model_io.functions.filters.exclude_value:
-            col: Regeling
+            col: Control
             value: FALSE
-  Transformatorbelastingen:
+  Transformer loads:
     transformer:
       id:
         auto_id:
           name: transformer
           key:
-            - Knooppunt.Nummer
-            - Subnummer
+            - Node.Number
+            - Subnumber
       from_node:
         auto_id:
-          table: Knooppunten
+          table: Nodes
           key:
-            Nummer: Knooppunt.Nummer
+            Number: Node.Number
       to_node:
         auto_id:
           name: internal_node
           key:
-            - Knooppunt.Nummer
-            - Subnummer
-      from_status: Schakelstand
+            - Node.Number
+            - Subnumber
+      from_status: Switch state
       to_status: 1
       u1: Unom1
       u2: Unom2
@@ -366,29 +373,30 @@ grid:
           - power_grid_model_io.functions.value_or_default:
               value: uk
               default: 0.001
+          - 0.001
       pk: Pk
-      p0: Pnul
+      p0: Po
       i0:
         power_grid_model_io.functions.phase_to_phase.relative_no_load_current:
           i_0: 0
-          p_0: Pnul
+          p_0: Po
           s_nom: Snom
           u_nom: Unom2
       winding_from:
-        power_grid_model_io.functions.phase_to_phase.get_winding_from: 
-          conn_str: Schakeling
+        power_grid_model_io.functions.phase_to_phase.get_winding_from:
+          conn_str: Connection
       winding_to:
         power_grid_model_io.functions.phase_to_phase.get_winding_to:
-          conn_str: Schakeling
+          conn_str: Connection
       clock:
         power_grid_model_io.functions.phase_to_phase.get_clock:
-          conn_str: Schakeling
-      tap_side: Trapzijde
-      tap_pos: Trapstand
-      tap_min: Trapmin
-      tap_max: Trapmax
-      tap_nom: Trapnom
-      tap_size: Trapgrootte
+          conn_str: Connection
+      tap_side: Tap side
+      tap_pos: Tap
+      tap_min: Tap min
+      tap_max: Tap max
+      tap_nom: Tap nom
+      tap_size: Tap size
       uk_min:
         max:
           - divide:
@@ -397,6 +405,7 @@ grid:
           - power_grid_model_io.functions.value_or_default:
               value: uk
               default: 0.001
+          - 0.001
       uk_max:
         max:
           - divide:
@@ -405,6 +414,7 @@ grid:
           - power_grid_model_io.functions.value_or_default:
               value: uk
               default: 0.001
+          - 0.001
       pk_min: Pk
       pk_max: Pk
       r_grounding_from: 0
@@ -413,95 +423,85 @@ grid:
       x_grounding_to: 0
       extra:
         - ID
-        - Naam
+        - Name
     node:
       id:
         auto_id:
           name: internal_node
           key:
-            - Knooppunt.Nummer
-            - Subnummer
+            - Node.Number
+            - Subnumber
       u_rated: Unom2
       extra:
         - ID
-        - Naam
+        - Name
     sym_load:
       id:
         auto_id:
           name: load
           key:
-            - Knooppunt.Nummer
-            - Subnummer
+            - Node.Number
+            - Subnumber
       node:
         auto_id:
           name: internal_node
           key:
-            - Knooppunt.Nummer
-            - Subnummer
-      status: Schakelstand
-      type: Gedrag
+            - Node.Number
+            - Subnumber
+      status: Switch state
+      type: Load.Behaviour
       p_specified:
         multiply:
-          - Belasting.P
+          - Load.P
           - reference:
-              query_column: Knooppunt.Nummer
-              other_table: Knooppunten
-              key_column: Nummer
-              value_column: Gelijktijdigheid
+              query_column: Node.Number
+              other_table: Nodes
+              key_column: Number
+              value_column: Simultaneity
       q_specified:
         multiply:
-          - Belasting.Q
+          - Load.Q
           - reference:
-              query_column: Knooppunt.Nummer
-              other_table: Knooppunten
-              key_column: Nummer
-              value_column: Gelijktijdigheid
+              query_column: Node.Number
+              other_table: Nodes
+              key_column: Number
+              value_column: Simultaneity
       extra:
         - ID
-        - Naam
-      filters:
-        - power_grid_model_io.functions.filters.exclude_all_columns_empty_or_zero:
-            cols: 
-            - Belasting.P
-            - Belasting.Q
+        - Name
     sym_gen:
       - id:
           auto_id:
             name: generation
             key:
-              - Knooppunt.Nummer
-              - Subnummer
+              - Node.Number
+              - Subnumber
         node:
           auto_id:
             name: internal_node
             key:
-              - Knooppunt.Nummer
-              - Subnummer
-        status: Schakelstand
+              - Node.Number
+              - Subnumber
+        status: Switch state
         type: 0
-        p_specified: Opwekking.P
-        q_specified: Opwekking.Q
+        p_specified: Generation.P
+        q_specified: Generation.Q
         extra:
           - ID
-          - Naam
-        filters:
-          - power_grid_model_io.functions.filters.exclude_all_columns_empty_or_zero:
-              cols: 
-              - Opwekking.P
-              - Opwekking.Q
+          - Name
       - id:
           auto_id:
             name: pv_generation
             key:
-              - Knooppunt.Nummer
-              - Subnummer
+              - Node.Number
+              - Subnumber
         node:
           auto_id:
             name: internal_node
             key:
-              - Knooppunt.Nummer
-              - Subnummer
-        status: Schakelstand
+              - Node.Number
+              - Subnumber
+        status: Switch state
         type: 0
         p_specified: PV.Pnom
         q_specified:
@@ -510,44 +510,40 @@ grid:
             cos_phi: 1
         extra:
           - ID
-          - Naam
-        filters:
-          - power_grid_model_io.functions.filters.exclude_all_columns_empty_or_zero:
-              cols: 
-              - PV.Pnom
-  Netvoedingen:
+          - Name
+  Sources:
     source:
       id:
         auto_id:
           key:
-            - Knooppunt.Nummer
-            - Subnummer
+            - Node.Number
+            - Subnumber
       node:
         auto_id:
-          table: Knooppunten
+          table: Nodes
           key:
-            Nummer: Knooppunt.Nummer
-      status: Schakelstand
+            Number: Node.Number
+      status: Switch state
       u_ref: Uref
       sk: Sk"nom
       rx_ratio: R/X
       z01_ratio: Z0/Z1
       extra:
         - ID
-        - Naam
-  Synchrone generatoren:
+        - Name
+  Synchronous generators:
     sym_gen:
       id:
         auto_id:
           key:
-            - Knooppunt.Nummer
-            - Subnummer
+            - Node.Number
+            - Subnumber
       node:
         auto_id:
-          table: Knooppunten
+          table: Nodes
           key:
-            Nummer: Knooppunt.Nummer
-      status: Schakelstand
+            Number: Node.Number
+      status: Switch state
       type: 0
       p_specified: Pref
       q_specified:
@@ -558,20 +554,20 @@ grid:
           - Q
       extra:
         - ID
-        - Naam
-  Windturbines:
+        - Name
+  Wind turbines:
     sym_gen:
       id:
         auto_id:
           key:
-            - Knooppunt.Nummer
-            - Subnummer
+            - Node.Number
+            - Subnumber
       node:
         auto_id:
-          table: Knooppunten
+          table: Nodes
           key:
-            Nummer: Knooppunt.Nummer
-      status: Schakelstand
+            Number: Node.Number
+      status: Switch state
       type: 0
       p_specified:
         power_grid_model_io.functions.value_or_default:
@@ -579,7 +575,7 @@ grid:
           default:
             power_grid_model_io.functions.phase_to_phase.power_wind_speed:
               p_nom: Pnom
-              wind_speed: Windsnelheid
+              wind_speed: Wind speed
       q_specified:
         power_grid_model_io.functions.phase_to_phase.reactive_power:
           p:
@@ -588,57 +584,55 @@ grid:
               default:
                 power_grid_model_io.functions.phase_to_phase.power_wind_speed:
                   p_nom: Pnom
-                  wind_speed: Windsnelheid
+                  wind_speed: Wind speed
           cos_phi: cos phi
       extra:
         - ID
-        - Naam
-  Belastingen:
+        - Name
+  Loads:
     sym_load:
       id:
         auto_id:
           key:
-            - Knooppunt.Nummer
-            - Subnummer
+            - Node.Number
+            - Subnumber
       node:
         auto_id:
-          table: Knooppunten
+          table: Nodes
           key:
-            Nummer: Knooppunt.Nummer
-      status: Schakelstand
-      type: Gedrag
+            Number: Node.Number
+      status: Switch state
+      type: Behaviour
       p_specified:
         multiply:
           - P
           - reference:
-              query_column: Knooppunt.Nummer
-              other_table: Knooppunten
-              key_column: Nummer
-              value_column: Gelijktijdigheid
+              query_column: Node.Number
+              other_table: Nodes
+              key_column: Number
+              value_column: Simultaneity
       q_specified:
         multiply:
           - Q
           - reference:
-              query_column: Knooppunt.Nummer
-              other_table: Knooppunten
-              key_column: Nummer
-              value_column: Gelijktijdigheid
+              query_column: Node.Number
+              other_table: Nodes
+              key_column: Number
+              value_column: Simultaneity
       extra:
         - ID
-        - Naam
-  Nulpuntstransformatoren:
+        - Name
+  Earthing transformers:
     shunt:
       id:
         auto_id:
-          key:
-            - Knooppunt.Nummer
-            - Subnummer
+          key: Number
       node:
         auto_id:
-          table: Knooppunten
+          table: Nodes
           key:
-            Nummer: Knooppunt.Nummer
-      status: Schakelstand
+            Number: Node.Number
+      status: Switch state
       g1: 0
       b1: 0
       g0:
@@ -651,20 +645,18 @@ grid:
           imag: X0
       extra:
         - ID
-        - Naam
-  Condensatoren:
+        - Name
+  Shunt capacitors:
     shunt:
       id:
         auto_id:
-          key:
-            - Knooppunt.Nummer
-            - Subnummer
+          key: Number
       node:
         auto_id:
-          table: Knooppunten
+          table: Nodes
           key:
-            Nummer: Knooppunt.Nummer
-      status: Schakelstand
+            Number: Node.Number
+      status: Switch state
       g1: 0
       b1:
         power_grid_model_io.functions.phase_to_phase.reactive_power_to_susceptance:
@@ -674,20 +666,18 @@ grid:
       b0: 0
       extra:
         - ID
-        - Naam
-  Spoelen:
+        - Name
+  Shunt reactors:
     shunt:
       id:
         auto_id:
-          key:
-            - Knooppunt.Nummer
-            - Subnummer
+          key: Number
       node:
         auto_id:
-          table: Knooppunten
+          table: Nodes
           key:
-            Nummer: Knooppunt.Nummer
-      status: Schakelstand
+            Number: Node.Number
+      status: Switch state
       g1: 0
       b1:
         multiply:
@@ -699,20 +689,20 @@ grid:
       b0: 0
       extra:
         - ID
-        - Naam
-  Pv's:
+        - Name
+  Pvs:
     sym_gen:
       id:
         auto_id:
           key:
-            - Knooppunt.Nummer
-            - Subnummer
+            - Node.Number
+            - Subnumber
       node:
         auto_id:
-          table: Knooppunten
+          table: Nodes
           key:
-            Nummer: Knooppunt.Nummer
-      status: Schakelstand
+            Number: Node.Number
+      status: Switch state
       type: 0
       p_specified:
         power_grid_model_io.functions.phase_to_phase.pvs_power_adjustment:
@@ -721,8 +711,8 @@ grid:
               - min:
                 - Pnom
                 - Inverter.Pnom | Inverter.Snom
-              - Schaling
-          efficiency_type: Inverter.Rendementtype
+              - Scaling
+          efficiency_type: Inverter.efficiency type
       q_specified:
         multiply:
           - power_grid_model_io.functions.phase_to_phase.reactive_power:
@@ -731,33 +721,33 @@ grid:
                   - Pnom
                   - Inverter.Pnom | Inverter.Snom
               cos_phi: Inverter.cos phi
-          - Schaling
+          - Scaling
       extra:
         - ID
-        - Naam
-  Driewikkelingstransformatoren:
+        - Name
+  Three winding transformers:
     three_winding_transformer:
       id:
         auto_id:
-          key: Nummer
+          key: Number
       node_1:
         auto_id:
-          table: Knooppunten
+          table: Nodes
           key:
-            Nummer: Knooppunt1.Nummer
-      status_1: Schakelstand1
+            Number: Node1.Number
+      status_1: Switch state 1
       node_2:
         auto_id:
-          table: Knooppunten
+          table: Nodes
           key:
-            Nummer: Knooppunt2.Nummer
-      status_2: Schakelstand2
+            Number: Node2.Number
+      status_2: Switch state 2
       node_3:
         auto_id:
-          table: Knooppunten
+          table: Nodes
           key:
-            Nummer: Knooppunt3.Nummer
-      status_3: Schakelstand3
+            Number: Node3.Number
+      status_3: Switch state 3
       u1: Unom1
       u2: Unom2
       u3: Unom3
@@ -774,6 +764,7 @@ grid:
           - power_grid_model_io.functions.value_or_default:
               value: uk12
               default: 0.001
+          - 0.001
       uk_13:
         max:
           - divide:
@@ -784,6 +775,7 @@ grid:
           - power_grid_model_io.functions.value_or_default:
               value: uk13
               default: 0.001
+          - 0.001
       uk_23:
         max:
           - divide:
@@ -794,70 +786,71 @@ grid:
           - power_grid_model_io.functions.value_or_default:
               value: uk23
               default: 0.001
+          - 0.001
       pk_12: Pk12
       pk_13: Pk13
       pk_23: Pk23
       i0:
         power_grid_model_io.functions.phase_to_phase.relative_no_load_current:
-          i_0: Inul
-          p_0: Pnul
+          i_0: Io
+          p_0: Po
           s_nom: Snom3
           u_nom: Unom3
-      p0: Pnul
+      p0: Po
       winding_1:
         power_grid_model_io.functions.phase_to_phase.get_winding_1:
-          conn_str: Schakeling
-          neutral_grounding: N1
+          conn_str: Connection
+          neutral_grounding: Grounding1
       winding_2:
         power_grid_model_io.functions.phase_to_phase.get_winding_2:
-          conn_str: Schakeling
-          neutral_grounding: N2
+          conn_str: Connection
+          neutral_grounding: Earthing2
       winding_3:
         power_grid_model_io.functions.phase_to_phase.get_winding_3:
-          conn_str: Schakeling
-          neutral_grounding: N3
+          conn_str: Connection
+          neutral_grounding: Grounding3
       clock_12:
         power_grid_model_io.functions.phase_to_phase.get_clock_12:
-          conn_str: Schakeling
+          conn_str: Connection
       clock_13:
         power_grid_model_io.functions.phase_to_phase.get_clock_13:
-          conn_str: Schakeling
-      tap_side: Trapzijde u
-      tap_pos: Trapstand u
-      tap_min: Trapmin u
-      tap_max: Trapmax u
-      tap_nom: Trapnom u
-      tap_size: Trapgrootte u
-      r_grounding_1: Ra1
-      x_grounding_1: Xa1
-      r_grounding_2: Ra2
-      x_grounding_2: Xa2
-      r_grounding_3: Ra3
-      x_grounding_3: Xa3
+          conn_str: Connection
+      tap_side: Tap side a
+      tap_pos: Tap a
+      tap_min: Tap min a
+      tap_max: Tap max a
+      tap_nom: Tap nom a
+      tap_size: Tap size a
+      r_grounding_1: Re1
+      x_grounding_1: Xe1
+      r_grounding_2: Re2
+      x_grounding_2: Xe2
+      r_grounding_3: Re3
+      x_grounding_3: Xe3
       extra:
         - ID
-        - Naam
+        - Name
     transformer_tap_regulator:
       id:
         auto_id: 
           name: transformer_tap_regulator
-          key: Nummer
+          key: Number
       regulated_object:
         auto_id:
           key:
-            Nummer: Nummer
+            Number: Number
       status: 1
-      control_side: Meetzijde
+      control_side: Measure side
       u_set: Uset
       u_band: Uband
       line_drop_compensation_r: Rc
       line_drop_compensation_x: Xc
       extra:
         - ID
-        - Naam
+        - Name
       filters:
         - power_grid_model_io.functions.filters.exclude_value:
-            col: Regeling
+            col: Control
             value: 0
 units:
   A: null
@@ -888,50 +881,67 @@ units:
     "‰": 0.001
 
 substitutions:
-  ".*Schakelstand":
-    "uit": 0
+  ".*Switch state":
+    "off": 0
     "in": 1
-  "Schakelstand.*":
-    "uit": 0
+    "on": 1
+  "Switch state .*":
+    "off": 0
     "in": 1
-  N1:
+    "on": 1
+  Grounding1:
     0: false
     1: true
-    geen: false
-    eigen: true
-  N2:
+    none: false
+    own: true
+  Earthing2:
     0: false
     1: true
-    geen: false
-    eigen: true
-  N3:
+    none: false
+    own: true
+  Grounding3:
     0: false
     1: true
-    geen: false
-    eigen: true
-  Gedrag:
-    Constante impedantie: 1
-    ~Constante stroom: 2
-    Constant vermogen: 0
+    none: false
+    own: true
+  Load.Behaviour:
+    Constant admittance: 1
+    Constant impedance: 1
+    ~Constant current: 2
+    Constant power: 0
     Default: 0
-    Industrie: 0
-    Zakelijk: 0
-    Wonen: 0
-  Trapzijde:
+    Industry: 0
+    Business: 0
+    Residential: 0
+    Living: 0
+  Behaviour:
+    Constant admittance: 1
+    Constant impedance: 1
+    ~Constant current: 2
+    Constant power: 0
+    Default: 0
+    Industry: 0
+    Business: 0
+    Residential: 0
+    Living: 0
+  Tap side:
     1: 0
     2: 1
-  Trapzijde u:
+  Tap side a:
     1: 0
     2: 1
     3: 2
-  Trapzijde i:
+  Tap side c:
     1: 0
     2: 1
     3: 2
-  Synchrone generatoren.Q:
-    terugleveren: -1
-    leveren: 1
-  Meetzijde:
+  Synchronous generators.Q:
+    absorb: -1
+    supply: 1
+  Measure side:
     1: 0
     2: 1
     3: 2
+  At:
+    FALSE: 0
+    TRUE: 1

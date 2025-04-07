@@ -8,7 +8,7 @@ General regular expressions
 import re
 from typing import Dict
 
-_TRAFO_CONNECTION_RE = re.compile(r"^(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(\d|1[0-2])?$")
+_TRAFO_CONNECTION_RE = re.compile(r"^(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(-?\d|1[0-2]|-1[0-2])?$")
 
 
 def parse_trafo_connection(string: str) -> Dict[str, str]:
@@ -17,11 +17,11 @@ def parse_trafo_connection(string: str) -> Dict[str, str]:
     Matches the following regular expression to the winding_from and winding_to codes.
     Optionally checks the clock number:
 
-    ^               Start of the string
-    (Y|YN|D|Z|ZN)   From winding type
-    (y|yn|d|z|zn)   To winding type
-    (\d|1[0-2])?    Optional clock number (0-12)
-    $               End of the string
+    ^                         Start of the string
+    (Y|YN|D|Z|ZN)             From winding type
+    (y|yn|d|z|zn)             To winding type
+    (-?\d|1[0-2]|-1[0-2])?    Optional clock number (-12-12)
+    $                         End of the string
 
     Args:
         string (str): The input string.
@@ -39,7 +39,9 @@ def parse_trafo_connection(string: str) -> Dict[str, str]:
     return {"winding_from": match.group(1), "winding_to": match.group(2), "clock": match.group(3)}
 
 
-_TRAFO3_CONNECTION_RE = re.compile(r"^(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(\d|1[0-2])?(y|yn|d|z|zn)(\d|1[0-2])?$")
+_TRAFO3_CONNECTION_RE = re.compile(
+    r"^(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(-?\d|1[0-2]|-1[0-2])?(y|yn|d|z|zn)(-?\d|1[0-2]|-1[0-2])?$"
+)
 
 
 def parse_trafo3_connection(string: str) -> Dict[str, str]:
@@ -48,13 +50,13 @@ def parse_trafo3_connection(string: str) -> Dict[str, str]:
     Matches the following regular expression to the winding_1, winding_2 and winding_3 codes.
     Optionally checks the clock numbers:
 
-    ^               Start of the string
-    (Y|YN|D|Z|ZN)   First winding type
-    (y|yn|d|z|zn)   Second winding type
-    (\d|1[0-2])     Clock number (0-12)
-    (y|yn|d|z|zn)   Third winding type
-    (\d|1[0-2])     Clock number (0-12)
-    $               End of the string
+    ^                         Start of the string
+    (Y|YN|D|Z|ZN)             First winding type
+    (y|yn|d|z|zn)             Second winding type
+    (-?\d|1[0-2]|-1[0-2])     Clock number (-12-12)
+    (y|yn|d|z|zn)             Third winding type
+    (-?\d|1[0-2]|-1[0-2])     Clock number (-12-12)
+    $                         End of the string
 
     Args:
         string (str): The input string.
