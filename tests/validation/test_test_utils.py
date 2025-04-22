@@ -7,7 +7,7 @@ from unittest.mock import mock_open, patch
 
 import numpy as np
 import pandas as pd
-from power_grid_model import power_grid_meta_data
+from power_grid_model import ComponentType, power_grid_meta_data
 
 from .utils import component_attributes, extract_extra_info, select_values
 
@@ -20,18 +20,23 @@ def test_component_attributes():
     generator = component_attributes(Path("test.json"), data_type="input")
 
     # Assert
-    assert list(generator) == [("line", "i_n"), ("line", "id"), ("node", "id"), ("node", "u_rated")]
+    assert list(generator) == [
+        (ComponentType.line, "i_n"),
+        (ComponentType.line, "id"),
+        (ComponentType.node, "id"),
+        (ComponentType.node, "u_rated"),
+    ]
 
 
 def test_select_values():
     # Arrange
-    input_node_dtype = power_grid_meta_data["input"]["node"].dtype
-    actual = {"node": np.array([(2, 2.0), (4, np.nan), (3, 3.0), (1, 1.0)], dtype=input_node_dtype)}
-    expected = {"node": np.array([(4, 4.0), (1, np.nan), (3, 3.0)], dtype=input_node_dtype)}
+    input_node_dtype = power_grid_meta_data["input"][ComponentType.node].dtype
+    actual = {ComponentType.node: np.array([(2, 2.0), (4, np.nan), (3, 3.0), (1, 1.0)], dtype=input_node_dtype)}
+    expected = {ComponentType.node: np.array([(4, 4.0), (1, np.nan), (3, 3.0)], dtype=input_node_dtype)}
 
     # Act
     actual_values, expected_values = select_values(
-        actual=actual, expected=expected, component="node", attribute="u_rated"
+        actual=actual, expected=expected, component=ComponentType.node, attribute="u_rated"
     )
 
     # Assert
@@ -42,8 +47,8 @@ def test_select_values():
 def test_extract_extra_info():
     # Arrange
     data = {
-        "node": [{"id": 3, "name": "foo"}, {"id": 1, "u_rated": 400.0, "name": "bar"}],
-        "line": [{"id": 2, "name": "baz", "color": "red"}, {"id": 4, "r1": 0.0, "c1": 0.0, "x1": 0.0}],
+        ComponentType.node: [{"id": 3, "name": "foo"}, {"id": 1, "u_rated": 400.0, "name": "bar"}],
+        ComponentType.line: [{"id": 2, "name": "baz", "color": "red"}, {"id": 4, "r1": 0.0, "c1": 0.0, "x1": 0.0}],
     }
 
     # Act

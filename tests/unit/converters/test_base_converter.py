@@ -8,6 +8,7 @@ from unittest.mock import ANY, MagicMock
 
 import numpy as np
 import pytest
+from power_grid_model import ComponentType
 
 from power_grid_model_io.converters.base_converter import BaseConverter
 
@@ -30,7 +31,7 @@ def converter():
     converter = DummyConverter()
     converter._parse_data = MagicMock()
     converter._serialize_data = MagicMock()
-    converter._serialize_data.return_value = {"node": [{"id": 1}, {"id": 2}]}
+    converter._serialize_data.return_value = {ComponentType.node: [{"id": 1}, {"id": 2}]}
     return converter
 
 
@@ -48,11 +49,11 @@ def test_load_input_data(converter: DummyConverter):
     converter._parse_data.side_effect = add_extra_info  # type: ignore
 
     # Act
-    data, extra_info = converter.load_input_data(data={"node": [{"id": 1}, {"id": 2}]})
+    data, extra_info = converter.load_input_data(data={ComponentType.node: [{"id": 1}, {"id": 2}]})
 
     # Assert
     converter._parse_data.assert_called_once_with(  # type: ignore
-        data={"node": [{"id": 1}, {"id": 2}]}, data_type="input", extra_info=ANY
+        data={ComponentType.node: [{"id": 1}, {"id": 2}]}, data_type="input", extra_info=ANY
     )
     assert data == {"foo": 1}
     assert extra_info == {1: "Foo"}
@@ -76,7 +77,7 @@ def test_load_input_data__list(converter: DummyConverter):
 
     # Act & Assers
     with pytest.raises(TypeError, match="can not be batch"):
-        converter.load_input_data(data={"node": [{"id": 1}, {"id": 2}]})
+        converter.load_input_data(data={ComponentType.node: [{"id": 1}, {"id": 2}]})
 
 
 def test_load_update_data(converter: DummyConverter):
@@ -84,11 +85,11 @@ def test_load_update_data(converter: DummyConverter):
     converter._parse_data.return_value = {"foo": 1}  # type: ignore
 
     # Act
-    data = converter.load_update_data(data={"node": [{"id": 1}, {"id": 2}]})
+    data = converter.load_update_data(data={ComponentType.node: [{"id": 1}, {"id": 2}]})
 
     # Assert
     converter._parse_data.assert_called_once_with(  # type: ignore
-        data={"node": [{"id": 1}, {"id": 2}]}, data_type="update", extra_info=None
+        data={ComponentType.node: [{"id": 1}, {"id": 2}]}, data_type="update", extra_info=None
     )
     assert data == {"foo": 1}
 
@@ -98,11 +99,11 @@ def test_load_sym_output_data(converter: DummyConverter):
     converter._parse_data.return_value = {"foo": 1}  # type: ignore
 
     # Act
-    data = converter.load_sym_output_data(data={"node": [{"id": 1}, {"id": 2}]})
+    data = converter.load_sym_output_data(data={ComponentType.node: [{"id": 1}, {"id": 2}]})
 
     # Assert
     converter._parse_data.assert_called_once_with(  # type: ignore
-        data={"node": [{"id": 1}, {"id": 2}]}, data_type="sym_output", extra_info=None
+        data={ComponentType.node: [{"id": 1}, {"id": 2}]}, data_type="sym_output", extra_info=None
     )
     assert data == {"foo": 1}
 
@@ -112,11 +113,11 @@ def test_load_asym_output_data(converter: DummyConverter):
     converter._parse_data.return_value = {"foo": 1}  # type: ignore
 
     # Act
-    data = converter.load_asym_output_data(data={"node": [{"id": 1}, {"id": 2}]})
+    data = converter.load_asym_output_data(data={ComponentType.node: [{"id": 1}, {"id": 2}]})
 
     # Assert
     converter._parse_data.assert_called_once_with(  # type: ignore
-        data={"node": [{"id": 1}, {"id": 2}]}, data_type="asym_output", extra_info=None
+        data={ComponentType.node: [{"id": 1}, {"id": 2}]}, data_type="asym_output", extra_info=None
     )
     assert data == {"foo": 1}
 
@@ -126,11 +127,11 @@ def test_load_sc_output_data(converter: DummyConverter):
     converter._parse_data.return_value = {"foo": 1}  # type: ignore
 
     # Act
-    data = converter.load_sc_output_data(data={"node": [{"id": 1}, {"id": 2}]})
+    data = converter.load_sc_output_data(data={ComponentType.node: [{"id": 1}, {"id": 2}]})
 
     # Assert
     converter._parse_data.assert_called_once_with(  # type: ignore
-        data={"node": [{"id": 1}, {"id": 2}]}, data_type="sc_output", extra_info=None
+        data={ComponentType.node: [{"id": 1}, {"id": 2}]}, data_type="sc_output", extra_info=None
     )
     assert data == {"foo": 1}
 
@@ -151,7 +152,7 @@ def test_save_data(converter: DummyConverter):
     # Destination supplied as argument
     destination = MagicMock()
     converter.save(data={"foo": np.array([1])}, destination=destination)
-    destination.save.assert_called_once_with(data={"node": [{"id": 1}, {"id": 2}]})
+    destination.save.assert_called_once_with(data={ComponentType.node: [{"id": 1}, {"id": 2}]})
 
     # Destination supplied at instantiation
     destination2 = MagicMock()
@@ -165,7 +166,7 @@ def test_load_data(converter: DummyConverter):
     with pytest.raises(ValueError, match="No data supplied!"):
         converter._load_data(data=None)
 
-    data = converter._load_data(data={"node": [{"id": 1}, {"id": 2}]})
+    data = converter._load_data(data={ComponentType.node: [{"id": 1}, {"id": 2}]})
     assert data == data
 
     source = MagicMock()
