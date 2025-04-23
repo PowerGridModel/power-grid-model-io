@@ -1536,7 +1536,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # TODO: create unit tests for the function
         assert "res_asymmetric_sgen" not in self.pp_output_data
 
-        if "asym_gen" not in self.pgm_output_data or self.pgm_output_data[ComponentType.asym_gen].size == 0:
+        if ComponentType.asym_gen not in self.pgm_output_data or self.pgm_output_data[ComponentType.asym_gen].size == 0:
             return
 
         pgm_output_asym_gens = self.pgm_output_data[ComponentType.asym_gen]
