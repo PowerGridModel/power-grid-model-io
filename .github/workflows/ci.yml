@@ -39,7 +39,7 @@ jobs:
   build-python:
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.version.outputs.version }} # what is this? do we need it? relation to gihub_output? do what is done in display tag and get tag
+      version: ${{ steps.version.outputs.version }}
     steps:
 
       - name: Checkout source code
@@ -239,7 +239,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           # To test, use the TestPyPI:
-          repository-url: https://test.pypi.org/legacy/
+          # repository-url: https://test.pypi.org/legacy/
           # You must also create an account and project on TestPyPI,
           # as well as set the trusted-publisher in the project settings:
           # https://docs.pypi.org/trusted-publishers/adding-a-publisher/
