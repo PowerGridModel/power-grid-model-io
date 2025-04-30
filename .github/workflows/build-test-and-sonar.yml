@@ -39,21 +39,24 @@ jobs:
   build-python:
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.version.outputs.version }}
+      version: ${{ steps.version.outputs.version }} # what is this? do we need it? relation to gihub_output? do what is done in display tag and get tag
     steps:
 
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Setup Python 3.11
+      - name: Setup Python 3.13
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.13"
+
+      - name: Set PyPI version
+        uses: PowerGridModel/pgm-version-bump@main
 
       - name: Build
         run: |
-          pip install requests build
-          python set_pypi_version.py
+          cat PYPI_VERSION
+          pip install build
           python -m build --outdir wheelhouse .
 
       - name: Save version
@@ -163,7 +166,7 @@ jobs:
       - name: Validation tests
         run: pytest tests/validation --no-cov --verbose
 
-  publish:
+  github-release:
     needs:
       - build-python
       - unit-tests
@@ -171,15 +174,12 @@ jobs:
       - sonar-cloud
     permissions:
       contents: write
-    env:
-      TWINE_USERNAME: ${{ secrets.PYPI_USER }}
-      TWINE_PASSWORD: ${{ secrets.PYPI_PASS }}
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Python 3.11
+      - name: Setup Python 3.13
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.13"
 
       - name: Load built wheel file
         uses: actions/download-artifact@v4
@@ -187,20 +187,65 @@ jobs:
           name: power-grid-model-io
           path: wheelhouse/
 
-      - name: Upload wheels
-        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (github.event.inputs.create_release == 'true'))
-        run: |
-          pip install twine
-          echo "Publish to PyPI..."
-          twine upload --verbose wheelhouse/*
+      - name: Get tag
+        id: tag
+        run: echo "tag=v${{ needs.build-python.outputs.version }}" >> $GITHUB_OUTPUT
 
-      - name: Release
+      - name: Display tag
+        run: echo "${{ steps.tag.outputs.tag }}"
+
+      - name: Create GitHub release
         if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (github.event.inputs.create_release == 'true'))
         uses: softprops/action-gh-release@v2
         with:
           files: |
             ./wheelhouse/*
-          tag_name: v${{ needs.build-python.outputs.version }}
+          tag_name: "${{ steps.tag.outputs.tag }}"
           prerelease: ${{github.ref != 'refs/heads/main'}}
           generate_release_notes: true
           target_commitish: ${{ github.sha }}
+
+  publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write  # Required for Trusted Publishing
+    needs: github-release
+    if: (github.event_name == 'workflow_dispatch') || github.event_name == 'push'
+
+    steps:
+      - name: Download assets from GitHub release
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: ${{ github.repository }}
+          # download the latest release
+          latest: true
+          # don't download pre-releases
+          preRelease: false
+          fileName: "*"
+          # don't download GitHub-generated source tar and zip files
+          tarBall: false
+          zipBall: false
+          # create a directory to store the downloaded assets
+          out-file-path: assets-to-publish
+          # don't extract downloaded files
+          extract: false
+
+      - name: List downloaded assets
+        run: ls -la assets-to-publish
+      
+      - name: Upload assets to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # To test, use the TestPyPI:
+          # repository-url: https://test.pypi.org/legacy/
+          # You must also create an account and project on TestPyPI,
+          # as well as set the trusted-publisher in the project settings:
+          # https://docs.pypi.org/trusted-publishers/adding-a-publisher/
+          # To publish to the official PyPI repository, just keep
+          # repository-url commented out.
+          packages-dir: assets-to-publish
+          skip-existing: true
+          print-hash: true
+          verbose: true
