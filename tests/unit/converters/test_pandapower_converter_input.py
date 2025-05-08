@@ -9,7 +9,15 @@ import numpy as np
 import pandapower as pp
 import pandas as pd
 import pytest
-from power_grid_model import Branch3Side, BranchSide, LoadGenType, WindingType, initialize_array
+from power_grid_model import (
+    Branch3Side,
+    BranchSide,
+    ComponentType,
+    DatasetType,
+    LoadGenType,
+    WindingType,
+    initialize_array,
+)
 
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter
 
@@ -98,7 +106,7 @@ def test_parse_data(
     converter = PandaPowerConverter()
 
     def create_input_data():
-        converter.pgm_input_data = {"node": np.array([])}
+        converter.pgm_input_data = {ComponentType.node: np.array([])}
 
     create_input_data_mock.side_effect = create_input_data
 
@@ -110,8 +118,8 @@ def test_parse_data(
     fill_pgm_extra_info_mock.assert_not_called()
     fill_pp_extra_info_mock.assert_not_called()
     assert len(converter.pp_input_data) == 1 and "bus" in converter.pp_input_data
-    assert len(converter.pgm_input_data) == 1 and "node" in converter.pgm_input_data
-    assert len(result) == 1 and "node" in result
+    assert len(converter.pgm_input_data) == 1 and ComponentType.node in converter.pgm_input_data
+    assert len(result) == 1 and ComponentType.node in result
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._fill_pgm_extra_info")
@@ -148,14 +156,14 @@ def test_fill_pgm_extra_info():
     converter = PandaPowerConverter()
     converter.idx_lookup[("bus", None)] = pd.Series([101, 102, 103], index=[0, 1, 2])
     converter.idx_lookup[("load", "const_current")] = pd.Series([201, 202, 203], index=[3, 4, 5])
-    converter.pgm_input_data["sym_load"] = initialize_array("input", "sym_load", 3)
-    converter.pgm_input_data["sym_load"]["id"] = [3, 4, 5]
-    converter.pgm_input_data["sym_load"]["node"] = [0, 1, 2]
-    converter.pgm_input_data["line"] = initialize_array("input", "line", 2)
-    converter.pgm_input_data["line"]["id"] = [6, 7]
-    converter.pgm_input_data["line"]["from_node"] = [0, 1]
-    converter.pgm_input_data["line"]["to_node"] = [1, 2]
-    converter.pgm_input_data["line"]["i_n"] = [106.0, 105.0]
+    converter.pgm_input_data[ComponentType.sym_load] = initialize_array(DatasetType.input, ComponentType.sym_load, 3)
+    converter.pgm_input_data[ComponentType.sym_load]["id"] = [3, 4, 5]
+    converter.pgm_input_data[ComponentType.sym_load]["node"] = [0, 1, 2]
+    converter.pgm_input_data[ComponentType.line] = initialize_array(DatasetType.input, ComponentType.line, 2)
+    converter.pgm_input_data[ComponentType.line]["id"] = [6, 7]
+    converter.pgm_input_data[ComponentType.line]["from_node"] = [0, 1]
+    converter.pgm_input_data[ComponentType.line]["to_node"] = [1, 2]
+    converter.pgm_input_data[ComponentType.line]["i_n"] = [106.0, 105.0]
 
     # Act
     extra_info = {}
@@ -185,15 +193,15 @@ def test_fill_pgm_extra_info():
 def test_fill_pp_extra_info():
     # Arrange
     converter = PandaPowerConverter()
-    converter.idx_lookup[("line", None)] = pd.Series([102, 103], index=[1, 2])
+    converter.idx_lookup[(ComponentType.line, None)] = pd.Series([102, 103], index=[1, 2])
     converter.idx_lookup[("trafo", None)] = pd.Series([201, 202, 203], index=[3, 4, 5])
-    converter.idx[("line", None)] = pd.Series([1, 2], index=[102, 103])
+    converter.idx[(ComponentType.line, None)] = pd.Series([1, 2], index=[102, 103])
     converter.idx[("trafo", None)] = pd.Series([3, 4, 5], index=[201, 202, 203])
 
     converter.pp_input_data["trafo"] = pd.DataFrame(
         {"df": [0.1, 0.2, 0.3], "other": [0.1, 0.2, 0.3]}, index=[201, 202, 203]
     )
-    converter.pp_input_data["line"] = pd.DataFrame([10, 11, 12], columns=["df"], index=[201, 202, 203])
+    converter.pp_input_data[ComponentType.line] = pd.DataFrame([10, 11, 12], columns=["df"], index=[201, 202, 203])
 
     # Act
     extra_info = {}
@@ -215,8 +223,10 @@ def test_fill_pp_extra_info__no_info():
     converter.pp_input_data["trafo"] = pd.DataFrame(
         {"col1": [0.1, 0.2, 0.3], "col2": [0.1, 0.2, 0.3]}, index=[201, 202, 203]
     )
-    converter.pgm_input_data["transformer"] = initialize_array("input", "transformer", 3)
-    converter.pgm_input_data["transformer"]["id"] = [3, 4, 5]
+    converter.pgm_input_data[ComponentType.transformer] = initialize_array(
+        DatasetType.input, ComponentType.transformer, 3
+    )
+    converter.pgm_input_data[ComponentType.transformer]["id"] = [3, 4, 5]
     # Act
     extra_info = {}
     converter._fill_pp_extra_info(extra_info=extra_info)
@@ -233,7 +243,7 @@ def test__serialize_data__sym(
 ):
     # Arrange
     converter = PandaPowerConverter()
-    line_sym_output_array = initialize_array("sym_output", "line", 1)
+    line_sym_output_array = initialize_array(DatasetType.sym_output, ComponentType.line, 1)
 
     def create_output_data():
         converter.pp_output_data = {"res_line": pd.DataFrame(np.array([]))}
@@ -241,14 +251,14 @@ def test__serialize_data__sym(
     create_output_data_mock.side_effect = create_output_data
 
     # Act
-    result = converter._serialize_data(data={"line": line_sym_output_array}, extra_info=None)
+    result = converter._serialize_data(data={ComponentType.line: line_sym_output_array}, extra_info=None)
 
     # Assert
     create_output_data_mock.assert_called_once_with()
     extra_info_to_idx_lookup.assert_not_called()
     extra_info_pgm_input_data.assert_not_called()
     assert len(converter.pp_output_data) == 1 and "res_line" in converter.pp_output_data
-    assert len(converter.pgm_output_data) == 1 and "line" in converter.pgm_output_data
+    assert len(converter.pgm_output_data) == 1 and ComponentType.line in converter.pgm_output_data
     assert len(result) == 1 and "res_line" in result
 
 
@@ -260,7 +270,7 @@ def test__serialize_data__asym(
 ):
     # Arrange
     converter = PandaPowerConverter()
-    line_asym_output_array = initialize_array("asym_output", "line", 1)
+    line_asym_output_array = initialize_array(DatasetType.asym_output, ComponentType.line, 1)
 
     def create_output_data_3ph():
         converter.pp_output_data = {"res_line_3ph": pd.DataFrame(np.array([]))}
@@ -268,14 +278,14 @@ def test__serialize_data__asym(
     create_output_data_3ph_mock.side_effect = create_output_data_3ph
 
     # Act
-    result = converter._serialize_data(data={"line": line_asym_output_array}, extra_info=None)
+    result = converter._serialize_data(data={ComponentType.line: line_asym_output_array}, extra_info=None)
 
     # Assert
     create_output_data_3ph_mock.assert_called_once_with()
     extra_info_to_idx_lookup.assert_not_called()
     extra_info_pgm_input_data.assert_not_called()
     assert len(converter.pp_output_data) == 1 and "res_line_3ph" in converter.pp_output_data
-    assert len(converter.pgm_output_data) == 1 and "line" in converter.pgm_output_data
+    assert len(converter.pgm_output_data) == 1 and ComponentType.line in converter.pgm_output_data
     assert len(result) == 1 and "res_line_3ph" in result
 
 
@@ -288,7 +298,7 @@ def test__serialize_data__invalid_output():
         TypeError,
         match="Invalid output data dictionary supplied.",
     ):
-        converter._serialize_data(data={"line": np.array([])}, extra_info=None)
+        converter._serialize_data(data={ComponentType.line: np.array([])}, extra_info=None)
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._extra_info_to_idx_lookup")
@@ -345,10 +355,10 @@ def test_extra_info_to_idx_lookup():
 def test_extra_info_to_pgm_input_data():
     # Arrange
     converter = PandaPowerConverter()
-    converter.pgm_output_data["node"] = initialize_array("sym_output", "node", 3)
-    converter.pgm_output_data["line"] = initialize_array("sym_output", "line", 2)
-    converter.pgm_output_data["node"]["id"] = [1, 2, 3]
-    converter.pgm_output_data["line"]["id"] = [12, 23]
+    converter.pgm_output_data[ComponentType.node] = initialize_array(DatasetType.sym_output, ComponentType.node, 3)
+    converter.pgm_output_data[ComponentType.line] = initialize_array(DatasetType.sym_output, ComponentType.line, 2)
+    converter.pgm_output_data[ComponentType.node]["id"] = [1, 2, 3]
+    converter.pgm_output_data[ComponentType.line]["id"] = [12, 23]
     extra_info = {
         12: {"pgm_input": {"from_node": 1, "to_node": 2, "i_n": 105.0}},
         23: {"pgm_input": {"from_node": 2, "to_node": 3, "i_n": 5.0}},
@@ -358,17 +368,19 @@ def test_extra_info_to_pgm_input_data():
     converter._extra_info_to_pgm_input_data(extra_info=extra_info)
 
     # Assert
-    assert "node" not in converter.pgm_input_data
+    assert ComponentType.node not in converter.pgm_input_data
     assert_struct_array_equal(
-        converter.pgm_input_data["line"],
+        converter.pgm_input_data[ComponentType.line],
         [{"id": 12, "from_node": 1, "to_node": 2, "i_n": 105.0}, {"id": 23, "from_node": 2, "to_node": 3, "i_n": 5.0}],
     )
 
 
 def test__extra_info_to_pp_input_data():
     converter = PandaPowerConverter()
-    converter.pgm_output_data["transformer"] = initialize_array("sym_output", "transformer", 3)
-    converter.pgm_output_data["transformer"]["id"] = [3, 4, 5]
+    converter.pgm_output_data[ComponentType.transformer] = initialize_array(
+        DatasetType.sym_output, ComponentType.transformer, 3
+    )
+    converter.pgm_output_data[ComponentType.transformer]["id"] = [3, 4, 5]
 
     converter.idx_lookup[("trafo", None)] = pd.Series([201, 202, 203], index=[3, 4, 5])
     converter.idx[("trafo", None)] = pd.Series([3, 4, 5], index=[201, 202, 203])
@@ -387,7 +399,7 @@ def test__extra_info_to_pp_input_data():
 
 def test__extra_info_to_pp_input_data__empty():
     converter = PandaPowerConverter()
-    converter.pgm_output_data["line"] = initialize_array("sym_output", "line", 3)
+    converter.pgm_output_data[ComponentType.line] = initialize_array(DatasetType.sym_output, ComponentType.line, 3)
 
     converter._extra_info_to_pp_input_data({})
     assert len(converter.pp_input_data) == 0
@@ -465,7 +477,7 @@ def test_create_pgm_input_nodes(mock_init_array: MagicMock, two_pp_objs: MockDf,
     converter._generate_ids.assert_called_once_with("bus", two_pp_objs.index)
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type="node", shape=2)
+    mock_init_array.assert_called_once_with(data_type="input", component_type=ComponentType.node, shape=2)
 
     # retrieval
     converter._get_pp_attr.assert_any_call("bus", "vn_kv", expected_type="f8")
@@ -478,13 +490,13 @@ def test_create_pgm_input_nodes(mock_init_array: MagicMock, two_pp_objs: MockDf,
     assert len(pgm.call_args_list) == 2
 
     # result
-    assert converter.pgm_input_data["node"] == mock_init_array.return_value
+    assert converter.pgm_input_data[ComponentType.node] == mock_init_array.return_value
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
-    converter.pp_input_data["line"] = two_pp_objs
+    converter.pp_input_data[ComponentType.line] = two_pp_objs
 
     # Act
     converter._create_pgm_input_lines()
@@ -492,13 +504,13 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     # Assert
 
     # administration
-    converter.get_switch_states.assert_called_once_with("line")
-    converter._generate_ids.assert_called_once_with("line", two_pp_objs.index)
+    converter.get_switch_states.assert_called_once_with(ComponentType.line)
+    converter._generate_ids.assert_called_once_with(ComponentType.line, two_pp_objs.index)
     converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("line", "from_bus", expected_type="u4"))
     converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("line", "to_bus", expected_type="u4"))
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type="line", shape=2)
+    mock_init_array.assert_called_once_with(data_type="input", component_type=ComponentType.line, shape=2)
 
     # retrieval
     converter._get_pp_attr.assert_any_call("line", "from_bus", expected_type="u4")
@@ -573,7 +585,7 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     assert len(pgm.call_args_list) == 14
 
     # result
-    assert converter.pgm_input_data["line"] == mock_init_array.return_value
+    assert converter.pgm_input_data[ComponentType.line] == mock_init_array.return_value
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -590,7 +602,7 @@ def test_create_pgm_input_sources(mock_init_array: MagicMock, two_pp_objs, conve
     converter._generate_ids.assert_called_once_with("ext_grid", two_pp_objs.index)
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type="source", shape=2)
+    mock_init_array.assert_called_once_with(data_type="input", component_type=ComponentType.source, shape=2)
 
     # retrieval:
     converter._get_pp_attr.assert_any_call("ext_grid", "bus", expected_type="u4")
@@ -617,7 +629,7 @@ def test_create_pgm_input_sources(mock_init_array: MagicMock, two_pp_objs, conve
     assert len(pgm.call_args_list) == 7
 
     # result
-    assert converter.pgm_input_data["source"] == mock_init_array.return_value
+    assert converter.pgm_input_data[ComponentType.source] == mock_init_array.return_value
 
 
 @pytest.mark.parametrize("kwargs", [{"r0x0_max": 0.5, "rx_max": 4}, {"x0x_max": 0.6}])
@@ -655,7 +667,7 @@ def test_create_pgm_input_sym_loads(mock_init_array: MagicMock, two_pp_objs, con
     # administration:
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type="sym_load", shape=3 * 2)
+    mock_init_array.assert_called_once_with(data_type="input", component_type=ComponentType.sym_load, shape=3 * 2)
 
     # retrieval:
     converter._get_pp_attr.assert_any_call("load", "bus", expected_type="u4")
@@ -675,7 +687,7 @@ def test_create_pgm_input_sym_loads(mock_init_array: MagicMock, two_pp_objs, con
         assert len(pgm[attr].__setitem__.call_args_list) == len(slices)
 
     # result
-    assert converter.pgm_input_data["sym_load"] == pgm
+    assert converter.pgm_input_data[ComponentType.sym_load] == pgm
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -692,7 +704,7 @@ def test_create_pgm_input_asym_loads(mock_init_array: MagicMock, two_pp_objs, co
     converter._generate_ids.assert_called_once_with("asymmetric_load", two_pp_objs.index)
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type="asym_load", shape=2)
+    mock_init_array.assert_called_once_with(data_type="input", component_type=ComponentType.asym_load, shape=2)
 
     # retrieval:
     converter._get_pp_attr.assert_any_call("asymmetric_load", "bus", expected_type="u4")
@@ -716,7 +728,7 @@ def test_create_pgm_input_asym_loads(mock_init_array: MagicMock, two_pp_objs, co
     pgm.assert_any_call("q_specified", ANY)
     assert len(pgm.call_args_list) == 6
     # result
-    assert converter.pgm_input_data["asym_load"] == mock_init_array.return_value
+    assert converter.pgm_input_data[ComponentType.asym_load] == mock_init_array.return_value
 
 
 def test_create_pgm_input_sym_loads__delta() -> None:
@@ -769,7 +781,7 @@ def test_create_pgm_input_transformers__tap_dependent_impedance() -> None:
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_shunts(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
-    converter.pp_input_data["shunt"] = two_pp_objs
+    converter.pp_input_data[ComponentType.shunt] = two_pp_objs
 
     # Act
     converter._create_pgm_input_shunts()
@@ -777,18 +789,18 @@ def test_create_pgm_input_shunts(mock_init_array: MagicMock, two_pp_objs, conver
     # Assert
 
     # administration:
-    converter._generate_ids.assert_called_once_with("shunt", two_pp_objs.index)
+    converter._generate_ids.assert_called_once_with(ComponentType.shunt, two_pp_objs.index)
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type="shunt", shape=2)
+    mock_init_array.assert_called_once_with(data_type="input", component_type=ComponentType.shunt, shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call("shunt", "bus", expected_type="u4")
-    converter._get_pp_attr.assert_any_call("shunt", "p_mw", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("shunt", "q_mvar", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("shunt", "vn_kv", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("shunt", "step", expected_type="u4", default=1)
-    converter._get_pp_attr.assert_any_call("shunt", "in_service", expected_type="bool", default=True)
+    converter._get_pp_attr.assert_any_call(ComponentType.shunt, "bus", expected_type="u4")
+    converter._get_pp_attr.assert_any_call(ComponentType.shunt, "p_mw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(ComponentType.shunt, "q_mvar", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(ComponentType.shunt, "vn_kv", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(ComponentType.shunt, "step", expected_type="u4", default=1)
+    converter._get_pp_attr.assert_any_call(ComponentType.shunt, "in_service", expected_type="bool", default=True)
 
     assert len(converter._get_pp_attr.call_args_list) == 6
 
@@ -817,7 +829,7 @@ def test_create_pgm_input_shunts(mock_init_array: MagicMock, two_pp_objs, conver
     assert len(pgm.call_args_list) == 7
 
     # result
-    assert converter.pgm_input_data["shunt"] == mock_init_array.return_value
+    assert converter.pgm_input_data[ComponentType.shunt] == mock_init_array.return_value
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -847,7 +859,7 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
     )
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type="transformer", shape=2)
+    mock_init_array.assert_called_once_with(data_type="input", component_type=ComponentType.transformer, shape=2)
 
     # retrieval:
     converter._get_pp_attr.assert_any_call("trafo", "hv_bus", expected_type="u4")
@@ -902,7 +914,7 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
     assert len(pgm.call_args_list) == 21
 
     # result
-    assert converter.pgm_input_data["transformer"] == mock_init_array.return_value
+    assert converter.pgm_input_data[ComponentType.transformer] == mock_init_array.return_value
 
 
 @patch(
@@ -958,7 +970,7 @@ def test_create_pgm_input_transformers__default() -> None:
 
     # Act
     converter._create_pgm_input_transformers()
-    result = converter.pgm_input_data["transformer"]
+    result = converter.pgm_input_data[ComponentType.transformer]
 
     # Assert
     assert result[0]["tap_side"] == BranchSide.from_side.value
@@ -996,7 +1008,7 @@ def test_create_pgm_input_sym_gens(mock_init_array: MagicMock, two_pp_objs, conv
     converter._generate_ids.assert_called_once_with("sgen", two_pp_objs.index)
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type="sym_gen", shape=2)
+    mock_init_array.assert_called_once_with(data_type="input", component_type=ComponentType.sym_gen, shape=2)
 
     # retrieval:
     converter._get_pp_attr.assert_any_call("sgen", "bus", expected_type="i8")
@@ -1027,7 +1039,7 @@ def test_create_pgm_input_sym_gens(mock_init_array: MagicMock, two_pp_objs, conv
     assert len(pgm.call_args_list) == 6
 
     # result
-    assert converter.pgm_input_data["sym_gen"] == mock_init_array.return_value
+    assert converter.pgm_input_data[ComponentType.sym_gen] == mock_init_array.return_value
 
 
 @pytest.mark.parametrize(
@@ -1089,7 +1101,7 @@ def test_create_pgm_input_asym_gens(mock_init_array: MagicMock, two_pp_objs, con
     converter._generate_ids.assert_called_once_with("asymmetric_sgen", two_pp_objs.index)
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type="asym_gen", shape=2)
+    mock_init_array.assert_called_once_with(data_type="input", component_type=ComponentType.asym_gen, shape=2)
 
     # retrieval:
     converter._get_pp_attr.assert_any_call("asymmetric_sgen", "bus", expected_type="i8")
@@ -1114,7 +1126,7 @@ def test_create_pgm_input_asym_gens(mock_init_array: MagicMock, two_pp_objs, con
     assert len(pgm.call_args_list) == 6
 
     # result
-    assert converter.pgm_input_data["asym_gen"] == mock_init_array.return_value
+    assert converter.pgm_input_data[ComponentType.asym_gen] == mock_init_array.return_value
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -1140,7 +1152,9 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
     )
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type="three_winding_transformer", shape=2)
+    mock_init_array.assert_called_once_with(
+        data_type="input", component_type=ComponentType.three_winding_transformer, shape=2
+    )
 
     # retrieval:
     converter._get_pp_attr.assert_any_call("trafo3w", "hv_bus", expected_type="u4")
@@ -1213,7 +1227,7 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
     assert len(pgm.call_args_list) == 32
 
     # result
-    assert converter.pgm_input_data["three_winding_transformer"] == mock_init_array.return_value
+    assert converter.pgm_input_data[ComponentType.three_winding_transformer] == mock_init_array.return_value
 
 
 @patch(
@@ -1357,7 +1371,7 @@ def test_create_pgm_input_transformers3w__default() -> None:
 
     # Act
     converter._create_pgm_input_three_winding_transformers()
-    result = converter.pgm_input_data["three_winding_transformer"]
+    result = converter.pgm_input_data[ComponentType.three_winding_transformer]
 
     # Assert
     assert result[0]["tap_side"] == Branch3Side.side_1.value
@@ -1493,7 +1507,7 @@ def test_create_pgm_input_links(mock_init_array: MagicMock, converter):
     pd.testing.assert_index_equal(converter._generate_ids.call_args_list[0].args[1], pd.Index([1, 3]))
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type="link", shape=2)
+    mock_init_array.assert_called_once_with(data_type="input", component_type=ComponentType.link, shape=2)
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
@@ -1505,7 +1519,7 @@ def test_create_pgm_input_links(mock_init_array: MagicMock, converter):
     assert len(pgm.call_args_list) == 5
 
     # result
-    assert converter.pgm_input_data["link"] == mock_init_array.return_value
+    assert converter.pgm_input_data[ComponentType.link] == mock_init_array.return_value
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -1553,7 +1567,7 @@ def test_create_pgm_input_wards(mock_init_array: MagicMock, two_pp_objs, convert
     # administration:
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type="sym_load", shape=2 * 2)
+    mock_init_array.assert_called_once_with(data_type="input", component_type=ComponentType.sym_load, shape=2 * 2)
 
     # retrieval:
     converter._get_pp_attr.assert_any_call("ward", "bus", expected_type="u4")
@@ -1571,7 +1585,7 @@ def test_create_pgm_input_wards(mock_init_array: MagicMock, two_pp_objs, convert
         assert len(pgm[attr].__setitem__.call_args_list) == len(slices)
 
     # result
-    assert converter.pgm_input_data["sym_load"] == pgm
+    assert converter.pgm_input_data[ComponentType.sym_load] == pgm
 
 
 def test_create_pgm_input_wards__existing_loads() -> None:
@@ -1591,7 +1605,7 @@ def test_create_pgm_input_wards__existing_loads() -> None:
     converter._create_pgm_input_wards()
 
     # assert
-    assert len(converter.pgm_input_data["sym_load"]) == 5
+    assert len(converter.pgm_input_data[ComponentType.sym_load]) == 5
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -1650,7 +1664,7 @@ def test_create_pgm_input_motors(mock_init_array: MagicMock, two_pp_objs, conver
     converter._generate_ids.assert_called_once_with("motor", two_pp_objs.index, name="motor_load")
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type="sym_load", shape=2)
+    mock_init_array.assert_called_once_with(data_type="input", component_type=ComponentType.sym_load, shape=2)
 
     # retrieval:
     converter._get_pp_attr.assert_any_call("motor", "bus", expected_type="i8")
@@ -1673,7 +1687,7 @@ def test_create_pgm_input_motors(mock_init_array: MagicMock, two_pp_objs, conver
     assert len(pgm.call_args_list) == 6
 
     # result
-    assert converter.pgm_input_data["sym_load"] == mock_init_array.return_value
+    assert converter.pgm_input_data[ComponentType.sym_load] == mock_init_array.return_value
 
 
 def test_create_pgm_input_motors__existing_loads() -> None:
@@ -1693,7 +1707,7 @@ def test_create_pgm_input_motors__existing_loads() -> None:
     converter._create_pgm_input_motors()
 
     # assert
-    assert len(converter.pgm_input_data["sym_load"]) == 4
+    assert len(converter.pgm_input_data[ComponentType.sym_load]) == 4
 
 
 @pytest.mark.parametrize(
@@ -1992,10 +2006,10 @@ def test_get_individual_switch_states():
 def test_get_id():
     # Arrange
     converter = PandaPowerConverter()
-    converter.idx = {("line", None): pd.Series([21, 345, 0, 3, 15], index=[0, 1, 2, 3, 4])}
+    converter.idx = {(ComponentType.line, None): pd.Series([21, 345, 0, 3, 15], index=[0, 1, 2, 3, 4])}
 
     # Act
-    actual_id = converter.get_id("line", 1)
+    actual_id = converter.get_id(ComponentType.line, 1)
 
     # Assert
     np.testing.assert_array_equal(actual_id, 345)
@@ -2006,7 +2020,7 @@ def test_get_switch_states_lines(mock_get_individual_switch_states: MagicMock):
     # Arrange
     converter = PandaPowerConverter()
     converter.pp_input_data = {
-        "line": pd.DataFrame(columns=["from_bus", "to_bus"], data=[[101, 102]], index=[1]),
+        ComponentType.line: pd.DataFrame(columns=["from_bus", "to_bus"], data=[[101, 102]], index=[1]),
         "switch": pd.DataFrame(
             columns=["bus", "et", "element", "closed"],
             data=[[101, "l", 1, False], [102, "x", 1, False]],
@@ -2020,7 +2034,7 @@ def test_get_switch_states_lines(mock_get_individual_switch_states: MagicMock):
     expected = pd.DataFrame(columns=["from", "to"], index=[1], data=[[False, True]])
 
     # Act
-    actual = converter.get_switch_states("line")
+    actual = converter.get_switch_states(ComponentType.line)
 
     # Assert
     pd.testing.assert_frame_equal(actual, expected)
@@ -2080,7 +2094,7 @@ def test_get_switch_states__exception():
 
     # Act / Assert
     with pytest.raises(KeyError, match=r"link"):
-        converter.get_switch_states("link")
+        converter.get_switch_states(ComponentType.link)
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter.get_individual_switch_states")
@@ -2110,11 +2124,11 @@ def test_lookup_id():
     # Arrange
     converter = PandaPowerConverter()
     converter.idx_lookup = {
-        ("line", None): pd.Series([0, 1, 2, 3, 4], index=[21, 345, 0, 3, 15]),
+        (ComponentType.line, None): pd.Series([0, 1, 2, 3, 4], index=[21, 345, 0, 3, 15]),
         ("load", "const_current"): pd.Series([5, 6, 7, 8, 9], index=[543, 14, 34, 48, 4]),
     }
 
-    expected_line = {"table": "line", "index": 4}
+    expected_line = {"table": ComponentType.line, "index": 4}
     expected_load = {"table": "load", "name": "const_current", "index": 8}
 
     # Act
@@ -2129,7 +2143,7 @@ def test_lookup_id():
 def test_lookup_id__value_error():
     # Arrange
     converter = PandaPowerConverter()
-    converter.idx_lookup = {("line", None): pd.Series([0, 1, 2, 3, 4], index=[21, 345, 0, 3, 15])}
+    converter.idx_lookup = {(ComponentType.line, None): pd.Series([0, 1, 2, 3, 4], index=[21, 345, 0, 3, 15])}
 
     # Act / Assert
     with pytest.raises(KeyError):

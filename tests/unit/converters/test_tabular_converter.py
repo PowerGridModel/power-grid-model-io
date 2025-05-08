@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
-from power_grid_model import initialize_array, power_grid_meta_data
+from power_grid_model import ComponentType, DatasetType, initialize_array, power_grid_meta_data
 from power_grid_model.data_types import SingleDataset
 
 from power_grid_model_io.converters.tabular_converter import TabularConverter
@@ -28,20 +28,20 @@ def converter():
 
 @pytest.fixture
 def pgm_node_empty():
-    node = initialize_array("input", "node", 2)
-    return {"node": node}
+    node = initialize_array(DatasetType.input, ComponentType.node, 2)
+    return {ComponentType.node: node}
 
 
 @pytest.fixture
 def pgm_line_empty():
-    line = initialize_array("input", "line", 2)
-    return {"line": line}
+    line = initialize_array(DatasetType.input, ComponentType.line, 2)
+    return {ComponentType.line: line}
 
 
 @pytest.fixture
 def pgm_power_sensor_empty():
-    power_sensor = initialize_array("input", "sym_power_sensor", 1)
-    return {"power_sensor": power_sensor}
+    power_sensor = initialize_array(DatasetType.input, ComponentType.sym_power_sensor, 1)
+    return {ComponentType.sym_power_sensor: power_sensor}
 
 
 @pytest.fixture
@@ -80,21 +80,24 @@ def test_parse_data(converter: TabularConverter, tabular_data: TabularData):
     data.set_unit_multipliers.assert_called_once()
     data.set_substitutions.assert_called_once()
 
-    pgm_input_data = converter._parse_data(data=tabular_data, data_type="input", extra_info=None)
-    assert list(pgm_input_data.keys()) == ["node", "line", "sym_load"]
-    assert len(pgm_input_data["node"]) == 2
-    assert (pgm_input_data["node"]["id"] == [0, 1]).all()
-    assert (pgm_input_data["node"]["u_rated"] == [10.5e3, 400]).all()
+    pgm_input_data = converter._parse_data(data=tabular_data, data_type=DatasetType.input, extra_info=None)
+    assert list(pgm_input_data.keys()) == [ComponentType.node, ComponentType.line, ComponentType.sym_load]
+    assert len(pgm_input_data[ComponentType.node]) == 2
+    assert (pgm_input_data[ComponentType.node]["id"] == [0, 1]).all()
+    assert (pgm_input_data[ComponentType.node]["u_rated"] == [10.5e3, 400]).all()
 
-    assert len(pgm_input_data["line"]) == 2
-    assert (pgm_input_data["line"]["id"] == [2, 3]).all()
-    assert (pgm_input_data["line"]["from_node"] == [0, 1]).all()
+    assert len(pgm_input_data[ComponentType.line]) == 2
+    assert (pgm_input_data[ComponentType.line]["id"] == [2, 3]).all()
+    assert (pgm_input_data[ComponentType.line]["from_node"] == [0, 1]).all()
 
-    assert len(pgm_input_data["sym_load"]) == 4
-    assert (pgm_input_data["sym_load"]["id"] == [4, 5, 6, 7]).all()
-    assert (pgm_input_data["sym_load"]["node"] == [0, 1, 0, 1]).all()
-    assert (pgm_input_data["sym_load"]["status"] == [1, 0, 1, 0]).all()
-    assert pgm_input_data["sym_load"].dtype == power_grid_meta_data["input"]["sym_load"].dtype
+    assert len(pgm_input_data[ComponentType.sym_load]) == 4
+    assert (pgm_input_data[ComponentType.sym_load]["id"] == [4, 5, 6, 7]).all()
+    assert (pgm_input_data[ComponentType.sym_load]["node"] == [0, 1, 0, 1]).all()
+    assert (pgm_input_data[ComponentType.sym_load]["status"] == [1, 0, 1, 0]).all()
+    assert (
+        pgm_input_data[ComponentType.sym_load].dtype
+        == power_grid_meta_data[DatasetType.input][ComponentType.sym_load].dtype
+    )
 
 
 def test_convert_table_to_component(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
@@ -103,7 +106,7 @@ def test_convert_table_to_component(converter: TabularConverter, tabular_data_no
         data=tabular_data_no_units_no_substitutions,
         data_type="input",
         table="some_random_table",
-        component="node",
+        component=ComponentType.node,
         attributes={"key": "value"},
         extra_info=None,
     )
