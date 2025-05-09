@@ -13,7 +13,6 @@ from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 from power_grid_model import initialize_array
-from power_grid_model._utils import is_nan
 from power_grid_model.data_types import ComponentList, Dataset, SingleDataset, SinglePythonDataset
 from power_grid_model.utils import json_deserialize, json_serialize
 
@@ -216,8 +215,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
             is_batch = is_dense_batch or is_sparse_batch
         return bool(is_batch)
 
-    @staticmethod
-    def _serialize_dataset(data: SingleDataset, extra_info: Optional[ExtraInfo] = None) -> SinglePythonDataset:
+    def _serialize_dataset(self, data: SingleDataset, extra_info: Optional[ExtraInfo] = None) -> SinglePythonDataset:
         """This function converts a single power-grid-model dataset to a structured dataset
 
         Args:
@@ -248,7 +246,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
                     {
                         attribute: obj[attribute].tolist()
                         for attribute in objects.dtype.names
-                        if not is_nan(obj[attribute])
+                        if not self._is_nan(obj[attribute])
                     },
                     extra_info.get(obj["id"], {}),
                 )
@@ -296,3 +294,21 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
                 return entry
 
         return None
+
+    @staticmethod
+    def _is_nan(data: np.ndarray) -> bool:
+        """
+        Determine if the data point is valid
+        Args:
+            data: a single scaler or numpy array
+
+        Returns:
+            True if all the data points are invalid
+            False otherwise
+        """
+        nan_func = {
+            np.dtype("f8"): lambda x: np.all(np.isnan(x)),
+            np.dtype("i4"): lambda x: np.all(x == np.iinfo("i4").min),
+            np.dtype("i1"): lambda x: np.all(x == np.iinfo("i1").min),
+        }
+        return bool(nan_func[data.dtype](data))
