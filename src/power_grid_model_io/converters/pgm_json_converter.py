@@ -298,7 +298,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
     @staticmethod
     def _is_nan(data: np.ndarray) -> bool:
         """
-        Determine if the data point is valid
+        Determine whether the data point is valid
         Args:
             data: a single scalar or numpy array
 
