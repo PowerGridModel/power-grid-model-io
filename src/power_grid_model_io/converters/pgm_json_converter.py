@@ -300,15 +300,15 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
         """
         Determine if the data point is valid
         Args:
-            data: a single scaler or numpy array
+            data: a single scalar or numpy array
 
         Returns:
-            True if all the data points are invalid
+            True when all the data points are invalid
             False otherwise
         """
         nan_func = {
             np.dtype("f8"): lambda x: np.all(np.isnan(x)),
-            np.dtype("i4"): lambda x: np.all(x == np.iinfo("i4").min),
-            np.dtype("i1"): lambda x: np.all(x == np.iinfo("i1").min),
+            np.dtype("i4"): lambda x: np.all(x == np.iinfo(np.dtype("i4")).min),
+            np.dtype("i1"): lambda x: np.all(x == np.iinfo(np.dtype("i1")).min),
         }
         return bool(nan_func[data.dtype](data))
