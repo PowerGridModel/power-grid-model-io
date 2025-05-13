@@ -21,6 +21,12 @@ from power_grid_model_io.data_stores.json_file_store import JsonFileStore
 from power_grid_model_io.data_types import ExtraInfo, StructuredData
 from power_grid_model_io.utils.dict import merge_dicts
 
+_NAN_FUNC = {
+    np.dtype("f8"): lambda x: np.all(np.isnan(x)),
+    np.dtype("i4"): lambda x: np.all(x == np.iinfo(np.dtype("i4")).min),
+    np.dtype("i1"): lambda x: np.all(x == np.iinfo(np.dtype("i1")).min),
+}
+
 
 class PgmJsonConverter(BaseConverter[StructuredData]):
     """
@@ -306,9 +312,4 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
             True when all the data points are invalid
             False otherwise
         """
-        nan_func = {
-            np.dtype("f8"): lambda x: np.all(np.isnan(x)),
-            np.dtype("i4"): lambda x: np.all(x == np.iinfo(np.dtype("i4")).min),
-            np.dtype("i1"): lambda x: np.all(x == np.iinfo(np.dtype("i1")).min),
-        }
-        return bool(nan_func[data.dtype](data))
+        return bool(_NAN_FUNC[data.dtype](data))
