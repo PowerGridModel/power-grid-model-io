@@ -95,6 +95,9 @@ jobs:
         run: |
           pytest --cov-report=xml:coverage.xml --cov-fail-under=0
 
+          echo "Contents of coverage.xml after pytest:"
+          cat /home/runner/work/power-grid-model-io/power-grid-model-io/coverage.xml
+
           # Fix relative paths in coverage file
           # Known bug: https://community.sonarsource.com/t/sonar-on-github-actions-with-python-coverage-source-issue/36057
           sed -i 's@/home/runner/work/power-grid-model-io/power-grid-model-io@/github/workspace@g' coverage.xml
