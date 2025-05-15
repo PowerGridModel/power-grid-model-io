@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   main:
-    uses: "./.github/workflows/ci.yml"
+    uses: "./.github/workflows/build-test-release.yml"
     permissions:
       contents: write
     with:
