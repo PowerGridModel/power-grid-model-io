@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+from importlib import metadata
 from typing import Callable
 from unittest.mock import ANY, MagicMock, call, patch
 
@@ -9,6 +10,7 @@ import numpy as np
 import pandapower as pp
 import pandas as pd
 import pytest
+from packaging import version
 from power_grid_model import Branch3Side, BranchSide, LoadGenType, WindingType, initialize_array
 
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter
@@ -756,14 +758,19 @@ def test_create_pgm_input_transformers__tap_dependent_impedance() -> None:
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
     args = [0, 0, 0, 0, 0, 0, 0, 0, 0]
-    pp.create_transformer_from_parameters(pp_net, *args, tap_dependent_impedance=True)
 
-    converter = PandaPowerConverter()
-    converter.pp_input_data = {k: v for k, v in pp_net.items() if isinstance(v, pd.DataFrame)}
+    if version.Version(metadata.version("pandapower")) >= version.Version("3"):
+        with pytest.deprecated_call():
+            pp.create_transformer_from_parameters(pp_net, *args, tap_dependent_impedance=True)
+    else:
+        pp.create_transformer_from_parameters(pp_net, *args, tap_dependent_impedance=True)
 
-    # Act/Assert
-    with pytest.raises(RuntimeError, match="not supported"):
-        converter._create_pgm_input_transformers()
+        converter = PandaPowerConverter()
+        converter.pp_input_data = {k: v for k, v in pp_net.items() if isinstance(v, pd.DataFrame)}
+
+        # Act/Assert
+        with pytest.raises(RuntimeError, match="not supported"):
+            converter._create_pgm_input_transformers()
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -1462,14 +1469,19 @@ def test_create_pgm_input_three_winding_transformers__tap_dependent_impedance() 
     pp_net: pp.pandapowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
     args = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    pp.create_transformer3w_from_parameters(pp_net, *args, tap_dependent_impedance=True)
 
-    converter = PandaPowerConverter()
-    converter.pp_input_data = {k: v for k, v in pp_net.items() if isinstance(v, pd.DataFrame)}
+    if version.Version(metadata.version("pandapower")) >= version.Version("3"):
+        with pytest.deprecated_call():
+            pp.create_transformer3w_from_parameters(pp_net, *args, tap_dependent_impedance=True)
+    else:
+        pp.create_transformer3w_from_parameters(pp_net, *args, tap_dependent_impedance=True)
 
-    # Act/Assert
-    with pytest.raises(RuntimeError, match="not supported"):
-        converter._create_pgm_input_three_winding_transformers()
+        converter = PandaPowerConverter()
+        converter.pp_input_data = {k: v for k, v in pp_net.items() if isinstance(v, pd.DataFrame)}
+
+        # Act/Assert
+        with pytest.raises(RuntimeError, match="not supported"):
+            converter._create_pgm_input_three_winding_transformers()
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
