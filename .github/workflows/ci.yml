@@ -93,19 +93,11 @@ jobs:
 
       - name: Test and Coverage
         run: |
-          pytest --cov-report=xml:coverage.xml --cov-fail-under=0
-
-          echo "Contents of coverage.xml after pytest:"
-          cat /home/runner/work/power-grid-model-io/power-grid-model-io/coverage.xml
+          pytest
 
           # Fix relative paths in coverage file
           # Known bug: https://community.sonarsource.com/t/sonar-on-github-actions-with-python-coverage-source-issue/36057
           sed -i 's@/home/runner/work/power-grid-model-io/power-grid-model-io@/github/workspace@g' coverage.xml
-      
-      - name: Verify updated coverage file
-        run: |
-          echo "Contents of coverage.xml after sed command:"
-          cat /github/workspace/coverage.xml
 
       - name: SonarCloud Scan
         if: ${{ (github.event_name == 'push') || (github.event.pull_request.head.repo.owner.login == 'PowerGridModel') }}
