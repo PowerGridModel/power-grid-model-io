@@ -13,7 +13,6 @@ from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 from power_grid_model import initialize_array
-from power_grid_model._utils import is_nan
 from power_grid_model.data_types import ComponentList, Dataset, SingleDataset, SinglePythonDataset
 from power_grid_model.utils import json_deserialize, json_serialize
 
@@ -21,6 +20,12 @@ from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_stores.json_file_store import JsonFileStore
 from power_grid_model_io.data_types import ExtraInfo, StructuredData
 from power_grid_model_io.utils.dict import merge_dicts
+
+_NAN_FUNC = {
+    np.dtype("f8"): lambda x: np.all(np.isnan(x)),
+    np.dtype("i4"): lambda x: np.all(x == np.iinfo(np.dtype("i4")).min),
+    np.dtype("i1"): lambda x: np.all(x == np.iinfo(np.dtype("i1")).min),
+}
 
 
 class PgmJsonConverter(BaseConverter[StructuredData]):
@@ -216,8 +221,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
             is_batch = is_dense_batch or is_sparse_batch
         return bool(is_batch)
 
-    @staticmethod
-    def _serialize_dataset(data: SingleDataset, extra_info: Optional[ExtraInfo] = None) -> SinglePythonDataset:
+    def _serialize_dataset(self, data: SingleDataset, extra_info: Optional[ExtraInfo] = None) -> SinglePythonDataset:
         """This function converts a single power-grid-model dataset to a structured dataset
 
         Args:
@@ -248,7 +252,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
                     {
                         attribute: obj[attribute].tolist()
                         for attribute in objects.dtype.names
-                        if not is_nan(obj[attribute])
+                        if not self._is_nan(obj[attribute])
                     },
                     extra_info.get(obj["id"], {}),
                 )
@@ -296,3 +300,16 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
                 return entry
 
         return None
+
+    @staticmethod
+    def _is_nan(data: np.ndarray) -> bool:
+        """
+        Determine whether the data point is valid
+        Args:
+            data: a single scalar or numpy array
+
+        Returns:
+            True when all the data points are invalid
+            False otherwise
+        """
+        return bool(_NAN_FUNC[data.dtype](data))
