@@ -72,15 +72,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self.idx: Dict[Tuple[str, Optional[str]], pd.Series] = {}
         self.idx_lookup: Dict[Tuple[str, Optional[str]], pd.Series] = {}
         self.next_idx = 0
-        print("this is a newly covered line for testing purposes")  # TODO(mgovers): delete before merging
-
-    def _uncovered_method(self):  # TODO(mgovers): delete before merging
-        """
-        This is a non-covered function for testing purposes
-
-        TODO(mgovers): delete before merging
-        """
-        print("this is a new non-covered line for testing purposes")  # TODO(mgovers): delete before merging
 
     def _parse_data(
         self,
