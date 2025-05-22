@@ -8,13 +8,15 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Tuple
 
-import pandapower as pp
 import pandas as pd
 import pytest
 from power_grid_model.validation import assert_valid_input_data
 
 from power_grid_model_io.converters import PandaPowerConverter
 from power_grid_model_io.converters.pandapower_converter import PandaPowerData
+
+pp = pytest.importorskip("pandapower", reason="pandapower is not installed")
+# we add this to enable python 3.13 testing even though pandapower 3.0 is not yet compatible with it
 
 from ...data.pandapower.pp_validation import pp_net, pp_net_3ph
 from ..utils import component_attributes_df, load_json_single_dataset

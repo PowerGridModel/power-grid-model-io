@@ -3,19 +3,23 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from importlib import metadata
-from typing import Callable
+from typing import Callable, TypeAlias
 from unittest.mock import ANY, MagicMock, call, patch
 
 import numpy as np
-import pandapower as pp
 import pandas as pd
 import pytest
 from packaging import version
 from power_grid_model import Branch3Side, BranchSide, LoadGenType, WindingType, initialize_array
 
+pp = pytest.importorskip("pandapower", reason="pandapower is not installed")
+# we add this to enable python 3.13 testing even though pandapower 3.0 is not yet compatible with it
+
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter
 
 from ...utils import MockDf, MockFn, assert_struct_array_equal
+
+PandaPowerNet: TypeAlias = pp.pandapowerNet  # type: ignore
 
 
 def _generate_ids(*args, **kwargs):
@@ -624,7 +628,7 @@ def test_create_pgm_input_sources(mock_init_array: MagicMock, two_pp_objs, conve
 
 @pytest.mark.parametrize("kwargs", [{"r0x0_max": 0.5, "rx_max": 4}, {"x0x_max": 0.6}])
 def test_create_pgm_input_sources__zero_sequence(kwargs) -> None:
-    pp_net: pp.pandapowerNet = pp.create_empty_network()
+    pp_net: PandaPowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=1.0)
     pp.create_ext_grid(pp_net, 0, **kwargs)
 
@@ -723,7 +727,7 @@ def test_create_pgm_input_asym_loads(mock_init_array: MagicMock, two_pp_objs, co
 
 def test_create_pgm_input_sym_loads__delta() -> None:
     # Arrange
-    pp_net: pp.pandapowerNet = pp.create_empty_network()
+    pp_net: PandaPowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
     pp.create_load(pp_net, 0, 0, type="delta")
 
@@ -739,7 +743,7 @@ def test_create_pgm_input_sym_loads__delta() -> None:
 
 def test_create_pgm_input_asym_loads__delta() -> None:
     # Arrange
-    pp_net: pp.pandapowerNet = pp.create_empty_network()
+    pp_net: PandaPowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
     pp.create_asymmetric_load(pp_net, 0, type="delta")
 
@@ -755,7 +759,7 @@ def test_create_pgm_input_asym_loads__delta() -> None:
 
 def test_create_pgm_input_transformers__tap_dependent_impedance() -> None:
     # Arrange
-    pp_net: pp.pandapowerNet = pp.create_empty_network()
+    pp_net: PandaPowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
     args = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 
@@ -937,7 +941,7 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
 )
 def test_create_pgm_input_transformers__default() -> None:
     # Arrange
-    pp_net: pp.pandapowerNet = pp.create_empty_network()
+    pp_net: PandaPowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
     args = [0, 0, 0, 0, 0, 0, 0, 0, 0]
     pp.create_transformer_from_parameters(
@@ -1066,7 +1070,7 @@ def test_create_pgm_input_sym_gens(mock_init_array: MagicMock, two_pp_objs, conv
 )
 def test_create_pgm_input_transformers__warnings(kwargs) -> None:
     # Arrange
-    pp_net: pp.pandapowerNet = pp.create_empty_network()
+    pp_net: PandaPowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
     args = [0, 0, 0, 0, 0, 0, 0, 0, 0]
     if "pfe_kw" in kwargs:
@@ -1291,7 +1295,7 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
 )
 def test_create_pgm_input_transformers3w__default() -> None:
     # Arrange
-    pp_net: pp.pandapowerNet = pp.create_empty_network()
+    pp_net: PandaPowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
     args = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     pp.create_transformer3w_from_parameters(
@@ -1432,7 +1436,7 @@ def test_create_pgm_input_transformers3w__default() -> None:
 )
 def test_create_pgm_input_transformers3w__warnings(kwargs) -> None:
     # Arrange
-    pp_net: pp.pandapowerNet = pp.create_empty_network()
+    pp_net: PandaPowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
     args = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     if "pfe_kw" in kwargs:
@@ -1451,7 +1455,7 @@ def test_create_pgm_input_transformers3w__warnings(kwargs) -> None:
 
 def test_create_pgm_input_three_winding_transformers__tap_at_star_point() -> None:
     # Arrange
-    pp_net: pp.pandapowerNet = pp.create_empty_network()
+    pp_net: PandaPowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
     args = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     pp.create_transformer3w_from_parameters(pp_net, *args, tap_at_star_point=True)
@@ -1466,7 +1470,7 @@ def test_create_pgm_input_three_winding_transformers__tap_at_star_point() -> Non
 
 def test_create_pgm_input_three_winding_transformers__tap_dependent_impedance() -> None:
     # Arrange
-    pp_net: pp.pandapowerNet = pp.create_empty_network()
+    pp_net: PandaPowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
     args = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
@@ -1590,7 +1594,7 @@ def test_create_pgm_input_wards__existing_loads() -> None:
     converter = PandaPowerConverter()
     # Arrange
 
-    pp_net: pp.pandapowerNet = pp.create_empty_network()
+    pp_net: PandaPowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
     pp.create_load(pp_net, 0, 0)
     pp.create_ward(pp_net, 0, 0, 0, 0, 0)
@@ -1692,7 +1696,7 @@ def test_create_pgm_input_motors__existing_loads() -> None:
     converter = PandaPowerConverter()
     # Arrange
 
-    pp_net: pp.pandapowerNet = pp.create_empty_network()
+    pp_net: PandaPowerNet = pp.create_empty_network()
     pp.create_bus(net=pp_net, vn_kv=0.0)
     pp.create_load(pp_net, 0, 0)
     pp.create_motor(pp_net, 0, 0, 0)
