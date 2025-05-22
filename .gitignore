@@ -16,6 +16,7 @@ __pycache__/
 .mypy_cache/
 .pytest_cache/
 cov_html/
+python_coverage.xml
 
 # Virtual environment
 venv*/
