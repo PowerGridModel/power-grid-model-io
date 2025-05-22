@@ -97,7 +97,7 @@ jobs:
 
           # Fix relative paths in coverage file
           # Known bug: https://community.sonarsource.com/t/sonar-on-github-actions-with-python-coverage-source-issue/36057
-          sed -i 's@/home/runner/work/power-grid-model-io/power-grid-model-io@/github/workspace@g' coverage.xml
+          sed -i 's@/home/runner/work/power-grid-model-io/power-grid-model-io@/github/workspace@g' python_coverage.xml
 
       - name: SonarCloud Scan
         if: ${{ (github.event_name == 'push') || (github.event.pull_request.head.repo.owner.login == 'PowerGridModel') }}
