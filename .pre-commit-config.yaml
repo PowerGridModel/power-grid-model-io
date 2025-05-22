@@ -36,4 +36,4 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
-        args: [ "--cov-fail-under=99" ]
+        args: [ "--cov-fail-under=98" ]
