@@ -4,12 +4,14 @@
 
 import sys
 from copy import copy, deepcopy
+from importlib import metadata
 from itertools import chain
 from typing import Any, Dict, List, Mapping, MutableMapping, Optional, Tuple, Union
 from unittest.mock import MagicMock
 
 import numpy as np
 import pandas as pd
+from packaging import version
 from pandas.core.generic import NDFrame
 
 
@@ -71,7 +73,9 @@ class MockFn:
     __slots__ = ["fn", "args", "kwargs", "postfix"]
 
     __array_struct__ = np.array([]).__array_struct__
-    __array_prepare__ = np.array([]).__array_prepare__
+
+    if version.Version(metadata.version("numpy")) < version.Version("2"):
+        __array_prepare__ = np.array([]).__array_prepare__  # type: ignore[attr-defined]
 
     def __init__(self, fn: str, *args, **kwargs):
         self.fn = fn
