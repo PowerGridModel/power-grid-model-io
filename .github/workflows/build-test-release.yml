@@ -111,7 +111,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python: ["3.11", "3.12"]
+        python: ["3.11", "3.12", "3.13"]
       fail-fast: false
     runs-on: ${{ matrix.os }}
 
@@ -131,8 +131,13 @@ jobs:
           name: power-grid-model-io
           path: wheelhouse/
 
-      - name: Install built wheel file
+      - name: Install built wheel file (Python 3.11 and 3.12)
+        if: matrix.python != '3.13'
         run: pip install power-grid-model-io[dev]==${{ needs.build-python.outputs.version }} --find-links=wheelhouse
+
+      - name: Install built wheel file (Python 3.13)
+        if: matrix.python == '3.13'
+        run: pip install power-grid-model-io[dev-bare]==${{ needs.build-python.outputs.version }} --find-links=wheelhouse
 
       - name: Unit test and coverage
         run: pytest --verbose
@@ -142,7 +147,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python: ["3.11", "3.12"]
+        python: ["3.11", "3.12", "3.13"]
       fail-fast: false
     runs-on: ${{ matrix.os }}
 
@@ -162,8 +167,13 @@ jobs:
           name: power-grid-model-io
           path: wheelhouse/
 
-      - name: Install built wheel file
+      - name: Install built wheel file (Python 3.11 and 3.12)
+        if: matrix.python != '3.13'
         run: pip install power-grid-model-io[dev]==${{ needs.build-python.outputs.version }} --find-links=wheelhouse
+
+      - name: Install built wheel file (Python 3.13)
+        if: matrix.python == '3.13'
+        run: pip install power-grid-model-io[dev-bare]==${{ needs.build-python.outputs.version }} --find-links=wheelhouse
 
       - name: Validation tests
         run: pytest tests/validation --no-cov --verbose
