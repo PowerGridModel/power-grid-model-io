@@ -52,7 +52,7 @@ jobs:
     permissions:
       contents: write
       id-token: write  # Required for Trusted Publishing
-    needs: github-release
+    needs: build-test-release
     if: (github.event_name == 'workflow_dispatch') || github.event_name == 'push'
 
     steps:
