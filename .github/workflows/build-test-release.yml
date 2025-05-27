@@ -6,13 +6,6 @@
 name: Build, Test, Sonar
 
 on:
-  push:
-    branches:
-      - main
-  # run pipeline on pull request
-  pull_request:
-  # run pipeline on merge queue
-  merge_group:
   # run pipeline from another workflow
   workflow_call:
     inputs:
@@ -207,7 +200,7 @@ jobs:
         run: echo "${{ steps.tag.outputs.tag }}"
 
       - name: Create GitHub release
-        if: (github.event_name == 'push') || ((github.event_name == 'workflow_dispatch') && (github.event.inputs.create_release == 'true'))
+        if: (inputs.create_release)
         uses: softprops/action-gh-release@v2
         with:
           files: |

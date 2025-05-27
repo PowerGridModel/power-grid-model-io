@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  main:
+  build-test-release:
     uses: "./.github/workflows/build-test-release.yml"
     permissions:
       contents: write
