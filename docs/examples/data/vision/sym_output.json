@@ -1,24 +1,24 @@
 {
-  "line":
-    [
-      {"id": 4, "energized": 1, "loading": 0.15473990756817002, "p_from": 30133.178503728053, "q_from": 10050.721853721689, "i_from": 46.421809438989094, "s_from": 31765.16104977932, "p_to": -29999.9999999991, "q_to": -10000.000000000018, "i_to": 46.42197227045101, "s_to": 31622.776601682945, "id_reference": {"table": "Cables", "key": {"Number": 6}}},
-      {"id": 5, "energized": 1, "loading": 0.2946347177166794, "p_from": 60482.835089115535, "q_from": 184.81468538821002, "i_from": 88.39041452675093, "s_from": 60483.11745342729, "p_to": -60000.00000000256, "q_to": -2.981555974335137e-10, "i_to": 88.3904153150038, "s_to": 60000.00000000256, "id_reference": {"table": "Cables", "key": {"Number": 5}}},
-      {"id": 6, "energized": 1, "loading": 0.44422983507391905, "p_from": 91713.619010016, "q_from": 10656.105417735627, "i_from": 133.26889142389211, "s_from": 92330.60432266358, "p_to": -90616.01359284009, "q_to": -10235.536539109033, "i_to": 133.26895052217571, "s_to": 91192.25914353265, "id_reference": {"table": "Cables", "key": {"Number": 4}}}
-    ],
   "node":
     [
-      {"id": 0, "energized": 1, "u_pu": 0.999991421302051, "u": 399.9965685208204, "u_angle": -3.921691889422987e-05, "id_reference": {"table": "Nodes", "key": {"Number": 1}}, "ID": 101, "Name": "First Node"},
-      {"id": 1, "energized": 1, "u_pu": 0.983231522194849, "u": 393.2926088779396, "u_angle": -0.003434581394274798, "id_reference": {"table": "Nodes", "key": {"Number": 4}}, "ID": 104, "Name": "Fourth Node"},
-      {"id": 2, "energized": 1, "u_pu": 0.9876620765421245, "u": 395.0648306168498, "u_angle": -0.003235042286685305, "id_reference": {"table": "Nodes", "key": {"Number": 2}}, "ID": 102, "Name": "Second Node"},
-      {"id": 3, "energized": 1, "u_pu": 0.9797729773054616, "u": 391.9091909221847, "u_angle": -0.006296501518419363, "id_reference": {"table": "Nodes", "key": {"Number": 3}}, "ID": 103, "Name": "Third Node"}
+      {"id": 0, "energized": 1, "u_pu": 0.9999914213020509, "u": 399.99656852082035, "u_angle": -3.921691889422516e-05, "p": 91713.61901001866, "q": 10656.105417735625, "id_reference": {"table": "Nodes", "key": {"Number": 1}}, "ID": 101, "Name": "First Node"},
+      {"id": 1, "energized": 1, "u_pu": 0.9832315221948486, "u": 393.2926088779394, "u_angle": -0.0034345813942749746, "p": -29999.999999999956, "q": -9999.999999999569, "id_reference": {"table": "Nodes", "key": {"Number": 4}}, "ID": 104, "Name": "Fourth Node"},
+      {"id": 2, "energized": 1, "u_pu": 0.9876620765421241, "u": 395.06483061684963, "u_angle": -0.0032350422866854467, "p": -2.6344844955208393e-09, "q": -8.687020341559513e-10, "id_reference": {"table": "Nodes", "key": {"Number": 2}}, "ID": 102, "Name": "Second Node"},
+      {"id": 3, "energized": 1, "u_pu": 0.9797729773054615, "u": 391.9091909221846, "u_angle": -0.006296501518419477, "p": -59999.99999999907, "q": 1.218643241873707e-10, "id_reference": {"table": "Nodes", "key": {"Number": 3}}, "ID": 103, "Name": "Third Node"}
+    ],
+  "line":
+    [
+      {"id": 4, "energized": 1, "loading": 0.15473990756817338, "p_from": 30133.17850372892, "q_from": 10050.72185372124, "i_from": 46.4218094389901, "s_from": 31765.16104978, "p_to": -29999.999999999956, "q_to": -9999.999999999569, "i_to": 46.42197227045202, "s_to": 31622.776601683618, "id_reference": {"table": "Cables", "key": {"Number": 6}}},
+      {"id": 5, "energized": 1, "loading": 0.2946347177166623, "p_from": 60482.83508911288, "q_from": 184.8146853877713, "i_from": 88.39041452674708, "s_from": 60483.11745342463, "p_to": -59999.99999999907, "q_to": 1.218643241873707e-10, "i_to": 88.39041531499868, "s_to": 59999.99999999907, "id_reference": {"table": "Cables", "key": {"Number": 5}}},
+      {"id": 6, "energized": 1, "loading": 0.44422983507392755, "p_from": 91713.61901001866, "q_from": 10656.105417735625, "i_from": 133.26889142389595, "s_from": 92330.60432266623, "p_to": -90616.0135928418, "q_to": -10235.53653910901, "i_to": 133.26895052217827, "s_to": 91192.25914353436, "id_reference": {"table": "Cables", "key": {"Number": 4}}}
     ],
   "source":
     [
-      {"id": 7, "energized": 1, "p": 91713.61901002181, "q": 10656.105417760706, "i": 133.26889142390465, "s": 92330.60432267224, "pf": 0.9933176510954675, "id_reference": {"table": "Sources", "key": {"Node.Number": 1, "Subnumber": 1}}, "Name": "Grid"}
+      {"id": 7, "energized": 1, "p": 91713.61901001866, "q": 10656.105417735625, "i": 133.26889142389595, "s": 92330.60432266623, "pf": 0.9933176510954981, "id_reference": {"table": "Sources", "key": {"Node.Number": 1, "Subnumber": 1}}, "Name": "Grid"}
     ],
   "sym_load":
     [
-      {"id": 8, "energized": 1, "p": 60000.0, "q": -0.0, "i": 88.39041531500003, "s": 60000.0, "pf": 1.0, "id_reference": {"table": "Loads", "key": {"Node.Number": 3, "Subnumber": 1}}},
-      {"id": 9, "energized": 1, "p": 30000.0, "q": 10000.0, "i": 46.421972270452244, "s": 31622.776601683792, "pf": 0.9486832980505139, "id_reference": {"table": "Loads", "key": {"Node.Number": 4, "Subnumber": 1}}}
+      {"id": 8, "energized": 1, "p": 60000, "q": 0, "i": 88.39041531500004, "s": 60000, "pf": 1, "id_reference": {"table": "Loads", "key": {"Node.Number": 3, "Subnumber": 1}}},
+      {"id": 9, "energized": 1, "p": 30000, "q": 10000, "i": 46.421972270452265, "s": 31622.776601683792, "pf": 0.9486832980505139, "id_reference": {"table": "Loads", "key": {"Node.Number": 4, "Subnumber": 1}}}
     ]
 }
