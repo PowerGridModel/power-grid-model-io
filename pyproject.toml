@@ -39,20 +39,17 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-dev-bare = [  # pandapower 3.0.0 is not compatible with Python 3.13. pandapower 3.1 will be.
+dev = [
     "pre-commit",
     "pylint",
     "pytest",
     "pytest-cov",
     "pydantic>2", # Used in unit tests
-]
-dev = [
-    "power-grid-model-io[dev-bare]",
-    "pandapower>2.11.1, <3.1", # pandapower 3.0.0 is not compatible with Python 3.13. pandapower 3.1 will be.
+    "pandapower>2.11.1",
 ]
 examples = [
     "power-grid-model>1.9.80",
-    "pandapower>2.11.1, <4.0", # pandapower 3.0.0 has differences in results cfr. https://github.com/e2nIEE/pandapower/issues/2557
+    "pandapower>2.11.1",
     "pyarrow", # Pyarrow support for Python 3.12 scheduled for 14.0.0: https://github.com/apache/arrow/issues/37880
 ]
 doc = [

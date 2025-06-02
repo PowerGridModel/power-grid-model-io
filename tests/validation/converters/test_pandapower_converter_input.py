@@ -15,9 +15,6 @@ from power_grid_model_io.converters import PandaPowerConverter
 from power_grid_model_io.data_types import ExtraInfo
 from power_grid_model_io.utils.json import JsonEncoder
 
-pp = pytest.importorskip("pandapower", reason="pandapower is not installed")
-# we add this to enable python 3.13 testing even though pandapower 3.0 is not yet compatible with it
-
 from ...data.pandapower.pp_validation import pp_net
 from ..utils import compare_extra_info, component_attributes, component_objects, load_json_single_dataset, select_values
 
