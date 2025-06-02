@@ -1,28 +1,28 @@
 {
   "node":
     [
-      {"id": 0, "u_rated": 110000.0, "id_reference": {"table": "bus", "index": 101}},
-      {"id": 1, "u_rated": 20000.0, "id_reference": {"table": "bus", "index": 102}},
-      {"id": 2, "u_rated": 20000.0, "id_reference": {"table": "bus", "index": 103}},
-      {"id": 3, "u_rated": 30100.0, "id_reference": {"table": "bus", "index": 104}},
-      {"id": 4, "u_rated": 60000.0, "id_reference": {"table": "bus", "index": 105}},
-      {"id": 5, "u_rated": 110000.0, "id_reference": {"table": "bus", "index": 106}}
+      {"id": 0, "u_rated": 110000, "id_reference": {"table": "bus", "index": 101}},
+      {"id": 1, "u_rated": 20000, "id_reference": {"table": "bus", "index": 102}},
+      {"id": 2, "u_rated": 20000, "id_reference": {"table": "bus", "index": 103}},
+      {"id": 3, "u_rated": 30100, "id_reference": {"table": "bus", "index": 104}},
+      {"id": 4, "u_rated": 60000, "id_reference": {"table": "bus", "index": 105}},
+      {"id": 5, "u_rated": 110000, "id_reference": {"table": "bus", "index": 106}}
     ],
   "line":
     [
-      {"id": 6, "from_node": 2, "to_node": 1, "from_status": 1, "to_status": 1, "r1": 0.12792, "x1": 0.0492, "c1": 6.4206e-07, "tan1": 0.0, "i_n": 108.0, "id_reference": {"table": "line", "index": 101}, "pgm_input": {"from_node": 2, "to_node": 1, "i_n": 108.0}}
+      {"id": 6, "from_node": 2, "to_node": 1, "from_status": 1, "to_status": 1, "r1": 0.12792, "x1": 0.0492, "c1": 6.4206e-07, "tan1": 0, "i_n": 108, "id_reference": {"table": "line", "index": 101}, "pgm_input": {"from_node": 2, "to_node": 1, "i_n": 108.0}}
     ],
   "source":
     [
-      {"id": 7, "node": 0, "status": 1, "u_ref": 1.0, "u_ref_angle": 0.0, "sk": 1e+16, "rx_ratio": 0.0, "id_reference": {"table": "ext_grid", "index": 1}, "pgm_input": {"node": 0}}
+      {"id": 7, "node": 0, "status": 1, "u_ref": 1, "u_ref_angle": 0, "sk": 10000000000000000, "rx_ratio": 0, "id_reference": {"table": "ext_grid", "index": 1}, "pgm_input": {"node": 0}}
     ],
   "sym_load":
     [
-      {"id": 8, "node": 2, "status": 1, "type": 0, "p_specified": 575000.0, "q_specified": 55200.0, "id_reference": {"table": "load", "name": "const_power", "index": 101}, "pgm_input": {"node": 2}},
-      {"id": 9, "node": 2, "status": 1, "type": 1, "p_specified": 1275000.0, "q_specified": 122400.0, "id_reference": {"table": "load", "name": "const_impedance", "index": 101}, "pgm_input": {"node": 2}},
-      {"id": 10, "node": 2, "status": 1, "type": 2, "p_specified": 650000.0, "q_specified": 62400.0, "id_reference": {"table": "load", "name": "const_current", "index": 101}, "pgm_input": {"node": 2}},
-      {"id": 18, "node": 4, "status": 1, "type": 0, "p_specified": 100000.0, "q_specified": 100000.0, "id_reference": {"table": "ward", "name": "ward_const_power_load", "index": 34}, "pgm_input": {"node": 4}},
-      {"id": 19, "node": 4, "status": 1, "type": 1, "p_specified": 100000.0, "q_specified": 100000.0, "id_reference": {"table": "ward", "name": "ward_const_impedance_load", "index": 34}, "pgm_input": {"node": 4}},
+      {"id": 8, "node": 2, "status": 1, "type": 0, "p_specified": 575000, "q_specified": 55200, "id_reference": {"table": "load", "name": "const_power", "index": 101}, "pgm_input": {"node": 2}},
+      {"id": 9, "node": 2, "status": 1, "type": 1, "p_specified": 1275000, "q_specified": 122400, "id_reference": {"table": "load", "name": "const_impedance", "index": 101}, "pgm_input": {"node": 2}},
+      {"id": 10, "node": 2, "status": 1, "type": 2, "p_specified": 650000, "q_specified": 62400, "id_reference": {"table": "load", "name": "const_current", "index": 101}, "pgm_input": {"node": 2}},
+      {"id": 18, "node": 4, "status": 1, "type": 0, "p_specified": 100000, "q_specified": 100000, "id_reference": {"table": "ward", "name": "ward_const_power_load", "index": 34}, "pgm_input": {"node": 4}},
+      {"id": 19, "node": 4, "status": 1, "type": 1, "p_specified": 100000, "q_specified": 100000, "id_reference": {"table": "ward", "name": "ward_const_impedance_load", "index": 34}, "pgm_input": {"node": 4}},
       {"id": 20, "node": 4, "status": 1, "type": 0, "p_specified": 71111.11111111111, "q_specified": 34440.68301069173, "id_reference": {"table": "motor", "name": "motor_load", "index": 12}, "pgm_input": {"node": 4}}
     ],
   "shunt":
@@ -31,15 +31,15 @@
     ],
   "transformer":
     [
-      {"id": 12, "from_node": 0, "to_node": 1, "from_status": 1, "to_status": 1, "u1": 110000.0, "u2": 20000.0, "sn": 80000000.0, "uk": 0.17800000000000002, "pk": 8176000.0, "i0": 0.03, "p0": 23200.0, "winding_from": 2, "winding_to": 1, "clock": 1, "tap_side": 0, "tap_pos": 2, "tap_min": -1, "tap_max": 3, "tap_nom": 1, "tap_size": 2200.0, "id_reference": {"table": "trafo", "index": 101}, "pgm_input": {"from_node": 0, "to_node": 1}, "pp_input": {"df": 1.0}}
+      {"id": 12, "from_node": 0, "to_node": 1, "from_status": 1, "to_status": 1, "u1": 110000, "u2": 20000, "sn": 80000000, "uk": 0.17800000000000002, "pk": 8176000, "i0": 0.03, "p0": 23200, "winding_from": 2, "winding_to": 1, "clock": 1, "tap_side": 0, "tap_pos": 2, "tap_min": -1, "tap_max": 3, "tap_nom": 1, "tap_size": 2200, "id_reference": {"table": "trafo", "index": 101}, "pgm_input": {"from_node": 0, "to_node": 1}, "pp_input": {"df": 1.0}}
     ],
   "sym_gen":
     [
-      {"id": 13, "node": 4, "status": 1, "type": 0, "p_specified": 1210000.0, "q_specified": 810000.0, "id_reference": {"table": "sgen", "index": 31}, "pgm_input": {"node": 4}}
+      {"id": 13, "node": 4, "status": 1, "type": 0, "p_specified": 1210000, "q_specified": 810000, "id_reference": {"table": "sgen", "index": 31}, "pgm_input": {"node": 4}}
     ],
   "three_winding_transformer":
     [
-      {"id": 14, "node_1": 2, "node_2": 4, "node_3": 3, "status_1": 1, "status_2": 1, "status_3": 1, "u1": 20000.0, "u2": 60000.0, "u3": 30100.0, "sn_1": 40000000.0, "sn_2": 100000000.0, "sn_3": 50000000.0, "uk_12": 0.1, "uk_13": 0.12, "uk_23": 0.11, "pk_12": 400000.0, "pk_13": 1600000.0, "pk_23": 1000000.0, "i0": 0.001, "p0": 10000.0, "winding_1": 2, "winding_2": 1, "winding_3": 0, "clock_12": 1, "clock_13": 1, "tap_side": 2, "tap_pos": 2, "tap_min": 1, "tap_max": 3, "tap_nom": 2, "tap_size": 903.0, "id_reference": {"table": "trafo3w", "index": 102}, "pgm_input": {"node_1": 2, "node_2": 4, "node_3": 3}}
+      {"id": 14, "node_1": 2, "node_2": 4, "node_3": 3, "status_1": 1, "status_2": 1, "status_3": 1, "u1": 20000, "u2": 60000, "u3": 30100, "sn_1": 40000000, "sn_2": 100000000, "sn_3": 50000000, "uk_12": 0.1, "uk_13": 0.12, "uk_23": 0.11, "pk_12": 400000, "pk_13": 1600000, "pk_23": 1000000, "i0": 0.001, "p0": 10000, "winding_1": 2, "winding_2": 1, "winding_3": 0, "clock_12": 1, "clock_13": 1, "tap_side": 2, "tap_pos": 2, "tap_min": 1, "tap_max": 3, "tap_nom": 2, "tap_size": 903, "id_reference": {"table": "trafo3w", "index": 102}, "pgm_input": {"node_1": 2, "node_2": 4, "node_3": 3}}
     ],
   "link":
     [
@@ -47,10 +47,10 @@
     ],
   "asym_load":
     [
-      {"id": 16, "node": 4, "status": 1, "type": 0, "p_specified": [100000.0, 200000.0, 3000000.0], "q_specified": [10000.0, 10000.0, 10000.0], "id_reference": {"table": "asymmetric_load", "index": 33}, "pgm_input": {"node": 4}}
+      {"id": 16, "node": 4, "status": 1, "type": 0, "p_specified": [100000, 200000, 3000000], "q_specified": [10000, 10000, 10000], "id_reference": {"table": "asymmetric_load", "index": 33}, "pgm_input": {"node": 4}}
     ],
   "asym_gen":
     [
-      {"id": 17, "node": 4, "status": 1, "type": 0, "p_specified": [100000.0, 200000.0, 3000000.0], "q_specified": [10000.0, 10000.0, 10000.0], "id_reference": {"table": "asymmetric_sgen", "index": 32}, "pgm_input": {"node": 4}}
+      {"id": 17, "node": 4, "status": 1, "type": 0, "p_specified": [100000, 200000, 3000000], "q_specified": [10000, 10000, 10000], "id_reference": {"table": "asymmetric_sgen", "index": 32}, "pgm_input": {"node": 4}}
     ]
 }
