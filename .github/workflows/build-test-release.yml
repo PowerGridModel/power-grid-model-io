@@ -89,7 +89,7 @@ jobs:
           name: power-grid-model-io
           path: wheelhouse/
 
-      - name: Install built wheel file (Python 3.11 and 3.12)
+      - name: Install built wheel file
         run: pip install power-grid-model-io[dev]==${{ needs.build-python.outputs.version }} --find-links=wheelhouse
 
       - name: Unit test and coverage
