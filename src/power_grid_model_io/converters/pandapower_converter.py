@@ -35,7 +35,7 @@ logger = structlog.get_logger(__file__)
 
 
 # pylint: disable=too-many-instance-attributes
-class PandaPowerConverter(BaseConverter[PandaPowerData]):  # pragma: no cover
+class PandaPowerConverter(BaseConverter[PandaPowerData]):
     """
     Panda Power Converter
     """

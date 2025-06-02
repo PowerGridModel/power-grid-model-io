@@ -7,13 +7,11 @@ from typing import Callable, TypeAlias
 from unittest.mock import ANY, MagicMock, call, patch
 
 import numpy as np
+import pandapower as pp
 import pandas as pd
 import pytest
 from packaging import version
 from power_grid_model import Branch3Side, BranchSide, LoadGenType, WindingType, initialize_array
-
-pp = pytest.importorskip("pandapower", reason="pandapower is not installed")
-# we add this to enable python 3.13 testing even though pandapower 3.0 is not yet compatible with it
 
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter
 
