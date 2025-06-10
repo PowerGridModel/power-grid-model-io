@@ -127,7 +127,7 @@ def test_extract__return_subdir_path(mock_tqdm: MagicMock, temp_dir: Path):
 
 def test_get_only_item_in_dir__no_items(temp_dir):
     # Act / Assert
-    assert _get_only_item_in_dir(temp_dir) == None
+    assert _get_only_item_in_dir(temp_dir) is None
 
 
 def test_get_only_item_in_dir__one_file(temp_dir):
@@ -155,4 +155,4 @@ def test_get_only_item_in_dir__two_files(temp_dir):
         pass
 
     # Act / Assert
-    assert _get_only_item_in_dir(temp_dir) == None
+    assert _get_only_item_in_dir(temp_dir) is None
