@@ -2,9 +2,9 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+from contextlib import suppress
+
 import pandas as pd
 
-try:
+with suppress(pd.errors.OptionError):
     pd.set_option("future.no_silent_downcasting", True)
-except pd.errors.OptionError:
-    pass

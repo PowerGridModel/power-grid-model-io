@@ -7,3 +7,5 @@ Common data types used in the Power Grid Model project
 
 from power_grid_model_io.data_types._data_types import ExtraInfo, ExtraInfoLookup, StructuredData
 from power_grid_model_io.data_types.tabular_data import LazyDataFrame, TabularData
+
+__all__ = ["ExtraInfo", "ExtraInfoLookup", "StructuredData", "LazyDataFrame", "TabularData"]

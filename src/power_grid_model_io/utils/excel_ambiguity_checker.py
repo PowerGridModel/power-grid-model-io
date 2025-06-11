@@ -19,6 +19,7 @@ Requirements:
     - xml.etree.ElementTree for parsing XML structures within the Excel file.
     - zipfile to handle the Excel file as a ZIP archive for parsing.
 """
+
 import os
 import xml.etree.ElementTree as ET
 import zipfile
@@ -80,11 +81,10 @@ class ExcelAmbiguityChecker:
             list: A list of shared strings used in the Excel file.
         """
         shared_strings_path = SHARED_STR_PATH
-        shared_strings = []
+        shared_strings: List[Optional[str]] = []
         with zip_file.open(shared_strings_path) as f:
             tree = ET.parse(f)
-            for si in tree.findall(FIND_T, namespaces=XML_NAME_SPACE):
-                shared_strings.append(si.text)
+            shared_strings.extend(si.text for si in tree.findall(FIND_T, namespaces=XML_NAME_SPACE))
         return shared_strings
 
     def _get_column_names_from_row(self, row, shared_strings) -> List[Optional[str]]:

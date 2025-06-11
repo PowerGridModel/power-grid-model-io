@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: MPL-2.0
 import logging
 
-import pytest
 import structlog
 
 from power_grid_model_io.mappings.field_mapping import FieldMapping

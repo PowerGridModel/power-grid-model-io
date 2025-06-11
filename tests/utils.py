@@ -93,21 +93,20 @@ class MockFn:
             obj = copy(left)
         else:
             obj = MockFn(fn, left)
-        if MockFn._is_operator(right):
-            if (
-                obj.fn == "+"
-                and right.fn == "+"
-                or obj.fn == "-"
-                and right.fn == "+"
-                or obj.fn == "*"
-                and right.fn == "*"
-                or obj.fn == "/"
-                and right.fn == "*"
-                or obj.fn == "&"
-                and right.fn == "&"
-            ):
-                obj.args += right.args
-                return obj
+        if MockFn._is_operator(right) and (
+            obj.fn == "+"
+            and right.fn == "+"
+            or obj.fn == "-"
+            and right.fn == "+"
+            or obj.fn == "*"
+            and right.fn == "*"
+            or obj.fn == "/"
+            and right.fn == "*"
+            or obj.fn == "&"
+            and right.fn == "&"
+        ):
+            obj.args += right.args
+            return obj
         obj.args += [right]
         return obj
 
@@ -176,7 +175,7 @@ class MockFn:
                 return False
 
         def eq(left, right) -> bool:
-            if type(left) != type(right):
+            if type(left) is not type(right):
                 return False
             if isinstance(left, pd.DataFrame) and left.columns != right.columns:
                 return False

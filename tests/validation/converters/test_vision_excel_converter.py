@@ -95,7 +95,8 @@ def test_input_data(input_data: Tuple[SingleDataset, SingleDataset]):
 
 def test_input_data_custom_yaml():
     """
-    Unit test to preload the expected and actual data, using a different mapping file other than the one in the default location
+    Unit test to preload the expected and actual data, using a different
+    mapping file other than the one in the default location
     """
     for language in LANGUAGES:
         # Arrange

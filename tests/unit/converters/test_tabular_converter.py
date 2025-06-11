@@ -233,7 +233,7 @@ def test_convert_col_def_to_attribute(
 ):
     with pytest.raises(
         KeyError,
-        match=r"Could not find attribute 'incorrect_attribute' for 'nodes'. " r"\(choose from: id, u_rated\)",
+        match=r"Could not find attribute 'incorrect_attribute' for 'nodes'. \(choose from: id, u_rated\)",
     ):
         converter._convert_col_def_to_attribute(
             data=tabular_data_no_units_no_substitutions,

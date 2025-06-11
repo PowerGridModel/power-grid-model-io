@@ -4,6 +4,7 @@
 """
 Abstract converter class
 """
+
 import logging
 from abc import ABC, abstractmethod
 from typing import Generic, Optional, Tuple, TypeVar

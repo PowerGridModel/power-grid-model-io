@@ -4,6 +4,7 @@
 """
 Vision Excel file store
 """
+
 from pathlib import Path
 from typing import Optional
 

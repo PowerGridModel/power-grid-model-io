@@ -176,7 +176,7 @@ def load_json_single_dataset(file_path: Path, data_type: str) -> Tuple[SingleDat
     """
     try:
         dataset = json_deserialize_from_file(file_path=file_path)
-    except PowerGridSerializationError as error:
+    except PowerGridSerializationError:
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
@@ -223,7 +223,7 @@ def compare_extra_info(actual: ExtraInfo, expected: ExtraInfo, component: str, o
             # If the values don't match, that's an error
             elif act[key] != value:
                 errors.append(
-                    f"Expected extra info '{key}' for {component} #{obj_id} to be {value}, " f"but it is {act[key]}."
+                    f"Expected extra info '{key}' for {component} #{obj_id} to be {value}, but it is {act[key]}."
                 )
 
     return errors

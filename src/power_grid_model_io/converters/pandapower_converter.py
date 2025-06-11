@@ -461,7 +461,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         }
         if not all(checks.values()):
             failed_checks = ", ".join([key for key, value in checks.items() if not value])
-            logger.warning(f"Zero sequence parameters given in external grid shall be ignored:{failed_checks}")
+            logger.warning("Zero sequence parameters given in external grid shall be ignored: ", {failed_checks})
 
         pgm_sources = initialize_array(data_type="input", component_type="source", shape=len(pp_ext_grid))
         pgm_sources["id"] = self._generate_ids("ext_grid", pp_ext_grid.index)
@@ -753,7 +753,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         }
         if not all(checks.values()):
             failed_checks = ", ".join([key for key, value in checks.items() if not value])
-            logger.warning(f"Zero sequence parameters given in trafo shall be ignored:{failed_checks}")
+            logger.warning("Zero sequence parameters given in trafo shall be ignored: ", {failed_checks})
 
         # Do not use taps when mandatory tap data is not available
         no_taps = np.equal(tap_side, None) | np.isnan(tap_pos) | np.isnan(tap_nom) | np.isnan(tap_size)
@@ -862,7 +862,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         }
         if not all(checks.values()):
             failed_checks = ", ".join([key for key, value in checks.items() if not value])
-            logger.warning(f"Zero sequence parameters given in trafo3w are ignored: {failed_checks}")
+            logger.warning("Zero sequence parameters given in trafo3w are ignored: ", {failed_checks})
 
         # Do not use taps when mandatory tap data is not available
         no_taps = np.equal(tap_side, None) | np.isnan(tap_pos) | np.isnan(tap_nom) | np.isnan(tap_size)
