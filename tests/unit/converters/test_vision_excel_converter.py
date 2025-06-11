@@ -146,4 +146,4 @@ def test_ambiguity_in_vision_excel():
     ambiguious_test_file = Path(__file__).parents[2] / "data" / "vision" / "excel_ambiguity_check_data.xlsx"
     excel_file_checker = ExcelAmbiguityChecker(file_path=ambiguious_test_file.as_posix())
     res, _ = excel_file_checker.check_ambiguity()
-    assert res == True
+    assert res

@@ -238,7 +238,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
         """
 
         # This should be a single data set
-        for component, array in data.items():
+        for array in data.values():
             if not isinstance(array, np.ndarray) or array.ndim != 1:
                 raise ValueError("Invalid data format")
 

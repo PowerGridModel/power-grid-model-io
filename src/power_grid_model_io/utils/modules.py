@@ -4,6 +4,7 @@
 """
 Module utilities, expecially useful for loading optional dependencies
 """
+
 from importlib import import_module
 from typing import Callable
 

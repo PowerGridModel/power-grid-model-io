@@ -29,25 +29,16 @@ jobs:
       - name: Upgrade pip
         run: pip install --upgrade pip
 
-      - name: Install and run isort
-        run: |
-          pip install isort
-          isort .
-
-      - name: Install and run black
-        run: |
-          pip install black[jupyter]
-          black .
-
       - name: Install and run mypy
         run: |
           pip install mypy
           mypy src
 
-      - name: Install and run pylint
+      - name: Install and run ruff
         run: |
-          pip install pylint .
-          pylint power_grid_model_io
+          pip install ruff .
+          ruff check .
+          ruff format .
 
       - name: If needed raise error
         run: |

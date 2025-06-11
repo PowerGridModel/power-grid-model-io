@@ -4,6 +4,7 @@
 """
 Tabular data mapping helper class
 """
+
 from typing import Dict, Generator, List, Tuple, Union
 
 import structlog

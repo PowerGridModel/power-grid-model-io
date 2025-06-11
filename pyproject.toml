@@ -44,6 +44,7 @@ dev = [
     "pylint",
     "pytest",
     "pytest-cov",
+    "ruff",
     "pydantic>2", # Used in unit tests
     "pandapower>2.11.1",
 ]
@@ -89,33 +90,43 @@ addopts = [
 ]
 xfail_strict = true
 
-[tool.black]
+[tool.ruff]
+# Same as Black.
 line-length = 120
-target-version = ["py311", "py312", "py313"]
+indent-width = 4
+show-fixes = true
 
-[tool.isort]
-profile = "black"
-line_length = 120
+# Assume Python 3.11
+target-version = "py311"
 
-[tool.pylint]
-max-line-length = 120
-ignore-paths = [
-    "docs/",
-    "examples/",
-    "tests/",
-    "setup.py",
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # isort
+    "I",
+    "SIM",
+    "YTT",
+    "BLE",
+    "PERF",
+    "Q",
+    "ICN",
+    "ISC",
+    "G",
+    "LOG",
+    "EXE",
+    "FA",
+    "FURB",
+    "FLY",
+    "SLOT",
 ]
-disable = [
-    "fixme", # allow todos
-]
-good-names=[
-    "ex",   # exception
-    "i",    # iterator or current
-    "p",    # active power
-    "q",    # reactive power
-    "s",    # power (p + q)
-    "v",    # voltage
-]
+ignore = ["SIM108", "SIM118", "SIM110", "SIM211"]
+
+[tool.ruff.lint.isort]
+# Imports that are imported using keyword "as" and are from the same source - are combined.
+combine-as-imports = true
 
 [tool.mypy]
 follow_imports = "silent"

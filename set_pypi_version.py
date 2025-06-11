@@ -8,7 +8,6 @@
 
 import os
 from pathlib import Path
-from typing import cast
 
 import requests
 
@@ -26,7 +25,7 @@ def set_version(pkg_dir: Path):
         ref = os.environ["GITHUB_REF"]
         build_number = os.environ["GITHUB_RUN_NUMBER"]
         # short hash number in numeric
-        short_hash = f'{int(f"0x{sha[0:6]}", base=16):08}'
+        short_hash = f"{int(f'0x{sha[0:6]}', base=16):08}"
 
         if "main" in ref:
             # main branch

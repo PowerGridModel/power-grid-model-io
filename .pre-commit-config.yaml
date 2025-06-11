@@ -7,14 +7,15 @@ repos:
     rev: v5.0.2
     hooks:
       - id: reuse
-  - repo: https://github.com/pycqa/isort
-    rev: 6.0.1
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.11.12
     hooks:
-      - id: isort
-  - repo: https://github.com/psf/black
-    rev: 25.1.0
-    hooks:
-      - id: black-jupyter
+      # Run the linter.
+      - id: ruff-check
+        args: [ --fix ]
+      # Run the formatter.
+      - id: ruff-format
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.16.0
     hooks:
@@ -22,14 +23,6 @@ repos:
         additional_dependencies: [numpy, pandas]
   - repo: local
     hooks:
-      - id: pylint
-        name: pylint
-        entry: pylint
-        files: ^src/.+\.py$
-        language: system
-        types: [ python ]
-        args: [ "--rcfile=pyproject.toml" ]
-        require_serial: true
       - id: pytest
         name: pytest
         entry: pytest
