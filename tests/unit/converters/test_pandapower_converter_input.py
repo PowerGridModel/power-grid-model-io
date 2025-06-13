@@ -154,10 +154,7 @@ def test_fill_pgm_extra_info():
     converter = PandaPowerConverter()
     converter.idx_lookup[("bus", None)] = pd.Series([101, 102, 103], index=[0, 1, 2])
     converter.idx_lookup[("load", "const_current")] = pd.Series([201, 202, 203], index=[3, 4, 5])
-    converter.pgm_input_data[ComponentType.sym_load] = initialize_array(
-      
-      
-      .input, ComponentType.sym_load, 3)
+    converter.pgm_input_data[ComponentType.sym_load] = initialize_array(DatasetType.input, ComponentType.sym_load, 3)
     converter.pgm_input_data[ComponentType.sym_load]["id"] = [3, 4, 5]
     converter.pgm_input_data[ComponentType.sym_load]["node"] = [0, 1, 2]
     converter.pgm_input_data[ComponentType.line] = initialize_array(DatasetType.input, ComponentType.line, 2)
