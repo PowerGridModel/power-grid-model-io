@@ -10,17 +10,16 @@ import numpy as np
 import pandapower as pp
 import pandas as pd
 import pytest
-
 from packaging import version
 from power_grid_model import (
     Branch3Side,
     BranchSide,
+    ComponentType,
+    DatasetType,
     LoadGenType,
     WindingType,
     initialize_array,
-    ComponentType,
-    DatasetType,)
-
+)
 
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter
 
