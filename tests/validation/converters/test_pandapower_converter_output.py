@@ -8,7 +8,6 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Tuple
 
-import pandapower as pp
 import pandas as pd
 import pytest
 from power_grid_model.validation import assert_valid_input_data
@@ -19,8 +18,14 @@ from power_grid_model_io.converters.pandapower_converter import PandaPowerData
 from ...data.pandapower.pp_validation import pp_net, pp_net_3ph
 from ..utils import component_attributes_df, load_json_single_dataset
 
-PGM_OUTPUT_FILE = Path(__file__).parents[2] / "data" / "pandapower" / "pgm_output_data.json"
-PGM_ASYM_OUTPUT_FILE = Path(__file__).parents[2] / "data" / "pandapower" / "pgm_asym_output_data.json"
+pp = pytest.importorskip("pandapower", reason="pandapower is not installed")
+# we add this to enable python 3.13 testing even though pandapower 3.0 is not yet compatible with it
+
+PGM_PP_TEST_DATA = Path(__file__).parents[2] / "data" / "pandapower"
+PGM_OUTPUT_FILE = PGM_PP_TEST_DATA / "pgm_output_data.json"
+PGM_ASYM_OUTPUT_FILE = PGM_PP_TEST_DATA / "pgm_asym_output_data.json"
+PP_V2_NET_OUTPUT_FILE = PGM_PP_TEST_DATA / "pp_v2_net_output.json"
+PP_V2_NET_3PH_OUTPUT_FILE = PGM_PP_TEST_DATA / "pp_v2_net_3ph_output.json"
 
 
 @contextmanager
@@ -56,9 +61,7 @@ def load_validation_data() -> PandaPowerData:
     """
     Load the validation data from the pp file
     """
-    net = pp_net()
-    pp.runpp(net, calculate_voltage_angles=True, tolerance_mva=1e-10, trafo_model="pi", trafo_loading="power")
-    return net
+    return pp.file_io.from_json(PP_V2_NET_OUTPUT_FILE)
 
 
 @lru_cache
@@ -66,9 +69,7 @@ def load_validation_data_3ph() -> PandaPowerData:
     """
     Load the validation data from the pp file
     """
-    net = pp_net_3ph()
-    pp.runpp_3ph(net, calculate_voltage_angles=True, tolerance_mva=1e-10, trafo_loading="power")
-    return net
+    return pp.file_io.from_json(PP_V2_NET_3PH_OUTPUT_FILE)
 
 
 @pytest.fixture

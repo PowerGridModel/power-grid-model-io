@@ -159,3 +159,16 @@ def test_serialize_dataset(converter: PgmJsonConverter, pgm_input_data: SingleDa
     extra_info: ExtraInfo = {1: {"dummy": "data"}}
     structured_data_with_extra_info = converter._serialize_dataset(data=pgm_input_data, extra_info=extra_info)
     assert structured_data_with_extra_info == {ComponentType.node: [{"id": 1, "dummy": "data"}, {"id": 2}]}
+
+
+def test_is_nan(converter: PgmJsonConverter):
+    single_value = np.array([np.nan])
+    assert converter._is_nan(single_value)
+    array_f8 = np.array([0.1, 0.2, np.nan], dtype=np.dtype("f8"))
+    assert not converter._is_nan(array_f8)
+    array_i4 = np.array([10, 2, -(2**31), 40], dtype=np.dtype("i4"))
+    assert not converter._is_nan(array_i4)
+    array_i1 = np.array([1, 0, -(2**7), 1], dtype=np.dtype("i1"))
+    assert not converter._is_nan(array_i1)
+    nan_array = np.array([np.nan, np.nan, np.nan])
+    assert converter._is_nan(nan_array)

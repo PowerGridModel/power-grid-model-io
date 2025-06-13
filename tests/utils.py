@@ -4,12 +4,14 @@
 
 import sys
 from copy import copy, deepcopy
+from importlib import metadata
 from itertools import chain
 from typing import Any, Dict, List, Mapping, MutableMapping, Optional, Tuple, Union
 from unittest.mock import MagicMock
 
 import numpy as np
 import pandas as pd
+from packaging import version
 from pandas.core.generic import NDFrame
 
 
@@ -71,7 +73,9 @@ class MockFn:
     __slots__ = ["fn", "args", "kwargs", "postfix"]
 
     __array_struct__ = np.array([]).__array_struct__
-    __array_prepare__ = np.array([]).__array_prepare__
+
+    if version.Version(metadata.version("numpy")) < version.Version("2"):
+        __array_prepare__ = np.array([]).__array_prepare__  # type: ignore[attr-defined]
 
     def __init__(self, fn: str, *args, **kwargs):
         self.fn = fn
@@ -89,21 +93,20 @@ class MockFn:
             obj = copy(left)
         else:
             obj = MockFn(fn, left)
-        if MockFn._is_operator(right):
-            if (
-                obj.fn == "+"
-                and right.fn == "+"
-                or obj.fn == "-"
-                and right.fn == "+"
-                or obj.fn == "*"
-                and right.fn == "*"
-                or obj.fn == "/"
-                and right.fn == "*"
-                or obj.fn == "&"
-                and right.fn == "&"
-            ):
-                obj.args += right.args
-                return obj
+        if MockFn._is_operator(right) and (
+            obj.fn == "+"
+            and right.fn == "+"
+            or obj.fn == "-"
+            and right.fn == "+"
+            or obj.fn == "*"
+            and right.fn == "*"
+            or obj.fn == "/"
+            and right.fn == "*"
+            or obj.fn == "&"
+            and right.fn == "&"
+        ):
+            obj.args += right.args
+            return obj
         obj.args += [right]
         return obj
 
@@ -172,7 +175,7 @@ class MockFn:
                 return False
 
         def eq(left, right) -> bool:
-            if type(left) != type(right):
+            if type(left) is not type(right):
                 return False
             if isinstance(left, pd.DataFrame) and left.columns != right.columns:
                 return False

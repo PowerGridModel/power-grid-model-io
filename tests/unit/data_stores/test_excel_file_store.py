@@ -4,7 +4,7 @@
 
 from pathlib import Path
 from typing import Dict
-from unittest.mock import MagicMock, call, mock_open, patch
+from unittest.mock import MagicMock, call, patch
 
 import numpy as np
 import pandas as pd

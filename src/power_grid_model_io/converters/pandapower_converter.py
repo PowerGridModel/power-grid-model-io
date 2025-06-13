@@ -466,7 +466,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         }
         if not all(checks.values()):
             failed_checks = ", ".join([key for key, value in checks.items() if not value])
-            logger.warning(f"Zero sequence parameters given in external grid shall be ignored:{failed_checks}")
+            logger.warning("Zero sequence parameters given in external grid shall be ignored: %s", failed_checks)
 
         pgm_sources = initialize_array(
             data_type=DatasetType.input, component_type=ComponentType.source, shape=len(pp_ext_grid)
@@ -611,7 +611,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_loads.empty:
             return
 
-        if self._get_pp_attr("load", "type", expected_type="O", default=None).any() == "delta":
+        if np.any(self._get_pp_attr("load", "type", expected_type="O", default=None) == "delta"):
             raise NotImplementedError("Delta loads are not implemented, only wye loads are supported in PGM.")
 
         scaling = self._get_pp_attr("load", "scaling", expected_type="f8", default=1.0)
@@ -671,7 +671,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_asym_loads.empty:
             return
 
-        if self._get_pp_attr("asymmetric_load", "type", expected_type="O", default=None).any() == "delta":
+        if np.any(self._get_pp_attr("asymmetric_load", "type", expected_type="O", default=None) == "delta"):
             raise NotImplementedError("Delta loads are not implemented, only wye loads are supported in PGM.")
 
         scaling = self._get_pp_attr("asymmetric_load", "scaling", expected_type="f8")
@@ -770,7 +770,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         }
         if not all(checks.values()):
             failed_checks = ", ".join([key for key, value in checks.items() if not value])
-            logger.warning(f"Zero sequence parameters given in trafo shall be ignored:{failed_checks}")
+            logger.warning("Zero sequence parameters given in trafo shall be ignored: %s", failed_checks)
 
         # Do not use taps when mandatory tap data is not available
         no_taps = np.equal(tap_side, None) | np.isnan(tap_pos) | np.isnan(tap_nom) | np.isnan(tap_size)
@@ -881,7 +881,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         }
         if not all(checks.values()):
             failed_checks = ", ".join([key for key, value in checks.items() if not value])
-            logger.warning(f"Zero sequence parameters given in trafo3w are ignored: {failed_checks}")
+            logger.warning("Zero sequence parameters given in trafo3w are ignored: %s", failed_checks)
 
         # Do not use taps when mandatory tap data is not available
         no_taps = np.equal(tap_side, None) | np.isnan(tap_pos) | np.isnan(tap_nom) | np.isnan(tap_size)

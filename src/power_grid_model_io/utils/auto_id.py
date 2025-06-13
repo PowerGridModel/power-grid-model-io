@@ -4,6 +4,7 @@
 """
 Automatic ID generator class
 """
+
 import collections
 from collections.abc import Hashable
 from typing import Any, Dict, List, Optional, Union

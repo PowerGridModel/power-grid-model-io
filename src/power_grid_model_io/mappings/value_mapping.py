@@ -4,6 +4,7 @@
 """
 Value substitution helper class
 """
+
 from typing import Dict, Optional, Union
 
 import structlog
