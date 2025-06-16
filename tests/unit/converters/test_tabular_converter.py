@@ -108,7 +108,7 @@ def test_convert_table_to_component(converter: TabularConverter, tabular_data_no
     # if table does not exist in data _convert_table_to_component should return None
     none_data = converter._convert_table_to_component(
         data=tabular_data_no_units_no_substitutions,
-        data_type="input",
+        data_type=DatasetType.input,
         table="some_random_table",
         component=ComponentType.node,
         attributes={"key": "value"},
@@ -116,32 +116,32 @@ def test_convert_table_to_component(converter: TabularConverter, tabular_data_no
     )
     assert none_data is None
     # wrong component
-    with pytest.raises(KeyError, match="Invalid component type 'dummy' or data type 'input'"):
+    with pytest.raises(KeyError, match="Invalid component type \'dummy\' or data type \'DatasetType.input\'"):
         converter._convert_table_to_component(
             data=tabular_data_no_units_no_substitutions,
-            data_type="input",
+            data_type=DatasetType.input,
             table="nodes",
             component="dummy",
             attributes={"key": "value"},
             extra_info=None,
         )
     # wrong data_type
-    with pytest.raises(KeyError, match="Invalid component type 'node' or data type 'some_type'"):
+    with pytest.raises(KeyError, match="Invalid component type \'ComponentType.node\' or data type 'some_type'"):
         converter._convert_table_to_component(
             data=tabular_data_no_units_no_substitutions,
             data_type="some_type",
             table="nodes",
-            component="node",
+            component=ComponentType.node,
             attributes={"key": "value"},
             extra_info=None,
         )
     # no 'id' in attributes
-    with pytest.raises(KeyError, match="No mapping for the attribute 'id' for 'nodes'!"):
+    with pytest.raises(KeyError, match="No mapping for the attribute \'id\' for \'ComponentType.nodes\'!"):
         converter._convert_table_to_component(
             data=tabular_data_no_units_no_substitutions,
-            data_type="input",
+            data_type=DatasetType.input,
             table="nodes",
-            component="node",
+            component=ComponentType.node,
             attributes={"key": "value"},
             extra_info=None,
         )
@@ -149,9 +149,9 @@ def test_convert_table_to_component(converter: TabularConverter, tabular_data_no
     node_attributes: InstanceAttributes = {"id": "id_number", "u_rated": "u_nom"}
     pgm_node_data = converter._convert_table_to_component(
         data=tabular_data_no_units_no_substitutions,
-        data_type="input",
+        data_type=DatasetType.input,
         table="nodes",
-        component="node",
+        component=ComponentType.node,
         attributes=node_attributes,
         extra_info=None,
     )
@@ -182,7 +182,7 @@ def test_convert_table_to_component__filters(
         data=tabular_data_no_units_no_substitutions,
         data_type="input",
         table="nodes",
-        component="node",
+        component=ComponentType.node,
         attributes=node_attributes_with_filter,
         extra_info=None,
     )
@@ -213,9 +213,9 @@ def test_convert_table_to_component__filters_all_false(
     }
     actual = converter._convert_table_to_component(
         data=tabular_data_no_units_no_substitutions,
-        data_type="input",
+        data_type=DatasetType.input,
         table="nodes",
-        component="node",
+        component=ComponentType.node,
         attributes=node_attributes_with_filter,
         extra_info=None,
     )
@@ -236,13 +236,13 @@ def test_convert_col_def_to_attribute(
 ):
     with pytest.raises(
         KeyError,
-        match=r"Could not find attribute 'incorrect_attribute' for 'nodes'. \(choose from: id, u_rated\)",
+        match=r"Could not find attribute \'incorrect_attribute\' for \'ComponentType.nodes\'. \(choose from: id, u_rated\)",
     ):
         converter._convert_col_def_to_attribute(
             data=tabular_data_no_units_no_substitutions,
-            pgm_data=pgm_node_empty["node"],
+            pgm_data=pgm_node_empty[ComponentType.node],
             table="nodes",
-            component="node",
+            component=ComponentType.node,
             attr="incorrect_attribute",
             col_def="id_number",
             table_mask=None,
@@ -252,9 +252,9 @@ def test_convert_col_def_to_attribute(
     # test extra info
     converter._convert_col_def_to_attribute(
         data=tabular_data_no_units_no_substitutions,
-        pgm_data=pgm_node_empty["node"],
+        pgm_data=pgm_node_empty[ComponentType.node],
         table="nodes",
-        component="node",
+        component=ComponentType.node,
         attr="extra",
         col_def="u_nom",
         table_mask=None,
@@ -264,27 +264,27 @@ def test_convert_col_def_to_attribute(
     # test other attr
     converter._convert_col_def_to_attribute(
         data=tabular_data_no_units_no_substitutions,
-        pgm_data=pgm_node_empty["node"],
+        pgm_data=pgm_node_empty[ComponentType.node],
         table="nodes",
-        component="node",
+        component=ComponentType.node,
         attr="u_rated",
         col_def="u_nom",
         table_mask=None,
         extra_info=None,
     )
     assert len(pgm_node_empty) == 1
-    assert (pgm_node_empty["node"]["u_rated"] == [10500.0, 400.0]).all()
+    assert (pgm_node_empty[ComponentType.node]["u_rated"] == [10500.0, 400.0]).all()
 
     with pytest.raises(
         ValueError,
-        match=r"DataFrame for node.u_rated should contain a single column "
+        match=r"DataFrame for ComponentType.node.u_rated should contain a single column "
         r"\(Index\(\['id_number', 'u_nom'\], dtype='object'\)\)",
     ):
         converter._convert_col_def_to_attribute(
             data=tabular_data_no_units_no_substitutions,
-            pgm_data=pgm_node_empty["node"],
+            pgm_data=pgm_node_empty[ComponentType.node],
             table="nodes",
-            component="node",
+            component=ComponentType.node,
             attr="u_rated",
             col_def=["id_number", "u_nom"],
             table_mask=None,
@@ -340,16 +340,16 @@ def test_handle_extra_info__units(converter: TabularConverter, tabular_data: Tab
 
 
 def test_merge_pgm_data(converter: TabularConverter):
-    nodes_1 = initialize_array("input", "node", 2)
+    nodes_1 = initialize_array(DatasetType.input, ComponentType.node, 2)
     nodes_1["id"] = [0, 1]
 
-    nodes_2 = initialize_array("input", "node", 3)
+    nodes_2 = initialize_array(DatasetType.input, ComponentType.node, 3)
     nodes_2["id"] = [2, 3, 4]
-    data = {"node": [nodes_1, nodes_2]}
+    data = {ComponentType.node: [nodes_1, nodes_2]}
 
     merged = converter._merge_pgm_data(data)
     assert len(merged) == 1
-    assert (merged["node"]["id"] == np.array([0, 1, 2, 3, 4])).all()
+    assert (merged[ComponentType.node]["id"] == np.array([0, 1, 2, 3, 4])).all()
 
 
 def test_serialize_data(converter: TabularConverter, pgm_node_empty: SingleDataset):
@@ -364,12 +364,12 @@ def test_serialize_data(converter: TabularConverter, pgm_node_empty: SingleDatas
     ):
         converter._serialize_data(data=[], extra_info=None)  # type: ignore
 
-    pgm_node_empty["node"]["id"] = [1, 2]
-    pgm_node_empty["node"]["u_rated"] = [3.0, 4.0]
+    pgm_node_empty[ComponentType.node]["id"] = [1, 2]
+    pgm_node_empty[ComponentType.node]["u_rated"] = [3.0, 4.0]
     tabular_data = converter._serialize_data(data=pgm_node_empty, extra_info=None)
     assert len(tabular_data) == 1
-    assert (tabular_data["node"]["id"] == np.array([1, 2])).all()
-    assert (tabular_data["node"]["u_rated"] == np.array([3.0, 4.0])).all()
+    assert (tabular_data[ComponentType.node]["id"] == np.array([1, 2])).all()
+    assert (tabular_data[ComponentType.node]["u_rated"] == np.array([3.0, 4.0])).all()
 
 
 def test_parse_col_def(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
