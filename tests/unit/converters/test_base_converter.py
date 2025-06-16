@@ -8,7 +8,7 @@ from unittest.mock import ANY, MagicMock
 
 import numpy as np
 import pytest
-from power_grid_model import ComponentType
+from power_grid_model import ComponentType, DatasetType
 
 from power_grid_model_io.converters.base_converter import BaseConverter
 
@@ -53,7 +53,7 @@ def test_load_input_data(converter: DummyConverter):
 
     # Assert
     converter._parse_data.assert_called_once_with(  # type: ignore
-        data={ComponentType.node: [{"id": 1}, {"id": 2}]}, data_type="input", extra_info=ANY
+        data={ComponentType.node: [{"id": 1}, {"id": 2}]}, data_type=DatasetType.input, extra_info=ANY
     )
     assert data == {"foo": 1}
     assert extra_info == {1: "Foo"}
@@ -67,7 +67,7 @@ def test_load_input_data__no_extra_info(converter: DummyConverter):
     data, extra_info = converter.load_input_data(data=mock_data, make_extra_info=False)
 
     # Assert
-    converter._parse_data.assert_called_once_with(data=mock_data, data_type="input", extra_info=None)  # type: ignore
+    converter._parse_data.assert_called_once_with(data=mock_data, data_type=DatasetType.input, extra_info=None)  # type: ignore
     assert extra_info == {}
 
 
@@ -89,7 +89,7 @@ def test_load_update_data(converter: DummyConverter):
 
     # Assert
     converter._parse_data.assert_called_once_with(  # type: ignore
-        data={ComponentType.node: [{"id": 1}, {"id": 2}]}, data_type="update", extra_info=None
+        data={ComponentType.node: [{"id": 1}, {"id": 2}]}, data_type=DatasetType.update, extra_info=None
     )
     assert data == {"foo": 1}
 
@@ -103,7 +103,7 @@ def test_load_sym_output_data(converter: DummyConverter):
 
     # Assert
     converter._parse_data.assert_called_once_with(  # type: ignore
-        data={ComponentType.node: [{"id": 1}, {"id": 2}]}, data_type="sym_output", extra_info=None
+        data={ComponentType.node: [{"id": 1}, {"id": 2}]}, data_type=DatasetType.sym_output, extra_info=None
     )
     assert data == {"foo": 1}
 
@@ -117,7 +117,7 @@ def test_load_asym_output_data(converter: DummyConverter):
 
     # Assert
     converter._parse_data.assert_called_once_with(  # type: ignore
-        data={ComponentType.node: [{"id": 1}, {"id": 2}]}, data_type="asym_output", extra_info=None
+        data={ComponentType.node: [{"id": 1}, {"id": 2}]}, data_type=DatasetType.asym_output, extra_info=None
     )
     assert data == {"foo": 1}
 
@@ -131,7 +131,7 @@ def test_load_sc_output_data(converter: DummyConverter):
 
     # Assert
     converter._parse_data.assert_called_once_with(  # type: ignore
-        data={ComponentType.node: [{"id": 1}, {"id": 2}]}, data_type="sc_output", extra_info=None
+        data={ComponentType.node: [{"id": 1}, {"id": 2}]}, data_type=DatasetType.sc_output, extra_info=None
     )
     assert data == {"foo": 1}
 

@@ -115,7 +115,7 @@ def test_parse_data(
     create_input_data_mock.side_effect = create_input_data
 
     # Act
-    result = converter._parse_data(data={"bus": pd.DataFrame()}, data_type="input", extra_info=None)
+    result = converter._parse_data(data={"bus": pd.DataFrame()}, data_type=DatasetType.input, extra_info=None)
 
     # Assert
     create_input_data_mock.assert_called_once_with()
@@ -138,7 +138,7 @@ def test_parse_data__extra_info(
     extra_info = MagicMock("extra_info")
 
     # Act
-    converter._parse_data(data={}, data_type="input", extra_info=extra_info)
+    converter._parse_data(data={}, data_type=DatasetType.input, extra_info=extra_info)
 
     # Assert
     create_input_data_mock.assert_called_once_with()
@@ -152,7 +152,7 @@ def test_parse_data__update_data():
 
     # Act/Assert
     with pytest.raises(ValueError):
-        converter._parse_data(data={}, data_type="update", extra_info=None)
+        converter._parse_data(data={}, data_type=DatasetType.update, extra_info=None)
 
 
 def test_fill_pgm_extra_info():
@@ -442,9 +442,9 @@ def test_create_input_data():
     ("create_fn", "table"),
     [
         (PandaPowerConverter._create_pgm_input_nodes, "bus"),
-        (PandaPowerConverter._create_pgm_input_lines, "line"),
+        (PandaPowerConverter._create_pgm_input_lines, ComponentType.line),
         (PandaPowerConverter._create_pgm_input_sources, "ext_grid"),
-        (PandaPowerConverter._create_pgm_input_shunts, "shunt"),
+        (PandaPowerConverter._create_pgm_input_shunts, ComponentType.shunt),
         (PandaPowerConverter._create_pgm_input_sym_gens, "sgen"),
         (PandaPowerConverter._create_pgm_input_sym_loads, "load"),
         (PandaPowerConverter._create_pgm_input_transformers, "trafo"),
@@ -481,7 +481,7 @@ def test_create_pgm_input_nodes(mock_init_array: MagicMock, two_pp_objs: MockDf,
     converter._generate_ids.assert_called_once_with("bus", two_pp_objs.index)
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type=ComponentType.node, shape=2)
+    mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=ComponentType.node, shape=2)
 
     # retrieval
     converter._get_pp_attr.assert_any_call("bus", "vn_kv", expected_type="f8")
@@ -514,7 +514,7 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("line", "to_bus", expected_type="u4"))
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type=ComponentType.line, shape=2)
+    mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=ComponentType.line, shape=2)
 
     # retrieval
     converter._get_pp_attr.assert_any_call("line", "from_bus", expected_type="u4")
@@ -606,7 +606,7 @@ def test_create_pgm_input_sources(mock_init_array: MagicMock, two_pp_objs, conve
     converter._generate_ids.assert_called_once_with("ext_grid", two_pp_objs.index)
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type=ComponentType.source, shape=2)
+    mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=ComponentType.source, shape=2)
 
     # retrieval:
     converter._get_pp_attr.assert_any_call("ext_grid", "bus", expected_type="u4")
@@ -671,7 +671,7 @@ def test_create_pgm_input_sym_loads(mock_init_array: MagicMock, two_pp_objs, con
     # administration:
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type=ComponentType.sym_load, shape=3 * 2)
+    mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=ComponentType.sym_load, shape=3 * 2)
 
     # retrieval:
     converter._get_pp_attr.assert_any_call("load", "bus", expected_type="u4")
@@ -708,7 +708,7 @@ def test_create_pgm_input_asym_loads(mock_init_array: MagicMock, two_pp_objs, co
     converter._generate_ids.assert_called_once_with("asymmetric_load", two_pp_objs.index)
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type=ComponentType.asym_load, shape=2)
+    mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=ComponentType.asym_load, shape=2)
 
     # retrieval:
     converter._get_pp_attr.assert_any_call("asymmetric_load", "bus", expected_type="u4")
@@ -801,7 +801,7 @@ def test_create_pgm_input_shunts(mock_init_array: MagicMock, two_pp_objs, conver
     converter._generate_ids.assert_called_once_with(ComponentType.shunt, two_pp_objs.index)
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type=ComponentType.shunt, shape=2)
+    mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=ComponentType.shunt, shape=2)
 
     # retrieval:
     converter._get_pp_attr.assert_any_call(ComponentType.shunt, "bus", expected_type="u4")
@@ -868,7 +868,7 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
     )
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type=ComponentType.transformer, shape=2)
+    mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=ComponentType.transformer, shape=2)
 
     # retrieval:
     converter._get_pp_attr.assert_any_call("trafo", "hv_bus", expected_type="u4")
@@ -1017,7 +1017,7 @@ def test_create_pgm_input_sym_gens(mock_init_array: MagicMock, two_pp_objs, conv
     converter._generate_ids.assert_called_once_with("sgen", two_pp_objs.index)
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type=ComponentType.sym_gen, shape=2)
+    mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=ComponentType.sym_gen, shape=2)
 
     # retrieval:
     converter._get_pp_attr.assert_any_call("sgen", "bus", expected_type="i8")
@@ -1110,7 +1110,7 @@ def test_create_pgm_input_asym_gens(mock_init_array: MagicMock, two_pp_objs, con
     converter._generate_ids.assert_called_once_with("asymmetric_sgen", two_pp_objs.index)
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type=ComponentType.asym_gen, shape=2)
+    mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=ComponentType.asym_gen, shape=2)
 
     # retrieval:
     converter._get_pp_attr.assert_any_call("asymmetric_sgen", "bus", expected_type="i8")
@@ -1162,7 +1162,7 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
 
     # initialization
     mock_init_array.assert_called_once_with(
-        data_type="input", component_type=ComponentType.three_winding_transformer, shape=2
+        data_type=DatasetType.input, component_type=ComponentType.three_winding_transformer, shape=2
     )
 
     # retrieval:
@@ -1521,7 +1521,7 @@ def test_create_pgm_input_links(mock_init_array: MagicMock, converter):
     pd.testing.assert_index_equal(converter._generate_ids.call_args_list[0].args[1], pd.Index([1, 3]))
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type=ComponentType.link, shape=2)
+    mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=ComponentType.link, shape=2)
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
@@ -1581,7 +1581,7 @@ def test_create_pgm_input_wards(mock_init_array: MagicMock, two_pp_objs, convert
     # administration:
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type=ComponentType.sym_load, shape=2 * 2)
+    mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=ComponentType.sym_load, shape=2 * 2)
 
     # retrieval:
     converter._get_pp_attr.assert_any_call("ward", "bus", expected_type="u4")
@@ -1678,7 +1678,7 @@ def test_create_pgm_input_motors(mock_init_array: MagicMock, two_pp_objs, conver
     converter._generate_ids.assert_called_once_with("motor", two_pp_objs.index, name="motor_load")
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type="input", component_type=ComponentType.sym_load, shape=2)
+    mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=ComponentType.sym_load, shape=2)
 
     # retrieval:
     converter._get_pp_attr.assert_any_call("motor", "bus", expected_type="i8")
