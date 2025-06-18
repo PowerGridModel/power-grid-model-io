@@ -116,7 +116,7 @@ def test_convert_table_to_component(converter: TabularConverter, tabular_data_no
     )
     assert none_data is None
     # wrong component
-    with pytest.raises(KeyError, match="Invalid component type \'dummy\' or data type \'DatasetType.input\'"):
+    with pytest.raises(KeyError, match="Invalid component type 'dummy' or data type 'input'"):
         converter._convert_table_to_component(
             data=tabular_data_no_units_no_substitutions,
             data_type=DatasetType.input,
@@ -126,7 +126,7 @@ def test_convert_table_to_component(converter: TabularConverter, tabular_data_no
             extra_info=None,
         )
     # wrong data_type
-    with pytest.raises(KeyError, match="Invalid component type \'ComponentType.node\' or data type 'some_type'"):
+    with pytest.raises(KeyError, match="Invalid component type 'node' or data type 'some_type'"):
         converter._convert_table_to_component(
             data=tabular_data_no_units_no_substitutions,
             data_type="some_type",
@@ -136,7 +136,7 @@ def test_convert_table_to_component(converter: TabularConverter, tabular_data_no
             extra_info=None,
         )
     # no 'id' in attributes
-    with pytest.raises(KeyError, match="No mapping for the attribute \'id\' for \'ComponentType.nodes\'!"):
+    with pytest.raises(KeyError, match="No mapping for the attribute 'id' for 'nodes'!"):
         converter._convert_table_to_component(
             data=tabular_data_no_units_no_substitutions,
             data_type=DatasetType.input,
@@ -236,7 +236,7 @@ def test_convert_col_def_to_attribute(
 ):
     with pytest.raises(
         KeyError,
-        match=r"Could not find attribute \'incorrect_attribute\' for \'ComponentType.nodes\'. \(choose from: id, u_rated\)",
+        match=r"Could not find attribute 'incorrect_attribute' for 'nodes'. \(choose from: id, u_rated\)",
     ):
         converter._convert_col_def_to_attribute(
             data=tabular_data_no_units_no_substitutions,

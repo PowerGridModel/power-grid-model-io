@@ -442,9 +442,9 @@ def test_create_input_data():
     ("create_fn", "table"),
     [
         (PandaPowerConverter._create_pgm_input_nodes, "bus"),
-        (PandaPowerConverter._create_pgm_input_lines, ComponentType.line),
+        (PandaPowerConverter._create_pgm_input_lines, "line"),
         (PandaPowerConverter._create_pgm_input_sources, "ext_grid"),
-        (PandaPowerConverter._create_pgm_input_shunts, ComponentType.shunt),
+        (PandaPowerConverter._create_pgm_input_shunts, "shunt"),
         (PandaPowerConverter._create_pgm_input_sym_gens, "sgen"),
         (PandaPowerConverter._create_pgm_input_sym_loads, "load"),
         (PandaPowerConverter._create_pgm_input_transformers, "trafo"),

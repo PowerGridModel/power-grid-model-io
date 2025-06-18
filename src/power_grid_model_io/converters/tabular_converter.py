@@ -12,6 +12,7 @@ from typing import Any, Collection, Dict, List, Mapping, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
+from enum import Enum
 import yaml
 from power_grid_model import initialize_array
 from power_grid_model.data_types import Dataset
@@ -145,9 +146,9 @@ class TabularConverter(BaseConverter[TabularData]):
     def _convert_table_to_component(  # pylint: disable = too-many-arguments,too-many-positional-arguments
         self,
         data: TabularData,
-        data_type: str,
+        data_type: Union[str, Enum],
         table: str,
-        component: str,
+        component: Union[str, Enum],
         attributes: InstanceAttributes,
         extra_info: Optional[ExtraInfo],
     ) -> Optional[np.ndarray]:
@@ -165,9 +166,9 @@ class TabularConverter(BaseConverter[TabularData]):
           extra_info: an optional dictionary where extra component info (that can't be specified in
         power-grid-model data) can be specified
           data: TabularData:
-          data_type: str:
+          data_type: Union[str, Enum]:
           table: str:
-          component: str:
+          component: Union[str, Enum]:
           attributes: InstanceAttributes:
           extra_info: Optional[ExtraInfo]:
 
@@ -187,13 +188,16 @@ class TabularConverter(BaseConverter[TabularData]):
 
         n_records = np.sum(table_mask) if table_mask is not None else len(data[table])
 
+        component_str = component.value if isinstance(component, Enum) else component
+        data_type_str = data_type.value if isinstance(data_type, Enum) else data_type
+
         try:
-            pgm_data = initialize_array(data_type=data_type, component_type=component, shape=n_records)
+            pgm_data = initialize_array(data_type=data_type_str, component_type=component_str, shape=n_records)
         except KeyError as ex:
-            raise KeyError(f"Invalid component type '{component}' or data type '{data_type}'") from ex
+            raise KeyError(f"Invalid component type '{component_str}' or data type '{data_type_str}'") from ex
 
         if "id" not in attributes:
-            raise KeyError(f"No mapping for the attribute 'id' for '{component}s'!")
+            raise KeyError(f"No mapping for the attribute 'id' for '{component_str}s'!")
 
         # Make sure that the "id" column is always parsed first (at least before "extra" is parsed)
         attributes_without_filter = {k: v for k, v in attributes.items() if k != "filters"}
@@ -207,7 +211,7 @@ class TabularConverter(BaseConverter[TabularData]):
                 data=data,
                 pgm_data=pgm_data,
                 table=table,
-                component=component,
+                component=component_str,
                 attr=attr,
                 col_def=col_def,
                 table_mask=table_mask,
@@ -232,7 +236,7 @@ class TabularConverter(BaseConverter[TabularData]):
         data: TabularData,
         pgm_data: np.ndarray,
         table: str,
-        component: str,
+        component: Union[str, Enum],
         attr: str,
         col_def: Any,
         table_mask: Optional[np.ndarray],
@@ -254,7 +258,7 @@ class TabularConverter(BaseConverter[TabularData]):
           data: TabularData:
           pgm_data: np.ndarray:
           table: str:
-          component: str:
+          component: Union[str, Enum]:
           attr: str:
           col_def: Any:
           extra_info: Optional[ExtraInfo]:
@@ -265,12 +269,15 @@ class TabularConverter(BaseConverter[TabularData]):
         """
         # To avoid mistakes, the attributes in the mapping should exist. There is one extra attribute called
         # 'extra' in which extra information can be captured.
+
+        component_str = component.value if isinstance(component, Enum) else component
+
         if pgm_data.dtype.names is None:
-            raise ValueError(f"pgm_data for '{component}s' has no attributes defined. (dtype.names is None)")
+            raise ValueError(f"pgm_data for '{component_str}s' has no attributes defined. (dtype.names is None)")
 
         if attr not in pgm_data.dtype.names and attr not in ["extra", "filters"]:
             attrs = ", ".join(pgm_data.dtype.names)
-            raise KeyError(f"Could not find attribute '{attr}' for '{component}s'. (choose from: {attrs})")
+            raise KeyError(f"Could not find attribute '{attr}' for '{component_str}s'. (choose from: {attrs})")
 
         if attr == "extra":
             # Extra info must be linked to the object IDs, therefore the uuids should be known before extra info can
