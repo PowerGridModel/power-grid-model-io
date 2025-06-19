@@ -397,7 +397,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a power-grid-model structured array for the Line component
         """
-        pp_lines = self.pp_input_data[ComponentType.line]
+        pp_lines = self.pp_input_data["line"]
 
         if pp_lines.empty:
             return
@@ -491,7 +491,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a power-grid-model structured array for the Shunt component
         """
-        pp_shunts = self.pp_input_data[ComponentType.shunt]
+        pp_shunts = self.pp_input_data["shunt"]
 
         if pp_shunts.empty:
             return
@@ -1900,7 +1900,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 "loading_b_percent",
                 "loading_c_percent",
             ],
-            index=self._get_pp_ids(ComponentType.line, pgm_output_lines["id"]),
+            index=self._get_pp_ids("line", pgm_output_lines["id"]),
         )
 
         pp_output_lines_3ph["p_a_from_mw"] = pgm_output_lines["p_from"][:, 0] * 1e-6

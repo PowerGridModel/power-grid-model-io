@@ -27,7 +27,7 @@ def converter():
 @pytest.fixture
 def structured_input_data():
     input_data = {
-        ComponentType.node: [
+        "node": [
             {"id": 1, "u_rated": 400.0},
             {"id": 2, "u_rated": 400.0, "some_extra_info": 2.1},
         ]
@@ -38,8 +38,8 @@ def structured_input_data():
 @pytest.fixture
 def structured_batch_data():
     batch_data = [
-        {ComponentType.sym_load: [{"id": 3, "p_specified": 1.0}]},
-        {ComponentType.sym_load: [{"id": 3, "p_specified": 2.0}, {"id": 4, "p_specified": 3.0}]},
+        {"sym_load": [{"id": 3, "p_specified": 1.0}]},
+        {"sym_load": [{"id": 3, "p_specified": 2.0}, {"id": 4, "p_specified": 3.0}]},
     ]
     return batch_data
 
@@ -111,9 +111,12 @@ def test_parse_component(converter: PgmJsonConverter, structured_input_data):
     node_with_wrong_attr_val = {"id": 3, "u_rated": "fault"}
     objects[0].append(node_with_wrong_attr_val)  # type: ignore
     with pytest.raises(
-        ValueError, match="Invalid 'u_rated' value for ComponentType.node DatasetType.input data: could not convert string to float: 'fault'"
+        ValueError,
+        match="Invalid 'u_rated' value for node input data: could not convert string to float: 'fault'",
     ):
-        converter._parse_component(objects=objects[0], component=component, data_type=DatasetType.input, extra_info=None)
+        converter._parse_component(
+            objects=objects[0], component=component, data_type=DatasetType.input, extra_info=None
+        )
 
 
 def test_serialize_data(converter: PgmJsonConverter, pgm_input_data: SingleDataset, pgm_batch_data: BatchDataset):
@@ -122,9 +125,9 @@ def test_serialize_data(converter: PgmJsonConverter, pgm_input_data: SingleDatas
     with capture_logs() as cap_log:
         structured_batch_data = converter._serialize_data(data=pgm_batch_data, extra_info={})
     assert structured_batch_data == [
-        {ComponentType.line: [{}, {}]},
-        {ComponentType.line: [{}, {}]},
-        {ComponentType.line: [{}, {}]},
+        {"line": [{}, {}]},
+        {"line": [{}, {}]},
+        {"line": [{}, {}]},
     ]
     assert_log_match(cap_log[0], "warning", "Extra info is not supported for batch data export")
 

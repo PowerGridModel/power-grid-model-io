@@ -197,15 +197,15 @@ def test_fill_pgm_extra_info():
 def test_fill_pp_extra_info():
     # Arrange
     converter = PandaPowerConverter()
-    converter.idx_lookup[(ComponentType.line, None)] = pd.Series([102, 103], index=[1, 2])
+    converter.idx_lookup[("line", None)] = pd.Series([102, 103], index=[1, 2])
     converter.idx_lookup[("trafo", None)] = pd.Series([201, 202, 203], index=[3, 4, 5])
-    converter.idx[(ComponentType.line, None)] = pd.Series([1, 2], index=[102, 103])
+    converter.idx[("line", None)] = pd.Series([1, 2], index=[102, 103])
     converter.idx[("trafo", None)] = pd.Series([3, 4, 5], index=[201, 202, 203])
 
     converter.pp_input_data["trafo"] = pd.DataFrame(
         {"df": [0.1, 0.2, 0.3], "other": [0.1, 0.2, 0.3]}, index=[201, 202, 203]
     )
-    converter.pp_input_data[ComponentType.line] = pd.DataFrame([10, 11, 12], columns=["df"], index=[201, 202, 203])
+    converter.pp_input_data["line"] = pd.DataFrame([10, 11, 12], columns=["df"], index=[201, 202, 203])
 
     # Act
     extra_info = {}
@@ -500,7 +500,7 @@ def test_create_pgm_input_nodes(mock_init_array: MagicMock, two_pp_objs: MockDf,
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
-    converter.pp_input_data[ComponentType.line] = two_pp_objs
+    converter.pp_input_data["line"] = two_pp_objs
 
     # Act
     converter._create_pgm_input_lines()
@@ -508,8 +508,8 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     # Assert
 
     # administration
-    converter.get_switch_states.assert_called_once_with(ComponentType.line)
-    converter._generate_ids.assert_called_once_with(ComponentType.line, two_pp_objs.index)
+    converter.get_switch_states.assert_called_once_with("line")
+    converter._generate_ids.assert_called_once_with("line", two_pp_objs.index)
     converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("line", "from_bus", expected_type="u4"))
     converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("line", "to_bus", expected_type="u4"))
 
@@ -671,7 +671,9 @@ def test_create_pgm_input_sym_loads(mock_init_array: MagicMock, two_pp_objs, con
     # administration:
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=ComponentType.sym_load, shape=3 * 2)
+    mock_init_array.assert_called_once_with(
+        data_type=DatasetType.input, component_type=ComponentType.sym_load, shape=3 * 2
+    )
 
     # retrieval:
     converter._get_pp_attr.assert_any_call("load", "bus", expected_type="u4")
@@ -708,7 +710,9 @@ def test_create_pgm_input_asym_loads(mock_init_array: MagicMock, two_pp_objs, co
     converter._generate_ids.assert_called_once_with("asymmetric_load", two_pp_objs.index)
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=ComponentType.asym_load, shape=2)
+    mock_init_array.assert_called_once_with(
+        data_type=DatasetType.input, component_type=ComponentType.asym_load, shape=2
+    )
 
     # retrieval:
     converter._get_pp_attr.assert_any_call("asymmetric_load", "bus", expected_type="u4")
@@ -790,7 +794,7 @@ def test_create_pgm_input_transformers__tap_dependent_impedance() -> None:
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_shunts(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
-    converter.pp_input_data[ComponentType.shunt] = two_pp_objs
+    converter.pp_input_data["shunt"] = two_pp_objs
 
     # Act
     converter._create_pgm_input_shunts()
@@ -804,12 +808,12 @@ def test_create_pgm_input_shunts(mock_init_array: MagicMock, two_pp_objs, conver
     mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=ComponentType.shunt, shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call(ComponentType.shunt, "bus", expected_type="u4")
-    converter._get_pp_attr.assert_any_call(ComponentType.shunt, "p_mw", expected_type="f8")
-    converter._get_pp_attr.assert_any_call(ComponentType.shunt, "q_mvar", expected_type="f8")
-    converter._get_pp_attr.assert_any_call(ComponentType.shunt, "vn_kv", expected_type="f8")
-    converter._get_pp_attr.assert_any_call(ComponentType.shunt, "step", expected_type="u4", default=1)
-    converter._get_pp_attr.assert_any_call(ComponentType.shunt, "in_service", expected_type="bool", default=True)
+    converter._get_pp_attr.assert_any_call("shunt", "bus", expected_type="u4")
+    converter._get_pp_attr.assert_any_call("shunt", "p_mw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("shunt", "q_mvar", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("shunt", "vn_kv", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("shunt", "step", expected_type="u4", default=1)
+    converter._get_pp_attr.assert_any_call("shunt", "in_service", expected_type="bool", default=True)
 
     assert len(converter._get_pp_attr.call_args_list) == 6
 
@@ -868,7 +872,9 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
     )
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=ComponentType.transformer, shape=2)
+    mock_init_array.assert_called_once_with(
+        data_type=DatasetType.input, component_type=ComponentType.transformer, shape=2
+    )
 
     # retrieval:
     converter._get_pp_attr.assert_any_call("trafo", "hv_bus", expected_type="u4")
@@ -1581,7 +1587,9 @@ def test_create_pgm_input_wards(mock_init_array: MagicMock, two_pp_objs, convert
     # administration:
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=ComponentType.sym_load, shape=2 * 2)
+    mock_init_array.assert_called_once_with(
+        data_type=DatasetType.input, component_type=ComponentType.sym_load, shape=2 * 2
+    )
 
     # retrieval:
     converter._get_pp_attr.assert_any_call("ward", "bus", expected_type="u4")
@@ -2034,7 +2042,7 @@ def test_get_switch_states_lines(mock_get_individual_switch_states: MagicMock):
     # Arrange
     converter = PandaPowerConverter()
     converter.pp_input_data = {
-        ComponentType.line: pd.DataFrame(columns=["from_bus", "to_bus"], data=[[101, 102]], index=[1]),
+        "line": pd.DataFrame(columns=["from_bus", "to_bus"], data=[[101, 102]], index=[1]),
         "switch": pd.DataFrame(
             columns=["bus", "et", "element", "closed"],
             data=[[101, "l", 1, False], [102, "x", 1, False]],
@@ -2108,7 +2116,7 @@ def test_get_switch_states__exception():
 
     # Act / Assert
     with pytest.raises(KeyError, match=r"link"):
-        converter.get_switch_states(ComponentType.link)
+        converter.get_switch_states("link")
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter.get_individual_switch_states")
@@ -2138,11 +2146,11 @@ def test_lookup_id():
     # Arrange
     converter = PandaPowerConverter()
     converter.idx_lookup = {
-        (ComponentType.line, None): pd.Series([0, 1, 2, 3, 4], index=[21, 345, 0, 3, 15]),
+        ("line", None): pd.Series([0, 1, 2, 3, 4], index=[21, 345, 0, 3, 15]),
         ("load", "const_current"): pd.Series([5, 6, 7, 8, 9], index=[543, 14, 34, 48, 4]),
     }
 
-    expected_line = {"table": ComponentType.line, "index": 4}
+    expected_line = {"table": "line", "index": 4}
     expected_load = {"table": "load", "name": "const_current", "index": 8}
 
     # Act
@@ -2157,7 +2165,7 @@ def test_lookup_id():
 def test_lookup_id__value_error():
     # Arrange
     converter = PandaPowerConverter()
-    converter.idx_lookup = {(ComponentType.line, None): pd.Series([0, 1, 2, 3, 4], index=[21, 345, 0, 3, 15])}
+    converter.idx_lookup = {("line", None): pd.Series([0, 1, 2, 3, 4], index=[21, 345, 0, 3, 15])}
 
     # Act / Assert
     with pytest.raises(KeyError):

@@ -7,12 +7,12 @@ Tabular Data Converter: Load data from multiple tables and use a mapping file to
 
 import inspect
 import logging
+from enum import Enum
 from pathlib import Path
 from typing import Any, Collection, Dict, List, Mapping, Optional, Union, cast
 
 import numpy as np
 import pandas as pd
-from enum import Enum
 import yaml
 from power_grid_model import initialize_array
 from power_grid_model.data_types import Dataset

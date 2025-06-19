@@ -8,6 +8,7 @@ Power Grid Model 'Converter': Load and store power grid model data in the native
 import json
 import logging
 import warnings
+from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -92,7 +93,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
         return result
 
     def _parse_dataset(
-        self, data: SinglePythonDataset, data_type: str, extra_info: Optional[ExtraInfo]
+        self, data: SinglePythonDataset, data_type: Enum, extra_info: Optional[ExtraInfo]
     ) -> SingleDataset:
         """This function parses a single Python dataset and returns a power-grid-model input or update dictionary
 
@@ -119,7 +120,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
 
     @staticmethod
     def _parse_component(
-        objects: ComponentList, component: str, data_type: str, extra_info: Optional[ExtraInfo]
+        objects: ComponentList, component: Enum, data_type: Enum, extra_info: Optional[ExtraInfo]
     ) -> np.ndarray:
         """This function generates a structured numpy array (power-grid-model native) from a structured dataset
 
@@ -152,13 +153,15 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
                     try:
                         array[i][attribute] = value
                     except ValueError as ex:
-                        raise ValueError(f"Invalid '{attribute}' value for {component} {data_type} data: {ex}") from ex
+                        raise ValueError(
+                            f"Invalid '{attribute}' value for {component.value} {data_type.value} data: {ex}"
+                        ) from ex
 
                 # If an attribute doesn't exist, it is added to the extra_info lookup table
                 elif extra_info is not None:
                     obj_id = obj["id"]
                     if not isinstance(obj_id, int):
-                        raise ValueError(f"Invalid 'id' value for {component} {data_type} data")
+                        raise ValueError(f"Invalid 'id' value for {component.value} {data_type.value} data")
                     if obj_id not in extra_info:
                         extra_info[obj_id] = {}
                     extra_info[obj_id][attribute] = value
@@ -215,8 +218,9 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
             is_sparse_batch = isinstance(array, dict) and "indptr" in array and "data" in array
             if is_batch is not None and is_batch != (is_dense_batch or is_sparse_batch):
                 raise ValueError(
-                    f"Mixed {'' if is_batch else 'non-'}batch data "
-                    f"with {'non-' if is_batch else ''}batch data ({component})."
+                    f"Mixed {'' if is_batch else 'non-'}batch data with "
+                    f"{'non-' if is_batch else ''}batch data ("
+                    f"{component.value if isinstance(component, Enum) else component})."
                 )
             is_batch = is_dense_batch or is_sparse_batch
         return bool(is_batch)
