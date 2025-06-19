@@ -14,7 +14,7 @@ from typing import Any, Collection, Dict, List, Mapping, Optional, Union, cast
 import numpy as np
 import pandas as pd
 import yaml
-from power_grid_model import initialize_array
+from power_grid_model import DatasetType, initialize_array
 from power_grid_model.data_types import Dataset
 
 from power_grid_model_io.converters.base_converter import BaseConverter
@@ -90,7 +90,7 @@ class TabularConverter(BaseConverter[TabularData]):
         if "multipliers" in mapping:
             self._multipliers = MultiplierMapping(cast(Multipliers, mapping["multipliers"]), logger=self._log)
 
-    def _parse_data(self, data: TabularData, data_type: str, extra_info: Optional[ExtraInfo]) -> Dataset:
+    def _parse_data(self, data: TabularData, data_type: DatasetType, extra_info: Optional[ExtraInfo]) -> Dataset:
         """This function parses tabular data and returns power-grid-model data
 
         Args:

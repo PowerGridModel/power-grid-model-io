@@ -10,6 +10,7 @@ from abc import ABC, abstractmethod
 from typing import Generic, Optional, Tuple, TypeVar
 
 import structlog
+from power_grid_model import DatasetType
 from power_grid_model.data_types import Dataset, SingleDataset
 
 from power_grid_model_io.data_stores.base_data_store import BaseDataStore
@@ -182,7 +183,7 @@ class BaseConverter(Generic[T], ABC):
         raise ValueError("No data supplied!")
 
     @abstractmethod  # pragma: nocover
-    def _parse_data(self, data: T, data_type: str, extra_info: Optional[ExtraInfo]) -> Dataset:
+    def _parse_data(self, data: T, data_type: DatasetType, extra_info: Optional[ExtraInfo]) -> Dataset:
         pass
 
     @abstractmethod  # pragma: nocover

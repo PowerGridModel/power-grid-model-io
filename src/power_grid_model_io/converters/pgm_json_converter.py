@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
-from power_grid_model import initialize_array
+from power_grid_model import DatasetType, initialize_array
 from power_grid_model.data_types import ComponentList, Dataset, SingleDataset, SinglePythonDataset
 from power_grid_model.utils import json_deserialize, json_serialize
 
@@ -53,7 +53,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
         destination = JsonFileStore(file_path=Path(destination_file)) if destination_file else None
         super().__init__(source=source, destination=destination, log_level=log_level)
 
-    def _parse_data(self, data: StructuredData, data_type: str, extra_info: Optional[ExtraInfo]) -> Dataset:
+    def _parse_data(self, data: StructuredData, data_type: DatasetType, extra_info: Optional[ExtraInfo]) -> Dataset:
         """This function expects Structured data, which can either be a dictionary (single dataset) or a list of
         dictionaries (batch dataset). The structured dataset consists of components + attributes that exist within
         power-grid-model, but can also contain other data. If this data should be saved for later usage an extra_info

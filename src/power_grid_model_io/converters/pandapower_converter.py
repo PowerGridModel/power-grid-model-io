@@ -77,7 +77,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
     def _parse_data(
         self,
         data: PandaPowerData,
-        data_type: str,
+        data_type: DatasetType,
         extra_info: Optional[ExtraInfo] = None,
     ) -> Dataset:
         """
