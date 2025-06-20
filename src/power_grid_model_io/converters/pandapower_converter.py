@@ -86,7 +86,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Args:
             data: PandaPowerData, i.e. a dictionary with the components as keys and pd.DataFrames as values, with
             attribute names as columns and their values in the table
-            data_type: power-grid-model data type, i.e. "input" or "update"
+            data_type: power-grid-model data type, i.e. DatasetType.input or DatasetType.update
             extra_info: an optional dictionary where extra component info (that can't be specified in
             power-grid-model data) can be specified
 
@@ -103,7 +103,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self.pp_input_data = data
 
         # Convert
-        if data_type == "input":
+        if data_type == DatasetType.input:
             self._create_input_data()
         else:
             raise ValueError(f"Data type: '{data_type}' is not implemented")
@@ -149,9 +149,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             )
 
         # Convert
-        if pgm_output_dtype_checker("sym_output"):
+        if pgm_output_dtype_checker(DatasetType.sym_output):
             self._create_output_data()
-        elif pgm_output_dtype_checker("asym_output"):
+        elif pgm_output_dtype_checker(DatasetType.asym_output):
             self._create_output_data_3ph()
         else:
             raise TypeError("Invalid output data dictionary supplied.")

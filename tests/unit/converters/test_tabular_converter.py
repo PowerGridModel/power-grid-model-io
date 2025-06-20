@@ -180,7 +180,7 @@ def test_convert_table_to_component__filters(
     }
     converter._convert_table_to_component(
         data=tabular_data_no_units_no_substitutions,
-        data_type="input",
+        data_type=DatasetType.input,
         table="nodes",
         component=ComponentType.node,
         attributes=node_attributes_with_filter,

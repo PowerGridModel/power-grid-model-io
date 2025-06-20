@@ -61,7 +61,8 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
 
         Args:
           data: Structured data, which can either be a dictionary or a list of dictionaries
-          data_type: the data type of the dataset, i.e. "input", "update", "sym_output" or "asym_output"
+          data_type: the data type of the dataset, i.e. DatasetType.input, DatasetType.update,
+                     DatasetType.sym_output or DatasetType.asym_output
           extra_info: an optional dictionary where extra component info (that can't be specified in
         power-grid-model data) can be specified
           data: StructuredData:
@@ -70,7 +71,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
 
         Returns:
           a dictionary containing the components as keys and their corresponding numpy arrays as values: a
-          power-grid-model "input" or "update" dataset
+          power-grid-model DatasetType.input or DatasetType.update dataset
 
         """
         self._log.debug(f"Loading PGM {data_type} data")
@@ -99,7 +100,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
 
         Args:
           data: a single Python dataset
-          data_type: the data type of the dataset, i.e. "input" or "update"
+          data_type: the data type of the dataset, i.e. DatasetType.input or DatasetType.update
           extra_info: an optional dictionary where extra component info (that can't be specified in
         power-grid-model data) can be specified
           data: SinglePythonDataset:
@@ -108,7 +109,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
 
         Returns:
           a dictionary containing the components as keys and their corresponding numpy arrays as values: a
-          power-grid-model "input" or "update" dataset
+          power-grid-model DatasetType.input or DatasetType.update dataset
 
         """
         return {
@@ -128,7 +129,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
           objects: a list with dictionaries, where each dictionary contains all attributes of a component
           component: the type of component, eg. node, line, etc. Note: it should be a valid power-grid-model
         component
-          data_type: a string specifying the data type: input/update
+          data_type: a string specifying the data type: DatasetType.input/DatasetType.update
           extra_info: an optional dictionary where extra component info (that can't be specified in
         power-grid-model data) can be specified
           objects: ComponentList:

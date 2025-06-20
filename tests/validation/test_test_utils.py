@@ -7,7 +7,7 @@ from unittest.mock import mock_open, patch
 
 import numpy as np
 import pandas as pd
-from power_grid_model import ComponentType, power_grid_meta_data
+from power_grid_model import ComponentType, DatasetType, power_grid_meta_data
 
 from .utils import component_attributes, extract_extra_info, select_values
 
@@ -17,7 +17,7 @@ MOCK_JSON_DATA = '{"node":[{"id":0,"u_rated":0.0},{"id":0,"u_rated":0.0,"bar":0}
 @patch("pathlib.Path.open", mock_open(read_data=MOCK_JSON_DATA))
 def test_component_attributes():
     # Act
-    generator = component_attributes(Path("test.json"), data_type="input")
+    generator = component_attributes(Path("test.json"), data_type=DatasetType.input)
 
     # Assert
     assert list(generator) == [
@@ -30,7 +30,7 @@ def test_component_attributes():
 
 def test_select_values():
     # Arrange
-    input_node_dtype = power_grid_meta_data["input"][ComponentType.node].dtype
+    input_node_dtype = power_grid_meta_data[DatasetType.input][ComponentType.node].dtype
     actual = {ComponentType.node: np.array([(2, 2.0), (4, np.nan), (3, 3.0), (1, 1.0)], dtype=input_node_dtype)}
     expected = {ComponentType.node: np.array([(4, 4.0), (1, np.nan), (3, 3.0)], dtype=input_node_dtype)}
 
@@ -52,7 +52,7 @@ def test_extract_extra_info():
     }
 
     # Act
-    extra_info = extract_extra_info(data=data, data_type="input")
+    extra_info = extract_extra_info(data=data, data_type=DatasetType.input)
 
     # Assert
     assert extra_info[1] == {"name": "bar"}

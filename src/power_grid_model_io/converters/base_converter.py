@@ -55,7 +55,9 @@ class BaseConverter(Generic[T], ABC):
 
         data = self._load_data(data)
         extra_info: ExtraInfo = {}
-        parsed_data = self._parse_data(data=data, data_type="input", extra_info=extra_info if make_extra_info else None)
+        parsed_data = self._parse_data(
+            data=data, data_type=DatasetType.input, extra_info=extra_info if make_extra_info else None
+        )
         if isinstance(parsed_data, list):
             raise TypeError("Input data can not be batch data")
         return parsed_data, extra_info
@@ -72,7 +74,7 @@ class BaseConverter(Generic[T], ABC):
 
         """
         data = self._load_data(data)
-        return self._parse_data(data=data, data_type="update", extra_info=None)
+        return self._parse_data(data=data, data_type=DatasetType.update, extra_info=None)
 
     def load_sym_output_data(self, data: Optional[T] = None) -> Dataset:
         """Load symmetric output data
@@ -86,7 +88,7 @@ class BaseConverter(Generic[T], ABC):
 
         """
         data = self._load_data(data)
-        return self._parse_data(data=data, data_type="sym_output", extra_info=None)
+        return self._parse_data(data=data, data_type=DatasetType.sym_output, extra_info=None)
 
     def load_asym_output_data(self, data: Optional[T] = None) -> Dataset:
         """Load asymmetric output data
@@ -100,7 +102,7 @@ class BaseConverter(Generic[T], ABC):
 
         """
         data = self._load_data(data)
-        return self._parse_data(data=data, data_type="asym_output", extra_info=None)
+        return self._parse_data(data=data, data_type=DatasetType.asym_output, extra_info=None)
 
     def load_sc_output_data(self, data: Optional[T] = None) -> Dataset:
         """Load sc output data
@@ -114,7 +116,7 @@ class BaseConverter(Generic[T], ABC):
 
         """
         data = self._load_data(data)
-        return self._parse_data(data=data, data_type="sc_output", extra_info=None)
+        return self._parse_data(data=data, data_type=DatasetType.sc_output, extra_info=None)
 
     def convert(self, data: Dataset, extra_info: Optional[ExtraInfo] = None) -> T:
         """Convert input/update/(a)sym_output data and optionally extra info.

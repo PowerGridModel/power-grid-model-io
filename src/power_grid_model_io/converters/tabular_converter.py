@@ -96,7 +96,7 @@ class TabularConverter(BaseConverter[TabularData]):
         Args:
           data: TabularData, i.e. a dictionary with the components as keys and pd.DataFrames as values, with
         attribute names as columns and their values in the table
-          data_type: power-grid-model data type, i.e. "input" or "update"
+          data_type: power-grid-model data type, i.e. DatasetType.input or DatasetType.update
           extra_info: an optional dictionary where extra component info (that can't be specified in
         power-grid-model data) can be specified
           data: TabularData:
@@ -158,7 +158,7 @@ class TabularConverter(BaseConverter[TabularData]):
 
         Args:
           data: The full dataset with tabular data
-          data_type: The data type, i.e. "input" or "update"
+          data_type: The data type, i.e. DatasetType.input or DatasetType.update
           table: The name of the table that should be converter
           component: the component for which a power-grid-model array should be made
           attributes: a dictionary with a mapping from the attribute names in the table to the corresponding
