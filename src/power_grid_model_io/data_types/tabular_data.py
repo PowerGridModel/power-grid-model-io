@@ -2,12 +2,12 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 """
-The TabularData class is a wrapper around Dict[str, Union[pd.DataFrame, np.ndarray]],
+The TabularData class is a wrapper around Dict[str, pd.DataFrame | np.ndarray],
 which supports unit conversions and value substitutions
 """
 
 import logging
-from typing import Callable, Dict, Generator, Iterable, Optional, Tuple, Union
+from typing import Callable, Dict, Generator, Iterable, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -21,11 +21,11 @@ LazyDataFrame = Callable[[], pd.DataFrame]
 
 class TabularData:
     """
-    The TabularData class is a wrapper around Dict[str, Union[pd.DataFrame, np.ndarray]],
+    The TabularData class is a wrapper around Dict[str, pd.DataFrame | np.ndarray],
     which supports unit conversions and value substitutions
     """
 
-    def __init__(self, logger=None, **tables: Union[pd.DataFrame, np.ndarray, LazyDataFrame]):
+    def __init__(self, logger=None, **tables: pd.DataFrame | np.ndarray | LazyDataFrame):
         """
         Tabular data can either be a collection of pandas DataFrames and/or numpy structured arrays.
         The key word arguments will define the keys of the data.
@@ -48,7 +48,7 @@ class TabularData:
                     f"Invalid data type for table '{table_name}'; "
                     f"expected a pandas DataFrame or NumPy array, got {type(table_data).__name__}."
                 )
-        self._data: Dict[str, Union[pd.DataFrame, np.ndarray, LazyDataFrame]] = tables
+        self._data: Dict[str, pd.DataFrame | np.ndarray | LazyDataFrame] = tables
         self._units: Optional[UnitMapping] = None
         self._substitution: Optional[ValueMapping] = None
 
@@ -181,7 +181,7 @@ class TabularData:
         """
         return table_name in self._data
 
-    def __getitem__(self, table_name: str) -> Union[pd.DataFrame, np.ndarray]:
+    def __getitem__(self, table_name: str) -> pd.DataFrame | np.ndarray:
         """
         Mimic the dictionary [] operator. It returns the 'raw' table data as stored in memory. This can be either a
         pandas DataFrame or a numpy structured array. It is possible that some unit conversions have been applied by
@@ -206,7 +206,7 @@ class TabularData:
 
         return self._data.keys()
 
-    def items(self) -> Generator[Tuple[str, Union[pd.DataFrame, np.ndarray]], None, None]:
+    def items(self) -> Generator[Tuple[str, pd.DataFrame | np.ndarray], None, None]:
         """
         Mimic the dictionary .items() function
 

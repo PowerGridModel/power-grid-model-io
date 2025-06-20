@@ -29,7 +29,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from shutil import rmtree as remove_dir
-from typing import Optional, Union
+from typing import Optional
 from urllib import request
 
 import structlog
@@ -81,7 +81,7 @@ class DownloadProgressHook:  # pylint: disable=too-few-public-methods
 
 
 def download_and_extract(
-    url: str, dir_path: Optional[Path] = None, file_name: Optional[Union[str, Path]] = None, overwrite: bool = False
+    url: str, dir_path: Optional[Path] = None, file_name: Optional[str | Path] = None, overwrite: bool = False
 ) -> Path:
     """
     Download a file from a URL and store it locally, extract the contents and return the path to the contents.
@@ -112,7 +112,7 @@ def download_and_extract(
 
 
 def download(
-    url: str, file_name: Optional[Union[str, Path]] = None, dir_path: Optional[Path] = None, overwrite: bool = False
+    url: str, file_name: Optional[str | Path] = None, dir_path: Optional[Path] = None, overwrite: bool = False
 ) -> Path:
     """
     Download a file from a URL and store it locally
@@ -200,7 +200,7 @@ def get_response_info(url: str) -> ResponseInfo:
 
 def get_download_path(
     dir_path: Optional[Path] = None,
-    file_name: Optional[Union[str, Path]] = None,
+    file_name: Optional[str | Path] = None,
     unique_key: Optional[str] = None,
 ) -> Path:
     """

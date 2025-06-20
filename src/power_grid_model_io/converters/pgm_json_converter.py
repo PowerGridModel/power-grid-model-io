@@ -8,11 +8,12 @@ Power Grid Model 'Converter': Load and store power grid model data in the native
 import json
 import logging
 import warnings
+from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import numpy as np
-from power_grid_model import initialize_array
+from power_grid_model import ComponentType, DatasetType, initialize_array
 from power_grid_model.data_types import ComponentList, Dataset, SingleDataset, SinglePythonDataset
 from power_grid_model.utils import json_deserialize, json_serialize
 
@@ -44,15 +45,15 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
 
     def __init__(
         self,
-        source_file: Optional[Union[Path, str]] = None,
-        destination_file: Optional[Union[Path, str]] = None,
+        source_file: Optional[Path | str] = None,
+        destination_file: Optional[Path | str] = None,
         log_level: int = logging.INFO,
     ):
         source = JsonFileStore(file_path=Path(source_file)) if source_file else None
         destination = JsonFileStore(file_path=Path(destination_file)) if destination_file else None
         super().__init__(source=source, destination=destination, log_level=log_level)
 
-    def _parse_data(self, data: StructuredData, data_type: str, extra_info: Optional[ExtraInfo]) -> Dataset:
+    def _parse_data(self, data: StructuredData, data_type: DatasetType, extra_info: Optional[ExtraInfo]) -> Dataset:
         """This function expects Structured data, which can either be a dictionary (single dataset) or a list of
         dictionaries (batch dataset). The structured dataset consists of components + attributes that exist within
         power-grid-model, but can also contain other data. If this data should be saved for later usage an extra_info
@@ -60,7 +61,8 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
 
         Args:
           data: Structured data, which can either be a dictionary or a list of dictionaries
-          data_type: the data type of the dataset, i.e. "input", "update", "sym_output" or "asym_output"
+          data_type: the data type of the dataset, i.e. DatasetType.input, DatasetType.update,
+                     DatasetType.sym_output or DatasetType.asym_output
           extra_info: an optional dictionary where extra component info (that can't be specified in
         power-grid-model data) can be specified
           data: StructuredData:
@@ -69,7 +71,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
 
         Returns:
           a dictionary containing the components as keys and their corresponding numpy arrays as values: a
-          power-grid-model "input" or "update" dataset
+          power-grid-model DatasetType.input or DatasetType.update dataset
 
         """
         self._log.debug(f"Loading PGM {data_type} data")
@@ -92,13 +94,13 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
         return result
 
     def _parse_dataset(
-        self, data: SinglePythonDataset, data_type: str, extra_info: Optional[ExtraInfo]
+        self, data: SinglePythonDataset, data_type: DatasetType, extra_info: Optional[ExtraInfo]
     ) -> SingleDataset:
         """This function parses a single Python dataset and returns a power-grid-model input or update dictionary
 
         Args:
           data: a single Python dataset
-          data_type: the data type of the dataset, i.e. "input" or "update"
+          data_type: the data type of the dataset, i.e. DatasetType.input or DatasetType.update
           extra_info: an optional dictionary where extra component info (that can't be specified in
         power-grid-model data) can be specified
           data: SinglePythonDataset:
@@ -107,7 +109,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
 
         Returns:
           a dictionary containing the components as keys and their corresponding numpy arrays as values: a
-          power-grid-model "input" or "update" dataset
+          power-grid-model DatasetType.input or DatasetType.update dataset
 
         """
         return {
@@ -119,7 +121,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
 
     @staticmethod
     def _parse_component(
-        objects: ComponentList, component: str, data_type: str, extra_info: Optional[ExtraInfo]
+        objects: ComponentList, component: ComponentType, data_type: DatasetType, extra_info: Optional[ExtraInfo]
     ) -> np.ndarray:
         """This function generates a structured numpy array (power-grid-model native) from a structured dataset
 
@@ -127,7 +129,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
           objects: a list with dictionaries, where each dictionary contains all attributes of a component
           component: the type of component, eg. node, line, etc. Note: it should be a valid power-grid-model
         component
-          data_type: a string specifying the data type: input/update
+          data_type: a string specifying the data type: DatasetType.input/DatasetType.update
           extra_info: an optional dictionary where extra component info (that can't be specified in
         power-grid-model data) can be specified
           objects: ComponentList:
@@ -152,13 +154,15 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
                     try:
                         array[i][attribute] = value
                     except ValueError as ex:
-                        raise ValueError(f"Invalid '{attribute}' value for {component} {data_type} data: {ex}") from ex
+                        raise ValueError(
+                            f"Invalid '{attribute}' value for {component.value} {data_type.value} data: {ex}"
+                        ) from ex
 
                 # If an attribute doesn't exist, it is added to the extra_info lookup table
                 elif extra_info is not None:
                     obj_id = obj["id"]
                     if not isinstance(obj_id, int):
-                        raise ValueError(f"Invalid 'id' value for {component} {data_type} data")
+                        raise ValueError(f"Invalid 'id' value for {component.value} {data_type.value} data")
                     if obj_id not in extra_info:
                         extra_info[obj_id] = {}
                     extra_info[obj_id][attribute] = value
@@ -215,8 +219,9 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
             is_sparse_batch = isinstance(array, dict) and "indptr" in array and "data" in array
             if is_batch is not None and is_batch != (is_dense_batch or is_sparse_batch):
                 raise ValueError(
-                    f"Mixed {'' if is_batch else 'non-'}batch data "
-                    f"with {'non-' if is_batch else ''}batch data ({component})."
+                    f"Mixed {'' if is_batch else 'non-'}batch data with "
+                    f"{'non-' if is_batch else ''}batch data ("
+                    f"{component.value if isinstance(component, Enum) else component})."
                 )
             is_batch = is_dense_batch or is_sparse_batch
         return bool(is_batch)

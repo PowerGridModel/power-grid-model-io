@@ -5,7 +5,7 @@
 These functions can be used in the mapping files to apply filter functions to vision data
 """
 
-from typing import List, Union
+from typing import List
 
 import pandas as pd
 
@@ -24,7 +24,7 @@ def exclude_empty(row: pd.Series, col: str) -> bool:
     return result
 
 
-def exclude_value(row: pd.Series, col: str, value: Union[float, str]) -> bool:
+def exclude_value(row: pd.Series, col: str, value: float | str) -> bool:
     """
     filter out by match value
     """

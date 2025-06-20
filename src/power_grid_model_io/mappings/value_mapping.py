@@ -5,13 +5,13 @@
 Value substitution helper class
 """
 
-from typing import Dict, Optional, Union
+from typing import Dict, Optional
 
 import structlog
 
 from power_grid_model_io.mappings.field_mapping import FieldMapping
 
-Value = Union[int, float, str, bool]
+Value = int | float | str | bool
 
 #             attr      key    value
 Values = Dict[str, Dict[Value, Value]]

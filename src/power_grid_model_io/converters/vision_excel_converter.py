@@ -8,7 +8,7 @@ Vision Excel Converter: Load data from a Vision Excel export file and use a mapp
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping, Optional, Union
+from typing import Any, Mapping, Optional
 
 from power_grid_model_io.converters.tabular_converter import TabularConverter
 from power_grid_model_io.data_stores.base_data_store import LANGUAGE_EN
@@ -37,10 +37,10 @@ class VisionExcelConverter(TabularConverter):
 
     def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
-        source_file: Optional[Union[Path, str]] = None,
+        source_file: Optional[Path | str] = None,
         language: str = LANGUAGE_EN,
         terms_changed: Optional[dict] = None,
-        mapping_file: Optional[Union[Path, str]] = None,
+        mapping_file: Optional[Path | str] = None,
         log_level: int = logging.INFO,
     ):
         _mapping_file = Path(

@@ -5,13 +5,13 @@
 Tabular data mapping helper class
 """
 
-from typing import Dict, Generator, List, Tuple, Union
+from typing import Dict, Generator, List, Tuple
 
 import structlog
 
-AttributeValue = Union[int, float, str, Dict, List]
+AttributeValue = int | float | str | Dict | List
 InstanceAttributes = Dict[str, AttributeValue]
-Components = Dict[str, Union[InstanceAttributes, List[InstanceAttributes]]]
+Components = Dict[str, InstanceAttributes | List[InstanceAttributes]]
 Tables = Dict[str, Components]
 
 

@@ -7,7 +7,7 @@ Excel File Store
 
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, List, Optional, Set, Tuple
 
 import pandas as pd
 
@@ -185,10 +185,10 @@ class ExcelFileStore(BaseDataStore[TabularData]):
 
         return data
 
-    def _check_duplicate_values(self, sheet_name: str, data: pd.DataFrame) -> Dict[int, Union[str, Tuple[str, ...]]]:
+    def _check_duplicate_values(self, sheet_name: str, data: pd.DataFrame) -> Dict[int, str | Tuple[str, ...]]:
         grouped = self._group_columns_by_index(data=data)
 
-        to_rename: Dict[int, Union[str, Tuple[str, ...]]] = {}
+        to_rename: Dict[int, str | Tuple[str, ...]] = {}
 
         for col_name, col_idxs in grouped.items():
             # No duplicate column names
@@ -251,8 +251,8 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         return data
 
     @staticmethod
-    def _group_columns_by_index(data: pd.DataFrame) -> Dict[Union[str, Tuple[str, ...]], Set[int]]:
-        grouped: Dict[Union[str, Tuple[str, ...]], Set[int]] = {}
+    def _group_columns_by_index(data: pd.DataFrame) -> Dict[str | Tuple[str, ...], Set[int]]:
+        grouped: Dict[str | Tuple[str, ...], Set[int]] = {}
         columns = data.columns.values
         for col_idx, col_name in enumerate(columns):
             if col_name[0] not in grouped:

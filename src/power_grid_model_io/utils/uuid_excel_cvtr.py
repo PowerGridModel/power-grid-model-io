@@ -16,7 +16,7 @@ nieuw_bestand = convert_guid_vision_excel("vision_97_nl.xlsx", number="Nummer", 
 import os
 import re
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
 import pandas as pd
 
@@ -120,7 +120,7 @@ class UUID2IntCvtr:
         return self._counter
 
 
-def load_excel_file(file_name: Union[Path, str]) -> pd.ExcelFile:
+def load_excel_file(file_name: Path | str) -> pd.ExcelFile:
     """Load an excel file
 
     Args:
@@ -219,7 +219,7 @@ def save_df_to_excel(df: pd.DataFrame, file_name: str, sheet_name: str, i: int) 
 
 
 def convert_guid_vision_excel(
-    excel_file: Union[Path, str],
+    excel_file: Path | str,
     number: str = VISION_EXCEL_LAN_DICT[LANGUAGE_EN][DICT_KEY_NUMBER],
     terms_changed: Optional[dict] = None,
 ) -> str:

@@ -11,6 +11,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 import pandas as pd
 import pytest
+from power_grid_model import DatasetType
 from power_grid_model.data_types import SingleDataset
 
 from power_grid_model_io.converters import VisionExcelConverter
@@ -110,7 +111,7 @@ def test_input_data_custom_yaml():
         assert len(expected) <= len(actual)
 
 
-@pytest.mark.parametrize(("component", "attribute"), component_attributes(VALIDATION_EN, data_type="input"))
+@pytest.mark.parametrize(("component", "attribute"), component_attributes(VALIDATION_EN, data_type=DatasetType.input))
 @pytest.mark.parametrize("input_data", LANGUAGES, indirect=True)
 def test_attributes(input_data: Tuple[SingleDataset, SingleDataset], component: str, attribute: str):
     """

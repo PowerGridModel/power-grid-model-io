@@ -10,7 +10,7 @@ from typing import Generator, List, Mapping, Tuple
 
 import numpy as np
 import pandas as pd
-from power_grid_model import power_grid_meta_data
+from power_grid_model import DatasetType, power_grid_meta_data
 from power_grid_model.data_types import SingleDataset, SinglePythonDataset
 from power_grid_model.errors import PowerGridSerializationError
 from power_grid_model.utils import import_json_data, json_deserialize_from_file
@@ -52,7 +52,7 @@ def component_objects(json_path: Path) -> Generator[Tuple[str, List[int]], None,
             yield component, obj_ids
 
 
-def component_attributes(json_path: Path, data_type: str) -> Generator[Tuple[str, str], None, None]:
+def component_attributes(json_path: Path, data_type: DatasetType) -> Generator[Tuple[str, str], None, None]:
     """
     Read the json file (only the structure is used, i.e. the component names and attribute name)
 
