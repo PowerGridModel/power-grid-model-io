@@ -180,15 +180,15 @@ def test_fill_pgm_extra_info():
     assert extra_info[2] == {"id_reference": {"table": "bus", "index": 103}}
     assert extra_info[3] == {
         "id_reference": {"table": "load", "name": "const_current", "index": 201},
-        "pgm_input": {"node": 0},
+        "pgm_input": {ComponentType.node: 0},
     }
     assert extra_info[4] == {
         "id_reference": {"table": "load", "name": "const_current", "index": 202},
-        "pgm_input": {"node": 1},
+        "pgm_input": {ComponentType.node: 1},
     }
     assert extra_info[5] == {
         "id_reference": {"table": "load", "name": "const_current", "index": 203},
-        "pgm_input": {"node": 2},
+        "pgm_input": {ComponentType.node: 2},
     }
     assert extra_info[6] == {"pgm_input": {"from_node": 0, "to_node": 1, "i_n": 106.0}}
     assert extra_info[7] == {"pgm_input": {"from_node": 1, "to_node": 2, "i_n": 105.0}}

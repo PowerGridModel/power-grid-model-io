@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
-from power_grid_model import DatasetType, initialize_array
+from power_grid_model import initialize_array, DatasetType, ComponentType
 from power_grid_model.data_types import ComponentList, Dataset, SingleDataset, SinglePythonDataset
 from power_grid_model.utils import json_deserialize, json_serialize
 
@@ -93,7 +93,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
         return result
 
     def _parse_dataset(
-        self, data: SinglePythonDataset, data_type: Enum, extra_info: Optional[ExtraInfo]
+        self, data: SinglePythonDataset, data_type: DatasetType, extra_info: Optional[ExtraInfo]
     ) -> SingleDataset:
         """This function parses a single Python dataset and returns a power-grid-model input or update dictionary
 
@@ -120,7 +120,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
 
     @staticmethod
     def _parse_component(
-        objects: ComponentList, component: Enum, data_type: Enum, extra_info: Optional[ExtraInfo]
+        objects: ComponentList, component: ComponentType, data_type: DatasetType, extra_info: Optional[ExtraInfo]
     ) -> np.ndarray:
         """This function generates a structured numpy array (power-grid-model native) from a structured dataset
 
