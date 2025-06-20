@@ -9,6 +9,7 @@ from typing import List, Tuple
 
 import pandas as pd
 import pytest
+from power_grid_model import DatasetType
 from power_grid_model.data_types import SingleDataset
 
 from power_grid_model_io.converters import PandaPowerConverter
@@ -72,7 +73,7 @@ def test_input_data(input_data: Tuple[SingleDataset, SingleDataset]):
     assert len(expected) <= len(actual)
 
 
-@pytest.mark.parametrize(("component", "attribute"), component_attributes(VALIDATION_FILE, data_type="input"))
+@pytest.mark.parametrize(("component", "attribute"), component_attributes(VALIDATION_FILE, data_type=DatasetType.input))
 def test_attributes(input_data: Tuple[SingleDataset, SingleDataset], component: str, attribute: str):
     """
     For each attribute, check if the actual values are consistent with the expected values
