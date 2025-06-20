@@ -9,7 +9,7 @@ import inspect
 import logging
 from enum import Enum
 from pathlib import Path
-from typing import Any, Collection, Dict, List, Mapping, Optional, Union, cast
+from typing import Any, Collection, Dict, List, Mapping, Optional, cast
 
 import numpy as np
 import pandas as pd
@@ -146,9 +146,9 @@ class TabularConverter(BaseConverter[TabularData]):
     def _convert_table_to_component(  # pylint: disable = too-many-arguments,too-many-positional-arguments
         self,
         data: TabularData,
-        data_type: Union[str, Enum],
+        data_type: str | Enum,
         table: str,
-        component: Union[str, Enum],
+        component: str | Enum,
         attributes: InstanceAttributes,
         extra_info: Optional[ExtraInfo],
     ) -> Optional[np.ndarray]:
@@ -166,9 +166,9 @@ class TabularConverter(BaseConverter[TabularData]):
           extra_info: an optional dictionary where extra component info (that can't be specified in
         power-grid-model data) can be specified
           data: TabularData:
-          data_type: Union[str, Enum]:
+          data_type: str | Enum:
           table: str:
-          component: Union[str, Enum]:
+          component: str | Enum:
           attributes: InstanceAttributes:
           extra_info: Optional[ExtraInfo]:
 
@@ -236,7 +236,7 @@ class TabularConverter(BaseConverter[TabularData]):
         data: TabularData,
         pgm_data: np.ndarray,
         table: str,
-        component: Union[str, Enum],
+        component: str | Enum,
         attr: str,
         col_def: Any,
         table_mask: Optional[np.ndarray],
@@ -258,7 +258,7 @@ class TabularConverter(BaseConverter[TabularData]):
           data: TabularData:
           pgm_data: np.ndarray:
           table: str:
-          component: Union[str, Enum]:
+          component: str | Enum:
           attr: str:
           col_def: Any:
           extra_info: Optional[ExtraInfo]:
@@ -428,7 +428,7 @@ class TabularConverter(BaseConverter[TabularData]):
     def _parse_col_def_const(
         data: TabularData,
         table: str,
-        col_def: Union[int, float],
+        col_def: int | float,
         table_mask: Optional[np.ndarray] = None,
     ) -> pd.DataFrame:
         """Create a single column pandas DataFrame containing the const value.
@@ -436,8 +436,7 @@ class TabularConverter(BaseConverter[TabularData]):
         Args:
           data: TabularData:
           table: str:
-          col_def: Union[int:
-          float]:
+          col_def: int | float:
 
         Returns:
 
@@ -609,7 +608,7 @@ class TabularConverter(BaseConverter[TabularData]):
         table: str,
         ref_table: Optional[str],
         ref_name: Optional[str],
-        key_col_def: Union[str, List[str], Dict[str, str]],
+        key_col_def: str | List[str] | Dict[str, str],
         table_mask: Optional[np.ndarray],
         extra_info: Optional[ExtraInfo],
     ) -> pd.DataFrame:
@@ -852,7 +851,7 @@ class TabularConverter(BaseConverter[TabularData]):
 
         return keys.apply(get_id, axis=1).to_list()
 
-    def lookup_id(self, pgm_id: int) -> Dict[str, Union[str, Dict[str, int]]]:
+    def lookup_id(self, pgm_id: int) -> Dict[str, str | Dict[str, int]]:
         """
         Retrieve the original name / key combination of a pgm object
         Args:

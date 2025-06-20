@@ -6,7 +6,7 @@ import sys
 from copy import copy, deepcopy
 from importlib import metadata
 from itertools import chain
-from typing import Any, Dict, List, Mapping, MutableMapping, Optional, Tuple, Union
+from typing import Any, Dict, List, Mapping, MutableMapping, Optional, Tuple
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -19,7 +19,7 @@ def contains(needle: Mapping[str, Any], data: Mapping[str, Any]) -> bool:
     return all(item in data.items() for item in needle.items())
 
 
-def assert_struct_array_equal(actual: np.ndarray, expected: Union[np.ndarray, pd.DataFrame, List[Dict[str, Any]]]):
+def assert_struct_array_equal(actual: np.ndarray, expected: np.ndarray | pd.DataFrame | List[Dict[str, Any]]):
     """
     Compare two structured numpy arrays by converting them to pandas DataFrames first
     """
@@ -56,7 +56,7 @@ def assert_log_match(
         raise KeyError(f"Expected log {kwargs} does not match actual log {capture}")
 
 
-def idx_to_str(idx: Union[str, int, slice, Tuple[Union[int, slice], ...]]) -> str:
+def idx_to_str(idx: str | int | slice | Tuple[int | slice, ...]) -> str:
     if isinstance(idx, tuple):
         return ", ".join(idx_to_str(i) for i in idx)
     if isinstance(idx, slice):
@@ -267,7 +267,7 @@ class MockVal(MockFn):
 class MockDf:
     __slots__ = ["columns", "empty", "index", "shape"]
 
-    def __init__(self, shape: Union[int, Tuple[int, ...]]):
+    def __init__(self, shape: int | Tuple[int, ...]):
         self.shape = shape
         self.empty = shape == 0 or (isinstance(shape, tuple) and (len(shape) == 0 or shape[0] == 0))
         self.index = MagicMock(name="DataFrame.index")

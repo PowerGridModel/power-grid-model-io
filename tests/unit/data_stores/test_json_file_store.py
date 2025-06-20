@@ -215,5 +215,5 @@ def test_validate__invalid_list():
     with pytest.raises(TypeError, match=r"Invalid data type.*JsonFileStore.*List\[int\]"):
         fs._validate(data=[123, 456])  # type: ignore
 
-    with pytest.raises(TypeError, match=r"Invalid data type.*JsonFileStore.*List\[Union\[float, int, str\]\]"):
+    with pytest.raises(TypeError, match=r"Invalid data type.*JsonFileStore.*List\[float \| int \| str\]"):
         fs._validate(data=["foo", 123, 3.1416, "bar"])  # type: ignore

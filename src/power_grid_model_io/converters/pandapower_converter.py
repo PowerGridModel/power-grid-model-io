@@ -8,7 +8,7 @@ Panda Power Converter
 
 import logging
 from functools import lru_cache
-from typing import Dict, List, MutableMapping, Optional, Tuple, Type, Union
+from typing import Dict, List, MutableMapping, Optional, Tuple, Type
 
 import numpy as np
 import pandas as pd
@@ -2237,7 +2237,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
     def _get_pgm_ids(
         self,
         pp_table: str,
-        pp_idx: Optional[Union[pd.Series, np.ndarray]] = None,
+        pp_idx: Optional[pd.Series | np.ndarray] = None,
         name: Optional[str] = None,
     ) -> pd.Series:
         """
@@ -2515,7 +2515,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         table: str,
         attribute: str,
         expected_type: Optional[str] = None,
-        default: Optional[Union[float, bool, str]] = None,
+        default: Optional[float | bool | str] = None,
     ) -> np.ndarray:
         """
         Returns the selected PandaPower attribute from the selected PandaPower table.
@@ -2529,7 +2529,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
         pp_component_data = self.pp_input_data[table]
 
-        exp_dtype: Union[str, Type] = "O"
+        exp_dtype: str | Type = "O"
         if expected_type is not None:
             exp_dtype = expected_type
         elif default is not None:
@@ -2569,7 +2569,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
         return self.idx[(pp_table, name)][pp_idx]
 
-    def lookup_id(self, pgm_id: int) -> Dict[str, Union[str, int]]:
+    def lookup_id(self, pgm_id: int) -> Dict[str, str | int]:
         """
         Retrieve the original name / key combination of a pgm object
 

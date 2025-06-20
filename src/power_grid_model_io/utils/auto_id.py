@@ -7,7 +7,7 @@ Automatic ID generator class
 
 import collections
 from collections.abc import Hashable
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 
 class AutoID:
@@ -94,7 +94,7 @@ class AutoID:
         # Return the numeric id
         return idx
 
-    def __contains__(self, item: Union[int, Hashable]) -> bool:
+    def __contains__(self, item: int | Hashable) -> bool:
         """
         Check if the id, or the item exists
 

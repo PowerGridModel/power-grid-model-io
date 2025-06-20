@@ -10,7 +10,7 @@ import logging
 import warnings
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 from power_grid_model import ComponentType, DatasetType, initialize_array
@@ -45,8 +45,8 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
 
     def __init__(
         self,
-        source_file: Optional[Union[Path, str]] = None,
-        destination_file: Optional[Union[Path, str]] = None,
+        source_file: Optional[Path | str] = None,
+        destination_file: Optional[Path | str] = None,
         log_level: int = logging.INFO,
     ):
         source = JsonFileStore(file_path=Path(source_file)) if source_file else None

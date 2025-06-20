@@ -5,7 +5,7 @@
 Common data types used in the Power Grid Model project
 """
 
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 
 ExtraInfo = Dict[int, Any]
 """
@@ -36,7 +36,7 @@ ExtraInfoLookup = ExtraInfo
 Legacy type name; use ExtraInfo instead!
 """
 
-StructuredData = Union[Dict[str, List[Dict[str, Any]]], List[Dict[str, List[Dict[str, Any]]]]]
+StructuredData = Dict[str, List[Dict[str, Any]]] | List[Dict[str, List[Dict[str, Any]]]]
 """
 Structured data is a multi dimensional structure (component_type -> objects -> attribute -> value) or a list of those
 dictionaries:
