@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
-from power_grid_model import initialize_array, DatasetType, ComponentType
+from power_grid_model import ComponentType, DatasetType, initialize_array
 from power_grid_model.data_types import ComponentList, Dataset, SingleDataset, SinglePythonDataset
 from power_grid_model.utils import json_deserialize, json_serialize
 
