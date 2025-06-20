@@ -105,5 +105,5 @@ class JsonFileStore(BaseDataStore[StructuredData]):
             if len(type_names) == 1:
                 type_str = type_names.pop()
             else:
-                type_str = type_str = " | ".join(type_names)
+                type_str = " | ".join(type_names)
             raise TypeError(f"Invalid data type for {type(self).__name__}: List[{type_str}]")
