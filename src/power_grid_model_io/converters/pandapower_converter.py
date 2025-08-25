@@ -2026,10 +2026,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             loading_a_percent = np.sqrt(3) * np.maximum(ui_from[:, 0], ui_to[:, 0]) / pgm_input_transformers["sn"]
             loading_b_percent = np.sqrt(3) * np.maximum(ui_from[:, 1], ui_to[:, 1]) / pgm_input_transformers["sn"]
             loading_c_percent = np.sqrt(3) * np.maximum(ui_from[:, 2], ui_to[:, 2]) / pgm_input_transformers["sn"]
-            # for total loading, phase wise powers are be calculated using v_n instead of v.
-            loading = (
-                np.maximum(np.sum(ui_from, axis=1), np.sum(ui_to, axis=1)) / np.sqrt(3)
-            ) / pgm_input_transformers["sn"]
+            # To make it consistent with PandaPower, overall loading will be calculated as max of above 3.
+            loading = np.maximum(np.maximum(loading_a_percent, loading_b_percent), loading_c_percent)
         elif self.trafo_loading == "power":
             loading_a_percent = (
                 np.maximum(
