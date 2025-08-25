@@ -2017,8 +2017,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # Only derating factor used here. Sn is already being multiplied by parallel
         loading_multiplier = pp_input_transformers["df"] * 1e2
         if self.trafo_loading == "current":
-            # ui_from = pgm_output_transformers["i_from"] * pgm_input_transformers["u1"]
-            # ui_to = pgm_output_transformers["i_to"] * pgm_input_transformers["u2"]
             # since "i_from" and "i_to" are (n, 3) arrays while "u1" and "u2" are (n,) arrays, valueError is generated during broadcost
             ui_from = pgm_output_transformers["i_from"] * np.tile(pgm_input_transformers["u1"][:, None], (1,3))
             ui_to = pgm_output_transformers["i_to"] * np.tile(pgm_input_transformers["u2"][:, None], (1,3))
