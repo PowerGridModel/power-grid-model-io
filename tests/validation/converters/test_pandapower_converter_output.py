@@ -163,7 +163,9 @@ def test_attributes(output_data: Tuple[PandaPowerData, PandaPowerData], componen
     # Assert
     pd.testing.assert_series_equal(actual_values, expected_values, atol=5e-4, rtol=1e-4)
 
-
+# The following test only works for those components where valid data is returned by
+# load_and_convert_pgm_data_3ph. since this is failing for trafo_output_3ph (returning
+# from first "if", this function's output is not being tested currently.
 @pytest.mark.parametrize(("component", "attribute"), component_attributes_df(load_and_convert_pgm_data_3ph()))
 def test_attributes_3ph(output_data_3ph: Tuple[PandaPowerData, PandaPowerData], component: str, attribute: str):
     """
