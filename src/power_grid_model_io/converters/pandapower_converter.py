@@ -2018,14 +2018,16 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         loading_multiplier = pp_input_transformers["df"] * 1e2
         if self.trafo_loading == "current":
             # since "i_from" and "i_to" are (n, 3) arrays while "u1" and "u2" are (n,) arrays, valueError is generated during broadcost
-            ui_from = pgm_output_transformers["i_from"] * np.tile(pgm_input_transformers["u1"][:, None], (1,3))
-            ui_to = pgm_output_transformers["i_to"] * np.tile(pgm_input_transformers["u2"][:, None], (1,3))
+            ui_from = pgm_output_transformers["i_from"] * np.tile(pgm_input_transformers["u1"][:, None], (1, 3))
+            ui_to = pgm_output_transformers["i_to"] * np.tile(pgm_input_transformers["u2"][:, None], (1, 3))
             # for phase wise loading, sn_ph = sn / 3, v_n = v / sqrt(3), so (i * u / sqrt(3)) / (sn / 3) --> sqrt(3) * i * u / sn
             loading_a_percent = np.sqrt(3) * np.maximum(ui_from[:, 0], ui_to[:, 0]) / pgm_input_transformers["sn"]
             loading_b_percent = np.sqrt(3) * np.maximum(ui_from[:, 1], ui_to[:, 1]) / pgm_input_transformers["sn"]
             loading_c_percent = np.sqrt(3) * np.maximum(ui_from[:, 2], ui_to[:, 2]) / pgm_input_transformers["sn"]
             # for total loading, phase wise powers are be calculated using v_n instead of v.
-            loading = (np.maximum(np.sum(ui_from, axis=1), np.sum(ui_to, axis=1))/np.sqrt(3)) / pgm_input_transformers["sn"]
+            loading = (
+                np.maximum(np.sum(ui_from, axis=1), np.sum(ui_to, axis=1)) / np.sqrt(3)
+            ) / pgm_input_transformers["sn"]
         elif self.trafo_loading == "power":
             loading_a_percent = (
                 np.maximum(
