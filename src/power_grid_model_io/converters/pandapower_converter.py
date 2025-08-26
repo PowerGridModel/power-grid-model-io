@@ -2034,23 +2034,24 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                     pgm_output_transformers["s_from"][:, 0],
                     pgm_output_transformers["s_to"][:, 0],
                 )
-                / pgm_output_transformers["s_n"]
+                / (pgm_input_transformers["sn"] / 3)
             )
             loading_b_percent = (
                 np.maximum(
                     pgm_output_transformers["s_from"][:, 1],
                     pgm_output_transformers["s_to"][:, 1],
                 )
-                / pgm_output_transformers["s_n"]
+                / (pgm_input_transformers["sn"] / 3)
             )
             loading_c_percent = (
                 np.maximum(
                     pgm_output_transformers["s_from"][:, 2],
                     pgm_output_transformers["s_to"][:, 2],
                 )
-                / pgm_output_transformers["s_n"]
+                / (pgm_input_transformers["sn"] / 3)
             )
-            loading = pgm_output_transformers["loading"]
+            # To make it consistent with PandaPower, overall loading will be calculated as max of above 3.
+            loading = np.maximum(np.maximum(loading_a_percent, loading_b_percent), loading_c_percent)
         else:
             raise ValueError(f"Invalid transformer loading type: {str(self.trafo_loading)}")
 

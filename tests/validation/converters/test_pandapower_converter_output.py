@@ -52,8 +52,11 @@ def load_and_convert_pgm_data_3ph() -> PandaPowerData:
     Load and convert the power_grid_model results
     """
     data, extra_info = load_json_single_dataset(PGM_ASYM_OUTPUT_FILE, data_type="asym_output")
-    converter = PandaPowerConverter()
-    return converter.convert(data=data, extra_info=extra_info)
+    # trafo_loading = "power", as validation data is based on power based loading
+    converter = PandaPowerConverter(trafo_loading="power")
+    # if pp_input_data is not present in converter, some convert functions may fail.
+    converter.load_input_data(load_validation_data_3ph(), make_extra_info=False)
+    return converter.convert(data=data)
 
 
 @lru_cache
