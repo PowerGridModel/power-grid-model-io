@@ -18,10 +18,12 @@ def exclude_empty(row: pd.Series, col: str) -> bool:
     """
     if col not in row:
         raise ValueError(f"The column: '{col}' cannot be found for the filter")
-    result = has_value(row[col])
-    if isinstance(result, pd.Series):
-        return result.item()
-    return result
+
+    col_value = row[col]
+    if isinstance(col_value, pd.Series):
+        col_value = col_value.item()
+
+    return has_value(col_value)
 
 
 def exclude_value(row: pd.Series, col: str, value: float | str) -> bool:
@@ -30,11 +32,12 @@ def exclude_value(row: pd.Series, col: str, value: float | str) -> bool:
     """
     if col not in row:
         raise ValueError(f"The column: '{col}' cannot be found for the filter")
-    result = row[col] != value
-    # Sonar cloud false positive (S2583): result can be a pd.Series of bool
-    if isinstance(result, pd.Series):  # NOSONAR
-        return result.item()
-    return result
+
+    col_value = row[col]
+    if isinstance(col_value, pd.Series):
+        col_value = col_value.item()
+
+    return col_value != value
 
 
 def exclude_all_columns_empty_or_zero(row: pd.Series, cols: List[str]) -> bool:
