@@ -208,11 +208,11 @@ def pp_net_3ph_minimal_trafo():
         2,
         0.33,
         0.34,
-        0.001,
+        0.00,
         600,
         r0_ohm_per_km=0.66,
         x0_ohm_per_km=0.65,
-        c0_nf_per_km=0.001,
+        c0_nf_per_km=0.00,
         g_us_per_km=0,
         g0_us_per_km=0,
     )
@@ -235,5 +235,5 @@ def pp_net_3ph_minimal_trafo():
         mag0_rx=0,
         si0_hv_partial=0.9,
     )
-    pp.create_asymmetric_load(net, 2, 0.2, 0.19, 0.195, 0.05, 0.045, 0.035, 0, type="wye")
+    pp.create_asymmetric_load(net, 2, 0.2, 0.2, 0.2, 0.05, 0.05, 0.05, 0, type="wye")
     return net

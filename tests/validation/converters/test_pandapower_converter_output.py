@@ -153,6 +153,13 @@ def test_output_trafos_3ph__power__with_comparison():
         np.testing.assert_allclose(
             np.maximum(i_c_hv / i_max_hv, i_c_lv / i_max_lv) * 100, net.res_trafo_3ph.loading_c_percent
         )
+        np.testing.assert_allclose(
+            np.maximum(np.maximum(net.res_trafo_3ph.loading_a_percent, net.res_trafo_3ph.loading_b_percent),
+                       net.res_trafo_3ph.loading_c_percent), net.res_trafo_3ph.loading_percent)
+        np.testing.assert_allclose(
+            np.maximum(np.maximum(net.res_line_3ph.loading_a_percent, net.res_line_3ph.loading_b_percent),
+                       net.res_line_3ph.loading_c_percent), net.res_line_3ph.loading_percent)
+
 
     def compare_result(actual, expected, *, rtol):
         np.testing.assert_allclose(actual.trafo.vn_hv_kv, expected.trafo.vn_hv_kv, rtol=rtol)
@@ -192,7 +199,7 @@ def test_output_trafos_3ph__power__with_comparison():
     pp.runpp_3ph(pp_net)
     check_result(pgm_net)
     check_result(pp_net)
-    compare_result(pgm_net, pp_net, rtol=0.04)
+    compare_result(pgm_net, pp_net, rtol=0.004)
 
 
 def test_output_data(output_data: Tuple[PandaPowerData, PandaPowerData]):

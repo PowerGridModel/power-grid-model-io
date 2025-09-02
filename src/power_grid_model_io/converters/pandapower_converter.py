@@ -422,11 +422,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_lines["x1"] = self._get_pp_attr("line", "x_ohm_per_km", expected_type="f8") * multiplier
         pgm_lines["c1"] = c_nf_per_km * length_km * parallel * 1e-9
         # The formula for tan1 = R_1 / Xc_1 = (g * 1e-6) / (2 * pi * f * c * 1e-9) = g / (2 * pi * f * c * 1e-3)
-        pgm_lines["tan1"] = (
-            self._get_pp_attr("line", "g_us_per_km", expected_type="f8", default=0)
-            / c_nf_per_km
-            / (2 * np.pi * self.system_frequency * 1e-3)
-        )
+        pgm_lines["tan1"] = np.divide(
+            self._get_pp_attr("line", "g_us_per_km", expected_type="f8", default=0),
+            c_nf_per_km * (2 * np.pi * self.system_frequency * 1e-3),
+        where=np.not_equal(c_nf_per_km, 0.0))
+        pgm_lines["tan1"][np.equal(c_nf_per_km, 0.0)] = 0.0
         pgm_lines["i_n"] = (
             (self._get_pp_attr("line", "max_i_ka", expected_type="f8", default=np.nan) * 1e3)
             * self._get_pp_attr("line", "df", expected_type="f8", default=1)
@@ -435,11 +435,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_lines["r0"] = self._get_pp_attr("line", "r0_ohm_per_km", expected_type="f8", default=np.nan) * multiplier
         pgm_lines["x0"] = self._get_pp_attr("line", "x0_ohm_per_km", expected_type="f8", default=np.nan) * multiplier
         pgm_lines["c0"] = c0_nf_per_km * length_km * parallel * 1e-9
-        pgm_lines["tan0"] = (
-            self._get_pp_attr("line", "g0_us_per_km", expected_type="f8", default=0)
-            / c0_nf_per_km
-            / (2 * np.pi * self.system_frequency * 1e-3)
-        )
+        pgm_lines["tan0"] = np.divide(
+            self._get_pp_attr("line", "g0_us_per_km", expected_type="f8", default=0),
+            c0_nf_per_km * (2 * np.pi * self.system_frequency * 1e-3)
+        ,where=np.not_equal(c0_nf_per_km, 0.0))
+        pgm_lines["tan0"][np.equal(c0_nf_per_km, 0.0)] = 0.0
         assert ComponentType.line not in self.pgm_input_data
         self.pgm_input_data[ComponentType.line] = pgm_lines
 
@@ -1942,7 +1942,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_lines_3ph["loading_c_percent"] = (
             np.maximum(pp_output_lines_3ph["i_c_from_ka"], pp_output_lines_3ph["i_c_to_ka"]) / pgm_input_lines["i_n"]
         ) * 1e5
-        pp_output_lines_3ph["loading_percent"] = pgm_output_lines["loading"] * 1e2
+        pp_output_lines_3ph["loading_percent"] = np.maximum(np.maximum(pp_output_lines_3ph["loading_a_percent"], pp_output_lines_3ph["loading_b_percent"]),
+                                                            pp_output_lines_3ph["loading_c_percent"])
 
         assert "res_line_3ph" not in self.pp_output_data
         self.pp_output_data["res_line_3ph"] = pp_output_lines_3ph
