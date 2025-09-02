@@ -2042,7 +2042,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         else:
             raise ValueError(f"Invalid transformer loading type: {str(self.trafo_loading)}")
 
-        # PGM returns the average loading over the cable, but PandaPower returns the maximum of the per-phase loading.
+        # PGM returns the average loading over the transformer, but PandaPower returns the maximum of the per-phase loading.
         # To make it consistent with PandaPower, overall loading will be calculated as max of above 3.
         loading = np.maximum(np.maximum(loading_a_percent, loading_b_percent), loading_c_percent)
 
