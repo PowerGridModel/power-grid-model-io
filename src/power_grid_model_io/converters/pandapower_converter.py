@@ -2026,34 +2026,25 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             loading_a_percent = np.sqrt(3) * np.maximum(ui_from[:, 0], ui_to[:, 0]) / pgm_input_transformers["sn"]
             loading_b_percent = np.sqrt(3) * np.maximum(ui_from[:, 1], ui_to[:, 1]) / pgm_input_transformers["sn"]
             loading_c_percent = np.sqrt(3) * np.maximum(ui_from[:, 2], ui_to[:, 2]) / pgm_input_transformers["sn"]
-            # To make it consistent with PandaPower, overall loading will be calculated as max of above 3.
-            loading = np.maximum(np.maximum(loading_a_percent, loading_b_percent), loading_c_percent)
         elif self.trafo_loading == "power":
-            loading_a_percent = (
-                np.maximum(
-                    pgm_output_transformers["s_from"][:, 0],
-                    pgm_output_transformers["s_to"][:, 0],
-                )
-                / (pgm_input_transformers["sn"] / 3)
-            )
-            loading_b_percent = (
-                np.maximum(
-                    pgm_output_transformers["s_from"][:, 1],
-                    pgm_output_transformers["s_to"][:, 1],
-                )
-                / (pgm_input_transformers["sn"] / 3)
-            )
-            loading_c_percent = (
-                np.maximum(
-                    pgm_output_transformers["s_from"][:, 2],
-                    pgm_output_transformers["s_to"][:, 2],
-                )
-                / (pgm_input_transformers["sn"] / 3)
-            )
-            # To make it consistent with PandaPower, overall loading will be calculated as max of above 3.
-            loading = np.maximum(np.maximum(loading_a_percent, loading_b_percent), loading_c_percent)
+            loading_a_percent = np.maximum(
+                pgm_output_transformers["s_from"][:, 0],
+                pgm_output_transformers["s_to"][:, 0],
+            ) / (pgm_input_transformers["sn"] / 3)
+            loading_b_percent = np.maximum(
+                pgm_output_transformers["s_from"][:, 1],
+                pgm_output_transformers["s_to"][:, 1],
+            ) / (pgm_input_transformers["sn"] / 3)
+            loading_c_percent = np.maximum(
+                pgm_output_transformers["s_from"][:, 2],
+                pgm_output_transformers["s_to"][:, 2],
+            ) / (pgm_input_transformers["sn"] / 3)
         else:
             raise ValueError(f"Invalid transformer loading type: {str(self.trafo_loading)}")
+
+        # PGM returns the average loading over the cable, but PandaPower returns the maximum of the per-phase loading.
+        # To make it consistent with PandaPower, overall loading will be calculated as max of above 3.
+        loading = np.maximum(np.maximum(loading_a_percent, loading_b_percent), loading_c_percent)
 
         pp_output_trafos_3ph = pd.DataFrame(
             columns=[

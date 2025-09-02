@@ -1034,7 +1034,10 @@ def test_output_trafos_3ph__power(converter):
         converter._pp_trafos_output_3ph()
 
         # retrieval
-        mock_pgm_array.__getitem__.assert_any_call("loading")
+        assert "loading" not in mock_pgm_array.__getitem__.call_args_list, (
+            "The convention for loading differs between PGM and PP and the PGM loading therefore should not be used "
+            "for conversion to PP."
+        )
 
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_trafo_3ph", mock_pp_df.return_value)

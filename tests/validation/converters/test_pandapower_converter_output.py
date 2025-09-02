@@ -15,7 +15,7 @@ from power_grid_model.validation import assert_valid_input_data
 from power_grid_model_io.converters import PandaPowerConverter
 from power_grid_model_io.converters.pandapower_converter import PandaPowerData
 
-from ...data.pandapower.pp_validation import pp_net, pp_net_3ph
+from ...data.pandapower.pp_validation import pp_net, pp_net_3ph, pp_net_3ph_minimal_trafo
 from ..utils import component_attributes_df, load_json_single_dataset
 
 pp = pytest.importorskip("pandapower", reason="pandapower is not installed")
@@ -51,10 +51,8 @@ def load_and_convert_pgm_data_3ph() -> PandaPowerData:
     """
     Load and convert the power_grid_model results
     """
-    data, extra_info = load_json_single_dataset(PGM_ASYM_OUTPUT_FILE, data_type="asym_output")
-    # trafo_loading = "power", as validation data is based on power based loading
+    data, _ = load_json_single_dataset(PGM_ASYM_OUTPUT_FILE, data_type="asym_output")
     converter = PandaPowerConverter(trafo_loading="power")
-    # if pp_input_data is not present in converter, some convert functions may fail.
     converter.load_input_data(load_validation_data_3ph(), make_extra_info=False)
     return converter.convert(data=data)
 
@@ -129,6 +127,74 @@ def test_generate_output_3ph():  # TODO: REMOVE THIS FUNCTION
         json_converter.save(data=output_data_asym, extra_info=extra_info)
 
 
+def test_output_trafos_3ph__power__with_comparison():
+    import numpy as np
+
+    def check_result(net):
+        v_hv = net.trafo.vn_hv_kv
+        v_lv = net.trafo.vn_lv_kv
+        i_max_hv = np.divide(net.trafo.sn_mva, v_hv * np.sqrt(3)) * 1e3
+        i_max_lv = np.divide(net.trafo.sn_mva, v_lv * np.sqrt(3)) * 1e3
+
+        i_a_hv = net.res_trafo_3ph.loc[:, "i_a_hv_ka"] * 1000
+        i_b_hv = net.res_trafo_3ph.loc[:, "i_b_hv_ka"] * 1000
+        i_c_hv = net.res_trafo_3ph.loc[:, "i_c_hv_ka"] * 1000
+
+        i_a_lv = net.res_trafo_3ph.loc[:, "i_a_lv_ka"] * 1000
+        i_b_lv = net.res_trafo_3ph.loc[:, "i_b_lv_ka"] * 1000
+        i_c_lv = net.res_trafo_3ph.loc[:, "i_c_lv_ka"] * 1000
+
+        np.testing.assert_allclose(
+            np.maximum(i_a_hv / i_max_hv, i_a_lv / i_max_lv) * 100, net.res_trafo_3ph.loading_a_percent
+        )
+        np.testing.assert_allclose(
+            np.maximum(i_b_hv / i_max_hv, i_b_lv / i_max_lv) * 100, net.res_trafo_3ph.loading_b_percent
+        )
+        np.testing.assert_allclose(
+            np.maximum(i_c_hv / i_max_hv, i_c_lv / i_max_lv) * 100, net.res_trafo_3ph.loading_c_percent
+        )
+
+    def compare_result(actual, expected, *, rtol):
+        np.testing.assert_allclose(actual.trafo.vn_hv_kv, expected.trafo.vn_hv_kv, rtol=rtol)
+        np.testing.assert_allclose(actual.trafo.vn_lv_kv, expected.trafo.vn_lv_kv, rtol=rtol)
+        np.testing.assert_allclose(actual.trafo.sn_mva, expected.trafo.sn_mva, rtol=rtol)
+        np.testing.assert_allclose(
+            actual.res_trafo_3ph.loc[:, "i_a_hv_ka"], expected.res_trafo_3ph.loc[:, "i_a_hv_ka"], rtol=rtol
+        )
+        np.testing.assert_allclose(
+            actual.res_trafo_3ph.loc[:, "i_b_hv_ka"], expected.res_trafo_3ph.loc[:, "i_b_hv_ka"], rtol=rtol
+        )
+        np.testing.assert_allclose(
+            actual.res_trafo_3ph.loc[:, "i_c_hv_ka"], expected.res_trafo_3ph.loc[:, "i_c_hv_ka"], rtol=rtol
+        )
+        np.testing.assert_allclose(
+            actual.res_trafo_3ph.loc[:, "i_a_lv_ka"], expected.res_trafo_3ph.loc[:, "i_a_lv_ka"], rtol=rtol
+        )
+        np.testing.assert_allclose(
+            actual.res_trafo_3ph.loc[:, "i_b_lv_ka"], expected.res_trafo_3ph.loc[:, "i_b_lv_ka"], rtol=rtol
+        )
+        np.testing.assert_allclose(
+            actual.res_trafo_3ph.loc[:, "i_c_lv_ka"], expected.res_trafo_3ph.loc[:, "i_c_lv_ka"], rtol=rtol
+        )
+        np.testing.assert_allclose(
+            actual.res_trafo_3ph.loading_a_percent, expected.res_trafo_3ph.loading_a_percent, rtol=rtol
+        )
+        np.testing.assert_allclose(
+            actual.res_trafo_3ph.loading_b_percent, expected.res_trafo_3ph.loading_b_percent, rtol=rtol
+        )
+        np.testing.assert_allclose(
+            actual.res_trafo_3ph.loading_c_percent, expected.res_trafo_3ph.loading_c_percent, rtol=rtol
+        )
+
+    pgm_net = pp_net_3ph_minimal_trafo()
+    pp_net = pp_net_3ph_minimal_trafo()
+    pp.runpp_pgm(pgm_net, symmetric=False)
+    pp.runpp_3ph(pp_net)
+    check_result(pgm_net)
+    check_result(pp_net)
+    compare_result(pgm_net, pp_net, rtol=0.04)
+
+
 def test_output_data(output_data: Tuple[PandaPowerData, PandaPowerData]):
     """
     Unit test to preload the expected and actual data
@@ -165,6 +231,7 @@ def test_attributes(output_data: Tuple[PandaPowerData, PandaPowerData], componen
 
     # Assert
     pd.testing.assert_series_equal(actual_values, expected_values, atol=5e-4, rtol=1e-4)
+
 
 # The following test only works for those components where valid data is returned by
 # load_and_convert_pgm_data_3ph. since this is failing for trafo_output_3ph (returning

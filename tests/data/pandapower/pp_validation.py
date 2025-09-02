@@ -192,3 +192,48 @@ def pp_net_3ph() -> pp.pandapowerNet:
     # )
 
     return net
+
+
+def pp_net_3ph_minimal_trafo():
+    net = pp.create_empty_network("test", f_hz=50)
+    pp.create_bus(net, 11, "source")
+    pp.create_bus(net, 11, "TF_HT")
+    pp.create_bus(net, 0.4, "TF_LT")
+
+    pp.create_ext_grid(net, 0, 1.0, 0, s_sc_max_mva=100, rx_max=0.1, x0x_max=1, r0x0_max=0.1)
+    pp.create_line_from_parameters(
+        net,
+        0,
+        1,
+        2,
+        0.33,
+        0.34,
+        0.001,
+        600,
+        r0_ohm_per_km=0.66,
+        x0_ohm_per_km=0.65,
+        c0_nf_per_km=0.001,
+        g_us_per_km=0,
+        g0_us_per_km=0,
+    )
+    pp.create_transformer_from_parameters(
+        net,
+        1,
+        2,
+        1,
+        11,
+        0.415,
+        0,
+        4,
+        0,
+        0.01,
+        -30,
+        vector_group="Dyn",
+        vk0_percent=4,
+        vkr0_percent=0,
+        mag0_percent=100,
+        mag0_rx=0,
+        si0_hv_partial=0.9,
+    )
+    pp.create_asymmetric_load(net, 2, 0.2, 0.19, 0.195, 0.05, 0.045, 0.035, 0, type="wye")
+    return net
