@@ -154,12 +154,19 @@ def test_output_trafos_3ph__power__with_comparison():
             np.maximum(i_c_hv / i_max_hv, i_c_lv / i_max_lv) * 100, net.res_trafo_3ph.loading_c_percent
         )
         np.testing.assert_allclose(
-            np.maximum(np.maximum(net.res_trafo_3ph.loading_a_percent, net.res_trafo_3ph.loading_b_percent),
-                       net.res_trafo_3ph.loading_c_percent), net.res_trafo_3ph.loading_percent)
+            np.maximum(
+                np.maximum(net.res_trafo_3ph.loading_a_percent, net.res_trafo_3ph.loading_b_percent),
+                net.res_trafo_3ph.loading_c_percent,
+            ),
+            net.res_trafo_3ph.loading_percent,
+        )
         np.testing.assert_allclose(
-            np.maximum(np.maximum(net.res_line_3ph.loading_a_percent, net.res_line_3ph.loading_b_percent),
-                       net.res_line_3ph.loading_c_percent), net.res_line_3ph.loading_percent)
-
+            np.maximum(
+                np.maximum(net.res_line_3ph.loading_a_percent, net.res_line_3ph.loading_b_percent),
+                net.res_line_3ph.loading_c_percent,
+            ),
+            net.res_line_3ph.loading_percent,
+        )
 
     def compare_result(actual, expected, *, rtol):
         np.testing.assert_allclose(actual.trafo.vn_hv_kv, expected.trafo.vn_hv_kv, rtol=rtol)
