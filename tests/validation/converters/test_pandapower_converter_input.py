@@ -16,7 +16,7 @@ from power_grid_model_io.converters import PandaPowerConverter
 from power_grid_model_io.data_types import ExtraInfo
 from power_grid_model_io.utils.json import JsonEncoder
 
-from ...data.pandapower.pp_validation import pp_net
+from ...data.pandapower.pp_validation import pp_net, pp_net_3ph_minimal_trafo
 from ..utils import compare_extra_info, component_attributes, component_objects, load_json_single_dataset, select_values
 
 VALIDATION_FILE = Path(__file__).parents[2] / "data" / "pandapower" / "pgm_input_data.json"
@@ -116,3 +116,8 @@ def test_extra_info__serializable(extra_info):
 
     # Assert
     json.dumps(actual, cls=JsonEncoder)  # expect no exception
+
+def test_pgm_input_lines__cnf_zero():
+    pp_net = pp_net_3ph_minimal_trafo()
+    pp_converter = PandaPowerConverter()
+    

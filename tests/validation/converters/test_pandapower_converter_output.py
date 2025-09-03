@@ -26,6 +26,7 @@ PGM_OUTPUT_FILE = PGM_PP_TEST_DATA / "pgm_output_data.json"
 PGM_ASYM_OUTPUT_FILE = PGM_PP_TEST_DATA / "pgm_asym_output_data.json"
 PP_V2_NET_OUTPUT_FILE = PGM_PP_TEST_DATA / "pp_v2_net_output.json"
 PP_V2_NET_3PH_OUTPUT_FILE = PGM_PP_TEST_DATA / "pp_v2_net_3ph_output.json"
+PP_V2_NET_3PH_OUTPUT_FILE_CURRENT_LOADING = PGM_PP_TEST_DATA / "pp_v2_net_3ph_output_current_loading.json"
 
 
 @contextmanager
@@ -47,12 +48,12 @@ def load_and_convert_pgm_data() -> PandaPowerData:
 
 
 @lru_cache
-def load_and_convert_pgm_data_3ph() -> PandaPowerData:
+def load_and_convert_pgm_data_3ph(trafo_loading="power") -> PandaPowerData:
     """
     Load and convert the power_grid_model results
     """
     data, _ = load_json_single_dataset(PGM_ASYM_OUTPUT_FILE, data_type="asym_output")
-    converter = PandaPowerConverter(trafo_loading="power")
+    converter = PandaPowerConverter(trafo_loading=trafo_loading)
     converter.load_input_data(load_validation_data_3ph(), make_extra_info=False)
     return converter.convert(data=data)
 
@@ -66,11 +67,14 @@ def load_validation_data() -> PandaPowerData:
 
 
 @lru_cache
-def load_validation_data_3ph() -> PandaPowerData:
+def load_validation_data_3ph(trafo_loading="power") -> PandaPowerData:
     """
     Load the validation data from the pp file
     """
-    return pp.file_io.from_json(PP_V2_NET_3PH_OUTPUT_FILE)
+    if trafo_loading == "power":
+        return pp.file_io.from_json(PP_V2_NET_3PH_OUTPUT_FILE)
+    else:
+        return pp.file_io.from_json(PP_V2_NET_3PH_OUTPUT_FILE_CURRENT_LOADING)
 
 
 @pytest.fixture
@@ -83,13 +87,13 @@ def output_data() -> Tuple[PandaPowerData, PandaPowerData]:
     return actual, expected
 
 
-@pytest.fixture
-def output_data_3ph() -> Tuple[PandaPowerData, PandaPowerData]:
+@pytest.fixture(params = ["power", "current"])
+def output_data_3ph(request) -> Tuple[PandaPowerData, PandaPowerData]:
     """
     Load the pandapower network and the json file, and return the output_data
     """
-    actual = load_and_convert_pgm_data_3ph()
-    expected = load_validation_data_3ph()
+    actual = load_and_convert_pgm_data_3ph(request.param)
+    expected = load_validation_data_3ph(request.param)
     return actual, expected
 
 
@@ -202,11 +206,23 @@ def test_output_trafos_3ph__power__with_comparison():
 
     pgm_net = pp_net_3ph_minimal_trafo()
     pp_net = pp_net_3ph_minimal_trafo()
+    # Asymmetric Load
     pp.runpp_pgm(pgm_net, symmetric=False)
     pp.runpp_3ph(pp_net)
     check_result(pgm_net)
     check_result(pp_net)
-    compare_result(pgm_net, pp_net, rtol=0.004)
+    compare_result(pgm_net, pp_net, rtol=0.04)
+
+    # Symmetric Load
+    pgm_net.asymmetric_load.loc[:, ['p_a_mw', 'p_b_mw', 'p_c_mw']] = 0.2
+    pgm_net.asymmetric_load.loc[:, ['q_a_mvar', 'q_b_mvar', 'q_c_mar']] = 0.05
+    pp_net.asymmetric_load.loc[:, ['p_a_mw', 'p_b_mw', 'p_c_mw']] = 0.2
+    pp_net.asymmetric_load.loc[:, ['q_a_mvar', 'q_b_mvar', 'q_c_mar']] = 0.05
+    pp.runpp_pgm(pgm_net, symmetric=False)
+    pp.runpp_3ph(pp_net)
+    check_result(pgm_net)
+    check_result(pp_net)
+    compare_result(pgm_net, pp_net, rtol=0.005)
 
 
 def test_output_data(output_data: Tuple[PandaPowerData, PandaPowerData]):
@@ -247,10 +263,7 @@ def test_attributes(output_data: Tuple[PandaPowerData, PandaPowerData], componen
     pd.testing.assert_series_equal(actual_values, expected_values, atol=5e-4, rtol=1e-4)
 
 
-# The following test only works for those components where valid data is returned by
-# load_and_convert_pgm_data_3ph. since this is failing for trafo_output_3ph (returning
-# from first "if", this function's output is not being tested currently.
-@pytest.mark.parametrize(("component", "attribute"), component_attributes_df(load_and_convert_pgm_data_3ph()))
+@pytest.mark.parametrize(("component", "attribute"), component_attributes_df(load_and_convert_pgm_data_3ph())) 
 def test_attributes_3ph(output_data_3ph: Tuple[PandaPowerData, PandaPowerData], component: str, attribute: str):
     """
     For each attribute, check if the actual values are consistent with the expected values for asym

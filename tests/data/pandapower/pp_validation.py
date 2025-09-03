@@ -9,7 +9,7 @@ import pandapower as pp
 
 @lru_cache
 def pp_net() -> pp.pandapowerNet:
-    #  (ext #1)         shunt - [104]  - 3w - [105] - sym_gen
+    #  (ext #1)         shunt - [104]  - 3w - [105] - asym_gen, asym_load
     #   |                                |
     #  [101] ---OO- [102] ---------- [103]
     #   |                                |
@@ -109,7 +109,7 @@ def pp_net_3ph() -> pp.pandapowerNet:
     """
     Creates a pandapower net used for validating 3 phase calculations
 
-     (ext #1)         shunt - [104], sym_gen - [105], motor, ward, asym_load, asym_gen
+     (ext #1)                       sym_gen , asym_load, asym_gen
       |                                |
      [101] ---OO- [102] ---------- [103]
       |                                |
@@ -208,11 +208,11 @@ def pp_net_3ph_minimal_trafo():
         2,
         0.33,
         0.34,
-        0.00,
+        0.001,
         600,
         r0_ohm_per_km=0.66,
         x0_ohm_per_km=0.65,
-        c0_nf_per_km=0.00,
+        c0_nf_per_km=0.001,
         g_us_per_km=0,
         g0_us_per_km=0,
     )
@@ -235,5 +235,5 @@ def pp_net_3ph_minimal_trafo():
         mag0_rx=0,
         si0_hv_partial=0.9,
     )
-    pp.create_asymmetric_load(net, 2, 0.2, 0.2, 0.2, 0.05, 0.05, 0.05, 0, type="wye")
+    pp.create_asymmetric_load(net, 2, 0.2, 0.19, 0.21, 0.05, 0.049, 0.052, 0, type="wye")
     return net
