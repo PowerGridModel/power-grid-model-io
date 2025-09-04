@@ -572,9 +572,11 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     )
     pgm.assert_any_call(
         "tan1",
-        _get_pp_attr("line", "g_us_per_km", expected_type="f8", default=0)
-        / _get_pp_attr("line", "c_nf_per_km", expected_type="f8")
-        / (np.pi / 10),
+        np.divide(
+            _get_pp_attr("line", "g_us_per_km", expected_type="f8", default=0),
+            _get_pp_attr("line", "c_nf_per_km", expected_type="f8") * (np.pi / 10),
+            where=_get_pp_attr("line", "c_nf_per_km", expected_type="f8") != 0.0,
+        ),
     )
     pgm.assert_any_call(
         "i_n",
