@@ -770,7 +770,7 @@ def test_pp_switch_output():
                 "element": [10, 10, 10, 10, 10, 11, 11, 77, 88],
                 "et": ["t", "t", "t3", "t3", "t3", "l", "l", "b", "b"],
                 "closed": [True, True, True, True, True, True, True, True, True],
-                "in_ka": [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan], 
+                "in_ka": [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
             },
             index=[40, 41, 42, 43, 44, 45, 46, 47, 48],
         ),

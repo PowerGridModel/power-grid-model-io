@@ -78,7 +78,7 @@ def load_validation_data_3ph(trafo_loading="power") -> PandaPowerData:
         return pp.file_io.from_json(PP_V2_NET_3PH_OUTPUT_FILE_CURRENT_LOADING)
 
 
-@pytest.fixture(params = ["power", "current"])
+@pytest.fixture(params=["power", "current"])
 def output_data(request) -> Tuple[PandaPowerData, PandaPowerData]:
     """
     Load the pandapower network and the json file, and return the output_data
@@ -88,7 +88,7 @@ def output_data(request) -> Tuple[PandaPowerData, PandaPowerData]:
     return actual, expected
 
 
-@pytest.fixture(params = ["power", "current"])
+@pytest.fixture(params=["power", "current"])
 def output_data_3ph(request) -> Tuple[PandaPowerData, PandaPowerData]:
     """
     Load the pandapower network and the json file, and return the output_data
@@ -264,7 +264,7 @@ def test_attributes(output_data: Tuple[PandaPowerData, PandaPowerData], componen
     pd.testing.assert_series_equal(actual_values, expected_values, atol=5e-4, rtol=1e-4)
 
 
-@pytest.mark.parametrize(("component", "attribute"), component_attributes_df(load_and_convert_pgm_data_3ph())) 
+@pytest.mark.parametrize(("component", "attribute"), component_attributes_df(load_and_convert_pgm_data_3ph()))
 def test_attributes_3ph(output_data_3ph: Tuple[PandaPowerData, PandaPowerData], component: str, attribute: str):
     """
     For each attribute, check if the actual values are consistent with the expected values for asym
