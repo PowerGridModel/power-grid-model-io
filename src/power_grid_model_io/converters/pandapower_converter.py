@@ -425,7 +425,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_lines["tan1"] = np.divide(
             self._get_pp_attr("line", "g_us_per_km", expected_type="f8", default=0),
             c_nf_per_km * (2 * np.pi * self.system_frequency * 1e-3),
-            where=np.not_equal(c_nf_per_km, 0.0),
+            where= c_nf_per_km != 0.0,
         )
         pgm_lines["tan1"][np.equal(c_nf_per_km, 0.0)] = 0.0
         pgm_lines["i_n"] = (
@@ -439,7 +439,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_lines["tan0"] = np.divide(
             self._get_pp_attr("line", "g0_us_per_km", expected_type="f8", default=0),
             c0_nf_per_km * (2 * np.pi * self.system_frequency * 1e-3),
-            where=np.not_equal(c0_nf_per_km, 0.0),
+            where= c0_nf_per_km != 0.0,
         )
         pgm_lines["tan0"][np.equal(c0_nf_per_km, 0.0)] = 0.0
         assert ComponentType.line not in self.pgm_input_data
@@ -1384,7 +1384,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if self.trafo_loading == "current":
             ui_from = pgm_output_transformers["i_from"] * pgm_input_transformers["u1"]
             ui_to = pgm_output_transformers["i_to"] * pgm_input_transformers["u2"]
-            loading = np.maximum(ui_from, ui_to) / pgm_input_transformers["sn"] * loading_multiplier * 1e2
+            loading = (np.sqrt(3) * np.maximum(ui_from, ui_to) /
+                       pgm_input_transformers["sn"]) * loading_multiplier * 1e2
         elif self.trafo_loading == "power":
             loading = pgm_output_transformers["loading"] * loading_multiplier * 1e2
         else:
@@ -1706,7 +1707,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         )
         pp_switches_output = pp_switches_output[["i_ka"]]
         pp_switches_output.set_index(pp_switches_output_index, inplace=True)
-        pp_switches_output["loading_percent"] = np.nan
 
         # For et=b, ie bus to bus switches, links are created. get result from them
         if not links_absent:
@@ -1714,7 +1714,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             # For links, i_from = i_to = i_ka / 1e3
             link_ids = self._get_pp_ids("switch", links["id"], "b2b_switches")
             pp_switches_output.loc[link_ids, "i_ka"] = links["i_from"] * 1e-3
-
+        in_ka = self.pp_input_data["switch"]["in_ka"].values
+        pp_switches_output["loading_percent"] = np.nan
+        pp_switches_output["loading_percent"] = np.divide(pp_switches_output["i_ka"],
+                                                          in_ka, where= in_ka != 0)
+        
         assert "res_switch" not in self.pp_output_data
         self.pp_output_data["res_switch"] = pp_switches_output
 

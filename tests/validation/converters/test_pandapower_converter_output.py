@@ -38,13 +38,14 @@ def temporary_file_cleanup(file_path):
 
 
 @lru_cache
-def load_and_convert_pgm_data() -> PandaPowerData:
+def load_and_convert_pgm_data(trafo_loading="power") -> PandaPowerData:
     """
     Load and convert the power_grid_model results
     """
-    data, extra_info = load_json_single_dataset(PGM_OUTPUT_FILE, data_type="sym_output")
-    converter = PandaPowerConverter()
-    return converter.convert(data=data, extra_info=extra_info)
+    data, _ = load_json_single_dataset(PGM_OUTPUT_FILE, data_type="sym_output")
+    converter = PandaPowerConverter(trafo_loading=trafo_loading)
+    converter.load_input_data(load_validation_data(), make_extra_info=False)
+    return converter.convert(data=data)
 
 
 @lru_cache
@@ -77,12 +78,12 @@ def load_validation_data_3ph(trafo_loading="power") -> PandaPowerData:
         return pp.file_io.from_json(PP_V2_NET_3PH_OUTPUT_FILE_CURRENT_LOADING)
 
 
-@pytest.fixture
-def output_data() -> Tuple[PandaPowerData, PandaPowerData]:
+@pytest.fixture(params = ["power", "current"])
+def output_data(request) -> Tuple[PandaPowerData, PandaPowerData]:
     """
     Load the pandapower network and the json file, and return the output_data
     """
-    actual = load_and_convert_pgm_data()
+    actual = load_and_convert_pgm_data(request.param)
     expected = load_validation_data()
     return actual, expected
 

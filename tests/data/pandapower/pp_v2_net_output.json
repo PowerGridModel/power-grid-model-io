@@ -2708,7 +2708,7 @@
     "res_switch": {
       "_module": "pandas.core.frame",
       "_class": "DataFrame",
-      "_object": "{\"columns\":[\"i_ka\",\"loading_percent\"],\"index\":[101,3021,321],\"data\":[[0.064048243266779,null],[null,null],[0.020545341606839,null]]}",
+      "_object": "{\"columns\":[\"i_ka\",\"loading_percent\"],\"index\":[101,3021,321],\"data\":[[0.064048243266779,null],[0.0,null],[0.020545341606839,null]]}",
       "orient": "split",
       "dtype": {
         "i_ka": "float64",
