@@ -9,7 +9,7 @@ from typing import List, Tuple
 
 import pandas as pd
 import pytest
-from power_grid_model import DatasetType
+from power_grid_model import DatasetType, ComponentType
 from power_grid_model.data_types import SingleDataset
 
 from power_grid_model_io.converters import PandaPowerConverter
@@ -117,7 +117,15 @@ def test_extra_info__serializable(extra_info):
     # Assert
     json.dumps(actual, cls=JsonEncoder)  # expect no exception
 
+@pytest.mark.filterwarnings("error:.*invalid value encountered in divide.*:RuntimeWarning")
 def test_pgm_input_lines__cnf_zero():
-    pp_net = pp_net_3ph_minimal_trafo()
+    pp_network = pp_net_3ph_minimal_trafo()
     pp_converter = PandaPowerConverter()
+    pp_network.line.c_nf_per_km = 0
+    data, _ = pp_converter.load_input_data(pp_network)
+    assert data[ComponentType.line]["tan1"] == 0
+    pp_network.line.c_nf_per_km = 0.001
+    pp_network.line.c0_nf_per_km = 0
+    data, _ = pp_converter.load_input_data(pp_network)
+    assert data[ComponentType.line]["tan0"] == 0
     
