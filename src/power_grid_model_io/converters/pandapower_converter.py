@@ -2022,12 +2022,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # Only derating factor used here. Sn is already being multiplied by parallel
         loading_multiplier = pp_input_transformers["df"] * 1e2
         if self.trafo_loading == "current":
-            # since "i_from" and "i_to" are (n, 3) arrays while "u1" and "u2" are (n,) arrays, ValueError is generated
-            # during broadcast
             ui_from = pgm_output_transformers["i_from"] * pgm_input_transformers["u1"][:, None]
             ui_to = pgm_output_transformers["i_to"] * pgm_input_transformers["u2"][:, None]
-            # for phase wise loading, sn_ph = sn / 3, v_n = v / sqrt(3), so (i * u / sqrt(3)) / (sn / 3)
-            # ==> sqrt(3) * i * u / sn
             loading_a_percent = np.sqrt(3) * np.maximum(ui_from[:, 0], ui_to[:, 0]) / pgm_input_transformers["sn"]
             loading_b_percent = np.sqrt(3) * np.maximum(ui_from[:, 1], ui_to[:, 1]) / pgm_input_transformers["sn"]
             loading_c_percent = np.sqrt(3) * np.maximum(ui_from[:, 2], ui_to[:, 2]) / pgm_input_transformers["sn"]
@@ -2047,8 +2043,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         else:
             raise ValueError(f"Invalid transformer loading type: {str(self.trafo_loading)}")
 
-        # PGM returns the average loading over the trafos, but PandaPower returns the maximum of the per-phase loading.
-        # To make it consistent with PandaPower, overall loading will be calculated as max of above 3.
         loading = np.maximum(np.maximum(loading_a_percent, loading_b_percent), loading_c_percent)
 
         pp_output_trafos_3ph = pd.DataFrame(
