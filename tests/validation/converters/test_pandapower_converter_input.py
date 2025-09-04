@@ -9,7 +9,7 @@ from typing import List, Tuple
 
 import pandas as pd
 import pytest
-from power_grid_model import DatasetType, ComponentType
+from power_grid_model import ComponentType, DatasetType
 from power_grid_model.data_types import SingleDataset
 
 from power_grid_model_io.converters import PandaPowerConverter

@@ -214,10 +214,10 @@ def test_output_trafos_3ph__power__with_comparison():
     compare_result(pgm_net, pp_net, rtol=0.04)
 
     # Symmetric Load
-    pgm_net.asymmetric_load.loc[:, ['p_a_mw', 'p_b_mw', 'p_c_mw']] = 0.2
-    pgm_net.asymmetric_load.loc[:, ['q_a_mvar', 'q_b_mvar', 'q_c_mar']] = 0.05
-    pp_net.asymmetric_load.loc[:, ['p_a_mw', 'p_b_mw', 'p_c_mw']] = 0.2
-    pp_net.asymmetric_load.loc[:, ['q_a_mvar', 'q_b_mvar', 'q_c_mar']] = 0.05
+    pgm_net.asymmetric_load.loc[:, ["p_a_mw", "p_b_mw", "p_c_mw"]] = 0.2
+    pgm_net.asymmetric_load.loc[:, ["q_a_mvar", "q_b_mvar", "q_c_mar"]] = 0.05
+    pp_net.asymmetric_load.loc[:, ["p_a_mw", "p_b_mw", "p_c_mw"]] = 0.2
+    pp_net.asymmetric_load.loc[:, ["q_a_mvar", "q_b_mvar", "q_c_mar"]] = 0.05
     pp.runpp_pgm(pgm_net, symmetric=False)
     pp.runpp_3ph(pp_net)
     check_result(pgm_net)
