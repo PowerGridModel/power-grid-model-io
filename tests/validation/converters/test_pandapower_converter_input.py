@@ -3,10 +3,12 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import json
+import warnings
 from functools import lru_cache
 from pathlib import Path
 from typing import List, Tuple
 
+import numpy as np
 import pandas as pd
 import pytest
 from power_grid_model import ComponentType, DatasetType
@@ -118,14 +120,17 @@ def test_extra_info__serializable(extra_info):
     json.dumps(actual, cls=JsonEncoder)  # expect no exception
 
 
-@pytest.mark.filterwarnings("error:.*invalid value encountered in divide.*:RuntimeWarning")
 def test_pgm_input_lines__cnf_zero():
-    pp_network = pp_net_3ph_minimal_trafo()
-    pp_converter = PandaPowerConverter()
-    pp_network.line.c_nf_per_km = 0
-    data, _ = pp_converter.load_input_data(pp_network)
-    assert data[ComponentType.line]["tan1"] == 0
-    pp_network.line.c_nf_per_km = 0.001
-    pp_network.line.c0_nf_per_km = 0
-    data, _ = pp_converter.load_input_data(pp_network)
-    assert data[ComponentType.line]["tan0"] == 0
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        pp_network = pp_net_3ph_minimal_trafo()
+        pp_converter = PandaPowerConverter()
+        pp_network.line.c_nf_per_km = 0
+        data, _ = pp_converter.load_input_data(pp_network)
+        np.testing.assert_array_equal(data[ComponentType.line]["tan1"], 0)
+
+        pp_network.line.c_nf_per_km = 0.001
+        pp_network.line.c0_nf_per_km = 0
+        data, _ = pp_converter.load_input_data(pp_network)
+        np.testing.assert_array_equal(data[ComponentType.line]["tan0"], 0)
