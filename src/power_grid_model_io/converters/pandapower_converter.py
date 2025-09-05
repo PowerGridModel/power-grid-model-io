@@ -757,7 +757,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         valid = np.logical_and(np.not_equal(sn_mva, 0.0), np.isfinite(sn_mva))
         mag_g = np.divide(pfe, sn_mva * 1000, where=valid)
         mag_g[np.logical_not(valid)] = np.nan
-        rx_mag = mag_g / np.sqrt(i_no_load * i_no_load * 1e-4 - mag_g * mag_g)
+        z_squared = i_no_load * i_no_load * 1e-4 - mag_g * mag_g
+        valid = np.logical_and(np.greater(z_squared, 0), np.isfinite(z_squared))
+        rx_mag = np.divide(mag_g, np.sqrt(z_squared, where=valid), where=valid)
+        rx_mag[np.logical_not(valid)] = np.inf
         # positive and zero sequence magnetising impedance must be equal.
         # mag0_percent = z0mag / z0.
         checks = {
