@@ -360,9 +360,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Furthermore, creates a global node lookup table, which stores nodes' voltage magnitude per unit and the voltage
         angle in degrees
         """
-        #TODO create output_data_3ph for remaining components
-        #Although Pandapower itself did not implmenet res_shunt_3ph
-        #Since results are avaiable in PGM output, these should be converted.
+        # TODO create output_data_3ph for remaining components
+        # Although Pandapower itself did not implmenet res_shunt_3ph
+        # Since results are avaiable in PGM output, these should be converted.
         self._pp_buses_output_3ph()
         self._pp_lines_output_3ph()
         self._pp_ext_grids_output_3ph()
@@ -379,7 +379,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a power-grid-model structured array for the Node component
         """
-        #TODO handle out-of-service buses, either here or in get_switch_states
+        # TODO handle out-of-service buses, either here or in get_switch_states
         pp_busses = self.pp_input_data["bus"]
 
         if pp_busses.empty:
