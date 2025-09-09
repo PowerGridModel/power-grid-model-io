@@ -9,7 +9,7 @@ import pandapower as pp
 
 @lru_cache
 def pp_net() -> pp.pandapowerNet:
-    #  (ext #1)         shunt - [104]  - 3w - [105] - sym_gen
+    #  (ext #1)         shunt - [104]  - 3w - [105] - asym_gen, asym_load
     #   |                                |
     #  [101] ---OO- [102] ---------- [103]
     #   |                                |
@@ -109,7 +109,7 @@ def pp_net_3ph() -> pp.pandapowerNet:
     """
     Creates a pandapower net used for validating 3 phase calculations
 
-     (ext #1)         shunt - [104], sym_gen - [105], motor, ward, asym_load, asym_gen
+     (ext #1)                       sym_gen , asym_load, asym_gen
       |                                |
      [101] ---OO- [102] ---------- [103]
       |                                |
@@ -191,4 +191,49 @@ def pp_net_3ph() -> pp.pandapowerNet:
     #     net, bus=103, index=12, pn_mech_mw=0.1, cos_phi=0.9, loading_percent=80, efficiency_percent=90, scaling=0.8
     # )
 
+    return net
+
+
+def pp_net_3ph_minimal_trafo():
+    net = pp.create_empty_network("test", f_hz=50)
+    pp.create_bus(net, 11, "source")
+    pp.create_bus(net, 11, "TF_HT")
+    pp.create_bus(net, 0.4, "TF_LT")
+
+    pp.create_ext_grid(net, 0, 1.0, 0, s_sc_max_mva=100, rx_max=0.1, x0x_max=1, r0x0_max=0.1)
+    pp.create_line_from_parameters(
+        net,
+        0,
+        1,
+        2,
+        0.33,
+        0.34,
+        0.001,
+        600,
+        r0_ohm_per_km=0.66,
+        x0_ohm_per_km=0.65,
+        c0_nf_per_km=0.001,
+        g_us_per_km=0,
+        g0_us_per_km=0,
+    )
+    pp.create_transformer_from_parameters(
+        net,
+        1,
+        2,
+        1,
+        11,
+        0.415,
+        0,
+        4,
+        0,
+        0.01,
+        -30,
+        vector_group="Dyn",
+        vk0_percent=4,
+        vkr0_percent=0,
+        mag0_percent=100,
+        mag0_rx=0,
+        si0_hv_partial=0.9,
+    )
+    pp.create_asymmetric_load(net, 2, 0.2, 0.19, 0.21, 0.05, 0.049, 0.052, 0, type="wye")
     return net
