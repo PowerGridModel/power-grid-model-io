@@ -410,8 +410,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         in_service = self._get_pp_attr("line", "in_service", expected_type="bool", default=True)
         length_km = self._get_pp_attr("line", "length_km", expected_type="f8")
         parallel = self._get_pp_attr("line", "parallel", expected_type="u4", default=1)
-        c_nf_per_km = self._get_pp_attr("line", "c_nf_per_km", expected_type="f8")
-        c0_nf_per_km = self._get_pp_attr("line", "c0_nf_per_km", expected_type="f8", default=np.nan)
+        c_nf_per_km = self._get_pp_attr("line", "c_nf_per_km", expected_type="f8", default=0)
+        c0_nf_per_km = self._get_pp_attr("line", "c0_nf_per_km", expected_type="f8", default=0)
         multiplier = length_km / parallel
 
         pgm_lines = initialize_array(
@@ -426,12 +426,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_lines["x1"] = self._get_pp_attr("line", "x_ohm_per_km", expected_type="f8") * multiplier
         pgm_lines["c1"] = c_nf_per_km * length_km * parallel * 1e-9
         # The formula for tan1 = R_1 / Xc_1 = (g * 1e-6) / (2 * pi * f * c * 1e-9) = g / (2 * pi * f * c * 1e-3)
+        pgm_lines["tan1"] = 0.0
         pgm_lines["tan1"] = np.divide(
             self._get_pp_attr("line", "g_us_per_km", expected_type="f8", default=0),
             c_nf_per_km * (2 * np.pi * self.system_frequency * 1e-3),
-            where=c_nf_per_km != 0.0,
+            where=np.logical_not(np.isclose(c_nf_per_km, 0.0)),
         )
-        pgm_lines["tan1"][np.equal(c_nf_per_km, 0.0)] = 0.0
         pgm_lines["i_n"] = (
             (self._get_pp_attr("line", "max_i_ka", expected_type="f8", default=np.nan) * 1e3)
             * self._get_pp_attr("line", "df", expected_type="f8", default=1)
@@ -440,12 +440,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_lines["r0"] = self._get_pp_attr("line", "r0_ohm_per_km", expected_type="f8", default=np.nan) * multiplier
         pgm_lines["x0"] = self._get_pp_attr("line", "x0_ohm_per_km", expected_type="f8", default=np.nan) * multiplier
         pgm_lines["c0"] = c0_nf_per_km * length_km * parallel * 1e-9
+        pgm_lines["tan0"] = 0.0
         pgm_lines["tan0"] = np.divide(
             self._get_pp_attr("line", "g0_us_per_km", expected_type="f8", default=0),
             c0_nf_per_km * (2 * np.pi * self.system_frequency * 1e-3),
-            where=c0_nf_per_km != 0.0,
+            where=np.logical_not(np.isclose(c0_nf_per_km, 0.0)),
         )
-        pgm_lines["tan0"][np.equal(c0_nf_per_km, 0.0)] = 0.0
         assert ComponentType.line not in self.pgm_input_data
         self.pgm_input_data[ComponentType.line] = pgm_lines
 

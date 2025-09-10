@@ -525,13 +525,13 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     converter._get_pp_attr.assert_any_call("line", "parallel", expected_type="u4", default=1)
     converter._get_pp_attr.assert_any_call("line", "r_ohm_per_km", expected_type="f8")
     converter._get_pp_attr.assert_any_call("line", "x_ohm_per_km", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("line", "c_nf_per_km", expected_type="f8")
+    converter._get_pp_attr.assert_any_call("line", "c_nf_per_km", expected_type="f8", default=0)
     converter._get_pp_attr.assert_any_call("line", "g_us_per_km", expected_type="f8", default=0)
     converter._get_pp_attr.assert_any_call("line", "max_i_ka", expected_type="f8", default=np.nan)
     converter._get_pp_attr.assert_any_call("line", "df", expected_type="f8", default=1)
     converter._get_pp_attr.assert_any_call("line", "r0_ohm_per_km", expected_type="f8", default=np.nan)
     converter._get_pp_attr.assert_any_call("line", "x0_ohm_per_km", expected_type="f8", default=np.nan)
-    converter._get_pp_attr.assert_any_call("line", "c0_nf_per_km", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call("line", "c0_nf_per_km", expected_type="f8", default=0)
     converter._get_pp_attr.assert_any_call("line", "g0_us_per_km", expected_type="f8", default=0)
     assert len(converter._get_pp_attr.call_args_list) == 15
 
@@ -566,7 +566,7 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     )
     pgm.assert_any_call(
         "c1",
-        _get_pp_attr("line", "c_nf_per_km", expected_type="f8")
+        _get_pp_attr("line", "c_nf_per_km", expected_type="f8", default=0)
         * _get_pp_attr("line", "length_km", expected_type="f8")
         * _get_pp_attr("line", "parallel", expected_type="u4", default=1)
         * 1e-9,
@@ -575,8 +575,8 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
         "tan1",
         np.divide(
             _get_pp_attr("line", "g_us_per_km", expected_type="f8", default=0),
-            _get_pp_attr("line", "c_nf_per_km", expected_type="f8") * (np.pi / 10),
-            where=_get_pp_attr("line", "c_nf_per_km", expected_type="f8") != 0.0,
+            _get_pp_attr("line", "c_nf_per_km", expected_type="f8", default=0) * (np.pi / 10),
+            where=np.logical_not(np.isclose(_get_pp_attr("line", "c_nf_per_km", expected_type="f8", default=0), 0.0)),
         ),
     )
     pgm.assert_any_call(
@@ -585,11 +585,18 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
         * _get_pp_attr("line", "df", expected_type="f8", default=1)
         * _get_pp_attr("line", "parallel", expected_type="u4", default=1),
     )
+    pgm.assert_any_call(
+        "tan0",
+        np.divide(
+            _get_pp_attr("line", "g0_us_per_km", expected_type="f8", default=0),
+            _get_pp_attr("line", "c0_nf_per_km", expected_type="f8", default=0) * (np.pi / 10),
+            where=np.logical_not(np.isclose(_get_pp_attr("line", "c0_nf_per_km", expected_type="f8", default=0), 0.0)),
+        ),
+    )
     pgm.assert_any_call("r0", ANY)
     pgm.assert_any_call("x0", ANY)
     pgm.assert_any_call("c0", ANY)
-    pgm.assert_any_call("tan0", ANY)
-    assert len(pgm.call_args_list) == 14
+    assert len(pgm.call_args_list) == 16
 
     # result
     assert converter.pgm_input_data[ComponentType.line] == mock_init_array.return_value
