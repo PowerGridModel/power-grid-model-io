@@ -150,3 +150,13 @@ def test_pgm_input_lines__cnf_zero():
         pp_network.line.c0_nf_per_km = 0
         data, _ = pp_converter.load_input_data(pp_network)
         np.testing.assert_array_equal(data[ComponentType.line]["tan0"], 0)
+
+
+@pytest.mark.filterwarnings("error")
+def test_simple_example():
+    from pandapower.networks import example_simple
+
+    pp_net = example_simple()
+    pp_net["gen"] = pp_net["gen"].iloc[:0]
+    pp_converter = PandaPowerConverter()
+    data, _ = pp_converter.load_input_data(pp_net)
