@@ -770,6 +770,7 @@ def test_pp_switch_output():
                 "element": [10, 10, 10, 10, 10, 11, 11, 77, 88],
                 "et": ["t", "t", "t3", "t3", "t3", "l", "l", "b", "b"],
                 "closed": [True, True, True, True, True, True, True, True, True],
+                "in_ka": [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
             },
             index=[40, 41, 42, 43, 44, 45, 46, 47, 48],
         ),
@@ -863,7 +864,6 @@ def test_output_line_3ph(converter):
         mock_pgm_array.__getitem__.assert_any_call("q_to")
         mock_pgm_array.__getitem__.assert_any_call("i_from")
         mock_pgm_array.__getitem__.assert_any_call("i_to")
-        mock_pgm_array.__getitem__.assert_any_call("loading")
 
         # assignment
         mock_pp_df.return_value.__setitem__.assert_any_call("p_a_from_mw", ANY)
@@ -1034,7 +1034,10 @@ def test_output_trafos_3ph__power(converter):
         converter._pp_trafos_output_3ph()
 
         # retrieval
-        mock_pgm_array.__getitem__.assert_any_call("loading")
+        assert "loading" not in mock_pgm_array.__getitem__.call_args_list, (
+            "The convention for loading differs between PGM and PP and the PGM loading therefore should not be used "
+            "for conversion to PP."
+        )
 
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_trafo_3ph", mock_pp_df.return_value)
