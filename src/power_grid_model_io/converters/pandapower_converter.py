@@ -426,7 +426,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_lines["x1"] = self._get_pp_attr("line", "x_ohm_per_km", expected_type="f8") * multiplier
         pgm_lines["c1"] = c_nf_per_km * length_km * parallel * 1e-9
         # The formula for tan1 = R_1 / Xc_1 = (g * 1e-6) / (2 * pi * f * c * 1e-9) = g / (2 * pi * f * c * 1e-3)
-        pgm_lines["tan1"] = 0.0
         pgm_lines["tan1"] = np.divide(
             self._get_pp_attr("line", "g_us_per_km", expected_type="f8", default=0),
             c_nf_per_km * (2 * np.pi * self.system_frequency * 1e-3),
@@ -440,7 +439,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_lines["r0"] = self._get_pp_attr("line", "r0_ohm_per_km", expected_type="f8", default=np.nan) * multiplier
         pgm_lines["x0"] = self._get_pp_attr("line", "x0_ohm_per_km", expected_type="f8", default=np.nan) * multiplier
         pgm_lines["c0"] = c0_nf_per_km * length_km * parallel * 1e-9
-        pgm_lines["tan0"] = 0.0
         pgm_lines["tan0"] = np.divide(
             self._get_pp_attr("line", "g0_us_per_km", expected_type="f8", default=0),
             c0_nf_per_km * (2 * np.pi * self.system_frequency * 1e-3),
