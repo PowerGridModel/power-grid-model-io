@@ -306,7 +306,27 @@ def _get_total_powers_3ph(net):
     else:
         s_load_sym = complex128()
 
-    s_load = s_load_sym + s_load_asym
+    if "res_motor_3ph" in net:
+        s_motor = net.res_motor_3ph.loc[:, "p_mw"].sum() + 1j * net.res_motor_3ph.loc[:, "q_mvar"].sum()
+    else:
+        s_motor = complex128()
+
+    if "res_ward_3ph" in net:
+        s_ward = (
+            net.res_ward_3ph.loc[:, ["p_a_mw", "p_b_mw", "p_c_mw"]].sum().sum()
+            + 1j * net.res_ward_3ph.loc[:, ["q_a_mvar", "q_b_mvar", "q_c_mvar"]].sum().sum()
+        )
+    else:
+        s_ward = complex128()
+
+    # TODO: enable res_shunt_3ph when implemented, right now the table exists but columns not defined.
+    # if "res_shunt_3ph" in net:
+    #    print(net.res_shunt_3ph)
+    #    s_shunt = net.res_shunt_3ph.loc[:, "p_mw"].sum() + 1j * net.res_shunt_3ph.loc[:, "q_mvar"].sum()
+    # else:
+    s_shunt = complex128()
+
+    s_load = s_load_sym + s_load_asym + s_motor + s_ward + s_shunt
 
     if "res_line_3ph" in net:
         s_loss_line = (
@@ -316,7 +336,7 @@ def _get_total_powers_3ph(net):
     else:
         s_loss_line = complex128()
 
-    if "res_line_3ph" in net:
+    if "res_trafo_3ph" in net:
         s_loss_trafo = (
             net.res_trafo_3ph.loc[:, ["p_a_l_mw", "p_b_l_mw", "p_c_l_mw"]].sum().sum()
             + 1j * net.res_trafo_3ph.loc[:, ["q_a_l_mvar", "q_b_l_mvar", "q_c_l_mvar"]].sum().sum()
@@ -355,4 +375,85 @@ def test_output_data_3ph__powers():
     pp.create_shunt_as_capacitor(net, 150, 0.09, 0)
     run_pf_asym_with_pgm(net)
     s_ext_grid, s_load, s_loss = _get_total_powers_3ph(net)
+    assert isclose(s_ext_grid, (s_load + s_loss))
+
+
+def _get_total_powers(net):
+    """
+    Calculates total complex power for sources, loads and losses
+    Input: Pandapower Network
+    Output: [s_ext_grid, s_load, s_loss]
+    """
+    from numpy import complex128
+
+    s_ext_grid = net.res_ext_grid.loc[:, "p_mw"].sum() + 1j * net.res_ext_grid.loc[:, "q_mvar"].sum()
+
+    if "res_asymmetric_load" in net:
+        s_load_asym = net.res_asymmetric_load.loc[:, "p_mw"].sum() + 1j * net.res_asymmetric_load.loc[:, "q_mvar"].sum()
+    else:
+        s_load_asym = complex128()
+
+    if "res_load" in net:
+        s_load_sym = net.res_load.loc[:, "p_mw"].sum() + 1j * net.res_load.loc[:, "q_mvar"].sum()
+    else:
+        s_load_sym = complex128()
+
+    if "res_motor" in net:
+        s_motor = net.res_motor.loc[:, "p_mw"].sum() + 1j * net.res_motor.loc[:, "q_mvar"].sum()
+    else:
+        s_motor = complex128()
+
+    if "res_ward" in net:
+        s_ward = net.res_ward.loc[:, "p_mw"].sum() + 1j * net.res_ward.loc[:, "q_mvar"].sum()
+    else:
+        s_ward = complex128()
+
+    if "res_shunt" in net:
+        s_shunt = net.res_shunt.loc[:, "p_mw"].sum() + 1j * net.res_shunt.loc[:, "q_mvar"].sum()
+    else:
+        s_shunt = complex128()
+
+    s_load = s_load_sym + s_load_asym + s_motor + s_ward + s_shunt
+
+    if "res_line" in net:
+        s_loss_line = net.res_line.loc[:, "pl_mw"].sum() + 1j * net.res_line.loc[:, "ql_mvar"].sum()
+    else:
+        s_loss_line = complex128()
+
+    if "res_trafo" in net:
+        s_loss_trafo = net.res_trafo.loc[:, "pl_mw"].sum() + 1j * net.res_trafo.loc[:, "ql_mvar"].sum()
+    else:
+        s_loss_trafo = complex128()
+
+    s_loss = s_loss_line + s_loss_trafo
+    return [s_ext_grid, s_load, s_loss]
+
+
+def test_output_data__powers():
+    def run_pf_sym_with_pgm(net):
+        from pandapower.results import reset_results
+        from power_grid_model import PowerGridModel
+
+        reset_results(net, "pf")
+        pgm_converter = PandaPowerConverter()
+        input_data, _ = pgm_converter.load_input_data(net, make_extra_info=False)
+        pgm = PowerGridModel(input_data)
+        output_data = pgm.calculate_power_flow(symmetric=True)
+        output_tables = pgm_converter.convert(output_data)
+        for table in output_tables.keys():
+            net[table] = output_tables[table]
+
+    from numpy import isclose
+    from pandapower.networks import ieee_european_lv_asymmetric
+
+    net = ieee_european_lv_asymmetric()
+    run_pf_sym_with_pgm(net)
+    s_ext_grid, s_load, s_loss = _get_total_powers(net)
+    assert isclose(s_ext_grid, (s_load + s_loss))
+
+    pp.create_motor(net, 100, 0.1, 0.9)
+    pp.create_ward(net, 200, 0.1, 0.05, 0.1, 0.05)
+    pp.create_shunt_as_capacitor(net, 150, 0.09, 0)
+    run_pf_sym_with_pgm(net)
+    s_ext_grid, s_load, s_loss = _get_total_powers(net)
     assert isclose(s_ext_grid, (s_load + s_loss))
