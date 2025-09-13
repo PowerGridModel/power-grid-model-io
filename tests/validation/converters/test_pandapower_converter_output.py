@@ -278,3 +278,81 @@ def test_attributes_3ph(output_data_3ph: Tuple[PandaPowerData, PandaPowerData], 
 
     # Assert
     pd.testing.assert_series_equal(actual_values, expected_values, atol=5e-4, rtol=1e-4)
+
+
+def _get_total_powers_3ph(net):
+    """
+    Calculates total complex power for sources, loads and losses
+    Input: Pandapower Network
+    Output: [s_ext_grid, s_load, s_loss]
+    """
+    from numpy import complex128
+
+    s_ext_grid = (
+        net.res_ext_grid_3ph.loc[:, ["p_a_mw", "p_b_mw", "p_c_mw"]].sum().sum()
+        + 1j * net.res_ext_grid_3ph.loc[:, ["q_a_mvar", "q_b_mvar", "q_c_mvar"]].sum().sum()
+    )
+
+    if "res_asymmetric_load_3ph" in net:
+        s_load_asym = (
+            net.res_asymmetric_load_3ph.loc[:, ["p_a_mw", "p_b_mw", "p_c_mw"]].sum().sum()
+            + 1j * net.res_asymmetric_load_3ph.loc[:, ["q_a_mvar", "q_b_mvar", "q_c_mvar"]].sum().sum()
+        )
+    else:
+        s_load_asym = complex128()
+
+    if "res_load_3ph" in net:
+        s_load_sym = net.res_load_3ph.loc[:, "p_mw"].sum() + 1j * net.res_load_3ph.loc[:, "q_mvar"].sum()
+    else:
+        s_load_sym = complex128()
+
+    s_load = s_load_sym + s_load_asym
+
+    if "res_line_3ph" in net:
+        s_loss_line = (
+            net.res_line_3ph.loc[:, ["p_a_l_mw", "p_b_l_mw", "p_c_l_mw"]].sum().sum()
+            + 1j * net.res_line_3ph.loc[:, ["q_a_l_mvar", "q_b_l_mvar", "q_c_l_mvar"]].sum().sum()
+        )
+    else:
+        s_loss_line = complex128()
+
+    if "res_line_3ph" in net:
+        s_loss_trafo = (
+            net.res_trafo_3ph.loc[:, ["p_a_l_mw", "p_b_l_mw", "p_c_l_mw"]].sum().sum()
+            + 1j * net.res_trafo_3ph.loc[:, ["q_a_l_mvar", "q_b_l_mvar", "q_c_l_mvar"]].sum().sum()
+        )
+    else:
+        s_loss_trafo = complex128()
+
+    s_loss = s_loss_line + s_loss_trafo
+    return [s_ext_grid, s_load, s_loss]
+
+
+def test_output_data_3ph__powers():
+    def run_pf_asym_with_pgm(net):
+        from pandapower.results import reset_results
+        from power_grid_model import PowerGridModel
+
+        reset_results(net, "pf_3ph")
+        pgm_converter = PandaPowerConverter()
+        input_data, _ = pgm_converter.load_input_data(net, make_extra_info=False)
+        pgm = PowerGridModel(input_data)
+        output_data = pgm.calculate_power_flow(symmetric=False)
+        output_tables = pgm_converter.convert(output_data)
+        for table in output_tables.keys():
+            net[table] = output_tables[table]
+
+    from numpy import isclose
+    from pandapower.networks import ieee_european_lv_asymmetric
+
+    net = ieee_european_lv_asymmetric()
+    run_pf_asym_with_pgm(net)
+    s_ext_grid, s_load, s_loss = _get_total_powers_3ph(net)
+    assert isclose(s_ext_grid, (s_load + s_loss))
+
+    pp.create_motor(net, 100, 0.1, 0.9)
+    pp.create_ward(net, 200, 0.1, 0.05, 0.1, 0.05)
+    pp.create_shunt_as_capacitor(net, 150, 0.09, 0)
+    run_pf_asym_with_pgm(net)
+    s_ext_grid, s_load, s_loss = _get_total_powers_3ph(net)
+    assert isclose(s_ext_grid, (s_load + s_loss))
