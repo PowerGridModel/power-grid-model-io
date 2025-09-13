@@ -360,15 +360,18 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Furthermore, creates a global node lookup table, which stores nodes' voltage magnitude per unit and the voltage
         angle in degrees
         """
-        # TODO create output_data_3ph for remaining components
+        # TODO create output_data_3ph for trafos3w
         # Although Pandapower itself did not implmenet res_shunt_3ph
         # Since results are avaiable in PGM output, these should be converted.
         self._pp_buses_output_3ph()
         self._pp_lines_output_3ph()
         self._pp_ext_grids_output_3ph()
         self._pp_loads_output_3ph()
+        self._pp_shunts_output_3ph()
         self._pp_trafos_output_3ph()
         self._pp_sgens_output_3ph()
+        self._pp_ward_output_3ph()
+        self._pp_motor_output_3ph()
         self._pp_asym_gens_output_3ph()
         self._pp_asym_loads_output_3ph()
 
@@ -2153,6 +2156,68 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self.pp_output_data["res_load_3ph"] = self._pp_load_result_accumulate(
             pp_component_name="load", load_id_names=load_id_names
         )
+
+    def _pp_ward_output_3ph(self):
+        # TODO: Create Unit tests
+        load_id_names = ["ward_const_power_load", "ward_const_impedance_load"]
+        if (
+            ComponentType.sym_load not in self.pgm_output_data
+            or self.pgm_output_data[ComponentType.sym_load].size == 0
+            or ("ward", load_id_names[0]) not in self.idx
+        ):
+            return
+
+        # TODO Find a better way for mapping vm_pu from bus
+        # accumulated_loads["vm_pu"] = np.nan
+        # Store the results, while assuring that we are not overwriting any data
+        assert "res_ward_3ph" not in self.pp_output_data
+        self.pp_output_data["res_ward_3ph"] = self._pp_load_result_accumulate(
+            pp_component_name="ward", load_id_names=load_id_names
+        )
+
+    def _pp_motor_output_3ph(self):
+        # TODO: Create unit tests
+        load_id_names = ["motor_load"]
+
+        assert "res_motor_3ph" not in self.pp_output_data
+
+        if (
+            ComponentType.sym_load not in self.pgm_output_data
+            or self.pgm_output_data[ComponentType.sym_load].size == 0
+            or ("motor", load_id_names[0]) not in self.idx
+        ):
+            return
+
+        # Store the results, while assuring that we are not overwriting any data
+        assert "res_motor" not in self.pp_output_data
+        self.pp_output_data["res_motor_3ph"] = self._pp_load_result_accumulate(
+            pp_component_name="motor", load_id_names=load_id_names
+        )
+
+    def _pp_shunts_output_3ph(self):
+        """
+        This function converts a power-grid-model Shunt output array to a Shunt Dataframe of PandaPower.
+
+        Returns:
+            a PandaPower Dataframe for the Shunt component
+        """
+        # TODO: create unit tests for the function
+        assert "res_shunt_3ph" not in self.pp_output_data
+
+        if ComponentType.shunt not in self.pgm_output_data or self.pgm_output_data[ComponentType.shunt].size == 0:
+            return
+
+        pgm_output_shunts = self.pgm_output_data[ComponentType.shunt]
+
+        pp_output_shunts = pd.DataFrame(
+            columns=["p_mw", "q_mvar", "vm_pu"],
+            index=self._get_pp_ids("shunt", pgm_output_shunts["id"]),
+        )
+        pp_output_shunts["p_mw"] = pgm_output_shunts["p"].sum() * 1e-6
+        pp_output_shunts["q_mvar"] = pgm_output_shunts["q"].sum() * 1e-6
+        # TODO Find a better way for mapping vm_pu from bus
+        # pp_output_shunts["vm_pu"] = np.nan
+        self.pp_output_data["res_shunt_3ph"] = pp_output_shunts
 
     def _pp_asym_loads_output_3ph(self):
         """

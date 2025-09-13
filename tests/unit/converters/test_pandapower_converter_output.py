@@ -54,7 +54,7 @@ def test_create_output_data_3ph():
     PandaPowerConverter._create_output_data_3ph(self=converter)  # type: ignore
 
     # Assert
-    assert len(converter.method_calls) == 8
+    assert len(converter.method_calls) == 11
     converter._pp_buses_output_3ph.assert_called_once_with()
     converter._pp_lines_output_3ph.assert_called_once_with()
     converter._pp_ext_grids_output_3ph.assert_called_once_with()

@@ -311,20 +311,15 @@ def _get_total_powers_3ph(net):
     else:
         s_motor = complex128()
 
-    if "res_ward_3ph" in net:
-        s_ward = (
-            net.res_ward_3ph.loc[:, ["p_a_mw", "p_b_mw", "p_c_mw"]].sum().sum()
-            + 1j * net.res_ward_3ph.loc[:, ["q_a_mvar", "q_b_mvar", "q_c_mvar"]].sum().sum()
-        )
+    if ("res_ward_3ph" in net) and (not net.res_ward_3ph.empty):
+        s_ward = net.res_ward_3ph.loc[:, "p_mw"].sum() + 1j * net.res_ward_3ph.loc[:, "q_mvar"].sum()
     else:
         s_ward = complex128()
 
-    # TODO: enable res_shunt_3ph when implemented, right now the table exists but columns not defined.
-    # if "res_shunt_3ph" in net:
-    #    print(net.res_shunt_3ph)
-    #    s_shunt = net.res_shunt_3ph.loc[:, "p_mw"].sum() + 1j * net.res_shunt_3ph.loc[:, "q_mvar"].sum()
-    # else:
-    s_shunt = complex128()
+    if ("res_shunt_3ph" in net) and (not net.res_shunt_3ph.empty):
+        s_shunt = net.res_shunt_3ph.loc[:, "p_mw"].sum() + 1j * net.res_shunt_3ph.loc[:, "q_mvar"].sum()
+    else:
+        s_shunt = complex128()
 
     s_load = s_load_sym + s_load_asym + s_motor + s_ward + s_shunt
 
