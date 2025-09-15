@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from typing import Callable, List
-from unittest.mock import ANY, MagicMock, patch
+from unittest.mock import ANY, MagicMock, call, patch
 
 import numpy as np
 import pandas as pd
@@ -38,11 +38,14 @@ def test_create_output_data():
     converter._pp_sgens_output.assert_called_once_with()
     converter._pp_trafos_output.assert_called_once_with()
     converter._pp_trafos3w_output.assert_called_once_with()
-    converter._pp_loads_output.assert_called_once_with()
+    expected_calls = [
+        call(element="load", symmetric=True),
+        call(element="ward", symmetric=True),
+        call(element="motor", symmetric=True),
+    ]
+    converter._pp_load_elements_output.assert_has_calls(expected_calls)
     converter._pp_asym_loads_output.assert_called_once_with()
     converter._pp_asym_gens_output.assert_called_once_with()
-    converter._pp_motor_output.assert_called_once_with()
-    converter._pp_ward_output.assert_called_once_with()
     converter._pp_switches_output.assert_called_once_with()
 
 
@@ -60,7 +63,12 @@ def test_create_output_data_3ph():
     converter._pp_ext_grids_output_3ph.assert_called_once_with()
     converter._pp_sgens_output_3ph.assert_called_once_with()
     converter._pp_trafos_output_3ph.assert_called_once_with()
-    converter._pp_loads_output_3ph.assert_called_once_with()
+    expected_calls = [
+        call(element="load", symmetric=False),
+        call(element="ward", symmetric=False),
+        call(element="motor", symmetric=False),
+    ]
+    converter._pp_load_elements_output.assert_has_calls(expected_calls)
     converter._pp_asym_loads_output_3ph.assert_called_once_with()
     converter._pp_asym_gens_output_3ph.assert_called_once_with()
 
@@ -75,18 +83,13 @@ def test_create_output_data_3ph():
         (PandaPowerConverter._pp_sgens_output, "sym_gen"),
         (PandaPowerConverter._pp_trafos_output, "transformer"),
         (PandaPowerConverter._pp_trafos3w_output, "three_winding_transformer"),
-        (PandaPowerConverter._pp_loads_output, "sym_load"),
-        (PandaPowerConverter._pp_asym_loads_output, "asym_load"),
         (PandaPowerConverter._pp_asym_gens_output, "asym_gen"),
-        (PandaPowerConverter._pp_ward_output, "ward"),
-        (PandaPowerConverter._pp_motor_output, "motor"),
         (PandaPowerConverter._pp_switches_output, "link"),
         (PandaPowerConverter._pp_buses_output_3ph, "node"),
         (PandaPowerConverter._pp_lines_output_3ph, "line"),
         (PandaPowerConverter._pp_ext_grids_output_3ph, "source"),
         (PandaPowerConverter._pp_sgens_output_3ph, "sym_gen"),
         (PandaPowerConverter._pp_trafos_output_3ph, "transformer"),
-        (PandaPowerConverter._pp_loads_output_3ph, "sym_load"),
         (PandaPowerConverter._pp_asym_loads_output_3ph, "asym_load"),
         (PandaPowerConverter._pp_asym_gens_output_3ph, "asym_gen"),
     ],
@@ -106,6 +109,34 @@ def test_create_pp_output_object__empty(create_fn: Callable[[PandaPowerConverter
     # Act / Assert
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_df:
         create_fn(converter)
+        mock_df.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("create_fn", "element", "symmetric", "table"),
+    [
+        (PandaPowerConverter._pp_load_elements_output, "load", True, "sym_load"),
+        (PandaPowerConverter._pp_load_elements_output, "ward", True, "ward"),
+        (PandaPowerConverter._pp_load_elements_output, "motor", True, "motor"),
+    ],
+)
+def test_create_pp_output_object_with_params__empty(
+    create_fn: Callable[[PandaPowerConverter, str, bool], None], element: str, symmetric: bool, table: str
+):
+    # Arrange: No table
+    converter = PandaPowerConverter()
+
+    # Act / Assert
+    with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_df:
+        create_fn(converter, element, symmetric)
+        mock_df.assert_not_called()
+
+    # Arrange: Empty table
+    converter.pgm_output_data[table] = np.array([])  # type: ignore
+
+    # Act / Assert
+    with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_df:
+        create_fn(converter, element, symmetric)
         mock_df.assert_not_called()
 
 
@@ -532,15 +563,34 @@ def test_pp_load_result_accumulate__asym():
 
 
 @pytest.mark.parametrize(
-    ("output_fn", "table", "load_id_names", "result_suffix"),
+    ("output_fn", "element", "symmetric", "table", "load_id_names", "result_suffix"),
     [
-        (PandaPowerConverter._pp_loads_output, "load", ["const_power", "const_impedance", "const_current"], ""),
-        (PandaPowerConverter._pp_motor_output, "motor", ["motor_load"], ""),
-        (PandaPowerConverter._pp_loads_output_3ph, "load", ["const_power", "const_impedance", "const_current"], "_3ph"),
+        (
+            PandaPowerConverter._pp_load_elements_output,
+            "load",
+            True,
+            "load",
+            ["const_power", "const_impedance", "const_current"],
+            "",
+        ),
+        (PandaPowerConverter._pp_load_elements_output, "motor", True, "motor", ["motor_load"], ""),
+        (
+            PandaPowerConverter._pp_load_elements_output,
+            "load",
+            False,
+            "load",
+            ["const_power", "const_impedance", "const_current"],
+            "_3ph",
+        ),
     ],
 )
 def test_output_load_types(
-    output_fn: Callable[[PandaPowerConverter], None], table: str, load_id_names: List[str], result_suffix: str
+    output_fn: Callable[[PandaPowerConverter, str, bool], None],
+    element: str,
+    symmetric: bool,
+    table: str,
+    load_id_names: List[str],
+    result_suffix: str,
 ):
     # Arrange
     converter = PandaPowerConverter()
@@ -551,7 +601,7 @@ def test_output_load_types(
     converter._pp_load_result_accumulate = MagicMock()  # type: ignore
 
     # Act
-    output_fn(converter)
+    output_fn(converter, element, symmetric)
 
     # Assert
     converter._pp_load_result_accumulate.assert_called_once_with(pp_component_name=table, load_id_names=load_id_names)
@@ -570,7 +620,7 @@ def test_output_load_ward():
     converter._pp_load_result_accumulate = MagicMock()
 
     # Act
-    converter._pp_ward_output()
+    converter._pp_load_elements_output(element="ward", symmetric=True)
 
     # Assert
     converter._pp_load_result_accumulate.assert_called_once_with(pp_component_name="ward", load_id_names=load_id_names)

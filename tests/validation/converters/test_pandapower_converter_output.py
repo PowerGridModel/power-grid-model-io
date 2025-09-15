@@ -357,6 +357,7 @@ def test_output_data_3ph__powers():
             net[table] = output_tables[table]
 
     net = pp_networks.ieee_european_lv_asymmetric()
+    pp.create_load(net, 50, 0.1, 0.05)
     run_pf_asym_with_pgm(net)
     s_ext_grid, s_load, s_loss = _get_total_powers_3ph(net)
     assert np.isclose(s_ext_grid, (s_load + s_loss))
@@ -430,6 +431,7 @@ def test_output_data__powers():
             net[table] = output_tables[table]
 
     net = pp_networks.ieee_european_lv_asymmetric()
+    pp.create_load(net, 50, 0.1, 0.05)
     run_pf_sym_with_pgm(net)
     s_ext_grid, s_load, s_loss = _get_total_powers(net)
     assert np.isclose(s_ext_grid, (s_load + s_loss))
