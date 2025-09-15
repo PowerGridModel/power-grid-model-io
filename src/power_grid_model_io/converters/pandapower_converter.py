@@ -1580,8 +1580,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         elif element == "motor":
             load_id_names = ["motor_load"]
 
-        assert res_table not in self.pp_output_data
-
         if (
             ComponentType.sym_load not in self.pgm_output_data
             or self.pgm_output_data[ComponentType.sym_load].size == 0

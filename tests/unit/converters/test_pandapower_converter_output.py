@@ -83,6 +83,7 @@ def test_create_output_data_3ph():
         (PandaPowerConverter._pp_sgens_output, "sym_gen"),
         (PandaPowerConverter._pp_trafos_output, "transformer"),
         (PandaPowerConverter._pp_trafos3w_output, "three_winding_transformer"),
+        (PandaPowerConverter._pp_asym_loads_output, "asym_load"),
         (PandaPowerConverter._pp_asym_gens_output, "asym_gen"),
         (PandaPowerConverter._pp_switches_output, "link"),
         (PandaPowerConverter._pp_buses_output_3ph, "node"),
