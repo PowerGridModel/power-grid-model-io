@@ -596,7 +596,7 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     pgm.assert_any_call("r0", ANY)
     pgm.assert_any_call("x0", ANY)
     pgm.assert_any_call("c0", ANY)
-    assert len(pgm.call_args_list) == 16
+    assert len(pgm.call_args_list) == 14
 
     # result
     assert converter.pgm_input_data[ComponentType.line] == mock_init_array.return_value
