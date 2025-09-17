@@ -102,6 +102,8 @@ class ExcelFileStore(BaseDataStore[TabularData]):
 
                 return sheet_data
 
+            return sheet_loader
+
         data: Dict[str, LazyDataFrame] = {}
         for name, path in self._file_paths.items():
             excel_file = pd.ExcelFile(path)
