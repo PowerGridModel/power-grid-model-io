@@ -88,23 +88,18 @@ class ExcelFileStore(BaseDataStore[TabularData]):
 
         def lazy_sheet_loader(xls_file: pd.ExcelFile, xls_sheet_name: str):
             def sheet_loader():
-                sheet_data = xls_file.parse(xls_sheet_name, header=self._header_rows)
+                preview = xls_file.parse(xls_sheet_name, header=self._header_rows, nrows=0)
+                columns = list(preview.columns)
+                dtype = {}
+                for col in columns:
+                    if col == "Name" or (isinstance(col, tuple) and col[0] == "Name"):
+                        dtype[col] = str
+                sheet_data = xls_file.parse(xls_sheet_name, header=self._header_rows, dtype=dtype)
                 sheet_data = self._remove_unnamed_column_placeholders(data=sheet_data)
                 sheet_data = self._handle_duplicate_columns(data=sheet_data, sheet_name=xls_sheet_name)
                 sheet_data = self._process_uuid_columns(data=sheet_data, sheet_name=xls_sheet_name)
                 sheet_data = self._update_column_names(data=sheet_data)
-                # Only convert large integer values to strings for columns named 'Name'
-                for col in sheet_data.columns:
-                    if (col == "Name" or (isinstance(col, tuple) and col[0] == "Name")) and sheet_data[col].dtype in [
-                        "float64",
-                        "int64",
-                    ]:
-                        if (sheet_data[col].abs() >= 1e12).any():
-                            sheet_data[col] = sheet_data[col].apply(
-                                lambda x: str(int(x))
-                                if pd.notnull(x) and isinstance(x, (int, float)) and abs(x) >= 1e12
-                                else x
-                            )
+
                 return sheet_data
 
         data: Dict[str, LazyDataFrame] = {}
