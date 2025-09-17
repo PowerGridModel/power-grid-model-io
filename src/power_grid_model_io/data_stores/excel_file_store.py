@@ -93,9 +93,19 @@ class ExcelFileStore(BaseDataStore[TabularData]):
                 sheet_data = self._handle_duplicate_columns(data=sheet_data, sheet_name=xls_sheet_name)
                 sheet_data = self._process_uuid_columns(data=sheet_data, sheet_name=xls_sheet_name)
                 sheet_data = self._update_column_names(data=sheet_data)
+                # Only convert large integer values to strings for columns named 'Name'
+                for col in sheet_data.columns:
+                    if (col == "Name" or (isinstance(col, tuple) and col[0] == "Name")) and sheet_data[col].dtype in [
+                        "float64",
+                        "int64",
+                    ]:
+                        if (sheet_data[col].abs() >= 1e12).any():
+                            sheet_data[col] = sheet_data[col].apply(
+                                lambda x: str(int(x))
+                                if pd.notnull(x) and isinstance(x, (int, float)) and abs(x) >= 1e12
+                                else x
+                            )
                 return sheet_data
-
-            return sheet_loader
 
         data: Dict[str, LazyDataFrame] = {}
         for name, path in self._file_paths.items():
