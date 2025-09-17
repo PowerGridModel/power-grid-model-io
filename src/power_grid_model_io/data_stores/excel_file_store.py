@@ -92,11 +92,7 @@ class ExcelFileStore(BaseDataStore[TabularData]):
                 columns = list(preview.columns)
                 dtype = {}
                 for col in columns:
-                    if (
-                        col == "Name"
-                        or col == "InObject.Name"
-                        or (isinstance(col, tuple) and (col[0] == "Name" or col[0] == "InObject.Name"))
-                    ):
+                    if "Name" in str(col) or (isinstance(col, tuple) and ("Name" in str(col[0]))):
                         dtype[col] = str
                 sheet_data = xls_file.parse(xls_sheet_name, header=self._header_rows, dtype=dtype)
                 sheet_data = self._remove_unnamed_column_placeholders(data=sheet_data)
