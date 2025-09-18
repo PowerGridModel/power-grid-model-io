@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from typing import Callable, List
+from typing import Any, Callable, Dict, List
 from unittest.mock import ANY, MagicMock, call, patch
 
 import numpy as np
@@ -74,34 +74,40 @@ def test_create_output_data_3ph():
 
 
 @pytest.mark.parametrize(
-    ("create_fn", "table"),
+    ("create_fn", "table", "create_fn_kwargs"),
     [
-        (PandaPowerConverter._pp_buses_output, "node"),
-        (PandaPowerConverter._pp_lines_output, "line"),
-        (PandaPowerConverter._pp_ext_grids_output, "source"),
-        (PandaPowerConverter._pp_shunts_output, "shunt"),
-        (PandaPowerConverter._pp_sgens_output, "sym_gen"),
-        (PandaPowerConverter._pp_trafos_output, "transformer"),
-        (PandaPowerConverter._pp_trafos3w_output, "three_winding_transformer"),
-        (PandaPowerConverter._pp_asym_loads_output, "asym_load"),
-        (PandaPowerConverter._pp_asym_gens_output, "asym_gen"),
-        (PandaPowerConverter._pp_switches_output, "link"),
-        (PandaPowerConverter._pp_buses_output_3ph, "node"),
-        (PandaPowerConverter._pp_lines_output_3ph, "line"),
-        (PandaPowerConverter._pp_ext_grids_output_3ph, "source"),
-        (PandaPowerConverter._pp_sgens_output_3ph, "sym_gen"),
-        (PandaPowerConverter._pp_trafos_output_3ph, "transformer"),
-        (PandaPowerConverter._pp_asym_loads_output_3ph, "asym_load"),
-        (PandaPowerConverter._pp_asym_gens_output_3ph, "asym_gen"),
+        (PandaPowerConverter._pp_buses_output, "node", {}),
+        (PandaPowerConverter._pp_lines_output, "line", {}),
+        (PandaPowerConverter._pp_ext_grids_output, "source", {}),
+        (PandaPowerConverter._pp_shunts_output, "shunt", {}),
+        (PandaPowerConverter._pp_sgens_output, "sym_gen", {}),
+        (PandaPowerConverter._pp_trafos_output, "transformer", {}),
+        (PandaPowerConverter._pp_trafos3w_output, "three_winding_transformer", {}),
+        (PandaPowerConverter._pp_load_elements_output, "load", {"symmetric": True, "element": "sym_load"}),
+        (PandaPowerConverter._pp_load_elements_output, "ward", {"symmetric": True, "element": "ward"}),
+        (PandaPowerConverter._pp_load_elements_output, "motor", {"symmetric": True, "element": "motor"}),
+        (PandaPowerConverter._pp_asym_loads_output, "asym_load", {}),
+        (PandaPowerConverter._pp_asym_gens_output, "asym_gen", {}),
+        (PandaPowerConverter._pp_switches_output, "link", {}),
+        (PandaPowerConverter._pp_buses_output_3ph, "node", {}),
+        (PandaPowerConverter._pp_lines_output_3ph, "line", {}),
+        (PandaPowerConverter._pp_ext_grids_output_3ph, "source", {}),
+        (PandaPowerConverter._pp_sgens_output_3ph, "sym_gen", {}),
+        (PandaPowerConverter._pp_trafos_output_3ph, "transformer", {}),
+        (PandaPowerConverter._pp_load_elements_output, "load", {"symmetric": False, "element": "sym_load"}),
+        (PandaPowerConverter._pp_load_elements_output, "ward", {"symmetric": False, "element": "ward"}),
+        (PandaPowerConverter._pp_load_elements_output, "motor", {"symmetric": False, "element": "motor"}),
+        (PandaPowerConverter._pp_asym_loads_output_3ph, "asym_load", {}),
+        (PandaPowerConverter._pp_asym_gens_output_3ph, "asym_gen", {}),
     ],
 )
-def test_create_pp_output_object__empty(create_fn: Callable[[PandaPowerConverter], None], table: str):
+def test_create_pp_output_object__empty(create_fn: Callable[..., None], table: str, create_fn_kwargs: Dict[str, Any]):
     # Arrange: No table
     converter = PandaPowerConverter()
 
     # Act / Assert
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_df:
-        create_fn(converter)
+        create_fn(converter, **create_fn_kwargs)
         mock_df.assert_not_called()
 
     # Arrange: Empty table
@@ -109,35 +115,7 @@ def test_create_pp_output_object__empty(create_fn: Callable[[PandaPowerConverter
 
     # Act / Assert
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_df:
-        create_fn(converter)
-        mock_df.assert_not_called()
-
-
-@pytest.mark.parametrize(
-    ("create_fn", "element", "symmetric", "table"),
-    [
-        (PandaPowerConverter._pp_load_elements_output, "load", True, "sym_load"),
-        (PandaPowerConverter._pp_load_elements_output, "ward", True, "ward"),
-        (PandaPowerConverter._pp_load_elements_output, "motor", True, "motor"),
-    ],
-)
-def test_create_pp_output_object_with_params__empty(
-    create_fn: Callable[[PandaPowerConverter, str, bool], None], element: str, symmetric: bool, table: str
-):
-    # Arrange: No table
-    converter = PandaPowerConverter()
-
-    # Act / Assert
-    with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_df:
-        create_fn(converter, element, symmetric)
-        mock_df.assert_not_called()
-
-    # Arrange: Empty table
-    converter.pgm_output_data[table] = np.array([])  # type: ignore
-
-    # Act / Assert
-    with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_df:
-        create_fn(converter, element, symmetric)
+        create_fn(converter, **create_fn_kwargs)
         mock_df.assert_not_called()
 
 

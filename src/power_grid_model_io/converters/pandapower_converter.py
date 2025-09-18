@@ -360,7 +360,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Furthermore, creates a global node lookup table, which stores nodes' voltage magnitude per unit and the voltage
         angle in degrees
         """
-        # TODO create output_data_3ph for trafos3w
+        # TODO create output_data_3ph for trafos3w, switches
         self._pp_buses_output_3ph()
         self._pp_lines_output_3ph()
         self._pp_ext_grids_output_3ph()
