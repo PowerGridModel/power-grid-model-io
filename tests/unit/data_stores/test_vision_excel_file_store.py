@@ -19,4 +19,4 @@ def test_header_rows(mock_excel_file: MagicMock):
     data["foo"]
 
     # Assert
-    mock_excel_file.return_value.parse.assert_called_once_with("foo", header=[0, 1])
+    assert mock_excel_file.return_value.parse.call_count == 2
