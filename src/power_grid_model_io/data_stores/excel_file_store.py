@@ -88,11 +88,18 @@ class ExcelFileStore(BaseDataStore[TabularData]):
 
         def lazy_sheet_loader(xls_file: pd.ExcelFile, xls_sheet_name: str):
             def sheet_loader():
-                sheet_data = xls_file.parse(xls_sheet_name, header=self._header_rows)
+                preview = xls_file.parse(xls_sheet_name, header=self._header_rows, nrows=0)
+                columns = list(preview.columns)
+                dtype = {}
+                for col in columns:
+                    if "Name" in str(col) or (isinstance(col, tuple) and ("Name" in str(col[0]))):
+                        dtype[col] = str
+                sheet_data = xls_file.parse(xls_sheet_name, header=self._header_rows, dtype=dtype)
                 sheet_data = self._remove_unnamed_column_placeholders(data=sheet_data)
                 sheet_data = self._handle_duplicate_columns(data=sheet_data, sheet_name=xls_sheet_name)
                 sheet_data = self._process_uuid_columns(data=sheet_data, sheet_name=xls_sheet_name)
                 sheet_data = self._update_column_names(data=sheet_data)
+
                 return sheet_data
 
             return sheet_loader
