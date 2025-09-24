@@ -37,7 +37,7 @@ def test_name_column_dtype_conversion(mock_excel_file: MagicMock):
             return preview_df
         else:
             actual_data = {
-                "Mock.Name": [123456789000000, 987.654],
+                "Mock.Name": [12345678900000000000, 987.654],
                 "Other.Column": ["value1", "value2"],
                 "ID": [1, 2],
                 "ratio": [0.1, 0.2],
@@ -66,7 +66,7 @@ def test_name_column_dtype_conversion(mock_excel_file: MagicMock):
     assert "Mock.Name" in second_call[1]["dtype"]
     assert second_call[1]["dtype"]["Mock.Name"] is str
 
-    assert result_df["Mock.Name"][0] == "123456789000000"  # Long int as string
+    assert result_df["Mock.Name"][0] == "12345678900000000000"  # Long int as string
     assert result_df["Mock.Name"][1] == "987.654"  # Float as string
     assert result_df["Other.Column"][0] == "value1"
     assert result_df["Other.Column"][1] == "value2"
