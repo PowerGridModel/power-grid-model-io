@@ -11,8 +11,10 @@ from functools import lru_cache
 from typing import Dict, List, MutableMapping, Optional, Tuple, Type
 
 import numpy as np
+import pandapower as pp
 import pandas as pd
 import structlog
+from packaging.version import Version
 from power_grid_model import (
     Branch3Side,
     BranchSide,
@@ -33,6 +35,9 @@ from power_grid_model_io.utils.parsing import is_node_ref, parse_trafo3_connecti
 PandaPowerData = MutableMapping[str, pd.DataFrame]
 
 logger = structlog.get_logger(__file__)
+
+pp_curr_version = Version(pp.__version__)
+pp_ref_version = Version("3.1.2")
 
 
 # pylint: disable=too-many-instance-attributes
@@ -631,34 +636,53 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             data_type=DatasetType.input, component_type=ComponentType.sym_load, shape=3 * n_loads
         )
 
-        const_i_multiplier = (
-            self._get_pp_attr("load", "const_i_percent", expected_type="f8", default=0) * scaling * (1e-2 * 1e6)
-        )
-        const_z_multiplier = (
-            self._get_pp_attr("load", "const_z_percent", expected_type="f8", default=0) * scaling * (1e-2 * 1e6)
-        )
-        const_p_multiplier = (1e6 - const_i_multiplier - const_z_multiplier) * scaling
+        if pp_curr_version <= pp_ref_version:
+            const_i_p_multiplier = (
+                self._get_pp_attr("load", "const_i_percent", expected_type="f8", default=0) * scaling * (1e-2 * 1e6)
+            )
+            const_z_p_multiplier = (
+                self._get_pp_attr("load", "const_z_percent", expected_type="f8", default=0) * scaling * (1e-2 * 1e6)
+            )
+            const_p_multiplier = (1e6 - const_i_p_multiplier - const_z_p_multiplier) * scaling
+            const_q_multiplier = const_p_multiplier
+            const_i_p_multiplier = const_i_p_multiplier
+            const_z_q_multiplier = const_z_p_multiplier
+        else:
+            const_i_p_multiplier = (
+                self._get_pp_attr("load", "const_i_p_percent", expected_type="f8", default=0) * scaling * (1e-2 * 1e6)
+            )
+            const_z_p_multiplier = (
+                self._get_pp_attr("load", "const_z_p_percent", expected_type="f8", default=0) * scaling * (1e-2 * 1e6)
+            )
+            const_p_multiplier = (1e6 - const_i_p_multiplier - const_z_p_multiplier) * scaling
+            const_i_q_multiplier = (
+                self._get_pp_attr("load", "const_i_q_percent", expected_type="f8", default=0) * scaling * (1e-2 * 1e6)
+            )
+            const_z_q_multiplier = (
+                self._get_pp_attr("load", "const_z_q_percent", expected_type="f8", default=0) * scaling * (1e-2 * 1e6)
+            )
+            const_q_multiplier = (1e6 - const_i_q_multiplier - const_z_q_multiplier) * scaling
 
         pgm_sym_loads["id"][:n_loads] = self._generate_ids("load", pp_loads.index, name="const_power")
         pgm_sym_loads["node"][:n_loads] = self._get_pgm_ids("bus", bus)
         pgm_sym_loads["status"][:n_loads] = in_service
         pgm_sym_loads["type"][:n_loads] = LoadGenType.const_power
         pgm_sym_loads["p_specified"][:n_loads] = const_p_multiplier * p_mw
-        pgm_sym_loads["q_specified"][:n_loads] = const_p_multiplier * q_mvar
+        pgm_sym_loads["q_specified"][:n_loads] = const_q_multiplier * q_mvar
 
         pgm_sym_loads["id"][n_loads : 2 * n_loads] = self._generate_ids("load", pp_loads.index, name="const_impedance")
         pgm_sym_loads["node"][n_loads : 2 * n_loads] = self._get_pgm_ids("bus", bus)
         pgm_sym_loads["status"][n_loads : 2 * n_loads] = in_service
         pgm_sym_loads["type"][n_loads : 2 * n_loads] = LoadGenType.const_impedance
-        pgm_sym_loads["p_specified"][n_loads : 2 * n_loads] = const_z_multiplier * p_mw
-        pgm_sym_loads["q_specified"][n_loads : 2 * n_loads] = const_z_multiplier * q_mvar
+        pgm_sym_loads["p_specified"][n_loads : 2 * n_loads] = const_z_p_multiplier * p_mw
+        pgm_sym_loads["q_specified"][n_loads : 2 * n_loads] = const_z_q_multiplier * q_mvar
 
         pgm_sym_loads["id"][-n_loads:] = self._generate_ids("load", pp_loads.index, name="const_current")
         pgm_sym_loads["node"][-n_loads:] = self._get_pgm_ids("bus", bus)
         pgm_sym_loads["status"][-n_loads:] = in_service
         pgm_sym_loads["type"][-n_loads:] = LoadGenType.const_current
-        pgm_sym_loads["p_specified"][-n_loads:] = const_i_multiplier * p_mw
-        pgm_sym_loads["q_specified"][-n_loads:] = const_i_multiplier * q_mvar
+        pgm_sym_loads["p_specified"][-n_loads:] = const_i_p_multiplier * p_mw
+        pgm_sym_loads["q_specified"][-n_loads:] = const_i_q_multiplier * q_mvar
 
         assert ComponentType.sym_load not in self.pgm_input_data
         self.pgm_input_data[ComponentType.sym_load] = pgm_sym_loads
@@ -1860,12 +1884,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 "q_b_to_mvar",
                 "p_c_to_mw",
                 "q_c_to_mvar",
-                "p_a_l_mw",
-                "q_a_l_mvar",
-                "p_b_l_mw",
-                "q_b_l_mvar",
-                "p_c_l_mw",
-                "q_c_l_mvar",
+                "pl_a_mw",
+                "ql_a_mvar",
+                "pl_b_mw",
+                "ql_b_mvar",
+                "pl_c_mw",
+                "ql_c_mvar",
                 "i_a_from_ka",
                 "i_b_from_ka",
                 "i_c_from_ka",
@@ -1898,12 +1922,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_lines_3ph["q_b_to_mvar"] = pgm_output_lines["q_to"][:, 1] * 1e-6
         pp_output_lines_3ph["p_c_to_mw"] = pgm_output_lines["p_to"][:, 2] * 1e-6
         pp_output_lines_3ph["q_c_to_mvar"] = pgm_output_lines["q_to"][:, 2] * 1e-6
-        pp_output_lines_3ph["p_a_l_mw"] = (pgm_output_lines["p_from"][:, 0] + pgm_output_lines["p_to"][:, 0]) * 1e-6
-        pp_output_lines_3ph["q_a_l_mvar"] = (pgm_output_lines["q_from"][:, 0] + pgm_output_lines["q_to"][:, 0]) * 1e-6
-        pp_output_lines_3ph["p_b_l_mw"] = (pgm_output_lines["p_from"][:, 1] + pgm_output_lines["p_to"][:, 1]) * 1e-6
-        pp_output_lines_3ph["q_b_l_mvar"] = (pgm_output_lines["q_from"][:, 1] + pgm_output_lines["q_to"][:, 1]) * 1e-6
-        pp_output_lines_3ph["p_c_l_mw"] = (pgm_output_lines["p_from"][:, 2] + pgm_output_lines["p_to"][:, 2]) * 1e-6
-        pp_output_lines_3ph["q_c_l_mvar"] = (pgm_output_lines["q_from"][:, 2] + pgm_output_lines["q_to"][:, 2]) * 1e-6
+        pp_output_lines_3ph["pl_a_mw"] = (pgm_output_lines["p_from"][:, 0] + pgm_output_lines["p_to"][:, 0]) * 1e-6
+        pp_output_lines_3ph["ql_a_mvar"] = (pgm_output_lines["q_from"][:, 0] + pgm_output_lines["q_to"][:, 0]) * 1e-6
+        pp_output_lines_3ph["pl_b_mw"] = (pgm_output_lines["p_from"][:, 1] + pgm_output_lines["p_to"][:, 1]) * 1e-6
+        pp_output_lines_3ph["ql_b_mvar"] = (pgm_output_lines["q_from"][:, 1] + pgm_output_lines["q_to"][:, 1]) * 1e-6
+        pp_output_lines_3ph["pl_c_mw"] = (pgm_output_lines["p_from"][:, 2] + pgm_output_lines["p_to"][:, 2]) * 1e-6
+        pp_output_lines_3ph["ql_c_mvar"] = (pgm_output_lines["q_from"][:, 2] + pgm_output_lines["q_to"][:, 2]) * 1e-6
         pp_output_lines_3ph["i_a_from_ka"] = pgm_output_lines["i_from"][:, 0] * 1e-3
         pp_output_lines_3ph["i_b_from_ka"] = pgm_output_lines["i_from"][:, 1] * 1e-3
         pp_output_lines_3ph["i_c_from_ka"] = pgm_output_lines["i_from"][:, 2] * 1e-3
@@ -2040,12 +2064,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 "q_b_lv_mvar",
                 "p_c_lv_mw",
                 "q_c_lv_mvar",
-                "p_a_l_mw",
-                "q_a_l_mvar",
-                "p_b_l_mw",
-                "q_b_l_mvar",
-                "p_c_l_mw",
-                "q_c_l_mvar",
+                "pl_a_mw",
+                "ql_a_mvar",
+                "pl_b_mw",
+                "ql_b_mvar",
+                "pl_c_mw",
+                "ql_c_mvar",
                 "i_a_hv_ka",
                 "i_a_lv_ka",
                 "i_b_hv_ka",
@@ -2071,22 +2095,22 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_trafos_3ph["q_b_lv_mvar"] = pgm_output_transformers["q_to"][:, 1] * 1e-6
         pp_output_trafos_3ph["p_c_lv_mw"] = pgm_output_transformers["p_to"][:, 2] * 1e-6
         pp_output_trafos_3ph["q_c_lv_mvar"] = pgm_output_transformers["q_to"][:, 2] * 1e-6
-        pp_output_trafos_3ph["p_a_l_mw"] = (
+        pp_output_trafos_3ph["pl_a_mw"] = (
             pgm_output_transformers["p_from"][:, 0] + pgm_output_transformers["p_to"][:, 0]
         ) * 1e-6
-        pp_output_trafos_3ph["q_a_l_mvar"] = (
+        pp_output_trafos_3ph["ql_a_mvar"] = (
             pgm_output_transformers["q_from"][:, 0] + pgm_output_transformers["q_to"][:, 0]
         ) * 1e-6
-        pp_output_trafos_3ph["p_b_l_mw"] = (
+        pp_output_trafos_3ph["pl_b_mw"] = (
             pgm_output_transformers["p_from"][:, 1] + pgm_output_transformers["p_to"][:, 1]
         ) * 1e-6
-        pp_output_trafos_3ph["q_b_l_mvar"] = (
+        pp_output_trafos_3ph["ql_b_mvar"] = (
             pgm_output_transformers["q_from"][:, 1] + pgm_output_transformers["q_to"][:, 1]
         ) * 1e-6
-        pp_output_trafos_3ph["p_c_l_mw"] = (
+        pp_output_trafos_3ph["pl_c_mw"] = (
             pgm_output_transformers["p_from"][:, 2] + pgm_output_transformers["p_to"][:, 2]
         ) * 1e-6
-        pp_output_trafos_3ph["q_c_l_mvar"] = (
+        pp_output_trafos_3ph["ql_c_mvar"] = (
             pgm_output_transformers["q_from"][:, 2] + pgm_output_transformers["q_to"][:, 2]
         ) * 1e-6
         pp_output_trafos_3ph["i_a_hv_ka"] = pgm_output_transformers["i_from"][:, 0] * 1e-3
