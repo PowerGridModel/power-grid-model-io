@@ -653,7 +653,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             )
             const_p_multiplier = (1e6 - const_i_p_multiplier - const_z_p_multiplier) * scaling
             const_q_multiplier = const_p_multiplier
-            const_i_p_multiplier = const_i_p_multiplier
+            const_i_q_multiplier = const_i_p_multiplier
             const_z_q_multiplier = const_z_p_multiplier
         else:
             const_i_p_multiplier = (
