@@ -22,7 +22,7 @@ from power_grid_model import (
     initialize_array,
 )
 
-from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter
+from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter, pp_curr_version, pp_ref_version
 
 from ...utils import MockDf, MockFn, assert_struct_array_equal
 
@@ -689,12 +689,19 @@ def test_create_pgm_input_sym_loads(mock_init_array: MagicMock, two_pp_objs, con
     converter._get_pp_attr.assert_any_call("load", "bus", expected_type="u4")
     converter._get_pp_attr.assert_any_call("load", "p_mw", expected_type="f8", default=0.0)
     converter._get_pp_attr.assert_any_call("load", "q_mvar", expected_type="f8", default=0.0)
-    converter._get_pp_attr.assert_any_call("load", "const_z_percent", expected_type="f8", default=0)
-    converter._get_pp_attr.assert_any_call("load", "const_i_percent", expected_type="f8", default=0)
     converter._get_pp_attr.assert_any_call("load", "scaling", expected_type="f8", default=1)
     converter._get_pp_attr.assert_any_call("load", "in_service", expected_type="bool", default=True)
     converter._get_pp_attr.assert_any_call("load", "type", expected_type="O", default=None)
-    assert len(converter._get_pp_attr.call_args_list) == 8
+    if pp_curr_version <= pp_ref_version:
+        converter._get_pp_attr.assert_any_call("load", "const_z_percent", expected_type="f8", default=0)
+        converter._get_pp_attr.assert_any_call("load", "const_i_percent", expected_type="f8", default=0)
+        assert len(converter._get_pp_attr.call_args_list) == 8
+    else:
+        converter._get_pp_attr.assert_any_call("load", "const_z_p_percent", expected_type="f8", default=0)
+        converter._get_pp_attr.assert_any_call("load", "const_z_q_percent", expected_type="f8", default=0)
+        converter._get_pp_attr.assert_any_call("load", "const_i_p_percent", expected_type="f8", default=0)
+        converter._get_pp_attr.assert_any_call("load", "const_i_q_percent", expected_type="f8", default=0)
+        assert len(converter._get_pp_attr.call_args_list) == 10
 
     # assignment:
     for attr in pgm_attr:

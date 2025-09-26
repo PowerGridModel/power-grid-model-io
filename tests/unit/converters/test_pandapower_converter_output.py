@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 from power_grid_model import ComponentType, DatasetType, initialize_array
 
-from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter
+from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter, get_loss_params_3ph
 from tests.utils import MockDf
 
 
@@ -895,6 +895,7 @@ def test_output_line_3ph(converter):
         mock_pgm_array.__getitem__.assert_any_call("i_to")
 
         # assignment
+        loss_params = get_loss_params_3ph()
         mock_pp_df.return_value.__setitem__.assert_any_call("p_a_from_mw", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("q_a_from_mvar", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("p_a_to_mw", ANY)
@@ -907,12 +908,12 @@ def test_output_line_3ph(converter):
         mock_pp_df.return_value.__setitem__.assert_any_call("q_c_from_mvar", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("p_c_to_mw", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("q_c_to_mvar", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("p_a_l_mw", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("p_b_l_mw", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("p_c_l_mw", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("q_a_l_mvar", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("q_b_l_mvar", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("q_c_l_mvar", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call(loss_params[0], ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call(loss_params[2], ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call(loss_params[4], ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call(loss_params[1], ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call(loss_params[3], ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call(loss_params[5], ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("i_a_from_ka", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("i_b_from_ka", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("i_c_from_ka", ANY)
@@ -1017,6 +1018,7 @@ def test_output_trafos_3ph__current(converter):
         mock_pgm_array.__getitem__.assert_any_call("i_to")
 
         # assignment
+        loss_params = get_loss_params_3ph()
         mock_pp_df.return_value.__setitem__.assert_any_call("p_a_hv_mw", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("q_a_hv_mvar", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("p_a_lv_mw", ANY)
@@ -1029,12 +1031,12 @@ def test_output_trafos_3ph__current(converter):
         mock_pp_df.return_value.__setitem__.assert_any_call("q_c_hv_mvar", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("p_c_lv_mw", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("q_c_lv_mvar", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("p_a_l_mw", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("p_b_l_mw", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("p_c_l_mw", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("q_a_l_mvar", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("q_b_l_mvar", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("q_c_l_mvar", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call(loss_params[0], ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call(loss_params[2], ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call(loss_params[4], ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call(loss_params[1], ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call(loss_params[3], ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call(loss_params[5], ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("i_a_hv_ka", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("i_b_hv_ka", ANY)
         mock_pp_df.return_value.__setitem__.assert_any_call("i_c_hv_ka", ANY)

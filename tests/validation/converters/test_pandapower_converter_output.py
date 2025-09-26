@@ -17,7 +17,7 @@ from power_grid_model import PowerGridModel
 from power_grid_model.validation import assert_valid_input_data
 
 from power_grid_model_io.converters import PandaPowerConverter
-from power_grid_model_io.converters.pandapower_converter import PandaPowerData
+from power_grid_model_io.converters.pandapower_converter import PandaPowerData, get_loss_params_3ph
 
 from ...data.pandapower.pp_validation import pp_net, pp_net_3ph, pp_net_3ph_minimal_trafo
 from ..utils import component_attributes_df, load_json_single_dataset
@@ -324,19 +324,19 @@ def _get_total_powers_3ph(net):
         s_shunt = np.complex128()
 
     s_load = s_load_sym + s_load_asym + s_motor + s_ward + s_shunt
-
+    loss_params = get_loss_params_3ph()
     if "res_line_3ph" in net:
         s_loss_line = (
-            net.res_line_3ph.loc[:, ["p_a_l_mw", "p_b_l_mw", "p_c_l_mw"]].sum().sum()
-            + 1j * net.res_line_3ph.loc[:, ["q_a_l_mvar", "q_b_l_mvar", "q_c_l_mvar"]].sum().sum()
+            net.res_line_3ph.loc[:, [loss_params[0], loss_params[2], loss_params[4]]].sum().sum()
+            + 1j * net.res_line_3ph.loc[:, [loss_params[1], loss_params[3], loss_params[5]]].sum().sum()
         )
     else:
         s_loss_line = np.complex128()
 
     if "res_trafo_3ph" in net:
         s_loss_trafo = (
-            net.res_trafo_3ph.loc[:, ["p_a_l_mw", "p_b_l_mw", "p_c_l_mw"]].sum().sum()
-            + 1j * net.res_trafo_3ph.loc[:, ["q_a_l_mvar", "q_b_l_mvar", "q_c_l_mvar"]].sum().sum()
+            net.res_trafo_3ph.loc[:, [loss_params[0], loss_params[2], loss_params[4]]].sum().sum()
+            + 1j * net.res_trafo_3ph.loc[:, [loss_params[1], loss_params[3], loss_params[5]]].sum().sum()
         )
     else:
         s_loss_trafo = np.complex128()
