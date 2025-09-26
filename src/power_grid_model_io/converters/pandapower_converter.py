@@ -8,10 +8,10 @@ Panda Power Converter
 
 import logging
 from functools import lru_cache
+from importlib.metadata import version
 from typing import Dict, List, MutableMapping, Optional, Tuple, Type
 
 import numpy as np
-import pandapower as pp
 import pandas as pd
 import structlog
 from packaging.version import Version
@@ -36,7 +36,7 @@ PandaPowerData = MutableMapping[str, pd.DataFrame]
 
 logger = structlog.get_logger(__file__)
 
-pp_curr_version = Version(pp.__version__)
+pp_curr_version = Version(version("pandapower"))
 pp_ref_version = Version("3.1.2")
 
 
@@ -1844,6 +1844,13 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # Finally apply the unit conversion (W -> MW and VAR -> MVAR)
         pp_output_buses_3ph[power_columns] /= 1e6
 
+    def get_loss_params_3ph(self):
+        if pp_curr_version <= pp_ref_version:
+            loss_params = ["p_a_l_mw", "q_a_l_mvar", "p_b_l_mw", "q_b_l_mvar", "p_c_l_mw", "q_c_l_mvar"]
+        else:
+            loss_params = ["pl_a_mw", "ql_a_mvar", "pl_b_mw", "ql_b_mvar", "pl_c_mw", "ql_c_mvar"]
+        return loss_params
+
     def _pp_lines_output_3ph(self):
         """
         This function converts a power-grid-model Line output array to a Line Dataframe of PandaPower.
@@ -1870,6 +1877,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         i_from = (pgm_output_lines["p_from"] + 1j * pgm_output_lines["q_from"]) / u_complex.iloc[from_nodes, :]
         i_to = (pgm_output_lines["p_to"] + 1j * pgm_output_lines["q_to"]) / u_complex.iloc[to_nodes, :]
 
+        loss_params = self.get_loss_params_3ph()
         pp_output_lines_3ph = pd.DataFrame(
             columns=[
                 "p_a_from_mw",
@@ -1884,12 +1892,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 "q_b_to_mvar",
                 "p_c_to_mw",
                 "q_c_to_mvar",
-                "pl_a_mw",
-                "ql_a_mvar",
-                "pl_b_mw",
-                "ql_b_mvar",
-                "pl_c_mw",
-                "ql_c_mvar",
+                loss_params[0],
+                loss_params[1],
+                loss_params[2],
+                loss_params[3],
+                loss_params[4],
+                loss_params[5],
                 "i_a_from_ka",
                 "i_b_from_ka",
                 "i_c_from_ka",
@@ -1922,12 +1930,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_lines_3ph["q_b_to_mvar"] = pgm_output_lines["q_to"][:, 1] * 1e-6
         pp_output_lines_3ph["p_c_to_mw"] = pgm_output_lines["p_to"][:, 2] * 1e-6
         pp_output_lines_3ph["q_c_to_mvar"] = pgm_output_lines["q_to"][:, 2] * 1e-6
-        pp_output_lines_3ph["pl_a_mw"] = (pgm_output_lines["p_from"][:, 0] + pgm_output_lines["p_to"][:, 0]) * 1e-6
-        pp_output_lines_3ph["ql_a_mvar"] = (pgm_output_lines["q_from"][:, 0] + pgm_output_lines["q_to"][:, 0]) * 1e-6
-        pp_output_lines_3ph["pl_b_mw"] = (pgm_output_lines["p_from"][:, 1] + pgm_output_lines["p_to"][:, 1]) * 1e-6
-        pp_output_lines_3ph["ql_b_mvar"] = (pgm_output_lines["q_from"][:, 1] + pgm_output_lines["q_to"][:, 1]) * 1e-6
-        pp_output_lines_3ph["pl_c_mw"] = (pgm_output_lines["p_from"][:, 2] + pgm_output_lines["p_to"][:, 2]) * 1e-6
-        pp_output_lines_3ph["ql_c_mvar"] = (pgm_output_lines["q_from"][:, 2] + pgm_output_lines["q_to"][:, 2]) * 1e-6
+        pp_output_lines_3ph[loss_params[0]] = (pgm_output_lines["p_from"][:, 0] + pgm_output_lines["p_to"][:, 0]) * 1e-6
+        pp_output_lines_3ph[loss_params[1]] = (pgm_output_lines["q_from"][:, 0] + pgm_output_lines["q_to"][:, 0]) * 1e-6
+        pp_output_lines_3ph[loss_params[2]] = (pgm_output_lines["p_from"][:, 1] + pgm_output_lines["p_to"][:, 1]) * 1e-6
+        pp_output_lines_3ph[loss_params[3]] = (pgm_output_lines["q_from"][:, 1] + pgm_output_lines["q_to"][:, 1]) * 1e-6
+        pp_output_lines_3ph[loss_params[4]] = (pgm_output_lines["p_from"][:, 2] + pgm_output_lines["p_to"][:, 2]) * 1e-6
+        pp_output_lines_3ph[loss_params[5]] = (pgm_output_lines["q_from"][:, 2] + pgm_output_lines["q_to"][:, 2]) * 1e-6
         pp_output_lines_3ph["i_a_from_ka"] = pgm_output_lines["i_from"][:, 0] * 1e-3
         pp_output_lines_3ph["i_b_from_ka"] = pgm_output_lines["i_from"][:, 1] * 1e-3
         pp_output_lines_3ph["i_c_from_ka"] = pgm_output_lines["i_from"][:, 2] * 1e-3
@@ -2050,6 +2058,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         loading = np.maximum(np.maximum(loading_a_percent, loading_b_percent), loading_c_percent)
 
+        loss_params = self.get_loss_params_3ph()
         pp_output_trafos_3ph = pd.DataFrame(
             columns=[
                 "p_a_hv_mw",
@@ -2064,12 +2073,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 "q_b_lv_mvar",
                 "p_c_lv_mw",
                 "q_c_lv_mvar",
-                "pl_a_mw",
-                "ql_a_mvar",
-                "pl_b_mw",
-                "ql_b_mvar",
-                "pl_c_mw",
-                "ql_c_mvar",
+                loss_params[0],
+                loss_params[1],
+                loss_params[2],
+                loss_params[3],
+                loss_params[4],
+                loss_params[5],
                 "i_a_hv_ka",
                 "i_a_lv_ka",
                 "i_b_hv_ka",
@@ -2095,22 +2104,22 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_trafos_3ph["q_b_lv_mvar"] = pgm_output_transformers["q_to"][:, 1] * 1e-6
         pp_output_trafos_3ph["p_c_lv_mw"] = pgm_output_transformers["p_to"][:, 2] * 1e-6
         pp_output_trafos_3ph["q_c_lv_mvar"] = pgm_output_transformers["q_to"][:, 2] * 1e-6
-        pp_output_trafos_3ph["pl_a_mw"] = (
+        pp_output_trafos_3ph[loss_params[0]] = (
             pgm_output_transformers["p_from"][:, 0] + pgm_output_transformers["p_to"][:, 0]
         ) * 1e-6
-        pp_output_trafos_3ph["ql_a_mvar"] = (
+        pp_output_trafos_3ph[loss_params[1]] = (
             pgm_output_transformers["q_from"][:, 0] + pgm_output_transformers["q_to"][:, 0]
         ) * 1e-6
-        pp_output_trafos_3ph["pl_b_mw"] = (
+        pp_output_trafos_3ph[loss_params[2]] = (
             pgm_output_transformers["p_from"][:, 1] + pgm_output_transformers["p_to"][:, 1]
         ) * 1e-6
-        pp_output_trafos_3ph["ql_b_mvar"] = (
+        pp_output_trafos_3ph[loss_params[3]] = (
             pgm_output_transformers["q_from"][:, 1] + pgm_output_transformers["q_to"][:, 1]
         ) * 1e-6
-        pp_output_trafos_3ph["pl_c_mw"] = (
+        pp_output_trafos_3ph[loss_params[4]] = (
             pgm_output_transformers["p_from"][:, 2] + pgm_output_transformers["p_to"][:, 2]
         ) * 1e-6
-        pp_output_trafos_3ph["ql_c_mvar"] = (
+        pp_output_trafos_3ph[loss_params[5]] = (
             pgm_output_transformers["q_from"][:, 2] + pgm_output_transformers["q_to"][:, 2]
         ) * 1e-6
         pp_output_trafos_3ph["i_a_hv_ka"] = pgm_output_transformers["i_from"][:, 0] * 1e-3
