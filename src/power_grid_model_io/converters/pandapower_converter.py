@@ -1776,7 +1776,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_buses_3ph["va_b_degree"] = node_u_angle[:, 1] * (180.0 / np.pi)
         pp_output_buses_3ph["vm_c_pu"] = node_u_pu[:, 2]
         pp_output_buses_3ph["va_c_degree"] = node_u_angle[:, 2] * (180.0 / np.pi)
-        pp_output_buses_3ph["unbalance_percent"] = np.abs(u_sequence[:, 0]) / np.abs(u_sequence[:, 1]) * 100
+        pp_output_buses_3ph["unbalance_percent"] = np.abs(u_sequence[:, 2]) / np.abs(u_sequence[:, 1]) * 100
 
         # p_to, p_from, q_to and q_from connected to the bus have to be summed up
         self._pp_buses_output_3ph__accumulate_power(pp_output_buses_3ph)
@@ -1911,10 +1911,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 "i_b_to_ka",
                 "i_c_to_ka",
                 "i_n_to_ka",
-                "loading_percent",
                 "loading_a_percent",
                 "loading_b_percent",
                 "loading_c_percent",
+                "loading_percent",
             ],
             index=self._get_pp_ids("line", pgm_output_lines["id"]),
         )
