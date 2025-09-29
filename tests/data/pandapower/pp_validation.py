@@ -6,6 +6,8 @@ from functools import lru_cache
 
 import pandapower as pp
 
+from power_grid_model_io.converters.pandapower_converter import pp_curr_version, pp_ref_version
+
 
 @lru_cache
 def pp_net() -> pp.pandapowerNet:
@@ -51,9 +53,23 @@ def pp_net() -> pp.pandapowerNet:
     pp.create_line(
         net, index=101, from_bus=103, to_bus=102, length_km=1.23, parallel=2, df=0.2, std_type="NAYY 4x150 SE"
     )
-    pp.create_load(
-        net, index=101, bus=103, p_mw=2.5, q_mvar=0.24, const_i_percent=26.0, const_z_percent=51.0, cos_phi=2
-    )
+    if pp_curr_version <= pp_ref_version:
+        pp.create_load(
+            net, index=101, bus=103, p_mw=2.5, q_mvar=0.24, const_i_percent=26.0, const_z_percent=51.0, cos_phi=2
+        )
+    else:
+        pp.create_load(
+            net,
+            index=101,
+            bus=103,
+            p_mw=2.5,
+            q_mvar=0.24,
+            const_i_p_percent=26.0,
+            const_i_q_percent=26.0,
+            const_z_p_percent=51.0,
+            const_z_q_percent=51.0,
+            cos_phi=2,
+        )
     pp.create_switch(net, index=101, et="l", bus=103, element=101, closed=True)
     pp.create_switch(net, index=3021, et="b", bus=101, element=106, closed=True)
     pp.create_switch(net, index=321, et="t", bus=101, element=101, closed=True)
@@ -173,7 +189,20 @@ def pp_net_3ph() -> pp.pandapowerNet:
         c0_nf_per_km=261.0,
         max_i_ka=0.27,
     )
-    pp.create_load(net, index=101, bus=103, p_mw=2.5, q_mvar=0.24, const_i_percent=0.0, const_z_percent=0)
+    if pp_curr_version <= pp_ref_version:
+        pp.create_load(net, index=101, bus=103, p_mw=2.5, q_mvar=0.24, const_i_percent=0.0, const_z_percent=0)
+    else:
+        pp.create_load(
+            net,
+            index=101,
+            bus=103,
+            p_mw=2.5,
+            q_mvar=0.24,
+            const_i_p_percent=0.0,
+            const_i_q_percent=0.0,
+            const_z_p_percent=0,
+            const_z_q_percnet=0,
+        )
     pp.create_switch(net, index=101, et="l", bus=103, element=101, closed=True)
     pp.create_switch(net, index=3021, et="b", bus=101, element=106, closed=True)
     pp.create_switch(net, index=321, et="t", bus=101, element=0, closed=True)

@@ -17,7 +17,12 @@ from power_grid_model import PowerGridModel
 from power_grid_model.validation import assert_valid_input_data
 
 from power_grid_model_io.converters import PandaPowerConverter
-from power_grid_model_io.converters.pandapower_converter import PandaPowerData, get_loss_params_3ph
+from power_grid_model_io.converters.pandapower_converter import (
+    PandaPowerData,
+    get_loss_params_3ph,
+    pp_curr_version,
+    pp_ref_version,
+)
 
 from ...data.pandapower.pp_validation import pp_net, pp_net_3ph, pp_net_3ph_minimal_trafo
 from ..utils import component_attributes_df, load_json_single_dataset
@@ -28,9 +33,16 @@ pp = pytest.importorskip("pandapower", reason="pandapower is not installed")
 PGM_PP_TEST_DATA = Path(__file__).parents[2] / "data" / "pandapower"
 PGM_OUTPUT_FILE = PGM_PP_TEST_DATA / "pgm_output_data.json"
 PGM_ASYM_OUTPUT_FILE = PGM_PP_TEST_DATA / "pgm_asym_output_data.json"
-PP_V2_NET_OUTPUT_FILE = PGM_PP_TEST_DATA / "pp_v2_net_output.json"
-PP_V2_NET_3PH_OUTPUT_FILE = PGM_PP_TEST_DATA / "pp_v2_net_3ph_output.json"
-PP_V2_NET_3PH_OUTPUT_FILE_CURRENT_LOADING = PGM_PP_TEST_DATA / "pp_v2_net_3ph_output_current_loading.json"
+if pp_curr_version <= pp_ref_version:
+    PP_V2_NET_OUTPUT_FILE = PGM_PP_TEST_DATA / "pp_old" / "pp_v2_net_output.json"
+    PP_V2_NET_3PH_OUTPUT_FILE = PGM_PP_TEST_DATA / "pp_old" / "pp_v2_net_3ph_output.json"
+    PP_V2_NET_3PH_OUTPUT_FILE_CURRENT_LOADING = (
+        PGM_PP_TEST_DATA / "pp_old" / "pp_v2_net_3ph_output_current_loading.json"
+    )
+else:
+    PP_V2_NET_OUTPUT_FILE = PGM_PP_TEST_DATA / "pp_v2_net_output.json"
+    PP_V2_NET_3PH_OUTPUT_FILE = PGM_PP_TEST_DATA / "pp_v2_net_3ph_output.json"
+    PP_V2_NET_3PH_OUTPUT_FILE_CURRENT_LOADING = PGM_PP_TEST_DATA / "pp_v2_net_3ph_output_current_loading.json"
 
 
 @contextmanager
