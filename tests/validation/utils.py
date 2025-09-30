@@ -10,8 +10,9 @@ from typing import Generator, List, Mapping, Tuple
 
 import numpy as np
 import pandas as pd
-from power_grid_model import DatasetType, power_grid_meta_data
+from power_grid_model import ComponentType, DatasetType, power_grid_meta_data
 from power_grid_model.data_types import SingleDataset, SinglePythonDataset
+from power_grid_model.enum import ComponentAttributeFilterOptions
 from power_grid_model.errors import PowerGridSerializationError
 from power_grid_model.utils import import_json_data, json_deserialize_from_file
 
@@ -42,12 +43,15 @@ def component_objects(json_path: Path) -> Generator[Tuple[str, List[int]], None,
     Yields: A tuple (component, ids) for each component available in the json file
 
     """
-    data = load_json_file(json_path)
+    data = json_deserialize_from_file(
+        json_path,
+        data_filter={key: ["id"] for key in ComponentType},
+    )
     assert isinstance(data, dict)
 
     # Loop over all components in the validation file (in alphabetical order)
     for component, objects in sorted(data.items(), key=lambda x: x[0]):
-        obj_ids = [obj["id"] for obj in objects]
+        obj_ids = list(objects["id"])
         if obj_ids:
             yield component, obj_ids
 
@@ -63,22 +67,24 @@ def component_attributes(json_path: Path, data_type: DatasetType) -> Generator[T
     Yields: A tuple (component, attribute) for each attribute available in the json file
 
     """
-    data = load_json_file(json_path)
+    data = json_deserialize_from_file(json_path, data_filter=ComponentAttributeFilterOptions.relevant)
     assert isinstance(data, dict)
 
     # Loop over all components in the validation file (in alphabetical order)
     for component, objects in sorted(data.items(), key=lambda x: x[0]):
         # Create a set of attribute names for each object, then take the union of all those sets
         pgm_attr = set(power_grid_meta_data[data_type][component].dtype.names)
-        obj_keys = (set(obj.keys()) & pgm_attr for obj in objects)
-        unique_attributes = set().union(*obj_keys)
+        obj_keys = set(objects.keys()) & pgm_attr
+        unique_attributes = set(obj_keys)
 
         # Yield the data for each attribute (in alphabetical order)
         for attribute in sorted(unique_attributes):
             yield component, attribute
 
 
-def component_attributes_df(data: Mapping[str, pd.DataFrame]) -> Generator[Tuple[str, str], None, None]:
+def component_attributes_df(
+    data: Mapping[str, pd.DataFrame],
+) -> Generator[Tuple[str, str], None, None]:
     """
     Extract the component and attribute names from the DataFrames
 
@@ -194,7 +200,11 @@ def load_json_single_dataset(file_path: Path, data_type: str) -> Tuple[SingleDat
             if error is not None:
                 raise error
 
-    extra_info = extract_extra_info(json.loads(file_path.read_text(encoding="utf-8")), data_type=data_type)
+    raw_data = json.loads(file_path.read_text(encoding="utf-8"))
+    if {"version", "data"} <= raw_data.keys():  # new format
+        raw_data = raw_data["data"]
+
+    extra_info = extract_extra_info(raw_data, data_type=data_type)
     return dataset, extra_info
 
 

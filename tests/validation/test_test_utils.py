@@ -11,7 +11,16 @@ from power_grid_model import ComponentType, DatasetType, power_grid_meta_data
 
 from .utils import component_attributes, extract_extra_info, select_values
 
-MOCK_JSON_DATA = '{"node":[{"id":0,"u_rated":0.0},{"id":0,"u_rated":0.0,"bar":0}],"line":[{"id":0,"i_n": 0}]}'
+MOCK_JSON_DATA = r"""{
+    "version": "1.0",
+    "type": "input",
+    "is_batch": false,
+    "attributes": {},
+    "data": {
+        "node": [{"id":0,"u_rated":0.0}, {"id":0,"u_rated":0.0,"bar":0}],
+        "line": [{"id":0,"i_n": 0}]
+    }
+}"""
 
 
 @patch("pathlib.Path.open", mock_open(read_data=MOCK_JSON_DATA))
