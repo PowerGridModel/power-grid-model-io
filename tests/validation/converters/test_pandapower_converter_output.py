@@ -34,17 +34,13 @@ PGM_PP_TEST_DATA = Path(__file__).parents[2] / "data" / "pandapower"
 PGM_OUTPUT_FILE = PGM_PP_TEST_DATA / "pgm_output_data.json"
 PGM_ASYM_OUTPUT_FILE = PGM_PP_TEST_DATA / "pgm_asym_output_data.json"
 if pp_curr_version <= pp_ref_version:
-    PP_V2_NET_OUTPUT_FILE = PGM_PP_TEST_DATA / "v3.1.2" / "pp_v2_net_output.json"
-    PP_V2_NET_3PH_OUTPUT_FILE = PGM_PP_TEST_DATA / "v3.1.2" / "pp_v2_net_3ph_output.json"
-    PP_V2_NET_3PH_OUTPUT_FILE_CURRENT_LOADING = (
-        PGM_PP_TEST_DATA / "v3.1.2" / "pp_v2_net_3ph_output_current_loading.json"
-    )
+    PP_V2_NET_OUTPUT_FILE = PGM_PP_TEST_DATA / "v2" / "pp_v2_net_output.json"
+    PP_V2_NET_3PH_OUTPUT_FILE = PGM_PP_TEST_DATA / "v2" / "pp_v2_net_3ph_output.json"
+    PP_V2_NET_3PH_OUTPUT_FILE_CURRENT_LOADING = PGM_PP_TEST_DATA / "v2" / "pp_v2_net_3ph_output_current_loading.json"
 else:
-    PP_V2_NET_OUTPUT_FILE = PGM_PP_TEST_DATA / "v3.1.3" / "pp_v2_net_output.json"
-    PP_V2_NET_3PH_OUTPUT_FILE = PGM_PP_TEST_DATA / "v3.1.3" / "pp_v2_net_3ph_output.json"
-    PP_V2_NET_3PH_OUTPUT_FILE_CURRENT_LOADING = (
-        PGM_PP_TEST_DATA / "v3.1.3" / "pp_v2_net_3ph_output_current_loading.json"
-    )
+    PP_V2_NET_OUTPUT_FILE = PGM_PP_TEST_DATA / "v3" / "pp_v2_net_output.json"
+    PP_V2_NET_3PH_OUTPUT_FILE = PGM_PP_TEST_DATA / "v3" / "pp_v2_net_3ph_output.json"
+    PP_V2_NET_3PH_OUTPUT_FILE_CURRENT_LOADING = PGM_PP_TEST_DATA / "v3" / "pp_v2_net_3ph_output_current_loading.json"
 
 
 @contextmanager
