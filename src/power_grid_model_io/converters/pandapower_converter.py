@@ -2430,7 +2430,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         else:
             raise KeyError(f"Can't get switch states for {pp_table}")
 
-        component = self.pp_input_data[pp_table]
+        component = self.pp_input_data[pp_table].copy()
         component["index"] = component.index
 
         # Select the appropriate switches and columns
