@@ -801,7 +801,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         checks = {
             "vk0_percent": np.allclose(vk_percent, vk0_percent) or np.isnan(vk0_percent).all(),
             "vkr0_percent": np.allclose(vkr_percent, vkr0_percent) or np.isnan(vkr0_percent).all(),
-            "mag0_percent": np.allclose(i_no_load * 1e-2, 1e4 / (vk0_percent * mag0_percent))
+            "mag0_percent": np.allclose(i_no_load * 1e-2, (vk0_percent * mag0_percent) * 1e-4)
             or np.isnan(mag0_percent).all(),
             "mag0_rx": np.allclose(rx_mag, mag0_rx) or np.isnan(mag0_rx).all(),
             "si0_hv_partial": np.isnan(
