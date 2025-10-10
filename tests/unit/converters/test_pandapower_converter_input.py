@@ -22,7 +22,11 @@ from power_grid_model import (
     initialize_array,
 )
 
-from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter, pp_curr_version, pp_ref_version
+from power_grid_model_io.converters.pandapower_converter import (
+    PP_COMPATIBILITY_VERSION_3_2_0,
+    PP_CONVERSION_VERSION,
+    PandaPowerConverter,
+)
 
 from ...utils import MockDf, MockFn, assert_struct_array_equal
 
@@ -692,7 +696,7 @@ def test_create_pgm_input_sym_loads(mock_init_array: MagicMock, two_pp_objs, con
     converter._get_pp_attr.assert_any_call("load", "scaling", expected_type="f8", default=1)
     converter._get_pp_attr.assert_any_call("load", "in_service", expected_type="bool", default=True)
     converter._get_pp_attr.assert_any_call("load", "type", expected_type="O", default=None)
-    if pp_curr_version <= pp_ref_version:
+    if PP_CONVERSION_VERSION < PP_COMPATIBILITY_VERSION_3_2_0:
         converter._get_pp_attr.assert_any_call("load", "const_z_percent", expected_type="f8", default=0)
         converter._get_pp_attr.assert_any_call("load", "const_i_percent", expected_type="f8", default=0)
         assert len(converter._get_pp_attr.call_args_list) == 8

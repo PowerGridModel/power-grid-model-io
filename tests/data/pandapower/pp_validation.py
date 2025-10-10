@@ -6,7 +6,10 @@ from functools import lru_cache
 
 import pandapower as pp
 
-from power_grid_model_io.converters.pandapower_converter import pp_curr_version, pp_ref_version
+from power_grid_model_io.converters.pandapower_converter import (
+    PP_COMPATIBILITY_VERSION_3_2_0,
+    PP_CONVERSION_VERSION,
+)
 
 
 @lru_cache
@@ -26,7 +29,15 @@ def pp_net() -> pp.pandapowerNet:
     pp.create_bus(net, index=105, vn_kv=60)
     pp.create_bus(net, index=106, vn_kv=110)
     pp.create_ext_grid(
-        net, index=1, in_service=True, bus=101, vm_pu=1, s_sc_max_mva=1e10, rx_max=0, va_degree=0, r0x0_max=0
+        net,
+        index=1,
+        in_service=True,
+        bus=101,
+        vm_pu=1,
+        s_sc_max_mva=1e10,
+        rx_max=0,
+        va_degree=0,
+        r0x0_max=0,
     )
     pp.create_transformer_from_parameters(
         net,
@@ -51,11 +62,25 @@ def pp_net() -> pp.pandapowerNet:
         parallel=2,
     )
     pp.create_line(
-        net, index=101, from_bus=103, to_bus=102, length_km=1.23, parallel=2, df=0.2, std_type="NAYY 4x150 SE"
+        net,
+        index=101,
+        from_bus=103,
+        to_bus=102,
+        length_km=1.23,
+        parallel=2,
+        df=0.2,
+        std_type="NAYY 4x150 SE",
     )
-    if pp_curr_version <= pp_ref_version:
+    if PP_CONVERSION_VERSION < PP_COMPATIBILITY_VERSION_3_2_0:
         pp.create_load(
-            net, index=101, bus=103, p_mw=2.5, q_mvar=0.24, const_i_percent=26.0, const_z_percent=51.0, cos_phi=2
+            net,
+            index=101,
+            bus=103,
+            p_mw=2.5,
+            q_mvar=0.24,
+            const_i_percent=26.0,
+            const_z_percent=51.0,
+            cos_phi=2,
         )
     else:
         pp.create_load(
@@ -76,14 +101,37 @@ def pp_net() -> pp.pandapowerNet:
     pp.create_shunt(net, index=1201, in_service=True, bus=104, p_mw=0.1, q_mvar=0.55, step=3)
     pp.create_sgen(net, index=31, bus=105, p_mw=1.21, q_mvar=0.81)
     pp.create_asymmetric_sgen(
-        net, index=32, bus=105, p_a_mw=0.1, p_b_mw=0.2, p_c_mw=3, q_a_mvar=0.01, q_b_mvar=0.01, q_c_mvar=0.01
+        net,
+        index=32,
+        bus=105,
+        p_a_mw=0.1,
+        p_b_mw=0.2,
+        p_c_mw=3,
+        q_a_mvar=0.01,
+        q_b_mvar=0.01,
+        q_c_mvar=0.01,
     )
     pp.create_asymmetric_load(
-        net, index=33, bus=105, p_a_mw=0.1, p_b_mw=0.2, p_c_mw=3, q_a_mvar=0.01, q_b_mvar=0.01, q_c_mvar=0.01
+        net,
+        index=33,
+        bus=105,
+        p_a_mw=0.1,
+        p_b_mw=0.2,
+        p_c_mw=3,
+        q_a_mvar=0.01,
+        q_b_mvar=0.01,
+        q_c_mvar=0.01,
     )
     pp.create_ward(net, index=34, bus=105, ps_mw=0.1, qs_mvar=0.1, pz_mw=0.1, qz_mvar=0.1)
     pp.create_motor(
-        net, bus=105, index=12, pn_mech_mw=0.1, cos_phi=0.9, loading_percent=80, efficiency_percent=90, scaling=0.8
+        net,
+        bus=105,
+        index=12,
+        pn_mech_mw=0.1,
+        cos_phi=0.9,
+        loading_percent=80,
+        efficiency_percent=90,
+        scaling=0.8,
     )
     pp.create_transformer3w_from_parameters(
         net,
@@ -143,7 +191,16 @@ def pp_net_3ph() -> pp.pandapowerNet:
     pp.create_bus(net, index=103, vn_kv=20)
     pp.create_bus(net, index=106, vn_kv=110)
     pp.create_ext_grid(
-        net, index=0, in_service=True, bus=101, vm_pu=1, s_sc_max_mva=1e10, rx_max=0, va_degree=0, r0x0_max=0, x0x_max=1
+        net,
+        index=0,
+        in_service=True,
+        bus=101,
+        vm_pu=1,
+        s_sc_max_mva=1e10,
+        rx_max=0,
+        va_degree=0,
+        r0x0_max=0,
+        x0x_max=1,
     )
     pp.create_transformer_from_parameters(
         net,
@@ -189,8 +246,16 @@ def pp_net_3ph() -> pp.pandapowerNet:
         c0_nf_per_km=261.0,
         max_i_ka=0.27,
     )
-    if pp_curr_version <= pp_ref_version:
-        pp.create_load(net, index=101, bus=103, p_mw=2.5, q_mvar=0.24, const_i_percent=0.0, const_z_percent=0)
+    if PP_CONVERSION_VERSION < PP_COMPATIBILITY_VERSION_3_2_0:
+        pp.create_load(
+            net,
+            index=101,
+            bus=103,
+            p_mw=2.5,
+            q_mvar=0.24,
+            const_i_percent=0.0,
+            const_z_percent=0,
+        )
     else:
         pp.create_load(
             net,
@@ -208,10 +273,26 @@ def pp_net_3ph() -> pp.pandapowerNet:
     pp.create_switch(net, index=321, et="t", bus=101, element=0, closed=True)
     pp.create_sgen(net, index=31, bus=103, p_mw=1.21, q_mvar=0.81)
     pp.create_asymmetric_sgen(
-        net, index=32, bus=103, p_a_mw=0.1, p_b_mw=0.2, p_c_mw=3, q_a_mvar=0.01, q_b_mvar=0.01, q_c_mvar=0.01
+        net,
+        index=32,
+        bus=103,
+        p_a_mw=0.1,
+        p_b_mw=0.2,
+        p_c_mw=3,
+        q_a_mvar=0.01,
+        q_b_mvar=0.01,
+        q_c_mvar=0.01,
     )
     pp.create_asymmetric_load(
-        net, index=33, bus=103, p_a_mw=0.4, p_b_mw=0.5, p_c_mw=1, q_a_mvar=0.01, q_b_mvar=0.01, q_c_mvar=0.01
+        net,
+        index=33,
+        bus=103,
+        p_a_mw=0.4,
+        p_b_mw=0.5,
+        p_c_mw=1,
+        q_a_mvar=0.01,
+        q_b_mvar=0.01,
+        q_c_mvar=0.01,
     )
     # TODO Shunt motor ward are not validated.
     # pp.create_shunt(net, index=1201, in_service=True, bus=103, p_mw=1, q_mvar=1, step=1)

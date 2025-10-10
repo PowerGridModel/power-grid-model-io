@@ -8,7 +8,7 @@ Panda Power Converter
 
 import logging
 from functools import lru_cache
-from importlib.metadata import version
+from importlib.metadata import PackageNotFoundError, version
 from typing import Dict, List, MutableMapping, Optional, Tuple, Type
 
 import numpy as np
@@ -36,12 +36,15 @@ PandaPowerData = MutableMapping[str, pd.DataFrame]
 
 logger = structlog.get_logger(__file__)
 
-pp_curr_version = Version(version("pandapower"))
-pp_ref_version = Version("3.1.2")
+PP_COMPATIBILITY_VERSION_3_2_0 = Version("3.2.0")
+try:
+    PP_CONVERSION_VERSION = Version(version("pandapower"))
+except PackageNotFoundError:
+    PP_CONVERSION_VERSION = PP_COMPATIBILITY_VERSION_3_2_0  # assume latest compatible version by default
 
 
 def get_loss_params_3ph():
-    if pp_curr_version <= pp_ref_version:
+    if PP_CONVERSION_VERSION < PP_COMPATIBILITY_VERSION_3_2_0:
         loss_params = ["p_a_l_mw", "q_a_l_mvar", "p_b_l_mw", "q_b_l_mvar", "p_c_l_mw", "q_c_l_mvar"]
     else:
         loss_params = ["pl_a_mw", "ql_a_mvar", "pl_b_mw", "ql_b_mvar", "pl_c_mw", "ql_c_mvar"]
@@ -644,7 +647,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             data_type=DatasetType.input, component_type=ComponentType.sym_load, shape=3 * n_loads
         )
 
-        if pp_curr_version <= pp_ref_version:
+        if PP_CONVERSION_VERSION < PP_COMPATIBILITY_VERSION_3_2_0:
             const_i_p_multiplier = (
                 self._get_pp_attr("load", "const_i_percent", expected_type="f8", default=0) * scaling * (1e-2 * 1e6)
             )
