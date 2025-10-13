@@ -18,8 +18,6 @@ from power_grid_model.utils import json_deserialize_from_file
 from power_grid_model.validation import assert_valid_input_data
 
 from power_grid_model_io.converters import PandaPowerConverter
-from power_grid_model_io.converters.pandapower_converter import PandaPowerData
-
 from power_grid_model_io.converters.pandapower_converter import (
     PP_COMPATIBILITY_VERSION_3_2_0,
     PP_CONVERSION_VERSION,
@@ -32,7 +30,7 @@ from ...data.pandapower.pp_validation import (
     pp_net_3ph,
     pp_net_3ph_minimal_trafo,
 )
-from ..utils import component_attributes_df, load_json_single_dataset
+from ..utils import component_attributes_df
 
 pp = pytest.importorskip("pandapower", reason="pandapower is not installed")
 # we add this to enable python 3.13 testing even though pandapower 3.0 is not yet compatible with it
