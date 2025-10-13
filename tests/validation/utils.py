@@ -4,7 +4,6 @@
 
 import json
 import warnings
-from functools import lru_cache
 from pathlib import Path
 from typing import Generator, List, Mapping, Tuple
 
@@ -16,21 +15,7 @@ from power_grid_model.enum import ComponentAttributeFilterOptions
 from power_grid_model.errors import PowerGridSerializationError
 from power_grid_model.utils import import_json_data, json_deserialize_from_file
 
-from power_grid_model_io.data_types import ExtraInfo, StructuredData
-
-
-@lru_cache()
-def load_json_file(file_path: Path) -> StructuredData:
-    """
-    Load (and cache) a json file
-    Args:
-        file_path: The path to the json file
-
-    Returns: The parsed contents of the json file in a native python structure
-    """
-    with file_path.open(mode="r", encoding="utf-8") as json_file:
-        data = json.load(json_file)
-    return data
+from power_grid_model_io.data_types import ExtraInfo
 
 
 def component_objects(json_path: Path) -> Generator[Tuple[str, List[int]], None, None]:
