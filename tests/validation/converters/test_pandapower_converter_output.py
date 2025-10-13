@@ -44,10 +44,10 @@ if PP_CONVERSION_VERSION < PP_COMPATIBILITY_VERSION_3_2_0:
         PGM_PP_TEST_DATA / "v3.1.2" / "pp_v2_net_3ph_output_current_loading.json"
     )
 else:
-    PP_V2_NET_OUTPUT_FILE = PGM_PP_TEST_DATA / "v3.1.3" / "pp_v2_net_output.json"
-    PP_V2_NET_3PH_OUTPUT_FILE = PGM_PP_TEST_DATA / "v3.1.3" / "pp_v2_net_3ph_output.json"
+    PP_V2_NET_OUTPUT_FILE = PGM_PP_TEST_DATA / "v3.2.0" / "pp_v2_net_output.json"
+    PP_V2_NET_3PH_OUTPUT_FILE = PGM_PP_TEST_DATA / "v3.2.0" / "pp_v2_net_3ph_output.json"
     PP_V2_NET_3PH_OUTPUT_FILE_CURRENT_LOADING = (
-        PGM_PP_TEST_DATA / "v3.1.3" / "pp_v2_net_3ph_output_current_loading.json"
+        PGM_PP_TEST_DATA / "v3.2.0" / "pp_v2_net_3ph_output_current_loading.json"
     )
 
 
