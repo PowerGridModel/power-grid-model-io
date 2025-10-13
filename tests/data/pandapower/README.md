@@ -5,7 +5,7 @@ SPDX-License-Identifier: MPL-2.0
 -->
 # Pandapower release 3.1.3
 
-`pandapower` made following breaking changes to its release 3.1.3;
+`pandapower` made following breaking changes to its release 3.2.0;
 1. `Load` attributes have been changed:
    * `const_i_percent` replaced with `const_i_p_percent` and `const_i_q_percent`
    * `const_z_percent` replaced with `const_z_p_percent` and `const_z_q_percent`
