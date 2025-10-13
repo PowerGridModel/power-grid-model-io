@@ -17,9 +17,18 @@ from power_grid_model import PowerGridModel
 from power_grid_model.validation import assert_valid_input_data
 
 from power_grid_model_io.converters import PandaPowerConverter
-from power_grid_model_io.converters.pandapower_converter import PandaPowerData
+from power_grid_model_io.converters.pandapower_converter import (
+    PP_COMPATIBILITY_VERSION_3_2_0,
+    PP_CONVERSION_VERSION,
+    PandaPowerData,
+    get_loss_params_3ph,
+)
 
-from ...data.pandapower.pp_validation import pp_net, pp_net_3ph, pp_net_3ph_minimal_trafo
+from ...data.pandapower.pp_validation import (
+    pp_net,
+    pp_net_3ph,
+    pp_net_3ph_minimal_trafo,
+)
 from ..utils import component_attributes_df, load_json_single_dataset
 
 pp = pytest.importorskip("pandapower", reason="pandapower is not installed")
@@ -28,9 +37,18 @@ pp = pytest.importorskip("pandapower", reason="pandapower is not installed")
 PGM_PP_TEST_DATA = Path(__file__).parents[2] / "data" / "pandapower"
 PGM_OUTPUT_FILE = PGM_PP_TEST_DATA / "pgm_output_data.json"
 PGM_ASYM_OUTPUT_FILE = PGM_PP_TEST_DATA / "pgm_asym_output_data.json"
-PP_V2_NET_OUTPUT_FILE = PGM_PP_TEST_DATA / "pp_v2_net_output.json"
-PP_V2_NET_3PH_OUTPUT_FILE = PGM_PP_TEST_DATA / "pp_v2_net_3ph_output.json"
-PP_V2_NET_3PH_OUTPUT_FILE_CURRENT_LOADING = PGM_PP_TEST_DATA / "pp_v2_net_3ph_output_current_loading.json"
+if PP_CONVERSION_VERSION < PP_COMPATIBILITY_VERSION_3_2_0:
+    PP_V2_NET_OUTPUT_FILE = PGM_PP_TEST_DATA / "v3.1.2" / "pp_v2_net_output.json"
+    PP_V2_NET_3PH_OUTPUT_FILE = PGM_PP_TEST_DATA / "v3.1.2" / "pp_v2_net_3ph_output.json"
+    PP_V2_NET_3PH_OUTPUT_FILE_CURRENT_LOADING = (
+        PGM_PP_TEST_DATA / "v3.1.2" / "pp_v2_net_3ph_output_current_loading.json"
+    )
+else:
+    PP_V2_NET_OUTPUT_FILE = PGM_PP_TEST_DATA / "v3.2.0" / "pp_v2_net_output.json"
+    PP_V2_NET_3PH_OUTPUT_FILE = PGM_PP_TEST_DATA / "v3.2.0" / "pp_v2_net_3ph_output.json"
+    PP_V2_NET_3PH_OUTPUT_FILE_CURRENT_LOADING = (
+        PGM_PP_TEST_DATA / "v3.2.0" / "pp_v2_net_3ph_output_current_loading.json"
+    )
 
 
 @contextmanager
@@ -154,24 +172,33 @@ def test_output_trafos_3ph__power__with_comparison():
         i_c_lv = net.res_trafo_3ph.loc[:, "i_c_lv_ka"] * 1000
 
         np.testing.assert_allclose(
-            np.maximum(i_a_hv / i_max_hv, i_a_lv / i_max_lv) * 100, net.res_trafo_3ph.loading_a_percent
+            np.maximum(i_a_hv / i_max_hv, i_a_lv / i_max_lv) * 100,
+            net.res_trafo_3ph.loading_a_percent,
         )
         np.testing.assert_allclose(
-            np.maximum(i_b_hv / i_max_hv, i_b_lv / i_max_lv) * 100, net.res_trafo_3ph.loading_b_percent
+            np.maximum(i_b_hv / i_max_hv, i_b_lv / i_max_lv) * 100,
+            net.res_trafo_3ph.loading_b_percent,
         )
         np.testing.assert_allclose(
-            np.maximum(i_c_hv / i_max_hv, i_c_lv / i_max_lv) * 100, net.res_trafo_3ph.loading_c_percent
+            np.maximum(i_c_hv / i_max_hv, i_c_lv / i_max_lv) * 100,
+            net.res_trafo_3ph.loading_c_percent,
         )
         np.testing.assert_allclose(
             np.maximum(
-                np.maximum(net.res_trafo_3ph.loading_a_percent, net.res_trafo_3ph.loading_b_percent),
+                np.maximum(
+                    net.res_trafo_3ph.loading_a_percent,
+                    net.res_trafo_3ph.loading_b_percent,
+                ),
                 net.res_trafo_3ph.loading_c_percent,
             ),
             net.res_trafo_3ph.loading_percent,
         )
         np.testing.assert_allclose(
             np.maximum(
-                np.maximum(net.res_line_3ph.loading_a_percent, net.res_line_3ph.loading_b_percent),
+                np.maximum(
+                    net.res_line_3ph.loading_a_percent,
+                    net.res_line_3ph.loading_b_percent,
+                ),
                 net.res_line_3ph.loading_c_percent,
             ),
             net.res_line_3ph.loading_percent,
@@ -182,31 +209,49 @@ def test_output_trafos_3ph__power__with_comparison():
         np.testing.assert_allclose(actual.trafo.vn_lv_kv, expected.trafo.vn_lv_kv, rtol=rtol)
         np.testing.assert_allclose(actual.trafo.sn_mva, expected.trafo.sn_mva, rtol=rtol)
         np.testing.assert_allclose(
-            actual.res_trafo_3ph.loc[:, "i_a_hv_ka"], expected.res_trafo_3ph.loc[:, "i_a_hv_ka"], rtol=rtol
+            actual.res_trafo_3ph.loc[:, "i_a_hv_ka"],
+            expected.res_trafo_3ph.loc[:, "i_a_hv_ka"],
+            rtol=rtol,
         )
         np.testing.assert_allclose(
-            actual.res_trafo_3ph.loc[:, "i_b_hv_ka"], expected.res_trafo_3ph.loc[:, "i_b_hv_ka"], rtol=rtol
+            actual.res_trafo_3ph.loc[:, "i_b_hv_ka"],
+            expected.res_trafo_3ph.loc[:, "i_b_hv_ka"],
+            rtol=rtol,
         )
         np.testing.assert_allclose(
-            actual.res_trafo_3ph.loc[:, "i_c_hv_ka"], expected.res_trafo_3ph.loc[:, "i_c_hv_ka"], rtol=rtol
+            actual.res_trafo_3ph.loc[:, "i_c_hv_ka"],
+            expected.res_trafo_3ph.loc[:, "i_c_hv_ka"],
+            rtol=rtol,
         )
         np.testing.assert_allclose(
-            actual.res_trafo_3ph.loc[:, "i_a_lv_ka"], expected.res_trafo_3ph.loc[:, "i_a_lv_ka"], rtol=rtol
+            actual.res_trafo_3ph.loc[:, "i_a_lv_ka"],
+            expected.res_trafo_3ph.loc[:, "i_a_lv_ka"],
+            rtol=rtol,
         )
         np.testing.assert_allclose(
-            actual.res_trafo_3ph.loc[:, "i_b_lv_ka"], expected.res_trafo_3ph.loc[:, "i_b_lv_ka"], rtol=rtol
+            actual.res_trafo_3ph.loc[:, "i_b_lv_ka"],
+            expected.res_trafo_3ph.loc[:, "i_b_lv_ka"],
+            rtol=rtol,
         )
         np.testing.assert_allclose(
-            actual.res_trafo_3ph.loc[:, "i_c_lv_ka"], expected.res_trafo_3ph.loc[:, "i_c_lv_ka"], rtol=rtol
+            actual.res_trafo_3ph.loc[:, "i_c_lv_ka"],
+            expected.res_trafo_3ph.loc[:, "i_c_lv_ka"],
+            rtol=rtol,
         )
         np.testing.assert_allclose(
-            actual.res_trafo_3ph.loading_a_percent, expected.res_trafo_3ph.loading_a_percent, rtol=rtol
+            actual.res_trafo_3ph.loading_a_percent,
+            expected.res_trafo_3ph.loading_a_percent,
+            rtol=rtol,
         )
         np.testing.assert_allclose(
-            actual.res_trafo_3ph.loading_b_percent, expected.res_trafo_3ph.loading_b_percent, rtol=rtol
+            actual.res_trafo_3ph.loading_b_percent,
+            expected.res_trafo_3ph.loading_b_percent,
+            rtol=rtol,
         )
         np.testing.assert_allclose(
-            actual.res_trafo_3ph.loading_c_percent, expected.res_trafo_3ph.loading_c_percent, rtol=rtol
+            actual.res_trafo_3ph.loading_c_percent,
+            expected.res_trafo_3ph.loading_c_percent,
+            rtol=rtol,
         )
 
     pgm_net = pp_net_3ph_minimal_trafo()
@@ -269,7 +314,11 @@ def test_attributes(output_data: Tuple[PandaPowerData, PandaPowerData], componen
 
 
 @pytest.mark.parametrize(("component", "attribute"), component_attributes_df(load_and_convert_pgm_data_3ph()))
-def test_attributes_3ph(output_data_3ph: Tuple[PandaPowerData, PandaPowerData], component: str, attribute: str):
+def test_attributes_3ph(
+    output_data_3ph: Tuple[PandaPowerData, PandaPowerData],
+    component: str,
+    attribute: str,
+):
     """
     For each attribute, check if the actual values are consistent with the expected values for asym
     """
@@ -324,19 +373,19 @@ def _get_total_powers_3ph(net):
         s_shunt = np.complex128()
 
     s_load = s_load_sym + s_load_asym + s_motor + s_ward + s_shunt
-
+    loss_params = get_loss_params_3ph()
     if "res_line_3ph" in net:
         s_loss_line = (
-            net.res_line_3ph.loc[:, ["p_a_l_mw", "p_b_l_mw", "p_c_l_mw"]].sum().sum()
-            + 1j * net.res_line_3ph.loc[:, ["q_a_l_mvar", "q_b_l_mvar", "q_c_l_mvar"]].sum().sum()
+            net.res_line_3ph.loc[:, [loss_params[0], loss_params[2], loss_params[4]]].sum().sum()
+            + 1j * net.res_line_3ph.loc[:, [loss_params[1], loss_params[3], loss_params[5]]].sum().sum()
         )
     else:
         s_loss_line = np.complex128()
 
     if "res_trafo_3ph" in net:
         s_loss_trafo = (
-            net.res_trafo_3ph.loc[:, ["p_a_l_mw", "p_b_l_mw", "p_c_l_mw"]].sum().sum()
-            + 1j * net.res_trafo_3ph.loc[:, ["q_a_l_mvar", "q_b_l_mvar", "q_c_l_mvar"]].sum().sum()
+            net.res_trafo_3ph.loc[:, [loss_params[0], loss_params[2], loss_params[4]]].sum().sum()
+            + 1j * net.res_trafo_3ph.loc[:, [loss_params[1], loss_params[3], loss_params[5]]].sum().sum()
         )
     else:
         s_loss_trafo = np.complex128()

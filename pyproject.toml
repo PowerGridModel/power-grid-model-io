@@ -47,6 +47,7 @@ dev = [
     "ruff",
     "pydantic>2", # Used in unit tests
     "pandapower>2.11.1",
+    "lxml", # missing pandapower dependency
 ]
 examples = [
     "power-grid-model>1.9.80",
