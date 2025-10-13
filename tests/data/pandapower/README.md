@@ -14,4 +14,4 @@ SPDX-License-Identifier: MPL-2.0
    * `q_a_l_mvar` changed to `ql_a_mvar` and same for other phases
 
 In order to maintain backward compatibility, data files compatible with both `pandapower` versions have been moved
-to separate folders **v3.1.2** and **v3.1.3**.
+to separate folders **v3.1.2** and **v3.2.0**.
