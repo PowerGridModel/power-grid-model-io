@@ -829,8 +829,8 @@ class TabularConverter(BaseConverter[TabularData]):
             )
             for sub_def in col_def
         ]
-        # Filter out empty DataFrames (from missing optional columns)
-        non_empty_columns = [col for col in columns if not col.empty and len(col.columns) > 0]
+        # Filter out DataFrames with no columns (from missing optional columns)
+        non_empty_columns = [col for col in columns if len(col.columns) > 0]
         if not non_empty_columns:
             # If all columns are missing, return an empty DataFrame with the correct number of rows
             table_data = data[table]
