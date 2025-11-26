@@ -396,6 +396,7 @@ class TabularConverter(BaseConverter[TabularData]):
         col_def: Any,
         table_mask: Optional[np.ndarray],
         extra_info: Optional[ExtraInfo],
+        allow_missing: bool = False,
     ) -> pd.DataFrame:
         """Interpret the column definition and extract/convert/create the data as a pandas DataFrame.
 
@@ -404,6 +405,7 @@ class TabularConverter(BaseConverter[TabularData]):
           table: str:
           col_def: Any:
           extra_info: Optional[ExtraInfo]:
+          allow_missing: bool: If True, missing columns will return empty DataFrame instead of raising KeyError
 
         Returns:
 
@@ -411,8 +413,19 @@ class TabularConverter(BaseConverter[TabularData]):
         if isinstance(col_def, (int, float)):
             return self._parse_col_def_const(data=data, table=table, col_def=col_def, table_mask=table_mask)
         if isinstance(col_def, str):
-            return self._parse_col_def_column_name(data=data, table=table, col_def=col_def, table_mask=table_mask)
+            return self._parse_col_def_column_name(
+                data=data, table=table, col_def=col_def, table_mask=table_mask, allow_missing=allow_missing
+            )
         if isinstance(col_def, dict):
+            # Check if this is an optional_extra wrapper
+            if len(col_def) == 1 and "optional_extra" in col_def:
+                # Extract the list of optional columns and parse as composite with allow_missing=True
+                optional_cols = col_def["optional_extra"]
+                if not isinstance(optional_cols, list):
+                    raise TypeError(f"optional_extra value must be a list, got {type(optional_cols).__name__}")
+                return self._parse_col_def_composite(
+                    data=data, table=table, col_def=optional_cols, table_mask=table_mask, allow_missing=True
+                )
             return self._parse_col_def_filter(
                 data=data,
                 table=table,
@@ -421,7 +434,9 @@ class TabularConverter(BaseConverter[TabularData]):
                 extra_info=extra_info,
             )
         if isinstance(col_def, list):
-            return self._parse_col_def_composite(data=data, table=table, col_def=col_def, table_mask=table_mask)
+            return self._parse_col_def_composite(
+                data=data, table=table, col_def=col_def, table_mask=table_mask, allow_missing=allow_missing
+            )
         raise TypeError(f"Invalid column definition: {col_def}")
 
     @staticmethod
@@ -454,6 +469,7 @@ class TabularConverter(BaseConverter[TabularData]):
         table: str,
         col_def: str,
         table_mask: Optional[np.ndarray] = None,
+        allow_missing: bool = False,
     ) -> pd.DataFrame:
         """Extract a column from the data. If the column doesn't exist, check if the col_def is a special float value,
         like 'inf'. If that's the case, create a single column pandas DataFrame containing the const value.
@@ -462,6 +478,7 @@ class TabularConverter(BaseConverter[TabularData]):
           data: TabularData:
           table: str:
           col_def: str:
+          allow_missing: bool: If True, return empty DataFrame when column is missing instead of raising KeyError
 
         Returns:
 
@@ -486,6 +503,15 @@ class TabularConverter(BaseConverter[TabularData]):
             const_value = float(col_def)
         except ValueError:
             # pylint: disable=raise-missing-from
+            if allow_missing:
+                # Return empty DataFrame with correct number of rows when column is optional and missing
+                self._log.debug(
+                    "Optional column not found",
+                    table=table,
+                    columns=" or ".join(f"'{col_name}'" for col_name in columns),
+                )
+                n_rows = len(table_data)
+                return pd.DataFrame(index=range(n_rows))
             columns_str = " and ".join(f"'{col_name}'" for col_name in columns)
             raise KeyError(f"Could not find column {columns_str} on table '{table}'")
 
@@ -778,6 +804,7 @@ class TabularConverter(BaseConverter[TabularData]):
         table: str,
         col_def: list,
         table_mask: Optional[np.ndarray],
+        allow_missing: bool = False,
     ) -> pd.DataFrame:
         """Select multiple columns (each is created from a column definition) and return them as a new DataFrame.
 
@@ -785,6 +812,7 @@ class TabularConverter(BaseConverter[TabularData]):
           data: TabularData:
           table: str:
           col_def: list:
+          allow_missing: bool: If True, skip missing columns instead of raising errors
 
         Returns:
 
@@ -797,10 +825,20 @@ class TabularConverter(BaseConverter[TabularData]):
                 col_def=sub_def,
                 table_mask=table_mask,
                 extra_info=None,
+                allow_missing=allow_missing,
             )
             for sub_def in col_def
         ]
-        return pd.concat(columns, axis=1)
+        # Filter out empty DataFrames (from missing optional columns)
+        non_empty_columns = [col for col in columns if not col.empty and len(col.columns) > 0]
+        if not non_empty_columns:
+            # If all columns are missing, return an empty DataFrame with the correct number of rows
+            table_data = data[table]
+            if table_mask is not None:
+                table_data = table_data[table_mask]
+            n_rows = len(table_data)
+            return pd.DataFrame(index=range(n_rows))
+        return pd.concat(non_empty_columns, axis=1)
 
     def _get_id(self, table: str, key: Mapping[str, int], name: Optional[str]) -> int:
         """

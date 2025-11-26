@@ -52,6 +52,33 @@ Vision introduced UUID based identifier system since version 9.7. It is implemen
 
 An examplery usage can be found in the example notebook as well as in the test cases.
 
+## Optional extra columns
+
+When working with Vision Excel exports, some metadata columns (like `GUID` or `StationID`) may not always be present, especially in partial exports. The `optional_extra` feature allows you to specify columns that should be included in `extra_info` if present, but won't cause conversion failure if missing.
+
+**Syntax:**
+```yaml
+grid:
+  Transformers:
+    transformer:
+      id:
+        auto_id:
+          key: Number
+      # ... other fields ...
+      extra:
+        - ID            # Required - fails if missing
+        - Name          # Required - fails if missing
+        - optional_extra:
+            - GUID      # Optional - skipped if missing
+            - StationID # Optional - skipped if missing
+```
+
+**Behavior:**
+- Required columns (listed directly under `extra`) will cause a KeyError if missing
+- Optional columns (nested under `optional_extra`) are silently skipped if not found
+- If some optional columns are present and others missing, only the present ones are included in `extra_info`
+- This feature is particularly useful for handling different Vision export configurations or versions
+
 ## Common/Known issues related to Vision
 So far we have the following issue known to us related to Vision exported spread sheets. We provide a solution from user perspective to the best of our knowledge.
 
