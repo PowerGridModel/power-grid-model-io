@@ -1672,3 +1672,27 @@ def test_optional_extra__multiple_optional_extra_sections():
     # Assert - only guid should be present
     assert list(result.columns) == ["guid"]
     assert list(result["guid"]) == ["g1", "g2"]
+
+
+def test_convert_col_def_to_attribute__pgm_data_without_dtype_names():
+    """Test error handling when pgm_data has no dtype.names (unusual edge case)"""
+    # Arrange
+    converter = TabularConverter(mapping_file=MAPPING_FILE)
+    data = TabularData(test_table=pd.DataFrame({"id": [1, 2], "name": ["n1", "n2"]}))
+
+    # Create a mock array without dtype.names by using a plain ndarray
+    pgm_data = np.array([1, 2])  # Regular array without structured dtype
+    assert pgm_data.dtype.names is None
+
+    # Act & Assert
+    with pytest.raises(ValueError, match="pgm_data for 'nodes' has no attributes defined"):
+        converter._convert_col_def_to_attribute(
+            data=data,
+            pgm_data=pgm_data,
+            table="test_table",
+            component="node",
+            attr="id",
+            col_def="id",
+            table_mask=None,
+            extra_info=None,
+        )
