@@ -837,7 +837,7 @@ class TabularConverter(BaseConverter[TabularData]):
             if table_mask is not None:
                 table_data = table_data[table_mask]
             n_rows = len(table_data)
-            return pd.DataFrame(index=range(n_rows))
+            return pd.DataFrame(index=table_data.index)
         return pd.concat(non_empty_columns, axis=1)
 
     def _get_id(self, table: str, key: Mapping[str, int], name: Optional[str]) -> int:
