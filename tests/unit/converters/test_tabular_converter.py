@@ -1532,3 +1532,143 @@ def test_optional_extra__integration():
     assert extra_info[node_0_id]["ID"] == "N1"
     assert extra_info[node_0_id]["Name"] == "Node 1"
     assert extra_info[node_0_id]["GUID"] == "guid-1"
+
+
+def test_optional_extra__with_table_mask(converter: TabularConverter):
+    """Test optional_extra works correctly with table filtering/masking"""
+    # Arrange
+    data = TabularData(
+        test_table=pd.DataFrame(
+            {
+                "id": [1, 2, 3, 4],
+                "value": [10, 20, 30, 40],
+                "guid": ["g1", "g2", "g3", "g4"],
+                "name": ["n1", "n2", "n3", "n4"],
+            }
+        )
+    )
+    # Create a mask that filters to only rows 0 and 2
+    table_mask = np.array([True, False, True, False])
+    col_def = {"optional_extra": ["guid", "station"]}  # 'station' is missing
+
+    # Act
+    result = converter._parse_col_def(
+        data=data, table="test_table", col_def=col_def, table_mask=table_mask, extra_info=None, allow_missing=False
+    )
+
+    # Assert - should only have 2 rows (from the mask) and 1 column (guid)
+    assert len(result) == 2
+    assert list(result.columns) == ["guid"]
+    assert list(result["guid"]) == ["g1", "g3"]
+
+
+def test_optional_extra__nested_in_list(converter: TabularConverter):
+    """Test optional_extra can be nested within a regular list of columns"""
+    # Arrange
+    data = TabularData(
+        test_table=pd.DataFrame(
+            {"id": [1, 2], "name": ["n1", "n2"], "value": [100, 200], "guid": ["g1", "g2"]}  # station missing
+        )
+    )
+    col_def = ["name", "value", {"optional_extra": ["guid", "station"]}]
+
+    # Act
+    result = converter._parse_col_def(
+        data=data, table="test_table", col_def=col_def, table_mask=None, extra_info=None, allow_missing=False
+    )
+
+    # Assert
+    assert list(result.columns) == ["name", "value", "guid"]
+    assert list(result["name"]) == ["n1", "n2"]
+    assert list(result["value"]) == [100, 200]
+    assert list(result["guid"]) == ["g1", "g2"]
+
+
+def test_optional_extra__with_pipe_separated_columns(converter: TabularConverter):
+    """Test optional_extra with pipe-separated alternative column names"""
+    # Arrange
+    data = TabularData(test_table=pd.DataFrame({"id": [1, 2], "GUID": ["g1", "g2"], "name": ["n1", "n2"]}))
+    # Use pipe separator for alternative column names (GUID or Guid)
+    col_def = {"optional_extra": ["GUID|Guid", "StationID|Station"]}  # Both StationID and Station missing
+
+    # Act
+    result = converter._parse_col_def(
+        data=data, table="test_table", col_def=col_def, table_mask=None, extra_info=None, allow_missing=False
+    )
+
+    # Assert - GUID should be found, Station alternatives should be skipped
+    assert list(result.columns) == ["GUID"]
+    assert list(result["GUID"]) == ["g1", "g2"]
+
+
+def test_optional_extra__empty_string_values(converter: TabularConverter):
+    """Test that optional_extra handles empty strings correctly"""
+    # Arrange
+    data = TabularData(test_table=pd.DataFrame({"id": [1, 2, 3], "guid": ["g1", "", "g3"], "name": ["n1", "n2", ""]}))
+    uuids = np.array([100, 200, 300])
+    extra_info: ExtraInfo = {}
+    col_def = {"optional_extra": ["guid", "name"]}
+
+    # Act
+    converter._handle_extra_info(
+        data=data, table="test_table", col_def=col_def, uuids=uuids, table_mask=None, extra_info=extra_info
+    )
+
+    # Assert - empty strings should still be included (not filtered as NaN)
+    assert 100 in extra_info
+    assert 200 in extra_info
+    assert 300 in extra_info
+    assert extra_info[100]["guid"] == "g1"
+    assert extra_info[100]["name"] == "n1"
+    assert extra_info[200]["guid"] == ""  # Empty string preserved
+    assert extra_info[200]["name"] == "n2"
+    assert extra_info[300]["guid"] == "g3"
+    assert extra_info[300]["name"] == ""  # Empty string preserved
+
+
+def test_optional_extra__with_nan_values(converter: TabularConverter):
+    """Test that optional_extra filters out NaN values correctly"""
+    # Arrange
+    data = TabularData(
+        test_table=pd.DataFrame({"id": [1, 2, 3], "guid": ["g1", np.nan, "g3"], "value": [10.0, 20.0, np.nan]})
+    )
+    uuids = np.array([100, 200, 300])
+    extra_info: ExtraInfo = {}
+    col_def = {"optional_extra": ["guid", "value"]}
+
+    # Act
+    converter._handle_extra_info(
+        data=data, table="test_table", col_def=col_def, uuids=uuids, table_mask=None, extra_info=extra_info
+    )
+
+    # Assert - NaN values should be filtered out
+    assert 100 in extra_info
+    assert extra_info[100] == {"guid": "g1", "value": 10.0}
+
+    assert 200 in extra_info
+    assert extra_info[200] == {"value": 20.0}  # guid was NaN, filtered out
+
+    assert 300 in extra_info
+    assert extra_info[300] == {"guid": "g3"}  # value was NaN, filtered out
+
+
+def test_optional_extra__multiple_optional_extra_sections():
+    """Test behavior when multiple optional_extra sections are used (should work independently)"""
+    # Arrange
+    converter = TabularConverter(mapping_file=MAPPING_FILE)
+    data = TabularData(
+        test_table=pd.DataFrame(
+            {"id": [1, 2], "name": ["n1", "n2"], "guid": ["g1", "g2"]}  # station and zone missing
+        )
+    )
+    # Two separate optional_extra sections
+    col_def = [{"optional_extra": ["guid"]}, {"optional_extra": ["station", "zone"]}]
+
+    # Act
+    result = converter._parse_col_def(
+        data=data, table="test_table", col_def=col_def, table_mask=None, extra_info=None, allow_missing=False
+    )
+
+    # Assert - only guid should be present
+    assert list(result.columns) == ["guid"]
+    assert list(result["guid"]) == ["g1", "g2"]
