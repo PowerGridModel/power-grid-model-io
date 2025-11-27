@@ -510,7 +510,6 @@ class TabularConverter(BaseConverter[TabularData]):
                     table=table,
                     columns=" or ".join(f"'{col_name}'" for col_name in columns),
                 )
-                n_rows = len(table_data)
                 return pd.DataFrame(index=table_data.index)
             columns_str = " and ".join(f"'{col_name}'" for col_name in columns)
             raise KeyError(f"Could not find column {columns_str} on table '{table}'")
@@ -836,7 +835,6 @@ class TabularConverter(BaseConverter[TabularData]):
             table_data = data[table]
             if table_mask is not None:
                 table_data = table_data[table_mask]
-            n_rows = len(table_data)
             return pd.DataFrame(index=table_data.index)
         return pd.concat(non_empty_columns, axis=1)
 
