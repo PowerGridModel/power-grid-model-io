@@ -511,7 +511,7 @@ class TabularConverter(BaseConverter[TabularData]):
                     columns=" or ".join(f"'{col_name}'" for col_name in columns),
                 )
                 n_rows = len(table_data)
-                return pd.DataFrame(index=range(n_rows))
+                return pd.DataFrame(index=table_data.index)
             columns_str = " and ".join(f"'{col_name}'" for col_name in columns)
             raise KeyError(f"Could not find column {columns_str} on table '{table}'")
 
