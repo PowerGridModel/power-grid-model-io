@@ -1696,3 +1696,326 @@ def test_convert_col_def_to_attribute__pgm_data_without_dtype_names():
             table_mask=None,
             extra_info=None,
         )
+
+
+def test_parse_col_def_with_allow_missing():
+    """Test _parse_col_def function with allow_missing parameter both True and False"""
+    # Arrange
+    converter = TabularConverter(mapping_file=MAPPING_FILE)
+    data = TabularData(test_table=pd.DataFrame({"existing_col": [1, 2, 3], "another_col": ["a", "b", "c"]}))
+
+    # Test 1: String column with allow_missing=False (default) - existing column
+    result = converter._parse_col_def(
+        data=data,
+        table="test_table",
+        col_def="existing_col",
+        table_mask=None,
+        extra_info=None,
+        allow_missing=False,
+    )
+    assert list(result.iloc[:, 0]) == [1, 2, 3]
+
+    # Test 2: String column with allow_missing=False - missing column (should raise KeyError)
+    with pytest.raises(KeyError, match="Could not find column 'missing_col' on table 'test_table'"):
+        converter._parse_col_def(
+            data=data,
+            table="test_table",
+            col_def="missing_col",
+            table_mask=None,
+            extra_info=None,
+            allow_missing=False,
+        )
+
+    # Test 3: String column with allow_missing=True - missing column (should return empty DataFrame)
+    result = converter._parse_col_def(
+        data=data,
+        table="test_table",
+        col_def="missing_col",
+        table_mask=None,
+        extra_info=None,
+        allow_missing=True,
+    )
+    assert len(result.columns) == 0
+    assert len(result) == 3  # Should have same number of rows as original table
+
+    # Test 4: String column with allow_missing=True - existing column (should work normally)
+    result = converter._parse_col_def(
+        data=data,
+        table="test_table",
+        col_def="existing_col",
+        table_mask=None,
+        extra_info=None,
+        allow_missing=True,
+    )
+    assert list(result.iloc[:, 0]) == [1, 2, 3]
+
+    # Test 5: List (composite) with allow_missing=False - all existing columns
+    result = converter._parse_col_def(
+        data=data,
+        table="test_table",
+        col_def=["existing_col", "another_col"],
+        table_mask=None,
+        extra_info=None,
+        allow_missing=False,
+    )
+    assert len(result.columns) == 2
+    assert list(result["existing_col"]) == [1, 2, 3]
+    assert list(result["another_col"]) == ["a", "b", "c"]
+
+    # Test 6: List (composite) with allow_missing=False - some missing columns (should raise error)
+    with pytest.raises(KeyError, match="Could not find column 'missing_col' on table 'test_table'"):
+        converter._parse_col_def(
+            data=data,
+            table="test_table",
+            col_def=["existing_col", "missing_col"],
+            table_mask=None,
+            extra_info=None,
+            allow_missing=False,
+        )
+
+    # Test 7: List (composite) with allow_missing=True - some missing columns (should skip missing)
+    result = converter._parse_col_def(
+        data=data,
+        table="test_table",
+        col_def=["existing_col", "missing_col", "another_col"],
+        table_mask=None,
+        extra_info=None,
+        allow_missing=True,
+    )
+    assert len(result.columns) == 2  # Only existing columns should be present
+    assert list(result["existing_col"]) == [1, 2, 3]
+    assert list(result["another_col"]) == ["a", "b", "c"]
+
+    # Test 8: List (composite) with allow_missing=True - all missing columns (should return empty with correct rows)
+    result = converter._parse_col_def(
+        data=data,
+        table="test_table",
+        col_def=["missing_col1", "missing_col2"],
+        table_mask=None,
+        extra_info=None,
+        allow_missing=True,
+    )
+    assert len(result.columns) == 0
+    assert len(result) == 3  # Should have same number of rows as original table
+
+    # Test 9: Dict (optional_extra) - should automatically set allow_missing=True internally
+    result = converter._parse_col_def(
+        data=data,
+        table="test_table",
+        col_def={"optional_extra": ["existing_col", "missing_col"]},
+        table_mask=None,
+        extra_info=None,
+        allow_missing=False,  # This should be ignored for optional_extra
+    )
+    assert len(result.columns) == 1  # Only existing column should be present
+    assert list(result["existing_col"]) == [1, 2, 3]
+
+    # Test 10: Constant values should work regardless of allow_missing
+    result_false = converter._parse_col_def(
+        data=data,
+        table="test_table",
+        col_def=42,
+        table_mask=None,
+        extra_info=None,
+        allow_missing=False,
+    )
+    result_true = converter._parse_col_def(
+        data=data,
+        table="test_table",
+        col_def=42,
+        table_mask=None,
+        extra_info=None,
+        allow_missing=True,
+    )
+    assert list(result_false.iloc[:, 0]) == [42, 42, 42]
+    assert list(result_true.iloc[:, 0]) == [42, 42, 42]
+
+
+def test_parse_col_def_with_allow_missing_and_table_mask():
+    """Test _parse_col_def function with allow_missing and table_mask combinations"""
+    # Arrange
+    converter = TabularConverter(mapping_file=MAPPING_FILE)
+    data = TabularData(test_table=pd.DataFrame({"existing_col": [1, 2, 3, 4], "another_col": ["a", "b", "c", "d"]}))
+    table_mask = np.array([True, False, True, False])  # Select rows 0 and 2
+
+    # Test 1: Missing column with table_mask and allow_missing=True
+    result = converter._parse_col_def(
+        data=data,
+        table="test_table",
+        col_def="missing_col",
+        table_mask=table_mask,
+        extra_info=None,
+        allow_missing=True,
+    )
+    assert len(result.columns) == 0
+    assert len(result) == 2  # Should match filtered table length
+
+    # Test 2: Existing column with table_mask and allow_missing=True
+    result = converter._parse_col_def(
+        data=data,
+        table="test_table",
+        col_def="existing_col",
+        table_mask=table_mask,
+        extra_info=None,
+        allow_missing=True,
+    )
+    assert list(result.iloc[:, 0]) == [1, 3]  # Should get filtered values
+
+    # Test 3: Composite with missing columns, table_mask, and allow_missing=True
+    result = converter._parse_col_def(
+        data=data,
+        table="test_table",
+        col_def=["existing_col", "missing_col"],
+        table_mask=table_mask,
+        extra_info=None,
+        allow_missing=True,
+    )
+    assert len(result.columns) == 1  # Only existing column
+    assert list(result["existing_col"]) == [1, 3]  # Filtered values
+
+
+def test_normalize_extra_col_def():
+    """Test _normalize_extra_col_def method for handling duplicate columns"""
+    # Arrange
+    converter = TabularConverter(mapping_file=MAPPING_FILE)
+
+    # Test 1: Regular list without optional_extra (should be unchanged)
+    col_def = ["ID", "Name", "GUID"]
+    result = converter._normalize_extra_col_def(col_def)
+    assert result == ["ID", "Name", "GUID"]
+
+    # Test 2: Non-list input (should be unchanged)
+    col_def = "ID"
+    result = converter._normalize_extra_col_def(col_def)
+    assert result == "ID"
+
+    # Test 3: List with optional_extra but no duplicates
+    col_def = ["ID", {"optional_extra": ["GUID", "StationID"]}]
+    result = converter._normalize_extra_col_def(col_def)
+    assert result == ["ID", {"optional_extra": ["GUID", "StationID"]}]
+
+    # Test 4: List with duplicates - regular column should dominate
+    col_def = ["ID", "Name", {"optional_extra": ["ID", "GUID", "StationID"]}]
+    result = converter._normalize_extra_col_def(col_def)
+    expected = ["ID", "Name", {"optional_extra": ["GUID", "StationID"]}]
+    assert result == expected
+
+    # Test 5: Multiple optional_extra sections with overlaps
+    col_def = ["ID", {"optional_extra": ["ID", "GUID"]}, {"optional_extra": ["Name", "StationID"]}]
+    result = converter._normalize_extra_col_def(col_def)
+    expected = ["ID", {"optional_extra": ["GUID"]}, {"optional_extra": ["Name", "StationID"]}]
+    assert result == expected
+
+    # Test 6: All optional columns are duplicates (should remove optional_extra section)
+    col_def = ["ID", "Name", {"optional_extra": ["ID", "Name"]}]
+    result = converter._normalize_extra_col_def(col_def)
+    expected = ["ID", "Name"]
+    assert result == expected
+
+    # Test 7: Empty optional_extra list (should be removed)
+    col_def = ["ID", {"optional_extra": []}]
+    result = converter._normalize_extra_col_def(col_def)
+    expected = ["ID"]
+    assert result == expected
+
+
+def test_handle_extra_info_with_duplicates():
+    """Test that _handle_extra_info correctly handles duplicates between regular and optional columns"""
+    # Arrange
+    converter = TabularConverter(mapping_file=MAPPING_FILE)
+    data = TabularData(
+        test_table=pd.DataFrame(
+            {
+                "ID": ["N001", "N002", "N003"],
+                "Name": ["Node1", "Node2", "Node3"],
+                "GUID": ["g1", "g2", "g3"],
+                "StationID": ["ST1", "ST2", "ST3"],
+            }
+        )
+    )
+
+    # Column definition with duplicates (ID appears in both regular and optional_extra)
+    col_def = ["ID", "Name", {"optional_extra": ["ID", "GUID", "StationID"]}]
+
+    uuids = np.array([100, 200, 300])
+    extra_info = {}
+
+    # Act
+    converter._handle_extra_info(
+        data=data,
+        table="test_table",
+        col_def=col_def,
+        uuids=uuids,
+        table_mask=None,
+        extra_info=extra_info,
+    )
+
+    # Assert
+    # ID should appear only once (from regular column, not duplicated from optional_extra)
+    assert 100 in extra_info
+    assert extra_info[100]["ID"] == "N001"
+    assert extra_info[100]["Name"] == "Node1"
+    assert extra_info[100]["GUID"] == "g1"
+    assert extra_info[100]["StationID"] == "ST1"
+
+    # Check that we don't have duplicate ID columns in the result
+    result_keys = list(extra_info[100].keys())
+    assert result_keys.count("ID") == 1, f"ID should appear only once, but got: {result_keys}"
+
+    # Similar checks for other rows
+    assert extra_info[200]["ID"] == "N002"
+    assert extra_info[300]["ID"] == "N003"
+
+
+def test_optional_extra_with_duplicates_integration():
+    """Integration test to verify duplicate elimination works in a full conversion scenario"""
+    # Arrange
+    converter = TabularConverter(mapping_file=MAPPING_FILE)
+
+    # Create test data with columns that will appear in both regular and optional_extra
+    data = TabularData(
+        test_table=pd.DataFrame(
+            {
+                "id": [1, 2, 3],
+                "name": ["Node1", "Node2", "Node3"],
+                "u_nom": [10.0, 10.0, 0.4],
+                "guid": ["g1", "g2", "g3"],
+                "station": ["ST1", "ST2", "ST3"],
+            }
+        )
+    )
+
+    # Column definition that has ID in both places - regular should dominate
+    col_def = [
+        "id",  # Regular column
+        "name",  # Regular column
+        {"optional_extra": ["id", "guid", "station"]},  # ID is duplicate, guid and station are new
+    ]
+
+    extra_info = {}
+    uuids = np.array([100, 200, 300])
+
+    # Act
+    converter._handle_extra_info(
+        data=data,
+        table="test_table",
+        col_def=col_def,
+        uuids=uuids,
+        table_mask=None,
+        extra_info=extra_info,
+    )
+
+    # Assert - verify no duplicate columns and all expected columns are present
+    for uuid, expected_id in zip([100, 200, 300], [1, 2, 3]):
+        assert uuid in extra_info
+        extra_data = extra_info[uuid]
+
+        # Should have all columns but ID should not be duplicated
+        expected_keys = {"id", "name", "guid", "station"}
+        assert set(extra_data.keys()) == expected_keys
+
+        # Verify values
+        assert extra_data["id"] == expected_id
+        assert extra_data["name"] == f"Node{expected_id}"
+        assert extra_data["guid"] == f"g{expected_id}"
+        assert extra_data["station"] == f"ST{expected_id}"

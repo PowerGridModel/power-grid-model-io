@@ -337,11 +337,14 @@ class TabularConverter(BaseConverter[TabularData]):
         if extra_info is None:
             return
 
+        # Normalize col_def to handle deduplication when optional_extra contains columns also in regular extra
+        normalized_col_def = self._normalize_extra_col_def(col_def)
+
         extra = self._parse_col_def(
             data=data,
             table=table,
             table_mask=table_mask,
-            col_def=col_def,
+            col_def=normalized_col_def,
             extra_info=None,
         ).to_dict(orient="records")
         for i, xtr in zip(uuids, extra):
@@ -355,6 +358,55 @@ class TabularConverter(BaseConverter[TabularData]):
                     extra_info[i].update(xtr)
                 else:
                     extra_info[i] = xtr
+
+    def _normalize_extra_col_def(self, col_def: Any) -> Any:
+        """
+        Normalize extra column definition to eliminate duplicates between regular columns and optional_extra.
+        Regular columns take precedence over optional_extra columns.
+
+        Args:
+            col_def: Column definition for extra info that may contain optional_extra sections
+
+        Returns:
+            Normalized column definition with duplicates removed from optional_extra
+        """
+        if not isinstance(col_def, list):
+            return col_def
+
+        # Collect all non-optional_extra column names
+        regular_columns = set()
+        normalized_list = []
+
+        for item in col_def:
+            if isinstance(item, dict) and len(item) == 1 and "optional_extra" in item:
+                # This is an optional_extra section - we'll process it later
+                normalized_list.append(item)
+            else:
+                # This is a regular column
+                if isinstance(item, str):
+                    regular_columns.add(item)
+                normalized_list.append(item)
+
+        # Now process optional_extra sections and remove duplicates
+        final_list = []
+        for item in normalized_list:
+            if isinstance(item, dict) and len(item) == 1 and "optional_extra" in item:
+                optional_cols = item["optional_extra"]
+                if isinstance(optional_cols, list):
+                    # Filter out columns that are already in regular columns
+                    filtered_optional_cols = [
+                        col for col in optional_cols if not isinstance(col, str) or col not in regular_columns
+                    ]
+                    # Only include the optional_extra section if it has remaining columns
+                    if filtered_optional_cols:
+                        final_list.append({"optional_extra": filtered_optional_cols})
+                else:
+                    # Keep non-list optional_extra as-is (shouldn't happen but be safe)
+                    final_list.append(item)
+            else:
+                final_list.append(item)
+
+        return final_list
 
     @staticmethod
     def _merge_pgm_data(data: Dict[str, List[np.ndarray]]) -> Dict[str, np.ndarray]:
@@ -396,6 +448,7 @@ class TabularConverter(BaseConverter[TabularData]):
         col_def: Any,
         table_mask: Optional[np.ndarray],
         extra_info: Optional[ExtraInfo],
+        *,
         allow_missing: bool = False,
     ) -> pd.DataFrame:
         """Interpret the column definition and extract/convert/create the data as a pandas DataFrame.
@@ -501,7 +554,7 @@ class TabularConverter(BaseConverter[TabularData]):
 
         try:  # Maybe it is not a column name, but a float value like 'inf', let's try to convert the string to a float
             const_value = float(col_def)
-            except ValueError as e:
+        except ValueError as e:
             if allow_missing:
                 # Return empty DataFrame with correct number of rows when column is optional and missing
                 self._log.debug(
