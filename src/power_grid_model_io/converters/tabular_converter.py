@@ -501,8 +501,7 @@ class TabularConverter(BaseConverter[TabularData]):
 
         try:  # Maybe it is not a column name, but a float value like 'inf', let's try to convert the string to a float
             const_value = float(col_def)
-        except ValueError:
-            # pylint: disable=raise-missing-from
+            except ValueError as e:
             if allow_missing:
                 # Return empty DataFrame with correct number of rows when column is optional and missing
                 self._log.debug(
