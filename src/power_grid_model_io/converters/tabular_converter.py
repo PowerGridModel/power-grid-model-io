@@ -512,7 +512,7 @@ class TabularConverter(BaseConverter[TabularData]):
                 )
                 return pd.DataFrame(index=table_data.index)
             columns_str = " and ".join(f"'{col_name}'" for col_name in columns)
-            raise KeyError(f"Could not find column {columns_str} on table '{table}'")
+            raise KeyError(f"Could not find column {columns_str} on table '{table}'") from e
 
         return self._parse_col_def_const(data=data, table=table, col_def=const_value, table_mask=table_mask)
 
