@@ -363,6 +363,7 @@ class TabularConverter(BaseConverter[TabularData]):
         """
         Normalize extra column definition to eliminate duplicates between regular columns and optional_extra.
         Regular columns take precedence over optional_extra columns.
+        Additionally, ensure no duplicates within optional_extra.
 
         Args:
             col_def: Column definition for extra info that may contain optional_extra sections
@@ -394,9 +395,9 @@ class TabularConverter(BaseConverter[TabularData]):
                 optional_cols = item["optional_extra"]
                 if isinstance(optional_cols, list):
                     # Filter out columns that are already in regular columns
-                    filtered_optional_cols = [
-                        col for col in optional_cols if not isinstance(col, str) or col not in regular_columns
-                    ]
+                    filtered_optional_cols = list(
+                        set(col for col in optional_cols if not isinstance(col, str) or col not in regular_columns)
+                    )
                     # Only include the optional_extra section if it has remaining columns
                     if filtered_optional_cols:
                         final_list.append({"optional_extra": filtered_optional_cols})
