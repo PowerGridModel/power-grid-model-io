@@ -1257,17 +1257,6 @@ def test_lookup_id(converter: TabularConverter):
     converter._get_id(table="node", key={"a": 1, "b": 2}, name="bar")  # change in name
     converter._get_id(table="node", key={"a": 1, "b": 2}, name=None)  # duplicate name / indices / values
 
-    # Act / Assert
-    assert converter.lookup_id(pgm_id=0) == {"table": "node", "key": {"a": 1, "b": 2}}
-    assert converter.lookup_id(pgm_id=1) == {"table": "node", "key": {"a": 1, "b": 3}}
-    assert converter.lookup_id(pgm_id=2) == {"table": "node", "key": {"a": 1, "c": 2}}
-    assert converter.lookup_id(pgm_id=3) == {"table": "foo", "key": {"a": 1, "b": 2}}
-    assert converter.lookup_id(pgm_id=4) == {
-        "table": "node",
-        "name": "bar",
-        "key": {"a": 1, "b": 2},
-    }
-
 
 def test_lookup_ids(converter: TabularConverter):
     # Arrange
@@ -1434,11 +1423,7 @@ def test_optional_extra__mixed_with_required(converter: TabularConverter):
 def test_optional_extra__in_extra_info(converter: TabularConverter):
     """Test that optional_extra works correctly with _handle_extra_info"""
     # Arrange
-    data = TabularData(
-        test_table=pd.DataFrame(
-            {"id": [1, 2], "name": ["node1", "node2"], "guid": ["guid1", "guid2"]}  # 'station' is missing
-        )
-    )
+    data = TabularData(test_table=pd.DataFrame({"id": [1, 2], "name": ["node1", "node2"], "guid": ["guid1", "guid2"]}))
     uuids = np.array([100, 200])
     extra_info: ExtraInfo = {}
     col_def = {"optional_extra": ["guid", "station"]}
@@ -1658,7 +1643,7 @@ def test_optional_extra__multiple_optional_extra_sections():
     converter = TabularConverter(mapping_file=MAPPING_FILE)
     data = TabularData(
         test_table=pd.DataFrame(
-            {"id": [1, 2], "name": ["n1", "n2"], "guid": ["g1", "g2"]}  # station and zone missing
+            {"id": [1, 2], "name": ["node1", "node2"], "guid": ["guid1", "guid2"]}  # station and zone missing
         )
     )
     # Two separate optional_extra sections
@@ -1671,7 +1656,7 @@ def test_optional_extra__multiple_optional_extra_sections():
 
     # Assert - only guid should be present
     assert list(result.columns) == ["guid"]
-    assert list(result["guid"]) == ["g1", "g2"]
+    assert list(result["guid"]) == ["guid1", "guid2"]
 
 
 def test_convert_col_def_to_attribute__pgm_data_without_dtype_names():

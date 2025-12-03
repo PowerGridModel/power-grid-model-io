@@ -395,9 +395,12 @@ class TabularConverter(BaseConverter[TabularData]):
                 optional_cols = item["optional_extra"]
                 if isinstance(optional_cols, list):
                     # Filter out columns that are already in regular columns
-                    filtered_optional_cols = list(
-                        set(col for col in optional_cols if not isinstance(col, str) or col not in regular_columns)
-                    )
+                    filtered_optional_cols = []
+                    for col in optional_cols:
+                        if isinstance(col, str) and col in regular_columns:
+                            continue
+                        if col not in filtered_optional_cols:
+                            filtered_optional_cols.append(col)
                     # Only include the optional_extra section if it has remaining columns
                     if filtered_optional_cols:
                         final_list.append({"optional_extra": filtered_optional_cols})
