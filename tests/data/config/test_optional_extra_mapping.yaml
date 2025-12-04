@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+---
+# Test mapping file for optional_extra feature
+grid:
+  nodes:
+    node:
+      id:
+        auto_id:
+          key: node_id
+      u_rated: voltage
+      extra:
+        - ID
+        - Name
+        - optional_extra:
+            - GUID
+            - StationID
+
+units:
+  V:
+    kV: 1000.0
+
+substitutions: {}

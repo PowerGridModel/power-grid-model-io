@@ -147,3 +147,105 @@ def test_ambiguity_in_vision_excel():
     excel_file_checker = ExcelAmbiguityChecker(file_path=ambiguious_test_file.as_posix())
     res, _ = excel_file_checker.check_ambiguity()
     assert res
+
+
+def test_optional_extra_all_columns_present():
+    """Test Vision Excel conversion with all optional columns present"""
+    # Arrange
+    test_file = Path(__file__).parents[2] / "data" / "vision" / "vision_optional_extra_full.xlsx"
+    mapping_file = Path(__file__).parents[2] / "data" / "vision" / "vision_optional_extra_mapping.yaml"
+
+    from power_grid_model import ComponentType
+
+    converter = VisionExcelConverter(source_file=test_file, mapping_file=mapping_file)
+
+    # Act
+    result, extra_info = converter.load_input_data()
+
+    # Assert
+    assert ComponentType.node in result
+    assert len(result[ComponentType.node]) == 3
+
+    # Check that all extra fields are present (including optional ones)
+    for node in result[ComponentType.node]:
+        node_id = node["id"]
+        assert node_id in extra_info
+        assert "ID" in extra_info[node_id]
+        assert "Name" in extra_info[node_id]
+        assert "GUID" in extra_info[node_id]  # Optional but present
+        assert "StationID" in extra_info[node_id]  # Optional but present
+
+    # Verify specific values
+    node_0_id = result[ComponentType.node][0]["id"]
+    assert extra_info[node_0_id]["ID"] == "N001"
+    assert extra_info[node_0_id]["Name"] == "Node1"
+    assert extra_info[node_0_id]["GUID"] == "guid-001"
+    assert extra_info[node_0_id]["StationID"] == "ST1"
+
+
+def test_optional_extra_some_columns_missing():
+    """Test Vision Excel conversion with some optional columns missing"""
+    # Arrange
+    test_file = Path(__file__).parents[2] / "data" / "vision" / "vision_optional_extra_partial.xlsx"
+    mapping_file = Path(__file__).parents[2] / "data" / "vision" / "vision_optional_extra_mapping.yaml"
+
+    from power_grid_model import ComponentType
+
+    converter = VisionExcelConverter(source_file=test_file, mapping_file=mapping_file)
+
+    # Act
+    result, extra_info = converter.load_input_data()
+
+    # Assert
+    assert ComponentType.node in result
+    assert len(result[ComponentType.node]) == 3
+
+    # Check that required and present optional fields are included
+    for node in result[ComponentType.node]:
+        node_id = node["id"]
+        assert node_id in extra_info
+        assert "ID" in extra_info[node_id]
+        assert "Name" in extra_info[node_id]
+        assert "GUID" in extra_info[node_id]  # Optional and present
+        assert "StationID" not in extra_info[node_id]  # Optional and missing - should not be present
+
+    # Verify specific values
+    node_1_id = result[ComponentType.node][1]["id"]
+    assert extra_info[node_1_id]["ID"] == "N002"
+    assert extra_info[node_1_id]["Name"] == "Node2"
+    assert extra_info[node_1_id]["GUID"] == "guid-002"
+
+
+def test_optional_extra_all_optional_missing():
+    """Test Vision Excel conversion with all optional columns missing"""
+    # Arrange
+    test_file = Path(__file__).parents[2] / "data" / "vision" / "vision_optional_extra_minimal.xlsx"
+    mapping_file = Path(__file__).parents[2] / "data" / "vision" / "vision_optional_extra_mapping.yaml"
+
+    from power_grid_model import ComponentType
+
+    converter = VisionExcelConverter(source_file=test_file, mapping_file=mapping_file)
+
+    # Act
+    result, extra_info = converter.load_input_data()
+
+    # Assert
+    assert ComponentType.node in result
+    assert len(result[ComponentType.node]) == 3
+
+    # Check that only required fields are present
+    for node in result[ComponentType.node]:
+        node_id = node["id"]
+        assert node_id in extra_info
+        assert "ID" in extra_info[node_id]
+        assert "Name" in extra_info[node_id]
+        assert "GUID" not in extra_info[node_id]  # Optional and missing
+        assert "StationID" not in extra_info[node_id]  # Optional and missing
+
+    # Verify specific values
+    node_2_id = result[ComponentType.node][2]["id"]
+    assert extra_info[node_2_id]["ID"] == "N003"
+    assert extra_info[node_2_id]["Name"] == "Node3"
+    # Check that optional fields are not present (only ID, Name, and id_reference)
+    assert "GUID" not in extra_info[node_2_id]
+    assert "StationID" not in extra_info[node_2_id]
