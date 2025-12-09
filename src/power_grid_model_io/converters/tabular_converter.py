@@ -558,17 +558,10 @@ class TabularConverter(BaseConverter[TabularData]):
 
         try:  # Maybe it is not a column name, but a float value like 'inf', let's try to convert the string to a float
             const_value = float(col_def)
-        except ValueError as e:
-            if allow_missing:
-                # Return empty DataFrame with correct number of rows when column is optional and missing
-                self._log.debug(
-                    "Optional column not found",
-                    table=table,
-                    columns=" or ".join(f"'{col_name}'" for col_name in columns),
-                )
-                return pd.DataFrame(index=table_data.index)
+        except ValueError:
+            # pylint: disable=raise-missing-from
             columns_str = " and ".join(f"'{col_name}'" for col_name in columns)
-            raise KeyError(f"Could not find column {columns_str} on table '{table}'") from e
+            raise KeyError(f"Could not find column {columns_str} on table '{table}'")
 
         return self._parse_col_def_const(data=data, table=table, col_def=const_value, table_mask=table_mask)
 
