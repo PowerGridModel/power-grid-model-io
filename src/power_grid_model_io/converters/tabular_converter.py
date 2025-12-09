@@ -482,14 +482,18 @@ class TabularConverter(BaseConverter[TabularData]):
                 col_data = self._apply_multiplier(table=table, column=col_name, data=col_data)
                 return pd.DataFrame(col_data)
 
-        try:  # Maybe it is not a column name, but a float value like 'inf', let's try to convert the string to a float
-            const_value = float(col_def)
-        except ValueError:
-            # pylint: disable=raise-missing-from
-            columns_str = " and ".join(f"'{col_name}'" for col_name in columns)
-            raise KeyError(f"Could not find column {columns_str} on table '{table}'")
+        def _get_float(value: str) -> Optional[float]:
+            try:
+                return float(value)
+            except ValueError:
+                return None
 
-        return self._parse_col_def_const(data=data, table=table, col_def=const_value, table_mask=table_mask)
+        # Maybe it is not a column name, but a float value like 'inf', let's try to convert the string to a float
+        if (const_value := _get_float(col_def)) is not None:
+            return self._parse_col_def_const(data=data, table=table, col_def=const_value, table_mask=table_mask)
+
+        columns_str = " and ".join(f"'{col_name}'" for col_name in columns)
+        raise KeyError(f"Could not find column {columns_str} on table '{table}'")
 
     def _apply_multiplier(self, table: str, column: str, data: pd.Series) -> pd.Series:
         if self._multipliers is None:
