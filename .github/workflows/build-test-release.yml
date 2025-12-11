@@ -122,7 +122,7 @@ jobs:
         run: uv pip install power-grid-model-io==${{ needs.build-python.outputs.version }} --find-links=wheelhouse
 
       - name: Validation tests
-        run: uv run --only-group validation --no-editable pytest tests/validation --no-cov --verbose
+        run: uv run --only-group test --no-editable pytest tests/validation --no-cov --verbose
 
   github-release:
     needs:
