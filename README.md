@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridm
 SPDX-License-Identifier: MPL-2.0
 -->
 
-[![PyPI version](https://badge.fury.io/py/power-grid-model-io.svg?no-cache)](https://badge.fury.io/py/power-grid-model-io)
+[![PyPI version](https://badge.fury.io/py/power-grid-model-io.svg?no-cache)](https://badge.fury.io/py/power-grid-model-io) <!-- markdownlint-disable-line first-line-h1 line-length -->
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/power-grid-model-io/badges/version.svg?no-cache)](https://anaconda.org/conda-forge/power-grid-model-io)
 [![License: MIT](https://img.shields.io/badge/License-MPL2.0-informational.svg)](https://github.com/PowerGridModel/power-grid-model-io/blob/main/LICENSE)
 [![Downloads](https://static.pepy.tech/badge/power-grid-model-io)](https://pepy.tech/project/power-grid-model-io)
@@ -24,11 +24,12 @@ SPDX-License-Identifier: MPL-2.0
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8059257.svg)](https://zenodo.org/record/8059257)
 
-[![Power Grid Model logo](https://github.com/PowerGridModel/.github/blob/main/artwork/svg/color.svg)](#)
+[![Power Grid Model logo](https://github.com/PowerGridModel/.github/blob/main/artwork/svg/color.svg)](#) <!-- markdownlint-disable-line no-empty-links line-length -->
 
 # Power Grid Model Input/Output
 
-`power-grid-model-io` can be used for various conversions to the [power-grid-model](https://github.com/PowerGridModel/power-grid-model).
+`power-grid-model-io` can be used for various conversions to the
+[power-grid-model](https://github.com/PowerGridModel/power-grid-model).
 For detailed documentation, see [Read the Docs](https://power-grid-model-io.readthedocs.io/en/stable/index.html).
 
 ## Installation
@@ -57,18 +58,22 @@ conda install -c conda-forge power-grid-model-io
 
 ## License
 
-This project is licensed under the Mozilla Public License, version 2.0 - see [LICENSE](https://github.com/PowerGridModel/power-grid-model-io/blob/main/LICENSE) for details.
+This project is licensed under the Mozilla Public License, version 2.0 - see
+[LICENSE](https://github.com/PowerGridModel/power-grid-model-io/blob/main/LICENSE) for details.
 
 ## Contributing
 
-Please read [CODE_OF_CONDUCT](https://github.com/PowerGridModel/.github/blob/main/CODE_OF_CONDUCT.md) and [CONTRIBUTING](https://github.com/PowerGridModel/.github/blob/main/CONTRIBUTING.md) for details on the process 
+Please read [CODE_OF_CONDUCT](https://github.com/PowerGridModel/.github/blob/main/CODE_OF_CONDUCT.md) and
+[CONTRIBUTING](https://github.com/PowerGridModel/.github/blob/main/CONTRIBUTING.md) for details on the process
 for submitting pull requests to us.
 
-Visit [Contribute](https://github.com/PowerGridModel/power-grid-model-io/contribute) for a list of good first issues in this repo.
+Visit [Contribute](https://github.com/PowerGridModel/power-grid-model-io/contribute) for a list of good first issues in
+this repo.
 
 ## Citations
 
-If you are using Power Grid Model IO in your research work, please consider citing our library using the following references.
+If you are using Power Grid Model IO in your research work, please consider citing our library using the following
+references.
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8059257.svg)](https://zenodo.org/record/8059257)
 
@@ -102,4 +107,5 @@ If you are using Power Grid Model IO in your research work, please consider citi
 
 ## Contact
 
-Please read [SUPPORT](https://github.com/PowerGridModel/.github/blob/main/SUPPORT.md) for how to connect and get into contact with the Power Grid Model IO project.
+Please read [SUPPORT](https://github.com/PowerGridModel/.github/blob/main/SUPPORT.md) for how to connect and get into
+contact with the Power Grid Model IO project.

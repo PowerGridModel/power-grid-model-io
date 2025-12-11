@@ -5,8 +5,10 @@ SPDX-License-Identifier: MPL-2.0
 -->
 # Tabular converter
 
-Tabular data is commonly stored in spreadsheet files: Excel files, CSV files, GNF files, databases, pandas DataFrames, etc.
-The similarity between all tabular data is that it contains multiple `tables`, each with multiple `columns`, possibly with a specific `unit` row.
+Tabular data is commonly stored in spreadsheet files:
+Excel files, CSV files, GNF files, databases, pandas DataFrames, etc.
+The similarity between all tabular data is that it contains multiple `tables`, each with multiple `columns`, possibly
+with a specific `unit` row.
 Others may have categorical values that need to be further mapped (i.e., open: 0, closed: 1).
 These attributes are referred to as `substitutions`.
 
@@ -61,7 +63,8 @@ The for each PGM `column` the source column is supplied (e.g., u_rated: Unom, fr
 
 ## Field Definitions
 
-If the `column` definition is a one-on-one mapping, the value is simply the name of the source column (e.g., u_rated: Unom).
+If the `column` definition is a one-on-one mapping, the value is simply the name of the source column
+(e.g., u_rated: Unom).
 In many other cases, however, mappings can be a bit more complex.
 You can use the following `column` definitions:
 
@@ -78,7 +81,7 @@ You can use the following `column` definitions:
     ```
 
 * Automatic IDs `Dict[str, Dict[str, Any]]` with single key `reference`, required attribute `key` and optional
-    attributes `table` and `name`. More extensive examples are shown in the section [AutoID Mapping](##autois-mapping).
+    attributes `table` and `name`. More extensive examples are shown in the section [AutoID Mapping](#autoid-mapping).
 
     ```yaml
     id:
@@ -151,9 +154,13 @@ You can use the following `column` definitions:
 
 ## Units
 
-Power Grid Model uses SI units (e.g., "W" for Watts), but source data may be supplied in different units (e.g., "MW" for Mega Watts).
-If units are supplied in the tabular data, the data stored using pandas DataFrame is expected to have `MultiIndexes` for columns.
-For our application, a `MultiIndex` can be interpreted as a tuple; the first element is the column name, the second element is the column unit. For example: `("C0", "µF")`.
+Power Grid Model uses SI units (e.g., "W" for Watts), but source data may be supplied in different units
+(e.g., "MW" for Mega Watts).
+If units are supplied in the tabular data, the data stored using pandas DataFrame is expected to have `MultiIndexes` for
+columns.
+For our application, a `MultiIndex` can be interpreted as a tuple;
+the first element is the column name, the second element is the column unit.
+For example: `("C0", "µF")`.
 
 If an optional unit is supplied, it should be defined in the unit section of the mapping.
 Undefined units that do not exist in mapping are not allowed.
@@ -350,7 +357,11 @@ Transformer Load:
   sym_gen: ...
 ```
 
-Then for each row in `Transformer Load` table, all 5 corresponding PGM components are created. But if it is the intention is to make some of these components optional, then it is possible to do so with the help of `filters` functions. These functions apply a mask based on the rules provided by the funciton. All components are selected from the start and the `filters` are then applied in a recursive `and` way.
+Then for each row in `Transformer Load` table, all 5 corresponding PGM components are created.
+But if it is the intention is to make some of these components optional, then it is possible to do so with the help of
+`filters` functions.
+These functions apply a mask based on the rules provided by the funciton.
+All components are selected from the start and the `filters` are then applied in a recursive `and` way.
 
 For example, `exclude_value` excludes all rows which match at the `value` for the `col` specified.
 
@@ -366,11 +377,15 @@ Transformers:
 
 ## Security Considerations
 
-Mapping files enable the specification of custom mappings or filter functions. These functions can come from the `power-grid-model-io` library, be user-provided, or even supplied by third parties. To ensure security, we have implemented several measures. Best practices are recommended to prevent malicious code execution.
+Mapping files enable the specification of custom mappings or filter functions.
+These functions can come from the `power-grid-model-io` library, be user-provided, or even supplied by third parties.
+To ensure security, we have implemented several measures.
+Best practices are recommended to prevent malicious code execution.
 
 ### Safe Loading of Configuration Files
 
-We use the `yaml.safe_load` functionality from the PyYAML library to load configuration files securely. This method prevents the execution of potentially malicious code during the loading process.
+We use the `yaml.safe_load` functionality from the PyYAML library to load configuration files securely.
+This method prevents the execution of potentially malicious code during the loading process.
 
 ### Secure Function Handling
 
@@ -387,7 +402,8 @@ We use the `yaml.safe_load` functionality from the PyYAML library to load config
 
   * Prefixed by Import Path:
 
-    Functions must include their relative or absolute import path, ensuring they are importable using `import_module`. For example, `numpy.max` is allowed, but `np.max` is not.
+    Functions must include their relative or absolute import path, ensuring they are importable using `import_module`.
+    For example, `numpy.max` is allowed, but `np.max` is not.
 
 ### Prevention of Malicious Code Injection
 
@@ -399,7 +415,8 @@ lambda x: return (malicious_code(), normal_code(x))[1]
 
 which, in normal operation without any malicious intentions, would be provided as plainly `normal_code`.
 
-We enforce above mentioned rules, completely rejecting the malicious snippet, and therefore prevent any potential harm from `malicious_code`.
+We enforce above mentioned rules, completely rejecting the malicious snippet, and therefore prevent any potential harm
+from `malicious_code`.
 
 ### Best Practices for Production Environments
 
