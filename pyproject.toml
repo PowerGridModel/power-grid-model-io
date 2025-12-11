@@ -50,8 +50,10 @@ test = [
 
 lint = [
     "pre-commit",
-    "pylint",
     "ruff",
+    "mypy",
+    "numpy", # needed for mypy
+    "types-pyyaml", # needed for mypy
 ]
 
 dev = [{ include-group = "test" }, { include-group = "lint" }]
