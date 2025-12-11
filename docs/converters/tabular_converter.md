@@ -4,13 +4,16 @@ SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridm
 SPDX-License-Identifier: MPL-2.0
 -->
 # Tabular converter
+
 Tabular data is commonly stored in spreadsheet files: Excel files, CSV files, GNF files, databases, pandas DataFrames, etc.
 The similarity between all tabular data is that it contains multiple `tables`, each with multiple `columns`, possibly with a specific `unit` row.
 Others may have categorical values that need to be further mapped (i.e., open: 0, closed: 1).
 These attributes are referred to as `substitutions`.
 
 ## Mapping file
+
 A mapping file is a yaml file with three main sections `grid`, `units` and `substitutions`:
+
 ```yaml
 grid:
 
@@ -52,31 +55,39 @@ substitutions:
 ```
 
 ## Grid
+
 For each `table`, the target PGM `component` is listed (e.g., Nodes: node, Cables: line).
 The for each PGM `column` the source column is supplied (e.g., u_rated: Unom, from_status: From.SwitchStatus).
 
 ## Field Definitions
+
 If the `column` definition is a one-on-one mapping, the value is simply the name of the source column (e.g., u_rated: Unom).
 In many other cases, however, mappings can be a bit more complex.
 You can use the following `column` definitions:
 
-  * Column name `str`
+* Column name `str`
+
     ```yaml
     from_node: From.Number
     ```
-  * First matching column name that exists in the data `str`
+
+* First matching column name that exists in the data `str`
+
     ```yaml
     p_specified: Inverter.Pnom | Inverter.Snom
     ```
-  * Automatic IDs `Dict[str, Dict[str, Any]]` with single key `reference`, required attribute `key` and optional
+
+* Automatic IDs `Dict[str, Dict[str, Any]]` with single key `reference`, required attribute `key` and optional
     attributes `table` and `name`. More extensive examples are shown in the section [AutoID Mapping](##autois-mapping).
+
     ```yaml
     id:
       auto_id:
         key: Number
     ```
 
-  * Reference to a column on another sheet `Dict[str, Dict[str, Any]]` with single key `reference` and the
+* Reference to a column on another sheet `Dict[str, Dict[str, Any]]` with single key `reference` and the
+
     ```yaml
     r1:
       reference:
@@ -85,27 +96,35 @@ You can use the following `column` definitions:
         key_column: Type short
         value_column: R
     ```
-  * Constant value `int` or `float`
+
+* Constant value `int` or `float`
+
     ```yaml
     from_status: 1
     tan1: 0.0
     ```
-  * Pandas DataFrame functions `Dict[str, List[Any]]`
+
+* Pandas DataFrame functions `Dict[str, List[Any]]`
     (`prod`, `sum`, `min`, `max`, etc. and the alias `multiply` which translates to `prod`)
+
     ```yaml
     p_specified:
       min:
         - Pnom
         - Inverter.Pnom
     ```
-  * Custom functions `Dict[str, Dict[str, Any]]`
+
+* Custom functions `Dict[str, Dict[str, Any]]`
+
     ```yaml
       g0:
         power_grid_model_io.functions.complex_inverse_real_part:
           real: R0
           imag: X0
     ```
-  * Nested definitions:
+
+* Nested definitions:
+
     ```yaml
     q_specified:
       power_grid_model_io.functions.phase_to_phase.reactive_power:
@@ -115,7 +134,9 @@ You can use the following `column` definitions:
             - Inverter.Pnom | Inverter.Snom
         cos_phi: Inverter.cos phi
     ```
+
     Is similar to something like:
+
     ```python
     from power_grid_model_io.functions.phase_to_phase import reactive_power
 
@@ -129,6 +150,7 @@ You can use the following `column` definitions:
     ```
 
 ## Units
+
 Power Grid Model uses SI units (e.g., "W" for Watts), but source data may be supplied in different units (e.g., "MW" for Mega Watts).
 If units are supplied in the tabular data, the data stored using pandas DataFrame is expected to have `MultiIndexes` for columns.
 For our application, a `MultiIndex` can be interpreted as a tuple; the first element is the column name, the second element is the column unit. For example: `("C0", "µF")`.
@@ -144,16 +166,20 @@ units:
   ohm/m:
     ohm/km: 0.001
 ```
+
 The definitions above can be interpreted as:
-  * **A** is a valid SI unit
-  * **F** is a valid SI unit
-    * 1 **µF** = 0.000001 **F**
-  * **ohm/m** is a valid SI unit
-    * 1 **ohm/km** = 0.001 **ohm/m**
+
+* **A** is a valid SI unit
+* **F** is a valid SI unit
+  * 1 **µF** = 0.000001 **F**
+* **ohm/m** is a valid SI unit
+  * 1 **ohm/km** = 0.001 **ohm/m**
 
 ## Substitutions
+
 Some columns may contain categorical values (enums) that should be mapped. The column names can be defined as
 regular expressions.
+
 ```yaml
 substitutions:
   ".*Switch state":
@@ -164,14 +190,17 @@ substitutions:
     none: false
     own: true
 ```
+
 The definitions above can be interpreted as:
-  * In all columns that end with `SwitchState` (e.g., `From.Switch State`, `To.Switch State` or just `Switch State`),
+
+* In all columns that end with `SwitchState` (e.g., `From.Switch State`, `To.Switch State` or just `Switch State`),
     the word "off" should be replaced with integer value 0, and the word "in" integer value 1.
-  * In all columns called "N1",
+* In all columns called "N1",
     the word "none" should be replaced with the boolean value `false`,
     and the word "own" boolean value `true`.
 
 ## AutoID
+
 The `id` field is special in the sense that each object should have a unique numerical id in power grid model.
 Therefore, each id definition is mapped to a numerical (integer) ID.
 Field names that end with `node` are also mapped to corresponding numerical IDs.
@@ -189,8 +218,10 @@ item = auto_id[1]      # item = "Bravo"
 See also {py:class}`power_grid_model_io.utils.AutoID`
 
 ## AutoID Mapping
+
 Let's consider a very common example of the usage of `auto_id` in a mapping file
 (note that we're focussing on the ids and references, other attributes are therefore omitted).
+
 ```yaml
   Nodes:
     node:
@@ -213,7 +244,9 @@ Let's consider a very common example of the usage of `auto_id` in a mapping file
             key:
               Number: To_Number
 ```
+
 This basically reads:
+
 * For each row in the Nodes table, a PGM node instance is created.
   * For each node instance, a numerical id is generated, which is unique for each value in the Number column. This
     assumes that the Number column is unique in the source table. Let's say tha values of the Number column in that
@@ -240,11 +273,12 @@ This basically reads:
     * `{"table": "Nodes", "key" {"Number": 102} -> 1`
     * `{"table": "Nodes", "key" {"Number": 103} -> 2`
 
-
 ## Advanced AutoID Mapping
+
 In some cases, multiple components have to be created for each row in a source table.
 In such cases, the `name` attribute may be necessary to create multiple PGM IDs for a single row. Consider
 this example:
+
 ```yaml
   Transformer loads:
     transformer:
@@ -289,6 +323,7 @@ this example:
 
 Suppose we have one Transformer Load connected to the Node Number 103 and its Subnumber is 1.
 Then the following IDs will be generated / retrieved:
+
 * `transformer.id`:
   `{"table": "Transformer loads", "name": "transformer", "key" {"Node_Number": 103, "Subnumber": 1} -> 5`
 * `transformer.from_node`:
@@ -329,14 +364,16 @@ Transformers:
           value: 0
 ```
 
-
 ## Security Considerations
+
 Mapping files enable the specification of custom mappings or filter functions. These functions can come from the `power-grid-model-io` library, be user-provided, or even supplied by third parties. To ensure security, we have implemented several measures. Best practices are recommended to prevent malicious code execution.
 
 ### Safe Loading of Configuration Files
+
 We use the `yaml.safe_load` functionality from the PyYAML library to load configuration files securely. This method prevents the execution of potentially malicious code during the loading process.
 
 ### Secure Function Handling
+
 * No `eval`-like Functionality:
 
   We do not use `eval` or similar functions that can execute arbitrary code.
@@ -353,15 +390,19 @@ We use the `yaml.safe_load` functionality from the PyYAML library to load config
     Functions must include their relative or absolute import path, ensuring they are importable using `import_module`. For example, `numpy.max` is allowed, but `np.max` is not.
 
 ### Prevention of Malicious Code Injection
+
 The rules mentioned above prevent the inclusion of malicious code like:
+
 ```python
 lambda x: return (malicious_code(), normal_code(x))[1]
 ```
+
 which, in normal operation without any malicious intentions, would be provided as plainly `normal_code`.
 
 We enforce above mentioned rules, completely rejecting the malicious snippet, and therefore prevent any potential harm from `malicious_code`.
 
 ### Best Practices for Production Environments
+
 * File Permissions
 
   Configuration files should be treated similarly to Python source files, with appropriate file permissions.

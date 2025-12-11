@@ -6,7 +6,7 @@ SPDX-License-Identifier: MPL-2.0
 
 # Pandapower converter
 
-The pandapower converter can convert the pandapower `net` to power-grid-model input data. 
+The pandapower converter can convert the pandapower `net` to power-grid-model input data.
 It also converts the power flow output of power-grid-model into the `res_*` Dataframes in the pandapower `net`.
 The converter can be used in a similar way as described in [Converters](converter.md).
 
@@ -24,7 +24,7 @@ If the clocks are odd, then the vector group is converted as `YNynd`, `YNdyn` or
 
 ## Modeling differences
 
-The user must be aware of following unsupported features or differences in conversion. 
+The user must be aware of following unsupported features or differences in conversion.
 
 * Currently, the conversions only support powerflow calculations and their relevant attributes.
 * Any feature involving a PV bus, i.e., generator, DC line are unsupported as of now.

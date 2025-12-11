@@ -48,20 +48,25 @@ Some components are yet to be modeled for conversions because they might not hav
 So the unchecking of `Also in backw. direction`. Neither `Load Dependent` compensation or a master-slave configuration for control under the `State` section is supported.
 
 ## Accomdation of UUID-based id system since Vision 9.7
+
 Vision introduced UUID based identifier system since version 9.7. It is implemented following the Microsoft naming scheme by replacing all the original identifier fields (i.e., '*Number', '*Subnumber', '*Nummber' and '*Subnummer') to GUID. This change brings the many benefits of UUIDs in general while on the other hand adds certain work on the conversion side. Since computations in PGM alone do not benefit from a string based identifier, we hence made the descision to perform UUID to integer conversion while maintaining the 'GUID' information in the `extra_info` field. Note that existing mapping files can still be used without significant changes, apart from adding `GUID` to the `extra` fields of interest.
 
 An examplery usage can be found in the example notebook as well as in the test cases.
 
 ## Common/Known issues related to Vision
+
 So far we have the following issue known to us related to Vision exported spread sheets. We provide a solution from user perspective to the best of our knowledge.
 
 ### Duplicated `P` columns
+
 Vision can export sheets with duplicated `P` columns, one of which being unitless additional information. This field is of no actual purpose within PGM calculation. In case of duplicate column names, PGM-IO renames them to eg. `P`, `P_2` and so on. However the change in mapping to the duplicate name should be done manually by the user in a custom mapping file.
 
 **Tip:** We advice users to uncheck the `specifics` when exporting from Vision and an extra `P` column would not appear.
 
 ### Different names for columns
+
 In different versions of exports, user can sometimes find different names for columns. For example, the column name `N1` might be represented as `Grounding1` in some exports. To address this, the `VisionExcelConverter`'s `terms_changed` argument can be used.
 
 ### Sheets being ignored
+
 In different versions of exports, user can find different names for the spreadsheets. All sheets not specified in the mapping file are ignored for conversion. Hence if the mapping has an incorrect sheet name, they would not be considered in conversion and no error shall be given out. The user should use the adequate mapping file for different vision versions. And if the default mapping is modified, it is advised to verify if all required sheets are being converted.

@@ -35,4 +35,3 @@ Also refer {py:class}`power_grid_model_io.data_stores.ExcelFileStore` for specif
 
 The vision excel export specific operations in conversion  are carried out.
 Eg. Vision exports has the units on the 2nd row.
-
