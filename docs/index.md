@@ -21,16 +21,18 @@ While we do not formally support those formats, you may find examples in this do
 ## Install from PyPI
 
 You can directly install the package from PyPI.
+Although it is opt-in, it is recommended to use [`uv`](https://github.com/astral-sh/uv) as
+your development environment manager.
 
-```
-pip install power-grid-model-io
+```sh
+uv add power-grid-model-io
 ```
 
 ## Install from Conda
 
 If you are using `conda`, you can directly install the package from `conda-forge` channel.
 
-```
+```sh
 conda install -c conda-forge power-grid-model-io
 ```
 
