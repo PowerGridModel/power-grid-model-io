@@ -115,7 +115,7 @@ class TabularConverter(BaseConverter[TabularData]):
             data.set_substitutions(self._substitutions)
 
         # Initialize some empty data structures
-        pgm: Dict[str, List[np.ndarray]] = {}
+        pgm: Dict[ComponentType, List[np.ndarray]] = {}
 
         # For each table in the mapping
         for table in self._mapping.tables():
@@ -132,8 +132,8 @@ class TabularConverter(BaseConverter[TabularData]):
                 )
                 if component_data is not None:
                     if component not in pgm:
-                        pgm[component] = []
-                    pgm[component].append(component_data)
+                        pgm[ComponentType(component)] = []
+                    pgm[ComponentType(component)].append(component_data)
 
         input_data = TabularConverter._merge_pgm_data(data=pgm)
         self._log.debug(
