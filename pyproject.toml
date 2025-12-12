@@ -54,6 +54,7 @@ lint = [
     "mypy",
     "numpy", # needed for mypy
     "types-pyyaml", # needed for mypy
+    "types-requests", # needed for mypy
 ]
 
 dev = [{ include-group = "test" }, { include-group = "lint" }]

@@ -14,7 +14,7 @@ from typing import Any, Collection, Dict, List, Mapping, Optional, cast
 import numpy as np
 import pandas as pd
 import yaml
-from power_grid_model import DatasetType, initialize_array
+from power_grid_model import ComponentType, DatasetType, initialize_array
 from power_grid_model.data_types import Dataset
 
 from power_grid_model_io.converters.base_converter import BaseConverter
@@ -357,14 +357,12 @@ class TabularConverter(BaseConverter[TabularData]):
                     extra_info[i] = xtr
 
     @staticmethod
-    def _merge_pgm_data(data: Dict[str, List[np.ndarray]]) -> Dict[str, np.ndarray]:
+    def _merge_pgm_data(data: Dict[ComponentType, List[np.ndarray]]) -> Dict[ComponentType, np.ndarray]:
         """During the conversion, multiple numpy arrays can be produced for the same type of component. These arrays
         should be concatenated to form one large table.
 
         Args:
-          data: For each component, one or more numpy structured arrays
-          data: Dict[str:
-          List[np.ndarray]]:
+          data: Dict[ComponentType, List[np.ndarray]]: For each component, one or more numpy structured arrays
 
         Returns:
 
