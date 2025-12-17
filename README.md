@@ -41,7 +41,7 @@ Although it is opt-in, it is recommended to use [`uv`](https://github.com/astral
 your development environment manager.
 
 ```sh
-uv add power-grid-model-io
+uv pip install power-grid-model-io
 ```
 
 ### Install from Conda
