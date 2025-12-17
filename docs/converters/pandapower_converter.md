@@ -47,8 +47,8 @@ Hence, this impedance value has to be mentioned in the power-flow calculation wh
 
 ### Transformer
 
-Custom zero sequence parameters in transformers are not supported.
-The same ones as positive sequence admittance is used in power-grid-model.
+Custom zero sequence parameters `vk0_percent` and `vkr0_percent` in transformers are not supported.
+The same ones as positive sequence admittance is used in power-grid-model. However, `mag0_percent` and `mag0_rx` are fetched from `pandapower`.
 The changing of impedance by the means of characteristics in `net.characteristic` is not directly supported.
 The phase shift in angle by transforermers by the `shift_degree` attribute only supports clock values in PGM.
 The `tap_phase_shifter` transformer and shifting of angles with tap via `tap_step_degree` are features not added in power-grid-model yet.
@@ -56,5 +56,6 @@ The default for transformer model to be used in pandapower is `t` model but powe
 
 ### Three  winding transformer
 
+Custom zero sequence parameters in transformers are not supported.
 The differences defined in [Transformer](#transformer) are applicable here as well.
 Additionally, tap connection at star point, i.e., `tap_at_star_point` is not supported.

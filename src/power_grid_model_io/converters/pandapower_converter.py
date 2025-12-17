@@ -790,7 +790,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # manual zero sequence vk0_percent and vkr0_percent params are not supported yet.
         vk0_percent = self._get_pp_attr("trafo", "vk0_percent", expected_type="f8", default=np.nan)
         vkr0_percent = self._get_pp_attr("trafo", "vkr0_percent", expected_type="f8", default=np.nan)
-        # mag0_percent and mag0_rx will be fetched relative to vk_percent and vkr_percent
+        # mag0_percent and mag0_rx will be fetched relative to vk_percent
         mag0_percent = self._get_pp_attr("trafo", "mag0_percent", expected_type="f8", default=np.nan)
         mag0_rx = self._get_pp_attr("trafo", "mag0_rx", expected_type="f8", default=np.nan)
         # Calculate rx ratio of magnetising branch
@@ -828,7 +828,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             * sn_mva
             * 1e6
         )
-        p0_zero_sequence[np.logical_not(valid)] = 0.0
+        p0_zero_sequence[np.logical_not(valid)] = np.nan
 
         # Do not use taps when mandatory tap data is not available
         no_taps = np.equal(tap_side, None) | np.isnan(tap_pos) | np.isnan(tap_nom) | np.isnan(tap_size)
