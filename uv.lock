@@ -1400,6 +1400,7 @@ source = { editable = "." }
 dependencies = [
     { name = "numpy" },
     { name = "openpyxl" },
+    { name = "packaging" },
     { name = "pandas" },
     { name = "power-grid-model" },
     { name = "pyyaml" },
@@ -1454,6 +1455,7 @@ test = [
 requires-dist = [
     { name = "numpy", specifier = ">=2.0" },
     { name = "openpyxl" },
+    { name = "packaging", specifier = ">=25.0" },
     { name = "pandas" },
     { name = "power-grid-model", specifier = ">=1.8" },
     { name = "pyyaml" },
