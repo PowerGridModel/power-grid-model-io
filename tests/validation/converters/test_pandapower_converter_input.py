@@ -43,7 +43,7 @@ def load_validation_data() -> Tuple[SingleDataset, ExtraInfo]:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
 
-        data, extra_info = load_json_single_dataset(VALIDATION_FILE, data_type="input")
+        data, extra_info = load_json_single_dataset(VALIDATION_FILE, data_type=DatasetType.input)
 
     return data, extra_info
 
@@ -83,7 +83,7 @@ def test_input_data(input_data: Tuple[SingleDataset, SingleDataset]):
 
 
 @pytest.mark.parametrize(("component", "attribute"), component_attributes(VALIDATION_FILE, data_type=DatasetType.input))
-def test_attributes(input_data: Tuple[SingleDataset, SingleDataset], component: str, attribute: str):
+def test_attributes(input_data: Tuple[SingleDataset, SingleDataset], component: ComponentType, attribute: str):
     """
     For each attribute, check if the actual values are consistent with the expected values
     """
@@ -107,7 +107,7 @@ def test_attributes(input_data: Tuple[SingleDataset, SingleDataset], component: 
     ("component", "obj_ids"),
     (pytest.param(component, objects, id=component) for component, objects in component_objects(VALIDATION_FILE)),
 )
-def test_extra_info(extra_info: Tuple[ExtraInfo, ExtraInfo], component: str, obj_ids: List[int]):
+def test_extra_info(extra_info: Tuple[ExtraInfo, ExtraInfo], component: ComponentType, obj_ids: List[int]):
     """
     For each object, check if the actual extra info is consistent with the expected extra info
     """

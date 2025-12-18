@@ -60,7 +60,7 @@ def tabular_data():
 
 
 @pytest.fixture
-def tabular_data_no_units_no_substitutions():
+def tabular_data_no_units_no_substitutions() -> TabularData:
     nodes = pd.DataFrame(data=[[1, 10.5e3], [2, 400.0]], columns=["id_number", "u_nom"])
     lines = pd.DataFrame(data=[[1, 2], [3, 1]], columns=["id_number", "from_node_side"])
     sources = pd.DataFrame(columns=["id_number", "node_side"])
@@ -80,7 +80,7 @@ def test_set_mapping_file(converter: TabularConverter):
 
 def test_parse_data(converter: TabularConverter, tabular_data: TabularData):
     data = MagicMock()
-    converter._parse_data(data=data, data_type="dummy", extra_info=None)
+    converter._parse_data(data=data, data_type=MagicMock(), extra_info=None)
     data.set_unit_multipliers.assert_called_once()
     data.set_substitutions.assert_called_once()
 
@@ -592,7 +592,7 @@ def test_parse_reference(converter: TabularConverter, tabular_data_no_units_no_s
     assert_frame_equal(df_lines_from_node_long, pd.DataFrame([400.0, 10.5e3], columns=["u_nom"]))
 
 
-def test_parse_col_def_filter(converter: TabularConverter):
+def test_parse_col_def_filter(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
     # Act/Assert:
     with pytest.raises(AssertionError):
         converter._parse_col_def_filter(
