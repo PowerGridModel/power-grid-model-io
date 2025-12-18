@@ -143,6 +143,8 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
         """
         # We'll initialize an 1d-array with NaN values for all the objects of this component type
         array = initialize_array(data_type, component, len(objects))
+        if array.dtype.names is None:
+            raise ValueError(f"Invalid component type: {component.value}")
 
         for i, obj in enumerate(objects):
             # As each object is a separate dictionary, and the attributes may differ per object, we need to check

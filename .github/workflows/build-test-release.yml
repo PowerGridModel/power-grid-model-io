@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-
 name: Build and Test
 
 on:
@@ -28,20 +27,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-
   build-python:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
-
       - name: Checkout source code
         uses: actions/checkout@v6
 
-      - name: Setup Python 3.13
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
 
       - name: Set PyPI version
         uses: PowerGridModel/pgm-version-bump@main
@@ -51,8 +46,7 @@ jobs:
       - name: Build
         run: |
           cat PYPI_VERSION
-          pip install build
-          python -m build --outdir wheelhouse .
+          uv build --sdist --no-create-gitignore --out-dir wheelhouse .
 
       - name: Save version
         id: version
@@ -74,12 +68,11 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-
       - name: Checkout source code
         uses: actions/checkout@v6
 
-      - name: Setup Python ${{ matrix.python }}
-        uses: actions/setup-python@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ matrix.python }}
 
@@ -89,11 +82,14 @@ jobs:
           name: power-grid-model-io
           path: wheelhouse/
 
+      - name: Create environment
+        run: uv venv
+
       - name: Install built wheel file
-        run: pip install power-grid-model-io[dev]==${{ needs.build-python.outputs.version }} --find-links=wheelhouse
+        run: uv pip install power-grid-model-io==${{ needs.build-python.outputs.version }} --find-links=wheelhouse
 
       - name: Unit test and coverage
-        run: pytest --verbose
+        run: uv run --only-group test --no-editable pytest --verbose
 
   validation-tests:
     needs: build-python
@@ -105,12 +101,11 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-
       - name: Checkout source code
         uses: actions/checkout@v6
 
-      - name: Setup Python ${{ matrix.python }}
-        uses: actions/setup-python@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ matrix.python }}
 
@@ -120,11 +115,14 @@ jobs:
           name: power-grid-model-io
           path: wheelhouse/
 
+      - name: Create environment
+        run: uv venv
+
       - name: Install built wheel file
-        run: pip install power-grid-model-io[dev]==${{ needs.build-python.outputs.version }} --find-links=wheelhouse
+        run: uv pip install power-grid-model-io==${{ needs.build-python.outputs.version }} --find-links=wheelhouse
 
       - name: Validation tests
-        run: pytest tests/validation --no-cov --verbose
+        run: uv run --only-group test --no-editable pytest tests/validation --no-cov --verbose
 
   github-release:
     needs:
@@ -135,10 +133,8 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Python 3.13
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
 
       - name: Load built wheel file
         uses: actions/download-artifact@v7

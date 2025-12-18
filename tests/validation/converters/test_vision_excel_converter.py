@@ -11,7 +11,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 import pandas as pd
 import pytest
-from power_grid_model import DatasetType
+from power_grid_model import ComponentType, DatasetType
 from power_grid_model.data_types import SingleDataset
 
 from power_grid_model_io.converters import VisionExcelConverter
@@ -59,7 +59,7 @@ def load_validation_data(language: str) -> Tuple[SingleDataset, ExtraInfo]:
     Load the validation data from the json file
     """
     validation_file = Path(str(VALIDATION_FILE).format(language=language))
-    data, extra_info = load_json_single_dataset(validation_file, data_type="input")
+    data, extra_info = load_json_single_dataset(validation_file, data_type=DatasetType.input)
     return data, extra_info
 
 
@@ -113,7 +113,7 @@ def test_input_data_custom_yaml():
 
 @pytest.mark.parametrize(("component", "attribute"), component_attributes(VALIDATION_EN, data_type=DatasetType.input))
 @pytest.mark.parametrize("input_data", LANGUAGES, indirect=True)
-def test_attributes(input_data: Tuple[SingleDataset, SingleDataset], component: str, attribute: str):
+def test_attributes(input_data: Tuple[SingleDataset, SingleDataset], component: ComponentType, attribute: str):
     """
     For each attribute, check if the actual values are consistent with the expected values
     """
@@ -132,7 +132,7 @@ def test_attributes(input_data: Tuple[SingleDataset, SingleDataset], component: 
     (pytest.param(component, objects, id=component) for component, objects in component_objects(VALIDATION_EN)),
 )
 @pytest.mark.parametrize("extra_info", LANGUAGES, indirect=True)
-def test_extra_info(extra_info: Tuple[ExtraInfo, ExtraInfo], component: str, obj_ids: List[int]):
+def test_extra_info(extra_info: Tuple[ExtraInfo, ExtraInfo], component: ComponentType, obj_ids: List[int]):
     """
     For each object, check if the actual extra info is consistent with the expected extra info
     """
