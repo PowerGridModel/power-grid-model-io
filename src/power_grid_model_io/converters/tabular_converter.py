@@ -570,8 +570,7 @@ class TabularConverter(BaseConverter[TabularData]):
             columns_str = " and ".join(f"'{col_name}'" for col_name in columns)
             raise KeyError(f"Could not find column {columns_str} on table '{table}'") from e
 
-        columns_str = " and ".join(f"'{col_name}'" for col_name in columns)
-        raise KeyError(f"Could not find column {columns_str} on table '{table}'")
+        return self._parse_col_def_const(data=data, table=table, col_def=const_value, table_mask=table_mask)
 
     def _apply_multiplier(self, table: str, column: str, data: pd.Series) -> pd.Series:
         if self._multipliers is None:
