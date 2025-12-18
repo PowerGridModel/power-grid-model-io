@@ -91,7 +91,8 @@ An examplery usage can be found in the example notebook as well as in the test c
 
 ## Optional extra columns
 
-When working with Vision Excel exports, some metadata columns (like `GUID` or `StationID`) may not always be present, especially in partial exports. The `optional_extra` feature allows you to specify columns that should be included in `extra_info` if present, but won't cause conversion failure if missing.
+When working with Vision Excel exports, some metadata columns (like `GUID` or `StationID`) may not always be present, especially in partial exports. 
+The `optional_extra` feature allows you to specify columns that should be included in `extra_info` if present, but won't cause conversion failure if missing.
 
 **Syntax:**
 ```yaml
@@ -117,7 +118,8 @@ grid:
 - This feature is particularly useful for handling different Vision export configurations or versions
 
 **Duplicate handling:**
-When a column appears in both the regular `extra` list and within `optional_extra`, the regular `extra` entry takes precedence and duplicates are automatically eliminated from `optional_extra`:
+When a column appears in both the regular `extra` list and within `optional_extra`, 
+the regular `extra` entry takes precedence and duplicates are automatically eliminated from `optional_extra`:
 
 ```yaml
 extra:
@@ -129,7 +131,8 @@ extra:
       - StationID   # Unique optional - processed if present
 ```
 
-In this example, `ID` will only be processed once (from the regular `extra` list), while `GUID` and `StationID` are processed as optional columns. This prevents duplicate data in the resulting `extra_info` and ensures consistent behavior regardless of column ordering.
+In this example, `ID` will only be processed once (from the regular `extra` list), while `GUID` and `StationID` are processed as optional columns. 
+This prevents duplicate data in the resulting `extra_info` and ensures consistent behavior regardless of column ordering.
 
 ## Common/Known issues related to Vision
 
