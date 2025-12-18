@@ -18,7 +18,7 @@ from power_grid_model.utils import import_json_data, json_deserialize_from_file
 from power_grid_model_io.data_types import ExtraInfo
 
 
-def component_objects(json_path: Path) -> Generator[Tuple[str, List[int]], None, None]:
+def component_objects(json_path: Path) -> Generator[Tuple[ComponentType, List[int]], None, None]:
     """
     Read the json file (only the components and their ids are are used, i.e. the component names and attribute name)
 
@@ -41,7 +41,7 @@ def component_objects(json_path: Path) -> Generator[Tuple[str, List[int]], None,
             yield component, obj_ids
 
 
-def component_attributes(json_path: Path, data_type: DatasetType) -> Generator[Tuple[str, str], None, None]:
+def component_attributes(json_path: Path, data_type: DatasetType) -> Generator[Tuple[ComponentType, str], None, None]:
     """
     Read the json file (only the structure is used, i.e. the component names and attribute name)
 
@@ -58,7 +58,9 @@ def component_attributes(json_path: Path, data_type: DatasetType) -> Generator[T
     # Loop over all components in the validation file (in alphabetical order)
     for component, objects in sorted(data.items(), key=lambda x: x[0]):
         # Create a set of attribute names for each object, then take the union of all those sets
-        pgm_attr = set(power_grid_meta_data[data_type][component].dtype.names)
+        component_meta = power_grid_meta_data[data_type][component]
+        assert component_meta.dtype.names is not None
+        pgm_attr = set(component_meta.dtype.names)
         obj_keys = set(objects.keys()) & pgm_attr
         unique_attributes = set(obj_keys)
 
@@ -85,7 +87,7 @@ def component_attributes_df(
             yield component, attribute
 
 
-def select_values(actual: SingleDataset, expected: SingleDataset, component: str, attribute: str):
+def select_values(actual: SingleDataset, expected: SingleDataset, component: ComponentType, attribute: str):
     """
 
     Creates two aligned series, for a single component attribute, containing the actual values and the (non-NaN
@@ -134,7 +136,7 @@ def select_values(actual: SingleDataset, expected: SingleDataset, component: str
     return actual_values, expected_values
 
 
-def extract_extra_info(data: SinglePythonDataset, data_type: str) -> ExtraInfo:
+def extract_extra_info(data: SinglePythonDataset, data_type: DatasetType) -> ExtraInfo:
     """
     Reads the dataset and collect all arguments that aren't pgm attributes
 
@@ -146,15 +148,18 @@ def extract_extra_info(data: SinglePythonDataset, data_type: str) -> ExtraInfo:
     """
     extra_info: ExtraInfo = {}
     for component, objects in data.items():
-        pgm_attr = set(power_grid_meta_data[data_type][component].dtype.names)
+        component_meta = power_grid_meta_data[data_type][component]
+        assert component_meta.dtype.names is not None
+        pgm_attr = set(component_meta.dtype.names)
         for obj in objects:
             obj_extra_info = {attr: val for attr, val in obj.items() if attr not in pgm_attr}
             if obj_extra_info:
+                assert isinstance(obj["id"], int)
                 extra_info[obj["id"]] = obj_extra_info
     return extra_info
 
 
-def load_json_single_dataset(file_path: Path, data_type: str) -> Tuple[SingleDataset, ExtraInfo]:
+def load_json_single_dataset(file_path: Path, data_type: DatasetType) -> Tuple[SingleDataset, ExtraInfo]:
     """
     Loads and parses a json file in the most basic way, without using power_grid_model_io functions.
 
@@ -193,7 +198,7 @@ def load_json_single_dataset(file_path: Path, data_type: str) -> Tuple[SingleDat
     return dataset, extra_info
 
 
-def compare_extra_info(actual: ExtraInfo, expected: ExtraInfo, component: str, obj_ids: List[int]):
+def compare_extra_info(actual: ExtraInfo, expected: ExtraInfo, component: ComponentType, obj_ids: List[int]):
     # We'll collect all errors, instead of terminating at the first error
     errors = []
 

@@ -39,22 +39,33 @@ dependencies = [
 ]
 dynamic = ["version"]
 
-[project.optional-dependencies]
-dev = [
-    "pre-commit",
-    "pylint",
+[dependency-groups]
+
+test = [
     "pytest",
     "pytest-cov",
-    "ruff",
     "pydantic>2", # Used in unit tests
     "pandapower>2.11.1",
     "lxml", # missing pandapower dependency
 ]
+
+lint = [
+    "pre-commit",
+    "ruff",
+    "mypy",
+    "numpy", # needed for mypy
+    "types-pyyaml", # needed for mypy
+    "types-requests", # needed for mypy
+]
+
+dev = [{ include-group = "test" }, { include-group = "lint" }]
+
 examples = [
     "power-grid-model>1.9.80",
     "pandapower>2.11.1",
     "pyarrow", # Pyarrow support for Python 3.12 scheduled for 14.0.0: https://github.com/apache/arrow/issues/37880
 ]
+
 doc = [
     "sphinx",
     "myst-nb",
