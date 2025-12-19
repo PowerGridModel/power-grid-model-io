@@ -160,3 +160,76 @@ def test_simple_example():
     pp_net["gen"] = pp_net["gen"].iloc[:0]
     pp_converter = PandaPowerConverter()
     data, _ = pp_converter.load_input_data(pp_net)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"mag0_percent": 1e2},
+        {"mag0_percent": 1e3},
+        {"mag0_percent": 1e6},
+        {"mag0_percent": 1e20},
+    ],
+)
+def test_trafo_zer_seq_params(kwargs):
+    import pandapower as pp
+    import power_grid_model as pgm
+
+    import power_grid_model_io as pgm_io
+
+    def get_simple_network_zero_seq(mag0_percent):
+        net = pp.create_empty_network()
+        pp.create_bus(net, 11)
+        pp.create_bus(net, 11)
+        pp.create_bus(net, 0.4)
+        pp.create_ext_grid(net, 0, s_sc_max_mva=1e6, rx_max=0.1, x0x_max=1, r0x0_max=0.1)
+        pp.create_line_from_parameters(
+            net,
+            0,
+            1,
+            1,
+            0.33,
+            0.4,
+            0,
+            10,
+            r0_ohm_per_km=0.33,
+            x0_ohm_per_km=0.4,
+            c0_nf_per_km=0,
+            g_nf_per_km=0,
+            g0_nf_per_km=0,
+        )
+        pp.create_transformer_from_parameters(
+            net,
+            1,
+            2,
+            1,
+            11,
+            0.4,
+            1.0,
+            10,
+            10,
+            1.5,
+            0,
+            vector_group="YNyn",
+            vk0_percent=10,
+            vkr0_percent=1.0,
+            mag0_percent=mag0_percent,
+            mag0_rx=0.1,
+            si0_hv_partial=0.5,
+        )
+        pp.create_asymmetric_load(net, 2, 0.2, 0.15, 0.01, 0.1, 0.07, 0.005)
+        return net
+
+    net = get_simple_network_zero_seq(kwargs["mag0_percent"])
+    converter = pgm_io.converters.PandaPowerConverter()
+    data, extra_info = converter.load_input_data(net)
+    pgm.validation.assert_valid_input_data(data)
+    pgm_net = pgm.PowerGridModel(data)
+    output = pgm_net.calculate_power_flow(symmetric=False)
+    pp.runpp_3ph(net)
+    print(output["transformer"]["p_from"][0])
+    assert np.allclose(
+        output["transformer"]["p_from"][0] / 1e6,
+        net.res_trafo_3ph.loc[0, ["p_a_hv_mw", "p_b_hv_mw", "p_c_hv_mw"]].values,
+        rtol=1e-3,
+    )
