@@ -376,21 +376,19 @@ class TabularConverter(BaseConverter[TabularData]):
 
         # Collect all non-optional_extra column names
         regular_columns = set()
-        normalized_list = []
 
         for item in col_def:
             if isinstance(item, dict) and len(item) == 1 and "optional_extra" in item:
                 # This is an optional_extra section - we'll process it later
-                normalized_list.append(item)
+                pass
             else:
                 # This is a regular column
                 if isinstance(item, str):
                     regular_columns.add(item)
-                normalized_list.append(item)
 
         # Now process optional_extra sections and remove duplicates
         final_list = []
-        for item in normalized_list:
+        for item in col_def:
             if isinstance(item, dict) and len(item) == 1 and "optional_extra" in item:
                 optional_cols = item["optional_extra"]
                 if isinstance(optional_cols, list):

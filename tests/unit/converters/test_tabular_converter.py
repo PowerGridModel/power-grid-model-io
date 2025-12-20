@@ -1420,6 +1420,20 @@ def test_optional_extra__mixed_with_required(converter: TabularConverter):
     assert list(result["guid"]) == ["guid1", "guid2"]
 
 
+def test_optional_extra__mixed_with_required_missing_column(converter: TabularConverter):
+    """Test that missing required column raises error even with optional_extra present"""
+    # Arrange
+    data = TabularData(test_table=pd.DataFrame({"id": [1, 2], "name": ["node1", "node2"], "guid": ["guid1", "guid2"]}))
+    # "missing_col" is required but missing
+    col_def = ["name", "missing_col", {"optional_extra": ["guid", "station"]}]
+
+    # Act & Assert
+    with pytest.raises(KeyError, match="missing_col"):
+        converter._parse_col_def(
+            data=data, table="test_table", col_def=col_def, table_mask=None, extra_info=None, allow_missing=False
+        )
+
+
 def test_optional_extra__in_extra_info(converter: TabularConverter):
     """Test that optional_extra works correctly with _handle_extra_info"""
     # Arrange
@@ -1442,6 +1456,23 @@ def test_optional_extra__in_extra_info(converter: TabularConverter):
     assert extra_info[200]["guid"] == "guid2"
     assert "station" not in extra_info[100]
     assert "station" not in extra_info[200]
+
+
+def test_optional_extra__empty_list_with_extra_info(converter: TabularConverter):
+    """Test that empty optional_extra list results in no updates to extra_info"""
+    # Arrange
+    data = TabularData(test_table=pd.DataFrame({"id": [1, 2], "name": ["node1", "node2"], "guid": ["guid1", "guid2"]}))
+    uuids = np.array([100, 200])
+    extra_info: ExtraInfo = {}
+    col_def: dict[str, list[str]] = {"optional_extra": []}
+
+    # Act
+    converter._handle_extra_info(
+        data=data, table="test_table", col_def=col_def, uuids=uuids, table_mask=None, extra_info=extra_info
+    )
+
+    # Assert
+    assert len(extra_info) == 0
 
 
 def test_optional_extra__all_missing_no_extra_info(converter: TabularConverter):
