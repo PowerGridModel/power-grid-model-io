@@ -1,0 +1,26 @@
+id_reference:
+  nodes_table: Nodes
+  number: Number
+  node_number: Node.Number
+  sub_number: Subnumber
+
+grid:
+  Nodes:
+    node:
+      id:
+        auto_id:
+          key: Number
+      u_rated: Unom
+      extra:
+        - optional_extra:
+            - GUID
+            - StationID
+        - ID
+        - Name
+        - GUID
+
+units:
+  V:
+    kV: 1000.0
+
+substitutions: {}

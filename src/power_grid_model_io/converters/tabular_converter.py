@@ -337,11 +337,14 @@ class TabularConverter(BaseConverter[TabularData]):
         if extra_info is None:
             return
 
+        # Normalize col_def to handle deduplication when optional_extra contains columns also in regular extra
+        normalized_col_def = self._normalize_extra_col_def(col_def)
+
         extra = self._parse_col_def(
             data=data,
             table=table,
             table_mask=table_mask,
-            col_def=col_def,
+            col_def=normalized_col_def,
             extra_info=None,
         ).to_dict(orient="records")
         for i, xtr in zip(uuids, extra):
@@ -355,6 +358,57 @@ class TabularConverter(BaseConverter[TabularData]):
                     extra_info[i].update(xtr)
                 else:
                     extra_info[i] = xtr
+
+    def _normalize_extra_col_def(self, col_def: Any) -> Any:
+        """
+        Normalize extra column definition to eliminate duplicates between regular columns and optional_extra.
+        Regular columns take precedence over optional_extra columns.
+        Additionally, ensure no duplicates within optional_extra.
+
+        Args:
+            col_def: Column definition for extra info that may contain optional_extra sections
+
+        Returns:
+            Normalized column definition with duplicates removed from optional_extra
+        """
+        if not isinstance(col_def, list):
+            return col_def
+
+        # Collect all non-optional_extra column names
+        regular_columns = set()
+
+        for item in col_def:
+            if isinstance(item, dict) and len(item) == 1 and "optional_extra" in item:
+                # This is an optional_extra section - we'll process it later
+                pass
+            else:
+                # This is a regular column
+                if isinstance(item, str):
+                    regular_columns.add(item)
+
+        # Now process optional_extra sections and remove duplicates
+        final_list = []
+        for item in col_def:
+            if isinstance(item, dict) and len(item) == 1 and "optional_extra" in item:
+                optional_cols = item["optional_extra"]
+                if isinstance(optional_cols, list):
+                    # Filter out columns that are already in regular columns
+                    filtered_optional_cols = []
+                    for col in optional_cols:
+                        if isinstance(col, str) and col in regular_columns:
+                            continue
+                        if col not in filtered_optional_cols:
+                            filtered_optional_cols.append(col)
+                    # Only include the optional_extra section if it has remaining columns
+                    if filtered_optional_cols:
+                        final_list.append({"optional_extra": filtered_optional_cols})
+                else:
+                    # Keep non-list optional_extra as-is (shouldn't happen but be safe)
+                    final_list.append(item)
+            else:
+                final_list.append(item)
+
+        return final_list
 
     @staticmethod
     def _merge_pgm_data(data: Dict[ComponentType, List[np.ndarray]]) -> Dict[ComponentType, np.ndarray]:
@@ -394,6 +448,8 @@ class TabularConverter(BaseConverter[TabularData]):
         col_def: Any,
         table_mask: Optional[np.ndarray],
         extra_info: Optional[ExtraInfo],
+        *,
+        allow_missing: bool = False,
     ) -> pd.DataFrame:
         """Interpret the column definition and extract/convert/create the data as a pandas DataFrame.
 
@@ -402,6 +458,7 @@ class TabularConverter(BaseConverter[TabularData]):
           table: str:
           col_def: Any:
           extra_info: Optional[ExtraInfo]:
+          allow_missing: bool: If True, missing columns will return empty DataFrame instead of raising KeyError
 
         Returns:
 
@@ -409,8 +466,19 @@ class TabularConverter(BaseConverter[TabularData]):
         if isinstance(col_def, (int, float)):
             return self._parse_col_def_const(data=data, table=table, col_def=col_def, table_mask=table_mask)
         if isinstance(col_def, str):
-            return self._parse_col_def_column_name(data=data, table=table, col_def=col_def, table_mask=table_mask)
+            return self._parse_col_def_column_name(
+                data=data, table=table, col_def=col_def, table_mask=table_mask, allow_missing=allow_missing
+            )
         if isinstance(col_def, dict):
+            # Check if this is an optional_extra wrapper
+            if len(col_def) == 1 and "optional_extra" in col_def:
+                # Extract the list of optional columns and parse as composite with allow_missing=True
+                optional_cols = col_def["optional_extra"]
+                if not isinstance(optional_cols, list):
+                    raise TypeError(f"optional_extra value must be a list, got {type(optional_cols).__name__}")
+                return self._parse_col_def_composite(
+                    data=data, table=table, col_def=optional_cols, table_mask=table_mask, allow_missing=True
+                )
             return self._parse_col_def_filter(
                 data=data,
                 table=table,
@@ -419,7 +487,9 @@ class TabularConverter(BaseConverter[TabularData]):
                 extra_info=extra_info,
             )
         if isinstance(col_def, list):
-            return self._parse_col_def_composite(data=data, table=table, col_def=col_def, table_mask=table_mask)
+            return self._parse_col_def_composite(
+                data=data, table=table, col_def=col_def, table_mask=table_mask, allow_missing=allow_missing
+            )
         raise TypeError(f"Invalid column definition: {col_def}")
 
     @staticmethod
@@ -452,6 +522,7 @@ class TabularConverter(BaseConverter[TabularData]):
         table: str,
         col_def: str,
         table_mask: Optional[np.ndarray] = None,
+        allow_missing: bool = False,
     ) -> pd.DataFrame:
         """Extract a column from the data. If the column doesn't exist, check if the col_def is a special float value,
         like 'inf'. If that's the case, create a single column pandas DataFrame containing the const value.
@@ -460,6 +531,7 @@ class TabularConverter(BaseConverter[TabularData]):
           data: TabularData:
           table: str:
           col_def: str:
+          allow_missing: bool: If True, return empty DataFrame when column is missing instead of raising KeyError
 
         Returns:
 
@@ -480,18 +552,23 @@ class TabularConverter(BaseConverter[TabularData]):
                 col_data = self._apply_multiplier(table=table, column=col_name, data=col_data)
                 return pd.DataFrame(col_data)
 
-        def _get_float(value: str) -> Optional[float]:
-            try:
-                return float(value)
-            except ValueError:
-                return None
+        try:  # Maybe it is not a column name, but a float value like 'inf', let's try to convert the string to a float
+            const_value = float(col_def)
+        except ValueError as e:
+            if allow_missing:
+                # Return empty DataFrame with correct number of rows when column is optional and missing
+                self._log.debug(
+                    "Optional column not found",
+                    table=table,
+                    columns=" or ".join(f"'{col_name}'" for col_name in columns),
+                )
+                index = table_data.index if isinstance(table_data, pd.DataFrame) else pd.RangeIndex(len(table_data))
+                return pd.DataFrame(index=index)
+            # pylint: disable=raise-missing-from
+            columns_str = " and ".join(f"'{col_name}'" for col_name in columns)
+            raise KeyError(f"Could not find column {columns_str} on table '{table}'") from e
 
-        # Maybe it is not a column name, but a float value like 'inf', let's try to convert the string to a float
-        if (const_value := _get_float(col_def)) is not None:
-            return self._parse_col_def_const(data=data, table=table, col_def=const_value, table_mask=table_mask)
-
-        columns_str = " and ".join(f"'{col_name}'" for col_name in columns)
-        raise KeyError(f"Could not find column {columns_str} on table '{table}'")
+        return self._parse_col_def_const(data=data, table=table, col_def=const_value, table_mask=table_mask)
 
     def _apply_multiplier(self, table: str, column: str, data: pd.Series) -> pd.Series:
         if self._multipliers is None:
@@ -780,6 +857,7 @@ class TabularConverter(BaseConverter[TabularData]):
         table: str,
         col_def: list,
         table_mask: Optional[np.ndarray],
+        allow_missing: bool = False,
     ) -> pd.DataFrame:
         """Select multiple columns (each is created from a column definition) and return them as a new DataFrame.
 
@@ -787,6 +865,7 @@ class TabularConverter(BaseConverter[TabularData]):
           data: TabularData:
           table: str:
           col_def: list:
+          allow_missing: bool: If True, skip missing columns instead of raising errors
 
         Returns:
 
@@ -799,10 +878,20 @@ class TabularConverter(BaseConverter[TabularData]):
                 col_def=sub_def,
                 table_mask=table_mask,
                 extra_info=None,
+                allow_missing=allow_missing,
             )
             for sub_def in col_def
         ]
-        return pd.concat(columns, axis=1)
+        # Filter out DataFrames with no columns (from missing optional columns)
+        non_empty_columns = [col for col in columns if len(col.columns) > 0]
+        if not non_empty_columns:
+            # If all columns are missing, return an empty DataFrame with the correct number of rows
+            table_data = data[table]
+            if table_mask is not None:
+                table_data = table_data[table_mask]
+            index = table_data.index if isinstance(table_data, pd.DataFrame) else pd.RangeIndex(len(table_data))
+            return pd.DataFrame(index=index)
+        return pd.concat(non_empty_columns, axis=1)
 
     def _get_id(self, table: str, key: Mapping[str, int], name: Optional[str]) -> int:
         """
