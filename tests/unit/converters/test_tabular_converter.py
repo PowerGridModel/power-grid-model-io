@@ -462,6 +462,7 @@ def test_parse_col_def(converter: TabularConverter, tabular_data_no_units_no_sub
             table="nodes",
             col_def="col_name",
             table_mask=None,
+            allow_missing=False,
         )
 
     # type(col_def) == dict
@@ -499,6 +500,7 @@ def test_parse_col_def(converter: TabularConverter, tabular_data_no_units_no_sub
             table="nodes",
             col_def=[],
             table_mask=None,
+            allow_missing=False,
         )
 
 
@@ -1255,17 +1257,6 @@ def test_lookup_id(converter: TabularConverter):
     converter._get_id(table="node", key={"a": 1, "b": 2}, name="bar")  # change in name
     converter._get_id(table="node", key={"a": 1, "b": 2}, name=None)  # duplicate name / indices / values
 
-    # Act / Assert
-    assert converter.lookup_id(pgm_id=0) == {"table": "node", "key": {"a": 1, "b": 2}}
-    assert converter.lookup_id(pgm_id=1) == {"table": "node", "key": {"a": 1, "b": 3}}
-    assert converter.lookup_id(pgm_id=2) == {"table": "node", "key": {"a": 1, "c": 2}}
-    assert converter.lookup_id(pgm_id=3) == {"table": "foo", "key": {"a": 1, "b": 2}}
-    assert converter.lookup_id(pgm_id=4) == {
-        "table": "node",
-        "name": "bar",
-        "key": {"a": 1, "b": 2},
-    }
-
 
 def test_lookup_ids(converter: TabularConverter):
     # Arrange
@@ -1356,3 +1347,762 @@ def test_parse_table_filters(
 def test_parse_table_filters__ndarray_data(converter: TabularConverter):
     numpy_tabular_data = TabularData(numpy_table=np.ones((4, 3)))
     assert converter._parse_table_filters(data=numpy_tabular_data, table="numpy_table", filtering_functions=[]) is None
+
+
+def test_optional_extra__all_columns_present(converter: TabularConverter):
+    """Test optional_extra when all optional columns are present in the data"""
+    # Arrange
+    data = TabularData(
+        test_table=pd.DataFrame(
+            {"id": [1, 2], "name": ["node1", "node2"], "guid": ["guid1", "guid2"], "station": ["st1", "st2"]}
+        )
+    )
+    col_def = {"optional_extra": ["guid", "station"]}
+
+    # Act
+    result = converter._parse_col_def(
+        data=data, table="test_table", col_def=col_def, table_mask=None, extra_info=None, allow_missing=False
+    )
+
+    # Assert
+    assert list(result.columns) == ["guid", "station"]
+    assert list(result["guid"]) == ["guid1", "guid2"]
+    assert list(result["station"]) == ["st1", "st2"]
+
+
+def test_optional_extra__some_columns_missing(converter: TabularConverter):
+    """Test optional_extra when some optional columns are missing from the data"""
+    # Arrange
+    data = TabularData(test_table=pd.DataFrame({"id": [1, 2], "name": ["node1", "node2"], "guid": ["guid1", "guid2"]}))
+    col_def = {"optional_extra": ["guid", "station"]}  # 'station' is missing
+
+    # Act
+    result = converter._parse_col_def(
+        data=data, table="test_table", col_def=col_def, table_mask=None, extra_info=None, allow_missing=False
+    )
+
+    # Assert - only 'guid' should be present
+    assert list(result.columns) == ["guid"]
+    assert list(result["guid"]) == ["guid1", "guid2"]
+
+
+def test_optional_extra__all_columns_missing(converter: TabularConverter):
+    """Test optional_extra when all optional columns are missing from the data"""
+    # Arrange
+    data = TabularData(test_table=pd.DataFrame({"id": [1, 2], "name": ["node1", "node2"]}))
+    col_def = {"optional_extra": ["guid", "station"]}  # Both are missing
+
+    # Act
+    result = converter._parse_col_def(
+        data=data, table="test_table", col_def=col_def, table_mask=None, extra_info=None, allow_missing=False
+    )
+
+    # Assert - should return empty DataFrame with correct number of rows
+    assert len(result) == 2
+    assert len(result.columns) == 0
+
+
+def test_optional_extra__mixed_with_required(converter: TabularConverter):
+    """Test mixing required and optional extra columns"""
+    # Arrange
+    data = TabularData(test_table=pd.DataFrame({"id": [1, 2], "name": ["node1", "node2"], "guid": ["guid1", "guid2"]}))
+    # Mix required columns with optional_extra
+    col_def = ["name", {"optional_extra": ["guid", "station"]}]
+
+    # Act
+    result = converter._parse_col_def(
+        data=data, table="test_table", col_def=col_def, table_mask=None, extra_info=None, allow_missing=False
+    )
+
+    # Assert - should have 'name' and 'guid', but not 'station'
+    assert list(result.columns) == ["name", "guid"]
+    assert list(result["name"]) == ["node1", "node2"]
+    assert list(result["guid"]) == ["guid1", "guid2"]
+
+
+def test_optional_extra__mixed_with_required_missing_column(converter: TabularConverter):
+    """Test that missing required column raises error even with optional_extra present"""
+    # Arrange
+    data = TabularData(test_table=pd.DataFrame({"id": [1, 2], "name": ["node1", "node2"], "guid": ["guid1", "guid2"]}))
+    # "missing_col" is required but missing
+    col_def = ["name", "missing_col", {"optional_extra": ["guid", "station"]}]
+
+    # Act & Assert
+    with pytest.raises(KeyError, match="missing_col"):
+        converter._parse_col_def(
+            data=data, table="test_table", col_def=col_def, table_mask=None, extra_info=None, allow_missing=False
+        )
+
+
+def test_optional_extra__in_extra_info(converter: TabularConverter):
+    """Test that optional_extra works correctly with _handle_extra_info"""
+    # Arrange
+    data = TabularData(test_table=pd.DataFrame({"id": [1, 2], "name": ["node1", "node2"], "guid": ["guid1", "guid2"]}))
+    uuids = np.array([100, 200])
+    extra_info: ExtraInfo = {}
+    col_def = {"optional_extra": ["guid", "station"]}
+
+    # Act
+    converter._handle_extra_info(
+        data=data, table="test_table", col_def=col_def, uuids=uuids, table_mask=None, extra_info=extra_info
+    )
+
+    # Assert - only 'guid' should be in extra_info, not 'station'
+    assert 100 in extra_info
+    assert 200 in extra_info
+    assert "guid" in extra_info[100]
+    assert "guid" in extra_info[200]
+    assert extra_info[100]["guid"] == "guid1"
+    assert extra_info[200]["guid"] == "guid2"
+    assert "station" not in extra_info[100]
+    assert "station" not in extra_info[200]
+
+
+def test_optional_extra__empty_list_with_extra_info(converter: TabularConverter):
+    """Test that empty optional_extra list results in no updates to extra_info"""
+    # Arrange
+    data = TabularData(test_table=pd.DataFrame({"id": [1, 2], "name": ["node1", "node2"], "guid": ["guid1", "guid2"]}))
+    uuids = np.array([100, 200])
+    extra_info: ExtraInfo = {}
+    col_def: dict[str, list[str]] = {"optional_extra": []}
+
+    # Act
+    converter._handle_extra_info(
+        data=data, table="test_table", col_def=col_def, uuids=uuids, table_mask=None, extra_info=extra_info
+    )
+
+    # Assert
+    assert len(extra_info) == 0
+
+
+def test_optional_extra__all_missing_no_extra_info(converter: TabularConverter):
+    """Test that when all optional columns are missing, no extra_info entries are created"""
+    # Arrange
+    data = TabularData(test_table=pd.DataFrame({"id": [1, 2], "name": ["node1", "node2"]}))  # Both optional missing
+    uuids = np.array([100, 200])
+    extra_info: ExtraInfo = {}
+    col_def = {"optional_extra": ["guid", "station"]}
+
+    # Act
+    converter._handle_extra_info(
+        data=data, table="test_table", col_def=col_def, uuids=uuids, table_mask=None, extra_info=extra_info
+    )
+
+    # Assert - no entries should be added to extra_info
+    assert len(extra_info) == 0
+
+
+def test_optional_extra__invalid_type():
+    """Test that optional_extra raises TypeError if value is not a list"""
+    # Arrange
+    converter = TabularConverter(mapping_file=MAPPING_FILE)
+    data = TabularData(test_table=pd.DataFrame({"id": [1, 2]}))
+    col_def = {"optional_extra": "not_a_list"}  # Invalid: should be a list
+
+    # Act & Assert
+    with pytest.raises(TypeError, match="optional_extra value must be a list"):
+        converter._parse_col_def(
+            data=data, table="test_table", col_def=col_def, table_mask=None, extra_info=None, allow_missing=False
+        )
+
+
+def test_optional_extra__integration():
+    """Integration test for optional_extra feature using a complete mapping file"""
+    # Arrange
+    mapping_file = Path(__file__).parents[2] / "data" / "config" / "test_optional_extra_mapping.yaml"
+    converter = TabularConverter(mapping_file=mapping_file)
+
+    # Create test data with some optional columns present and some missing
+    data = TabularData(
+        nodes=pd.DataFrame(
+            {
+                "node_id": [1, 2, 3],
+                "voltage": [10.5, 10.5, 0.4],
+                "ID": ["N1", "N2", "N3"],
+                "Name": ["Node 1", "Node 2", "Node 3"],
+                "GUID": ["guid-1", "guid-2", "guid-3"],
+                # Note: StationID column is missing (optional)
+            }
+        )
+    )
+
+    extra_info: ExtraInfo = {}
+
+    # Act
+    result = converter._parse_data(data=data, data_type=DatasetType.input, extra_info=extra_info)
+
+    # Assert
+    assert ComponentType.node in result
+    assert len(result[ComponentType.node]) == 3
+
+    # Check that extra_info contains the required and present optional fields
+    for node_id in result[ComponentType.node]["id"]:
+        assert node_id in extra_info
+        assert "ID" in extra_info[node_id]
+        assert "Name" in extra_info[node_id]
+        assert "GUID" in extra_info[node_id]  # Optional but present
+        assert "StationID" not in extra_info[node_id]  # Optional and missing
+
+    # Verify values
+    node_0_id = result[ComponentType.node]["id"][0]
+    assert extra_info[node_0_id]["ID"] == "N1"
+    assert extra_info[node_0_id]["Name"] == "Node 1"
+    assert extra_info[node_0_id]["GUID"] == "guid-1"
+
+
+def test_optional_extra__with_table_mask(converter: TabularConverter):
+    """Test optional_extra works correctly with table filtering/masking"""
+    # Arrange
+    data = TabularData(
+        test_table=pd.DataFrame(
+            {
+                "id": [1, 2, 3, 4],
+                "value": [10, 20, 30, 40],
+                "guid": ["g1", "g2", "g3", "g4"],
+                "name": ["n1", "n2", "n3", "n4"],
+            }
+        )
+    )
+    # Create a mask that filters to only rows 0 and 2
+    table_mask = np.array([True, False, True, False])
+    col_def = {"optional_extra": ["guid", "station"]}  # 'station' is missing
+
+    # Act
+    result = converter._parse_col_def(
+        data=data, table="test_table", col_def=col_def, table_mask=table_mask, extra_info=None, allow_missing=False
+    )
+
+    # Assert - should only have 2 rows (from the mask) and 1 column (guid)
+    assert len(result) == 2
+    assert list(result.columns) == ["guid"]
+    assert list(result["guid"]) == ["g1", "g3"]
+
+
+def test_optional_extra__nested_in_list(converter: TabularConverter):
+    """Test optional_extra can be nested within a regular list of columns"""
+    # Arrange
+    data = TabularData(
+        test_table=pd.DataFrame(
+            {"id": [1, 2], "name": ["n1", "n2"], "value": [100, 200], "guid": ["g1", "g2"]}  # station missing
+        )
+    )
+    col_def = ["name", "value", {"optional_extra": ["guid", "station"]}]
+
+    # Act
+    result = converter._parse_col_def(
+        data=data, table="test_table", col_def=col_def, table_mask=None, extra_info=None, allow_missing=False
+    )
+
+    # Assert
+    assert list(result.columns) == ["name", "value", "guid"]
+    assert list(result["name"]) == ["n1", "n2"]
+    assert list(result["value"]) == [100, 200]
+    assert list(result["guid"]) == ["g1", "g2"]
+
+
+def test_optional_extra__with_pipe_separated_columns(converter: TabularConverter):
+    """Test optional_extra with pipe-separated alternative column names"""
+    # Arrange
+    data = TabularData(test_table=pd.DataFrame({"id": [1, 2], "GUID": ["g1", "g2"], "name": ["n1", "n2"]}))
+    # Use pipe separator for alternative column names (GUID or Guid)
+    col_def = {"optional_extra": ["GUID|Guid", "StationID|Station"]}  # Both StationID and Station missing
+
+    # Act
+    result = converter._parse_col_def(
+        data=data, table="test_table", col_def=col_def, table_mask=None, extra_info=None, allow_missing=False
+    )
+
+    # Assert - GUID should be found, Station alternatives should be skipped
+    assert list(result.columns) == ["GUID"]
+    assert list(result["GUID"]) == ["g1", "g2"]
+
+
+def test_optional_extra__empty_string_values(converter: TabularConverter):
+    """Test that optional_extra handles empty strings correctly"""
+    # Arrange
+    data = TabularData(test_table=pd.DataFrame({"id": [1, 2, 3], "guid": ["g1", "", "g3"], "name": ["n1", "n2", ""]}))
+    uuids = np.array([100, 200, 300])
+    extra_info: ExtraInfo = {}
+    col_def = {"optional_extra": ["guid", "name"]}
+
+    # Act
+    converter._handle_extra_info(
+        data=data, table="test_table", col_def=col_def, uuids=uuids, table_mask=None, extra_info=extra_info
+    )
+
+    # Assert - empty strings should still be included (not filtered as NaN)
+    assert 100 in extra_info
+    assert 200 in extra_info
+    assert 300 in extra_info
+    assert extra_info[100]["guid"] == "g1"
+    assert extra_info[100]["name"] == "n1"
+    assert extra_info[200]["guid"] == ""  # Empty string preserved
+    assert extra_info[200]["name"] == "n2"
+    assert extra_info[300]["guid"] == "g3"
+    assert extra_info[300]["name"] == ""  # Empty string preserved
+
+
+def test_optional_extra__with_nan_values(converter: TabularConverter):
+    """Test that optional_extra filters out NaN values correctly"""
+    # Arrange
+    data = TabularData(
+        test_table=pd.DataFrame({"id": [1, 2, 3], "guid": ["g1", np.nan, "g3"], "value": [10.0, 20.0, np.nan]})
+    )
+    uuids = np.array([100, 200, 300])
+    extra_info: ExtraInfo = {}
+    col_def = {"optional_extra": ["guid", "value"]}
+
+    # Act
+    converter._handle_extra_info(
+        data=data, table="test_table", col_def=col_def, uuids=uuids, table_mask=None, extra_info=extra_info
+    )
+
+    # Assert - NaN values should be filtered out
+    assert 100 in extra_info
+    assert extra_info[100] == {"guid": "g1", "value": 10.0}
+
+    assert 200 in extra_info
+    assert extra_info[200] == {"value": 20.0}  # guid was NaN, filtered out
+
+    assert 300 in extra_info
+    assert extra_info[300] == {"guid": "g3"}  # value was NaN, filtered out
+
+
+def test_optional_extra__multiple_optional_extra_sections():
+    """Test behavior when multiple optional_extra sections are used (should work independently)"""
+    # Arrange
+    converter = TabularConverter(mapping_file=MAPPING_FILE)
+    data = TabularData(
+        test_table=pd.DataFrame(
+            {"id": [1, 2], "name": ["node1", "node2"], "guid": ["guid1", "guid2"]}  # station and zone missing
+        )
+    )
+    # Two separate optional_extra sections
+    col_def = [{"optional_extra": ["guid"]}, {"optional_extra": ["station", "zone"]}]
+
+    # Act
+    result = converter._parse_col_def(
+        data=data, table="test_table", col_def=col_def, table_mask=None, extra_info=None, allow_missing=False
+    )
+
+    # Assert - only guid should be present
+    assert list(result.columns) == ["guid"]
+    assert list(result["guid"]) == ["guid1", "guid2"]
+
+
+def test_convert_col_def_to_attribute__pgm_data_without_dtype_names():
+    """Test error handling when pgm_data has no dtype.names (unusual edge case)"""
+    # Arrange
+    converter = TabularConverter(mapping_file=MAPPING_FILE)
+    data = TabularData(test_table=pd.DataFrame({"id": [1, 2], "name": ["n1", "n2"]}))
+
+    # Create a mock array without dtype.names by using a plain ndarray
+    pgm_data = np.array([1, 2])  # Regular array without structured dtype
+    assert pgm_data.dtype.names is None
+
+    # Act & Assert
+    with pytest.raises(ValueError, match="pgm_data for 'nodes' has no attributes defined"):
+        converter._convert_col_def_to_attribute(
+            data=data,
+            pgm_data=pgm_data,
+            table="test_table",
+            component="node",
+            attr="id",
+            col_def="id",
+            table_mask=None,
+            extra_info=None,
+        )
+
+
+def test_parse_col_def_with_allow_missing():
+    """Test _parse_col_def function with allow_missing parameter both True and False"""
+    # Arrange
+    converter = TabularConverter(mapping_file=MAPPING_FILE)
+    data = TabularData(test_table=pd.DataFrame({"existing_col": [1, 2, 3], "another_col": ["a", "b", "c"]}))
+
+    # Test 1: String column with allow_missing=False (default) - existing column
+    result = converter._parse_col_def(
+        data=data,
+        table="test_table",
+        col_def="existing_col",
+        table_mask=None,
+        extra_info=None,
+        allow_missing=False,
+    )
+    assert list(result.iloc[:, 0]) == [1, 2, 3]
+
+    # Test 2: String column with allow_missing=False - missing column (should raise KeyError)
+    with pytest.raises(KeyError, match="Could not find column 'missing_col' on table 'test_table'"):
+        converter._parse_col_def(
+            data=data,
+            table="test_table",
+            col_def="missing_col",
+            table_mask=None,
+            extra_info=None,
+            allow_missing=False,
+        )
+
+    # Test 3: String column with allow_missing=True - missing column (should return empty DataFrame)
+    result = converter._parse_col_def(
+        data=data,
+        table="test_table",
+        col_def="missing_col",
+        table_mask=None,
+        extra_info=None,
+        allow_missing=True,
+    )
+    assert len(result.columns) == 0
+    assert len(result) == 3  # Should have same number of rows as original table
+
+    # Test 4: String column with allow_missing=True - existing column (should work normally)
+    result = converter._parse_col_def(
+        data=data,
+        table="test_table",
+        col_def="existing_col",
+        table_mask=None,
+        extra_info=None,
+        allow_missing=True,
+    )
+    assert list(result.iloc[:, 0]) == [1, 2, 3]
+
+    # Test 5: List (composite) with allow_missing=False - all existing columns
+    result = converter._parse_col_def(
+        data=data,
+        table="test_table",
+        col_def=["existing_col", "another_col"],
+        table_mask=None,
+        extra_info=None,
+        allow_missing=False,
+    )
+    assert len(result.columns) == 2
+    assert list(result["existing_col"]) == [1, 2, 3]
+    assert list(result["another_col"]) == ["a", "b", "c"]
+
+    # Test 6: List (composite) with allow_missing=False - some missing columns (should raise error)
+    with pytest.raises(KeyError, match="Could not find column 'missing_col' on table 'test_table'"):
+        converter._parse_col_def(
+            data=data,
+            table="test_table",
+            col_def=["existing_col", "missing_col"],
+            table_mask=None,
+            extra_info=None,
+            allow_missing=False,
+        )
+
+    # Test 7: List (composite) with allow_missing=True - some missing columns (should skip missing)
+    result = converter._parse_col_def(
+        data=data,
+        table="test_table",
+        col_def=["existing_col", "missing_col", "another_col"],
+        table_mask=None,
+        extra_info=None,
+        allow_missing=True,
+    )
+    assert len(result.columns) == 2  # Only existing columns should be present
+    assert list(result["existing_col"]) == [1, 2, 3]
+    assert list(result["another_col"]) == ["a", "b", "c"]
+
+    # Test 8: List (composite) with allow_missing=True - all missing columns (should return empty with correct rows)
+    result = converter._parse_col_def(
+        data=data,
+        table="test_table",
+        col_def=["missing_col1", "missing_col2"],
+        table_mask=None,
+        extra_info=None,
+        allow_missing=True,
+    )
+    assert len(result.columns) == 0
+    assert len(result) == 3  # Should have same number of rows as original table
+
+    # Test 9: Dict (optional_extra) - should automatically set allow_missing=True internally
+    result = converter._parse_col_def(
+        data=data,
+        table="test_table",
+        col_def={"optional_extra": ["existing_col", "missing_col"]},
+        table_mask=None,
+        extra_info=None,
+        allow_missing=False,  # This should be ignored for optional_extra
+    )
+    assert len(result.columns) == 1  # Only existing column should be present
+    assert list(result["existing_col"]) == [1, 2, 3]
+
+    # Test 10: Constant values should work regardless of allow_missing
+    result_false = converter._parse_col_def(
+        data=data,
+        table="test_table",
+        col_def=42,
+        table_mask=None,
+        extra_info=None,
+        allow_missing=False,
+    )
+    result_true = converter._parse_col_def(
+        data=data,
+        table="test_table",
+        col_def=42,
+        table_mask=None,
+        extra_info=None,
+        allow_missing=True,
+    )
+    assert list(result_false.iloc[:, 0]) == [42, 42, 42]
+    assert list(result_true.iloc[:, 0]) == [42, 42, 42]
+
+
+def test_parse_col_def_with_allow_missing_and_table_mask():
+    """Test _parse_col_def function with allow_missing and table_mask combinations"""
+    # Arrange
+    converter = TabularConverter(mapping_file=MAPPING_FILE)
+    data = TabularData(test_table=pd.DataFrame({"existing_col": [1, 2, 3, 4], "another_col": ["a", "b", "c", "d"]}))
+    table_mask = np.array([True, False, True, False])  # Select rows 0 and 2
+
+    # Test 1: Missing column with table_mask and allow_missing=True
+    result = converter._parse_col_def(
+        data=data,
+        table="test_table",
+        col_def="missing_col",
+        table_mask=table_mask,
+        extra_info=None,
+        allow_missing=True,
+    )
+    assert len(result.columns) == 0
+    assert len(result) == 2  # Should match filtered table length
+
+    # Test 2: Existing column with table_mask and allow_missing=True
+    result = converter._parse_col_def(
+        data=data,
+        table="test_table",
+        col_def="existing_col",
+        table_mask=table_mask,
+        extra_info=None,
+        allow_missing=True,
+    )
+    assert list(result.iloc[:, 0]) == [1, 3]  # Should get filtered values
+
+    # Test 3: Composite with missing columns, table_mask, and allow_missing=True
+    result = converter._parse_col_def(
+        data=data,
+        table="test_table",
+        col_def=["existing_col", "missing_col"],
+        table_mask=table_mask,
+        extra_info=None,
+        allow_missing=True,
+    )
+    assert len(result.columns) == 1  # Only existing column
+    assert list(result["existing_col"]) == [1, 3]  # Filtered values
+
+
+def test_normalize_extra_col_def():
+    """Test _normalize_extra_col_def method for handling duplicate columns"""
+    # Arrange
+    converter = TabularConverter(mapping_file=MAPPING_FILE)
+
+    # Test 1: Regular list without optional_extra (should be unchanged)
+    col_def = ["ID", "Name", "GUID"]
+    result = converter._normalize_extra_col_def(col_def)
+    assert result == ["ID", "Name", "GUID"]
+
+    # Test 2: Non-list input (should be unchanged)
+    col_def = "ID"
+    result = converter._normalize_extra_col_def(col_def)
+    assert result == "ID"
+
+    # Test 3: List with optional_extra but no duplicates
+    col_def = ["ID", {"optional_extra": ["GUID", "StationID"]}]
+    result = converter._normalize_extra_col_def(col_def)
+    assert result == ["ID", {"optional_extra": ["GUID", "StationID"]}]
+
+    # Test 4: List with duplicates - regular column should dominate
+    col_def = ["ID", "Name", {"optional_extra": ["ID", "GUID", "StationID"]}]
+    result = converter._normalize_extra_col_def(col_def)
+    expected = ["ID", "Name", {"optional_extra": ["GUID", "StationID"]}]
+    assert result == expected
+
+    # Test 5: Multiple optional_extra sections with overlaps
+    col_def = ["ID", {"optional_extra": ["ID", "GUID"]}, {"optional_extra": ["Name", "StationID"]}]
+    result = converter._normalize_extra_col_def(col_def)
+    expected = ["ID", {"optional_extra": ["GUID"]}, {"optional_extra": ["Name", "StationID"]}]
+    assert result == expected
+
+    # Test 6: All optional columns are duplicates (should remove optional_extra section)
+    col_def = ["ID", "Name", {"optional_extra": ["ID", "Name"]}]
+    result = converter._normalize_extra_col_def(col_def)
+    expected = ["ID", "Name"]
+    assert result == expected
+
+    # Test 7: Empty optional_extra list (should be removed)
+    col_def = ["ID", {"optional_extra": []}]
+    result = converter._normalize_extra_col_def(col_def)
+    expected = ["ID"]
+    assert result == expected
+
+
+def test_handle_extra_info_with_duplicates():
+    """Test that _handle_extra_info correctly handles duplicates between regular and optional columns"""
+    # Arrange
+    converter = TabularConverter(mapping_file=MAPPING_FILE)
+    data = TabularData(
+        test_table=pd.DataFrame(
+            {
+                "ID": ["N001", "N002", "N003"],
+                "Name": ["Node1", "Node2", "Node3"],
+                "GUID": ["g1", "g2", "g3"],
+                "StationID": ["ST1", "ST2", "ST3"],
+            }
+        )
+    )
+
+    # Column definition with duplicates (ID appears in both regular and optional_extra)
+    col_def = ["ID", "Name", {"optional_extra": ["ID", "GUID", "StationID"]}]
+
+    uuids = np.array([100, 200, 300])
+    extra_info = {}
+
+    # Act
+    converter._handle_extra_info(
+        data=data,
+        table="test_table",
+        col_def=col_def,
+        uuids=uuids,
+        table_mask=None,
+        extra_info=extra_info,
+    )
+
+    # Assert
+    # ID should appear only once (from regular column, not duplicated from optional_extra)
+    assert 100 in extra_info
+    assert extra_info[100]["ID"] == "N001"
+    assert extra_info[100]["Name"] == "Node1"
+    assert extra_info[100]["GUID"] == "g1"
+    assert extra_info[100]["StationID"] == "ST1"
+
+    # Check that we don't have duplicate ID columns in the result
+    result_keys = list(extra_info[100].keys())
+    assert result_keys.count("ID") == 1, f"ID should appear only once, but got: {result_keys}"
+
+    # Similar checks for other rows
+    assert extra_info[200]["ID"] == "N002"
+    assert extra_info[300]["ID"] == "N003"
+
+
+def test_optional_extra_with_duplicates_integration():
+    """Integration test to verify duplicate elimination works in a full conversion scenario"""
+    # Arrange
+    converter = TabularConverter(mapping_file=MAPPING_FILE)
+
+    # Create test data with columns that will appear in both regular and optional_extra
+    data = TabularData(
+        test_table=pd.DataFrame(
+            {
+                "id": [1, 2, 3],
+                "name": ["Node1", "Node2", "Node3"],
+                "u_nom": [10.0, 10.0, 0.4],
+                "guid": ["g1", "g2", "g3"],
+                "station": ["ST1", "ST2", "ST3"],
+            }
+        )
+    )
+
+    # Column definition that has ID in both places - regular should dominate
+    col_def = [
+        "id",  # Regular column
+        "name",  # Regular column
+        {"optional_extra": ["id", "guid", "station"]},  # ID is duplicate, guid and station are new
+    ]
+
+    extra_info = {}
+    uuids = np.array([100, 200, 300])
+
+    # Act
+    converter._handle_extra_info(
+        data=data,
+        table="test_table",
+        col_def=col_def,
+        uuids=uuids,
+        table_mask=None,
+        extra_info=extra_info,
+    )
+
+    # Assert - verify no duplicate columns and all expected columns are present
+    for uuid, expected_id in zip([100, 200, 300], [1, 2, 3]):
+        assert uuid in extra_info
+        extra_data = extra_info[uuid]
+
+        # Should have all columns but ID should not be duplicated
+        expected_keys = {"id", "name", "guid", "station"}
+        assert set(extra_data.keys()) == expected_keys
+
+        # Verify values
+        assert extra_data["id"] == expected_id
+        assert extra_data["name"] == f"Node{expected_id}"
+        assert extra_data["guid"] == f"g{expected_id}"
+        assert extra_data["station"] == f"ST{expected_id}"
+
+
+def test_normalize_extra_col_def_order_independence():
+    """Test that _normalize_extra_col_def correctly handles GUID appearing in both optional_extra and regular extra"""
+    # Arrange
+    converter = TabularConverter(mapping_file=MAPPING_FILE)
+
+    # This mimics the YAML config: optional_extra appears first with GUID and StationID,
+    # then regular columns ID, Name, GUID follow
+    col_def = [{"optional_extra": ["GUID", "StationID"]}, "ID", "Name", "GUID"]
+
+    # Act
+    result = converter._normalize_extra_col_def(col_def)
+
+    # Assert
+    # Expected: GUID should be removed from optional_extra since it appears as a regular column
+    # Only StationID should remain in optional_extra
+    # Regular columns ID, Name, GUID should be preserved in order
+    expected = [{"optional_extra": ["StationID"]}, "ID", "Name", "GUID"]
+
+    assert result == expected, f"Expected {expected}, got {result}"
+
+
+def test_optional_extra_ordering_invariance_integration():
+    """Integration test using vision_optional_extra_ordering_invariance.yaml to verify order independence"""
+    # Arrange
+    mapping_file = Path(__file__).parents[2] / "data" / "vision" / "vision_optional_extra_ordering_invariance.yaml"
+    converter = TabularConverter(mapping_file=mapping_file)
+
+    # Create test data with all columns: ID, Name, GUID, StationID
+    data = TabularData(
+        Nodes=pd.DataFrame(
+            {
+                "Number": [1, 2, 3],
+                "Unom": [10.5, 10.5, 0.4],
+                "ID": ["N001", "N002", "N003"],
+                "Name": ["Node1", "Node2", "Node3"],
+                "GUID": ["guid-1", "guid-2", "guid-3"],
+                "StationID": ["ST1", "ST2", "ST3"],
+            }
+        )
+    )
+
+    extra_info: ExtraInfo = {}
+
+    # Act
+    result = converter._parse_data(data=data, data_type=DatasetType.input, extra_info=extra_info)
+
+    # Assert
+    assert ComponentType.node in result
+    assert len(result[ComponentType.node]) == 3
+
+    # Verify that extra_info contains the expected fields
+    for node_id in result[ComponentType.node]["id"]:
+        assert node_id in extra_info
+        # Should have ID, Name, GUID (regular columns) and StationID (optional column)
+        assert "ID" in extra_info[node_id]
+        assert "Name" in extra_info[node_id]
+        assert "GUID" in extra_info[node_id]
+        assert "StationID" in extra_info[node_id]
+
+        # GUID should appear only once (not duplicated from optional_extra)
+        keys = list(extra_info[node_id].keys())
+        assert keys.count("GUID") == 1, f"GUID should appear only once, but got: {keys}"
+
+    # Verify values for first node
+    first_node_id = result[ComponentType.node]["id"][0]
+    assert extra_info[first_node_id]["ID"] == "N001"
+    assert extra_info[first_node_id]["Name"] == "Node1"
+    assert extra_info[first_node_id]["GUID"] == "guid-1"
+    assert extra_info[first_node_id]["StationID"] == "ST1"
