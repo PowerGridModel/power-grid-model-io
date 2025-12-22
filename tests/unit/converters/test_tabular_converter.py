@@ -1506,7 +1506,7 @@ def test_optional_extra__invalid_type():
         )
 
 
-def test_optional_extra__integration():
+def test_optional_extra__integration() -> None:
     """Integration test for optional_extra feature using a complete mapping file"""
     # Arrange
     mapping_file = Path(__file__).parents[2] / "data" / "config" / "test_optional_extra_mapping.yaml"
@@ -2058,7 +2058,7 @@ def test_normalize_extra_col_def_order_independence():
     assert result == expected, f"Expected {expected}, got {result}"
 
 
-def test_optional_extra_ordering_invariance_integration():
+def test_optional_extra_ordering_invariance_integration() -> None:
     """Integration test using vision_optional_extra_ordering_invariance.yaml to verify order independence"""
     # Arrange
     mapping_file = Path(__file__).parents[2] / "data" / "vision" / "vision_optional_extra_ordering_invariance.yaml"

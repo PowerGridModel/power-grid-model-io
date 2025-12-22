@@ -2243,7 +2243,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         key = (pp_table, name)
         assert key not in self.idx_lookup
         n_objects = len(pp_idx)
-        pgm_idx = np.arange(start=self.next_idx, stop=self.next_idx + n_objects, dtype=np.int32)
+        pgm_idx = np.arange(self.next_idx, self.next_idx + n_objects).astype(np.int32)
         self.idx[key] = pd.Series(pgm_idx, index=pp_idx)
         self.idx_lookup[key] = pd.Series(pp_idx, index=pgm_idx)
         self.next_idx += n_objects
