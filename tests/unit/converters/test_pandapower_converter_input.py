@@ -581,6 +581,7 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
             _get_pp_attr("line", "g_us_per_km", expected_type="f8", default=0),
             _get_pp_attr("line", "c_nf_per_km", expected_type="f8", default=0) * (np.pi / 10),
             where=np.logical_not(np.isclose(_get_pp_attr("line", "c_nf_per_km", expected_type="f8", default=0), 0.0)),
+            out=None,
         ),
     )
     pgm.assert_any_call(
@@ -595,6 +596,7 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
             _get_pp_attr("line", "g0_us_per_km", expected_type="f8", default=0),
             _get_pp_attr("line", "c0_nf_per_km", expected_type="f8", default=0) * (np.pi / 10),
             where=np.logical_not(np.isclose(_get_pp_attr("line", "c0_nf_per_km", expected_type="f8", default=0), 0.0)),
+            out=None,
         ),
     )
     pgm.assert_any_call("r0", ANY)

@@ -447,6 +447,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             self._get_pp_attr("line", "g_us_per_km", expected_type="f8", default=0),
             c_nf_per_km * (2 * np.pi * self.system_frequency * 1e-3),
             where=np.logical_not(np.isclose(c_nf_per_km, 0.0)),
+            out=None,
         )
         pgm_lines["i_n"] = (
             (self._get_pp_attr("line", "max_i_ka", expected_type="f8", default=np.nan) * 1e3)
@@ -460,6 +461,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             self._get_pp_attr("line", "g0_us_per_km", expected_type="f8", default=0),
             c0_nf_per_km * (2 * np.pi * self.system_frequency * 1e-3),
             where=np.logical_not(np.isclose(c0_nf_per_km, 0.0)),
+            out=None,
         )
         assert ComponentType.line not in self.pgm_input_data
         self.pgm_input_data[ComponentType.line] = pgm_lines
@@ -795,11 +797,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         mag0_rx = self._get_pp_attr("trafo", "mag0_rx", expected_type="f8", default=np.nan)
         # Calculate rx ratio of magnetising branch
         valid = np.logical_and(np.not_equal(sn_mva, 0.0), np.isfinite(sn_mva))
-        mag_g = np.divide(pfe, sn_mva * 1000, where=valid)
+        mag_g = np.divide(pfe, sn_mva * 1000, where=valid, out=None)
         mag_g[np.logical_not(valid)] = np.nan
         z_squared = i_no_load * i_no_load * 1e-4 - mag_g * mag_g
         valid = np.logical_and(np.greater(z_squared, 0), np.isfinite(z_squared))
-        rx_mag = np.divide(mag_g, np.sqrt(z_squared, where=valid), where=valid)
+        rx_mag = np.divide(mag_g, np.sqrt(z_squared, where=valid, out=None), where=valid, out=None)
         rx_mag[np.logical_not(valid)] = np.inf
         # positive and zero sequence magnetising impedance must be equal.
         # mag0_percent = z0mag / z0.
@@ -1152,8 +1154,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         cos_phi = self._get_pp_attr("motor", "cos_phi", expected_type="f8")
         valid = np.logical_and(np.not_equal(cos_phi, 0.0), np.isfinite(cos_phi))
         q_spec = np.sqrt(
-            np.power(np.divide(p_spec, cos_phi, where=valid), 2, where=valid) - p_spec**2,
+            np.power(np.divide(p_spec, cos_phi, where=valid), 2, where=valid, out=None) - p_spec**2,
             where=valid,
+            out=None,
         )
         q_spec[np.logical_not(valid)] = np.nan
         pgm_sym_loads_from_motor["q_specified"] = q_spec
@@ -1746,7 +1749,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             pp_switches_output.loc[link_ids, "i_ka"] = links["i_from"] * 1e-3
         in_ka = self.pp_input_data["switch"]["in_ka"].values
         pp_switches_output["loading_percent"] = np.nan
-        pp_switches_output["loading_percent"] = np.divide(pp_switches_output["i_ka"], in_ka, where=in_ka != 0)
+        pp_switches_output["loading_percent"] = np.divide(pp_switches_output["i_ka"], in_ka, where=in_ka != 0, out=None)
 
         assert "res_switch" not in self.pp_output_data
         self.pp_output_data["res_switch"] = pp_switches_output
@@ -2263,7 +2266,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         key = (pp_table, name)
         assert key not in self.idx_lookup
         n_objects = len(pp_idx)
-        pgm_idx = np.arange(start=self.next_idx, stop=self.next_idx + n_objects, dtype=np.int32)
+        pgm_idx = np.arange(self.next_idx, self.next_idx + n_objects).astype(np.int32)
         self.idx[key] = pd.Series(pgm_idx, index=pp_idx)
         self.idx_lookup[key] = pd.Series(pp_idx, index=pgm_idx)
         self.next_idx += n_objects
