@@ -819,12 +819,14 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             np.not_equal(mag0_rx, 0.0),
             np.logical_and(
                 np.allclose(vk_percent, vk0_percent),
-                np.logical_and(np.not_equal(vk_percent * mag0_percent, 0.0),
-                    np.logical_and(np.logical_not(np.isnan(mag0_percent)),
+                np.logical_and(
+                    np.not_equal(vk_percent * mag0_percent, 0.0),
+                    np.logical_and(
+                        np.logical_not(np.isnan(mag0_percent)),
                         np.logical_not(np.isnan(mag0_rx))
                     )
                 )
-            ),
+            )
         )
         i0_zero_sequence = np.divide(
             np.ones_like(mag0_percent), (vk_percent * mag0_percent * 1e-2), out=None, where=valid
