@@ -826,7 +826,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         p0_zero_sequence = (
             np.divide(
                 i0_zero_sequence,
-                np.sqrt(1 + np.square(np.divide(np.ones_like(mag0_rx), mag0_rx, where=valid))),
+                np.sqrt(1 + np.square(np.divide(np.ones_like(mag0_rx), mag0_rx, out=None, where=valid))),
                 out=None,
                 where=valid,
             )
