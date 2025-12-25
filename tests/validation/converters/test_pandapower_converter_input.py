@@ -11,8 +11,10 @@ from typing import List, Tuple
 import numpy as np
 import pandas as pd
 import pytest
-from power_grid_model import ComponentType, DatasetType
+from pandapower import runpp_3ph
+from power_grid_model import ComponentType, DatasetType, PowerGridModel
 from power_grid_model.data_types import SingleDataset
+from power_grid_model.validation import assert_valid_input_data
 
 from power_grid_model_io.converters import PandaPowerConverter
 from power_grid_model_io.data_types import ExtraInfo
@@ -22,6 +24,7 @@ from ...data.pandapower.pp_validation import pp_net, pp_net_3ph_minimal_trafo
 from ..utils import compare_extra_info, component_attributes, component_objects, load_json_single_dataset, select_values
 
 VALIDATION_FILE = Path(__file__).parents[2] / "data" / "pandapower" / "pgm_input_data.json"
+VALIDATION_FILE_ZERO_SEQ = Path(__file__).parents[2] / "data" / "pandapower" / "pgm_input_data_trafo_zero_seq.json"
 
 
 @lru_cache
@@ -162,6 +165,23 @@ def test_simple_example():
     data, _ = pp_converter.load_input_data(pp_net)
 
 
+def test_trafo_zero_seq_params_conversion():
+    net = pp_net_3ph_minimal_trafo()
+    net.trafo.vector_group = "YNyn"
+    net.trafo.mag0_percent = 1e3
+    net.trafo.mag0_rx = 0.1
+    net.trafo.shift_degree = 0
+    converter = PandaPowerConverter()
+    actual_data, extra_info = converter.load_input_data(net)
+    expected_data, extra_info = load_json_single_dataset(VALIDATION_FILE_ZERO_SEQ, data_type=DatasetType.input)
+    np.testing.assert_allclose(
+        actual_data["transformer"]["i0_zero_sequence"], expected_data["transformer"]["i0_zero_sequence"], rtol=1e-3
+    )
+    np.testing.assert_allclose(
+        actual_data["transformer"]["p0_zero_sequence"], expected_data["transformer"]["p0_zero_sequence"], rtol=1e-3
+    )
+
+
 @pytest.mark.parametrize(
     "kwargs",
     [
@@ -171,63 +191,18 @@ def test_simple_example():
         {"mag0_percent": 1e20},
     ],
 )
-def test_trafo_zer_seq_params(kwargs):
-    import pandapower as pp
-    import power_grid_model as pgm
-
-    import power_grid_model_io as pgm_io
-
-    def get_simple_network_zero_seq(mag0_percent):
-        net = pp.create_empty_network()
-        pp.create_bus(net, 11)
-        pp.create_bus(net, 11)
-        pp.create_bus(net, 0.4)
-        pp.create_ext_grid(net, 0, s_sc_max_mva=1e6, rx_max=0.1, x0x_max=1, r0x0_max=0.1)
-        pp.create_line_from_parameters(
-            net,
-            0,
-            1,
-            1,
-            0.33,
-            0.4,
-            0,
-            10,
-            r0_ohm_per_km=0.33,
-            x0_ohm_per_km=0.4,
-            c0_nf_per_km=0,
-            g_nf_per_km=0,
-            g0_nf_per_km=0,
-        )
-        pp.create_transformer_from_parameters(
-            net,
-            1,
-            2,
-            1,
-            11,
-            0.4,
-            1.0,
-            10,
-            10,
-            1.5,
-            0,
-            vector_group="YNyn",
-            vk0_percent=10,
-            vkr0_percent=1.0,
-            mag0_percent=mag0_percent,
-            mag0_rx=0.1,
-            si0_hv_partial=0.5,
-        )
-        pp.create_asymmetric_load(net, 2, 0.2, 0.15, 0.01, 0.1, 0.07, 0.005)
-        return net
-
-    net = get_simple_network_zero_seq(kwargs["mag0_percent"])
-    converter = pgm_io.converters.PandaPowerConverter()
+def test_trafo_zero_seq_params_calculation(kwargs):
+    net = pp_net_3ph_minimal_trafo()
+    net.trafo.vector_group = "YNyn"
+    net.trafo.mag0_percent = kwargs["mag0_percent"]
+    net.trafo.mag0_rx = 0.1
+    net.trafo.shift_degree = 0
+    converter = PandaPowerConverter()
     data, extra_info = converter.load_input_data(net)
-    pgm.validation.assert_valid_input_data(data)
-    pgm_net = pgm.PowerGridModel(data)
+    assert_valid_input_data(data)
+    pgm_net = PowerGridModel(data)
     output = pgm_net.calculate_power_flow(symmetric=False)
-    pp.runpp_3ph(net)
-    print(output["transformer"]["p_from"][0])
+    runpp_3ph(net)
     assert np.allclose(
         output["transformer"]["p_from"][0] / 1e6,
         net.res_trafo_3ph.loc[0, ["p_a_hv_mw", "p_b_hv_mw", "p_c_hv_mw"]].values,

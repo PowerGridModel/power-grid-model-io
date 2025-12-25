@@ -324,15 +324,7 @@ def pp_net_3ph_minimal_trafo():
     pp.create_bus(net, vn_kv=11, name="TF_HT", index=1)
     pp.create_bus(net, vn_kv=0.4, name="TF_LT", index=2)
 
-    pp.create_ext_grid(net,
-                       bus=0,
-                       vm_pu=1.0,
-                       va_degree=0,
-                       s_sc_max_mva=100,
-                       rx_max=0.1,
-                       x0x_max=1,
-                       r0x0_max=0.1
-                       )
+    pp.create_ext_grid(net, bus=0, vm_pu=1.0, va_degree=0, s_sc_max_mva=1e6, rx_max=0.1, x0x_max=1, r0x0_max=0.1)
     pp.create_line_from_parameters(
         net,
         from_bus=0,
@@ -377,5 +369,6 @@ def pp_net_3ph_minimal_trafo():
         q_b_mvar=0.049,
         q_c_mvar=0.052,
         sn_mva=0,
-        type="wye")
+        type="wye",
+    )
     return net
