@@ -305,21 +305,35 @@ def pp_net_3ph() -> pp.pandapowerNet:
 
 
 def pp_net_3ph_minimal_trafo():
-    net = pp.create_empty_network("test", f_hz=50)
-    pp.create_bus(net, 11, "source")
-    pp.create_bus(net, 11, "TF_HT")
-    pp.create_bus(net, 0.4, "TF_LT")
+    """
+    Creates a pandapower net used for validating 3 phase calculations
+    on transformers with unbalanced loading
 
-    pp.create_ext_grid(net, 0, 1.0, 0, s_sc_max_mva=100, rx_max=0.1, x0x_max=1, r0x0_max=0.1)
+     (ext #1)
+      |
+     [0] ----line---- [1] ---trafo--- [2]
+                                       |
+                              (asymmetric load #1)
+
+    Returns:
+
+    """
+
+    net = pp.create_empty_network(name="test", f_hz=50)
+    pp.create_bus(net, vn_kv=11, name="source", index=0)
+    pp.create_bus(net, vn_kv=11, name="TF_HT", index=1)
+    pp.create_bus(net, vn_kv=0.4, name="TF_LT", index=2)
+
+    pp.create_ext_grid(net, bus=0, vm_pu=1.0, va_degree=0, s_sc_max_mva=1e6, rx_max=0.1, x0x_max=1, r0x0_max=0.1)
     pp.create_line_from_parameters(
         net,
-        0,
-        1,
-        2,
-        0.33,
-        0.34,
-        0.001,
-        600,
+        from_bus=0,
+        to_bus=1,
+        length_km=2,
+        r_ohm_per_km=0.33,
+        x_ohm_per_km=0.34,
+        c_nf_per_km=0.001,
+        max_i_ka=0.6,
         r0_ohm_per_km=0.66,
         x0_ohm_per_km=0.65,
         c0_nf_per_km=0.001,
@@ -328,16 +342,16 @@ def pp_net_3ph_minimal_trafo():
     )
     pp.create_transformer_from_parameters(
         net,
-        1,
-        2,
-        1,
-        11,
-        0.415,
-        0,
-        4,
-        0,
-        0.01,
-        -30,
+        hv_bus=1,
+        lv_bus=2,
+        sn_mva=1,
+        vn_hv_kv=11,
+        vn_lv_kv=0.415,
+        vkr_percent=0,
+        vk_percent=4,
+        pfe_kw=0,
+        i0_percent=0.01,
+        shift_degree=-30,
         vector_group="Dyn",
         vk0_percent=4,
         vkr0_percent=0,
@@ -345,5 +359,16 @@ def pp_net_3ph_minimal_trafo():
         mag0_rx=0,
         si0_hv_partial=0.9,
     )
-    pp.create_asymmetric_load(net, 2, 0.2, 0.19, 0.21, 0.05, 0.049, 0.052, 0, type="wye")
+    pp.create_asymmetric_load(
+        net,
+        bus=2,
+        p_a_mw=0.2,
+        p_b_mw=0.19,
+        p_c_mw=0.21,
+        q_a_mvar=0.05,
+        q_b_mvar=0.049,
+        q_c_mvar=0.052,
+        sn_mva=0,
+        type="wye",
+    )
     return net

@@ -788,9 +788,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         winding_types = self.get_trafo_winding_types()
         clocks = np.round(self._get_pp_attr("trafo", "shift_degree", expected_type="f8", default=0.0) / 30) % 12
 
-        # Asym parameters retrival and check. For PGM, manual zero sequence params are not supported yet.
+        # Asym parameters retrival and check. For PGM,
+        # manual zero sequence vk0_percent and vkr0_percent params are not supported yet.
         vk0_percent = self._get_pp_attr("trafo", "vk0_percent", expected_type="f8", default=np.nan)
         vkr0_percent = self._get_pp_attr("trafo", "vkr0_percent", expected_type="f8", default=np.nan)
+        # mag0_percent and mag0_rx will be fetched relative to vk_percent
         mag0_percent = self._get_pp_attr("trafo", "mag0_percent", expected_type="f8", default=np.nan)
         mag0_rx = self._get_pp_attr("trafo", "mag0_rx", expected_type="f8", default=np.nan)
         # Calculate rx ratio of magnetising branch
@@ -804,11 +806,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # positive and zero sequence magnetising impedance must be equal.
         # mag0_percent = z0mag / z0.
         checks = {
-            "vk0_percent": np.allclose(vk_percent, vk0_percent) or np.isnan(vk0_percent).all(),
-            "vkr0_percent": np.allclose(vkr_percent, vkr0_percent) or np.isnan(vkr0_percent).all(),
-            "mag0_percent": np.allclose(i_no_load * 1e-2, 1e4 / (vk0_percent * mag0_percent))
-            or np.isnan(mag0_percent).all(),
-            "mag0_rx": np.allclose(rx_mag, mag0_rx) or np.isnan(mag0_rx).all(),
+            "vk0_percent": np.logical_or(np.allclose(vk_percent, vk0_percent), np.isnan(vk0_percent).all()),
+            "vkr0_percent": np.logical_or(np.allclose(vkr_percent, vkr0_percent), np.isnan(vkr0_percent).all()),
             "si0_hv_partial": np.isnan(
                 self._get_pp_attr("trafo", "si0_hv_partial", expected_type="f8", default=np.nan)
             ).all(),
@@ -816,6 +815,31 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if not all(checks.values()):
             failed_checks = ", ".join([key for key, value in checks.items() if not value])
             logger.warning("Zero sequence parameters given in trafo shall be ignored: %s", failed_checks)
+        valid = np.logical_and(
+            np.not_equal(mag0_rx, 0.0),
+            np.logical_and(
+                np.allclose(vk_percent, vk0_percent),
+                np.logical_and(
+                    np.not_equal(vk_percent * mag0_percent, 0.0),
+                    np.logical_and(np.logical_not(np.isnan(mag0_percent)), np.logical_not(np.isnan(mag0_rx))),
+                ),
+            ),
+        )
+        i0_zero_sequence = np.divide(
+            np.ones_like(mag0_percent), (vk_percent * mag0_percent * 1e-2), out=None, where=valid
+        )
+        i0_zero_sequence[np.logical_not(valid)] = np.nan
+        p0_zero_sequence = (
+            np.divide(
+                i0_zero_sequence,
+                np.sqrt(1 + np.square(np.divide(np.ones_like(mag0_rx), mag0_rx, out=None, where=valid))),
+                out=None,
+                where=valid,
+            )
+            * sn_mva
+            * 1e6
+        )
+        p0_zero_sequence[np.logical_not(valid)] = np.nan
 
         # Do not use taps when mandatory tap data is not available
         no_taps = np.equal(tap_side, None) | np.isnan(tap_pos) | np.isnan(tap_nom) | np.isnan(tap_size)
@@ -852,6 +876,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if any(np.less(pgm_transformers["i0"], i0_min_threshold)):
             logger.warning("Minimum value of i0_percent is clipped to p0/sn")
             pgm_transformers["i0"] = np.clip(pgm_transformers["i0"], a_min=i0_min_threshold, a_max=None)
+        pgm_transformers["i0_zero_sequence"] = i0_zero_sequence
+        pgm_transformers["p0_zero_sequence"] = p0_zero_sequence * parallel
         pgm_transformers["clock"] = clocks
         pgm_transformers["winding_from"] = winding_types["winding_from"]
         pgm_transformers["winding_to"] = winding_types["winding_to"]
