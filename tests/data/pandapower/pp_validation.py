@@ -350,8 +350,8 @@ def pp_net_3ph_minimal_trafo():
     )
     pp.create_transformer_from_parameters(
         net,
-        from_bus=1,
-        to_bus=2,
+        hv_bus=1,
+        lv_bus=2,
         sn_mva=1,
         vn_hv_kv=11,
         vn_lv_kv=0.415,
