@@ -56,7 +56,9 @@ Custom zero sequence parameters `vk0_percent` and `vkr0_percent` in transformers
 The same ones as positive sequence admittance is used in power-grid-model.
 However, `mag0_percent` and `mag0_rx` are fetched from `pandapower`. In case `vk0_percent` is different from
 `vk_percent` all zero sequence parameters are ignored.
-#### `mag0_percent` is treated as a ratio not as a percent in line with definition of `pandapower`.
+
+**`mag0_percent` is treated as a ratio not as a percent in line with definition of `pandapower`**
+
 The changing of impedance by the means of characteristics in `net.characteristic` is not directly supported.
 The phase shift in angle by transforermers by the `shift_degree` attribute only supports clock values in PGM.
 The `tap_phase_shifter` transformer and shifting of angles with tap via `tap_step_degree` are features not added in
