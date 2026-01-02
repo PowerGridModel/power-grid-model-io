@@ -836,6 +836,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 out=None,
                 where=valid,
             )
+            * parallel
             * sn_mva
             * 1e6
         )
