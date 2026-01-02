@@ -318,7 +318,9 @@
                 "u2": 20000.0,
                 "uk": 0.178,
                 "winding_from": 2,
-                "winding_to": 1
+                "winding_to": 1,
+                "i0_zero_sequence": 0.0561,
+                "p0_zero_sequence": 44941.573
             }
         ]
     }

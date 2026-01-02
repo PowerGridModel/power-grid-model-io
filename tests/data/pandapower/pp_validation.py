@@ -60,6 +60,9 @@ def pp_net() -> pp.pandapowerNet:
         tap_step_percent=2,
         tap_neutral=1,
         parallel=2,
+        vk0_percent=17.8,
+        mag0_percent=100.0,
+        mag0_rx=0.01
     )
     pp.create_line(
         net,
