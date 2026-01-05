@@ -950,7 +950,7 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
     pgm.assert_any_call("tap_nom", ANY)
     pgm.assert_any_call("tap_size", ANY)
 
-    assert len(pgm.call_args_list) == 21
+    assert len(pgm.call_args_list) == 23
 
     # result
     assert converter.pgm_input_data[ComponentType.transformer] == mock_init_array.return_value
@@ -1092,8 +1092,6 @@ def test_create_pgm_input_sym_gens(mock_init_array: MagicMock, two_pp_objs, conv
         {"pfe_kw": 2},
         {"vk0_percent": 2},
         {"vkr0_percent": 1},
-        {"mag0_percent": 5},
-        {"mag0_rx": 0.2},
         {"si0_hv_partial": 0.3},
     ],
 )
