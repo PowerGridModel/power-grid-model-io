@@ -4,14 +4,22 @@ SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridm
 SPDX-License-Identifier: MPL-2.0
 -->
 
-[![PyPI version](https://badge.fury.io/py/power-grid-model-io.svg?no-cache)](https://badge.fury.io/py/power-grid-model-io) <!-- markdownlint-disable-line first-line-h1 line-length -->
+[![Power Grid Model logo](https://github.com/PowerGridModel/.github/blob/main/artwork/svg/color.svg)](#) <!-- markdownlint-disable-line first-line-h1 no-empty-links line-length -->
+
+[![PyPI version](https://badge.fury.io/py/power-grid-model-io.svg?no-cache)](https://badge.fury.io/py/power-grid-model-io)
+[![PyPI Downloads](https://static.pepy.tech/badge/power-grid-model-io)](https://pepy.tech/project/power-grid-model-io)
+[![PyPI Downloads per month](https://static.pepy.tech/badge/power-grid-model-io/month)](https://pepy.tech/project/power-grid-model-io)
+
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/power-grid-model-io/badges/version.svg?no-cache)](https://anaconda.org/conda-forge/power-grid-model-io)
-[![License: MIT](https://img.shields.io/badge/License-MPL2.0-informational.svg)](https://github.com/PowerGridModel/power-grid-model-io/blob/main/LICENSE)
-[![Downloads](https://static.pepy.tech/badge/power-grid-model-io)](https://pepy.tech/project/power-grid-model-io)
-[![Downloads](https://static.pepy.tech/badge/power-grid-model-io/month)](https://pepy.tech/project/power-grid-model-io)
+[![Anaconda-Server Platforms](https://anaconda.org/conda-forge/power-grid-model-io/badges/platforms.svg)](https://anaconda.org/conda-forge/power-grid-model-io)
+[![Anaconda-Server Downloads](https://anaconda.org/conda-forge/power-grid-model-io/badges/downloads.svg)](https://anaconda.org/conda-forge/power-grid-model-io)
+
+[![License: MPL2.0](https://img.shields.io/badge/License-MPL2.0-informational.svg)](https://github.com/PowerGridModel/power-grid-model-io/blob/main/LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8059257.svg)](https://zenodo.org/record/8059257)
 
 [![CI Build](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/ci.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/ci.yml)
 [![docs](https://readthedocs.org/projects/power-grid-model-io/badge/)](https://power-grid-model-io.readthedocs.io/en/stable/)
+[![Nightly build](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/nightly.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/nightly.yml)
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model-io&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model-io)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model-io&metric=coverage)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model-io)
@@ -19,12 +27,6 @@ SPDX-License-Identifier: MPL-2.0
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model-io&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model-io)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model-io&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model-io)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model-io&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model-io)
-
-[![Nightly build](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/nightly.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model-io/actions/workflows/nightly.yml)
-
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8059257.svg)](https://zenodo.org/record/8059257)
-
-[![Power Grid Model logo](https://github.com/PowerGridModel/.github/blob/main/artwork/svg/color.svg)](#) <!-- markdownlint-disable-line no-empty-links line-length -->
 
 # Power Grid Model Input/Output
 
