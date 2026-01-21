@@ -71,7 +71,6 @@ doc = [
     "myst-nb",
     "sphinx_rtd_theme",
     "readthedocs-sphinx-search",
-    "sphinx-hoverxref",
     "numpydoc",
 ]
 

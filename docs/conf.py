@@ -23,7 +23,6 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
     "numpydoc",
-    "hoverxref.extension",
     "myst_nb",
 ]
 
@@ -39,20 +38,6 @@ html_static_path = ["_static"]
 # -- myst parser config ------------------------------------------------------
 # label references for depth of headers: label name in anchor slug structure
 myst_heading_anchors = 3
-
-# -- hoverxref config --------------------------------------------------------
-# hover tooltip on python classes
-hoverxref_domains = [
-    "py",
-]
-hoverxref_default_type = "tooltip"
-hoverxref_role_types = {
-    "hoverxref": "tooltip",
-    "ref": "modal",  # for hoverxref_auto_ref config
-    "confval": "tooltip",  # for custom object
-    "mod": "tooltip",  # for Python Sphinx Domain
-    "class": "tooltip",  # for Python Sphinx Domain
-}
 
 # -- sphinx.autodoc config ---------------------------------------------------
 autodoc_default_options = {
