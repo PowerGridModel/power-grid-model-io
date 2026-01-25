@@ -224,7 +224,7 @@ def test_get_column__sanity_check(mock_unit_conversion: MagicMock, nodes_iso: pd
     mock_unit_conversion.return_value = nodes_iso["u_rated"]
 
     # Act / Assert
-    with pytest.raises(TypeError, match=r"u_rated.+unitless.+V"):
+    with pytest.raises(TypeError, match=r"u_rated[\s\S]*unitless[\s\S]*V"):
         data.get_column(table_name="nodes", column_name="u_rated")
 
 
