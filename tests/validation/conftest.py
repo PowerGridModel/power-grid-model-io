@@ -3,12 +3,15 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from contextlib import suppress
+from importlib.metadata import version
 
 import pandas as pd
+from packaging.version import Version
 
-with suppress(pd.errors.OptionError):
-    pd.set_option("future.no_silent_downcasting", True)
+if Version(version("pandas")) < Version("3.0.0"):
+    # Opt-in to Pandas 3 behavior for Pandas 2.x
+    with suppress(pd.errors.OptionError):
+        pd.set_option("future.no_silent_downcasting", True)
 
-with suppress(pd.errors.OptionError):
-    # TODO(mgovers) We're ready for Pandas 3.x, but pandapower is not. Move to parent conftest when it is.
-    pd.set_option("mode.copy_on_write", False)
+    with suppress(pd.errors.OptionError):
+        pd.set_option("mode.copy_on_write", False)
