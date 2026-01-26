@@ -5,6 +5,7 @@
 """
 Panda Power Converter
 """
+
 import logging
 from functools import lru_cache
 from importlib.metadata import PackageNotFoundError, version
@@ -1754,7 +1755,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             pp_switches_output.loc[link_ids, "i_ka"] = links["i_from"] * 1e-3
         in_ka = self.pp_input_data["switch"]["in_ka"].values
         pp_switches_output["loading_percent"] = np.nan
-        pp_switches_output["loading_percent"] = np.divide(pp_switches_output["i_ka"].values, in_ka, where=in_ka != 0, out=None)
+        pp_switches_output["loading_percent"] = np.divide(
+            pp_switches_output["i_ka"].values, in_ka, where=in_ka != 0, out=None
+        )
 
         assert "res_switch" not in self.pp_output_data
         self.pp_output_data["res_switch"] = pp_switches_output
