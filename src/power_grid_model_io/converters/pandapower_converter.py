@@ -5,7 +5,6 @@
 """
 Panda Power Converter
 """
-
 import logging
 from functools import lru_cache
 from importlib.metadata import PackageNotFoundError, version
@@ -1160,7 +1159,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         cos_phi = self._get_pp_attr("motor", "cos_phi", expected_type="f8")
         valid = np.logical_and(np.not_equal(cos_phi, 0.0), np.isfinite(cos_phi))
         q_spec = np.sqrt(
-            np.power(np.divide(p_spec, cos_phi, where=valid), 2, where=valid, out=None) - p_spec**2,
+            np.power(np.divide(p_spec, cos_phi, where=valid, out=None), 2, where=valid, out=None) - p_spec**2,
             where=valid,
             out=None,
         )
@@ -1755,7 +1754,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             pp_switches_output.loc[link_ids, "i_ka"] = links["i_from"] * 1e-3
         in_ka = self.pp_input_data["switch"]["in_ka"].values
         pp_switches_output["loading_percent"] = np.nan
-        pp_switches_output["loading_percent"] = np.divide(pp_switches_output["i_ka"], in_ka, where=in_ka != 0, out=None)
+        pp_switches_output["loading_percent"] = np.divide(pp_switches_output["i_ka"].values, in_ka, where=in_ka != 0, out=None)
 
         assert "res_switch" not in self.pp_output_data
         self.pp_output_data["res_switch"] = pp_switches_output
@@ -2436,7 +2435,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         )
 
         # no need to fill na because bool(NaN) == True
-        return pd.Series(switch_states.astype(bool))
+        if Version(version("pandas")) >= Version("3.0.0"):
+            return pd.Series(switch_states.astype(bool))
+        else:
+            return pd.Series(switch_states.astype(bool, copy=False))
 
     def get_switch_states(self, pp_table: str) -> pd.DataFrame:
         """
