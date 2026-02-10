@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
+from importlib.metadata import version
 from pathlib import Path
 from typing import Callable, Tuple
 from unittest.mock import MagicMock, call, patch
@@ -8,6 +9,7 @@ from unittest.mock import MagicMock, call, patch
 import numpy as np
 import pandas as pd
 import pytest
+from packaging.version import Version
 from pandas.testing import assert_frame_equal
 from power_grid_model import ComponentType, DatasetType, initialize_array, power_grid_meta_data
 from power_grid_model.data_types import SingleDataset
@@ -18,6 +20,9 @@ from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes
 from power_grid_model_io.mappings.unit_mapping import UnitMapping
 
 MAPPING_FILE = Path(__file__).parents[2] / "data" / "config" / "mapping.yaml"
+
+PGM_COMPATIBILITY_VERSION_1_13_3 = Version("1.13.3")
+PGM_CONVERSION_VERSION = Version(version("pandapower"))
 
 
 @pytest.fixture
@@ -275,10 +280,16 @@ def test_convert_col_def_to_attribute(
     assert len(pgm_node_empty) == 1
     assert (pgm_node_empty[ComponentType.node]["u_rated"] == [10500.0, 400.0]).all()
 
+    if PGM_CONVERSION_VERSION < PGM_COMPATIBILITY_VERSION_1_13_3:
+        match_string = r"DataFrame for ComponentType.node.u_rated should contain a single column "
+        r"\(Index\(\['id_number', 'u_nom'\], dtype='(str|object)'\)\)"
+    else:
+        match_string = r"DataFrame for node.u_rated should contain a single column "
+        r"\(Index\(\['id_number', 'u_nom'\], dtype='(str|object)'\)\)"
+
     with pytest.raises(
         ValueError,
-        match=r"DataFrame for ComponentType.node.u_rated should contain a single column "
-        r"\(Index\(\['id_number', 'u_nom'\], dtype='(str|object)'\)\)",
+        match=match_string,
     ):
         converter._convert_col_def_to_attribute(
             data=tabular_data_no_units_no_substitutions,
