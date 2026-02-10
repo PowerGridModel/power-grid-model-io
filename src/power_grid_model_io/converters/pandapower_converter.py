@@ -37,10 +37,11 @@ PandaPowerData = MutableMapping[str, pd.DataFrame]
 logger = structlog.get_logger(__file__)
 
 PP_COMPATIBILITY_VERSION_3_2_0 = Version("3.2.0")
+PP_COMPATIBILITY_VERSION_3_4_0 = Version("3.4.0")
 try:
     PP_CONVERSION_VERSION = Version(version("pandapower"))
 except PackageNotFoundError:
-    PP_CONVERSION_VERSION = PP_COMPATIBILITY_VERSION_3_2_0  # assume latest compatible version by default
+    PP_CONVERSION_VERSION = PP_COMPATIBILITY_VERSION_3_4_0  # assume latest compatible version by default
 
 
 def get_loss_params_3ph():
@@ -794,6 +795,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         vkr0_percent = self._get_pp_attr("trafo", "vkr0_percent", expected_type="f8", default=np.nan)
         # mag0_percent and mag0_rx will be fetched relative to vk_percent
         mag0_percent = self._get_pp_attr("trafo", "mag0_percent", expected_type="f8", default=np.nan)
+        if PP_CONVERSION_VERSION < PP_COMPATIBILITY_VERSION_3_4_0:
+            mag0_percent *= 100.0
         mag0_rx = self._get_pp_attr("trafo", "mag0_rx", expected_type="f8", default=np.nan)
         # Calculate rx ratio of magnetising branch
         valid = np.logical_and(np.not_equal(sn_mva, 0.0), np.isfinite(sn_mva))
@@ -820,13 +823,13 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             np.logical_and(
                 np.allclose(vk_percent, vk0_percent),
                 np.logical_and(
-                    np.not_equal(vk_percent * mag0_percent, 0.0),
+                    np.not_equal(vk_percent * mag0_percent * 1e-4, 0.0),
                     np.logical_and(np.logical_not(np.isnan(mag0_percent)), np.logical_not(np.isnan(mag0_rx))),
                 ),
             ),
         )
         i0_zero_sequence = np.divide(
-            np.ones_like(mag0_percent), (vk_percent * mag0_percent * 1e-2), out=None, where=valid
+            np.ones_like(mag0_percent), (vk_percent * mag0_percent * 1e-4), out=None, where=valid
         )
         i0_zero_sequence[np.logical_not(valid)] = np.nan
         p0_zero_sequence = (
