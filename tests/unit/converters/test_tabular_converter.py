@@ -22,7 +22,7 @@ from power_grid_model_io.mappings.unit_mapping import UnitMapping
 MAPPING_FILE = Path(__file__).parents[2] / "data" / "config" / "mapping.yaml"
 
 PGM_COMPATIBILITY_VERSION_1_13_3 = Version("1.13.3")
-PGM_CONVERSION_VERSION = Version(version("pandapower"))
+PGM_INSTALLED_VERSION = Version(version("power_grid_model"))
 
 
 @pytest.fixture
@@ -280,12 +280,16 @@ def test_convert_col_def_to_attribute(
     assert len(pgm_node_empty) == 1
     assert (pgm_node_empty[ComponentType.node]["u_rated"] == [10500.0, 400.0]).all()
 
-    if PGM_CONVERSION_VERSION < PGM_COMPATIBILITY_VERSION_1_13_3:
-        match_string = r"DataFrame for ComponentType.node.u_rated should contain a single column "
-        r"\(Index\(\['id_number', 'u_nom'\], dtype='(str|object)'\)\)"
+    if PGM_INSTALLED_VERSION < PGM_COMPATIBILITY_VERSION_1_13_3:
+        match_string = (
+            r"DataFrame for ComponentType.node.u_rated should contain a single column "
+            r"\(Index\(\['id_number', 'u_nom'\], dtype='(str|object)'\)\)"
+        )
     else:
-        match_string = r"DataFrame for node.u_rated should contain a single column "
-        r"\(Index\(\['id_number', 'u_nom'\], dtype='(str|object)'\)\)"
+        match_string = (
+            r"DataFrame for node.u_rated should contain a single column "
+            r"\(Index\(\['id_number', 'u_nom'\], dtype='(str|object)'\)\)"
+        )
 
     with pytest.raises(
         ValueError,
