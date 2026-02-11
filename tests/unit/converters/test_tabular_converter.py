@@ -277,7 +277,7 @@ def test_convert_col_def_to_attribute(
 
     with pytest.raises(
         ValueError,
-        match=r"DataFrame for ComponentType.node.u_rated should contain a single column "
+        match=r"DataFrame for (ComponentType\.)?node.u_rated should contain a single column "
         r"\(Index\(\['id_number', 'u_nom'\], dtype='(str|object)'\)\)",
     ):
         converter._convert_col_def_to_attribute(
