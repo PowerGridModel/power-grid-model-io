@@ -796,6 +796,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # mag0_percent and mag0_rx will be fetched relative to vk_percent
         mag0_percent = self._get_pp_attr("trafo", "mag0_percent", expected_type="f8", default=np.nan)
         if PP_CONVERSION_VERSION < PP_COMPATIBILITY_VERSION_3_4_0:
+            # before pandapower 3.4.0, the mag0_percent wasn't a percentage but a relative value between 0 and 1
             mag0_percent *= 100.0
         mag0_rx = self._get_pp_attr("trafo", "mag0_rx", expected_type="f8", default=np.nan)
         # Calculate rx ratio of magnetising branch
