@@ -26,22 +26,20 @@ def converter():
 
 @pytest.fixture
 def structured_input_data():
-    input_data = {
+    return {
         "node": [
             {"id": 1, "u_rated": 400.0},
             {"id": 2, "u_rated": 400.0, "some_extra_info": 2.1},
         ]
     }
-    return input_data
 
 
 @pytest.fixture
 def structured_batch_data():
-    batch_data = [
+    return [
         {"sym_load": [{"id": 3, "p_specified": 1.0}]},
         {"sym_load": [{"id": 3, "p_specified": 2.0}, {"id": 4, "p_specified": 3.0}]},
     ]
-    return batch_data
 
 
 @pytest.fixture

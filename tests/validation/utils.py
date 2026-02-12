@@ -126,7 +126,7 @@ def select_values(actual: SingleDataset, expected: SingleDataset, component: Com
     missing_idx = set(expected_values.index) - set(actual_values.index)
     if len(missing_idx) == 1:
         raise KeyError(f"Expected {component} #{missing_idx.pop()}, but it is missing {actual_values.index.tolist()}.")
-    elif len(missing_idx) > 1:
+    if len(missing_idx) > 1:
         raise KeyError(f"Expected {component}s {missing_idx}, but they are missing {actual_values.index.tolist()}.")
 
     actual_values = actual_values.loc[expected_values.index][mask]

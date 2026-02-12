@@ -35,21 +35,21 @@ def test_name_column_dtype_conversion(mock_excel_file: MagicMock):
     def mock_parse(*args, **kwargs):
         if kwargs.get("nrows") == 0:
             return preview_df
-        else:
-            actual_data = {
-                "Mock.Name": [12345678900000000000, 987.654],
-                "Other.Column": ["value1", "value2"],
-                "ID": [1, 2],
-                "ratio": [0.1, 0.2],
-            }
-            df = pd.DataFrame(actual_data)
 
-            if "dtype" in kwargs:
-                for col, dtype_val in kwargs["dtype"].items():
-                    if col in df.columns and dtype_val is str:
-                        df[col] = df[col].apply(lambda x: str(int(x)) if float(x).is_integer() else str(x))
+        actual_data = {
+            "Mock.Name": [12345678900000000000, 987.654],
+            "Other.Column": ["value1", "value2"],
+            "ID": [1, 2],
+            "ratio": [0.1, 0.2],
+        }
+        df = pd.DataFrame(actual_data)
 
-            return df
+        if "dtype" in kwargs:
+            for col, dtype_val in kwargs["dtype"].items():
+                if col in df.columns and dtype_val is str:
+                    df[col] = df[col].apply(lambda x: str(int(x)) if float(x).is_integer() else str(x))
+
+        return df
 
     mock_excel_file.return_value.parse.side_effect = mock_parse
 

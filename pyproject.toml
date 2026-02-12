@@ -133,6 +133,7 @@ select = [
     "FURB",
     "FLY",
     "SLOT",
+    # pylint
     #"PL",
     # Numpy-specific rules
     "NPY",
@@ -141,13 +142,13 @@ select = [
     # use pathlib
     "PTH",
     # tidy imports
-    #"TID",
+    "TID",
     # unused arguments
     #"ARG",
     # Return
-    #"RET",
+    "RET",
     # pie
-    #"PIE",
+    "PIE",
     # self
     #"SLF",
     # pyupgrade
@@ -170,6 +171,9 @@ ignore = ["SIM108", "SIM118", "SIM110", "SIM211"]
 [tool.ruff.lint.isort]
 # Imports that are imported using keyword "as" and are from the same source - are combined.
 combine-as-imports = true
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["TID252"] # intentional relative imports inside tests
 
 [tool.mypy]
 follow_imports = "silent"

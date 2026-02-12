@@ -97,8 +97,7 @@ def load_validation_data_3ph(trafo_loading="power") -> PandaPowerData:
     """
     if trafo_loading == "power":
         return pp.file_io.from_json(PP_V2_NET_3PH_OUTPUT_FILE)
-    else:
-        return pp.file_io.from_json(PP_V2_NET_3PH_OUTPUT_FILE_CURRENT_LOADING)
+    return pp.file_io.from_json(PP_V2_NET_3PH_OUTPUT_FILE_CURRENT_LOADING)
 
 
 @pytest.fixture(params=["power", "current"])

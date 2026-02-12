@@ -22,8 +22,7 @@ MAPPING_FILE = Path(__file__).parents[2] / "data" / "config" / "mapping.yaml"
 
 @pytest.fixture
 def converter():
-    converter = TabularConverter(mapping_file=MAPPING_FILE)
-    return converter
+    return TabularConverter(mapping_file=MAPPING_FILE)
 
 
 @pytest.fixture
