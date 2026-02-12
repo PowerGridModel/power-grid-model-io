@@ -133,6 +133,37 @@ select = [
     "FURB",
     "FLY",
     "SLOT",
+    #"PL",
+    # Numpy-specific rules
+    "NPY",
+    # Warning
+    "W",
+    # use pathlib
+    "PTH",
+    # tidy imports
+    #"TID",
+    # unused arguments
+    #"ARG",
+    # Return
+    #"RET",
+    # pie
+    #"PIE",
+    # self
+    #"SLF",
+    # pyupgrade
+    #"UP",
+    # raise
+    #"RSE",
+    # ruff sepcific rules
+    #"RUF",
+    # bandit
+    #"S",
+    # boolean positional value in call
+    #"FBT003",
+    # raise vanilla args
+    #"TRY002",
+    # pytest-style
+    #"PT",
 ]
 ignore = ["SIM108", "SIM118", "SIM110", "SIM211"]
 

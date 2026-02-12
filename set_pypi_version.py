@@ -13,7 +13,7 @@ import requests
 
 
 def set_version(pkg_dir: Path):
-    with open(pkg_dir / "VERSION") as f:
+    with (pkg_dir / "VERSION").open() as f:
         version = f.read().strip().strip("\n")
     major, minor = (int(x) for x in version.split("."))
     latest_major, latest_minor, latest_patch = get_pypi_latest()
@@ -36,7 +36,7 @@ def set_version(pkg_dir: Path):
             # feature branch
             # major.minor.patch a 1 build_number short_hash
             version += f"a1{build_number}{short_hash}"
-    with open(pkg_dir / "PYPI_VERSION", "w") as f:
+    with (pkg_dir / "PYPI_VERSION").open("w") as f:
         f.write(version)
 
 

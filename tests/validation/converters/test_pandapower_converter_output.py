@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-import os
 from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
@@ -57,7 +56,8 @@ def temporary_file_cleanup(file_path):
     try:
         yield
     finally:
-        os.remove(file_path)
+        file_path = Path(file_path)
+        file_path.unlink(missing_ok=True)
 
 
 @lru_cache

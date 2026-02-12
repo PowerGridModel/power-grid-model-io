@@ -62,7 +62,7 @@ class TabularConverter(BaseConverter[TabularData]):
             raise ValueError(f"Mapping file should be a .yaml file, {mapping_file.suffix} provided.")
         self._log.debug("Read mapping file", mapping_file=mapping_file)
 
-        with open(mapping_file, "r", encoding="utf-8") as mapping_stream:
+        with mapping_file.open("r", encoding="utf-8") as mapping_stream:
             mapping = yaml.safe_load(mapping_stream)
 
         if "grid" not in mapping:

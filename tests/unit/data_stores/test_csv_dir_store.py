@@ -21,7 +21,7 @@ def temp_dir():
 
 
 def touch(file_path: Path):
-    open(file_path, "wb").close()
+    file_path.open("wb").close()
 
 
 @patch("power_grid_model_io.data_stores.csv_dir_store.pd.read_csv")

@@ -13,7 +13,6 @@ nieuw_bestand = convert_guid_vision_excel("vision_97_nl.xlsx", number="Nummer", 
 
 """
 
-import os
 import re
 from pathlib import Path
 from typing import Optional
@@ -202,7 +201,7 @@ def update_column_names(df: pd.DataFrame, terms_changed: dict) -> None:
     df.rename(columns=terms_changed, inplace=True)
 
 
-def save_df_to_excel(df: pd.DataFrame, file_name: str, sheet_name: str, i: int) -> None:
+def save_df_to_excel(df: pd.DataFrame, file_name: Path | str, sheet_name: str, i: int) -> None:
     """Dump the panda dataframe to an excel file
 
     Args:
@@ -222,7 +221,7 @@ def convert_guid_vision_excel(
     excel_file: Path | str,
     number: str = VISION_EXCEL_LAN_DICT[LANGUAGE_EN][DICT_KEY_NUMBER],
     terms_changed: Optional[dict] = None,
-) -> str:
+) -> Path:
     """Main entry function. Convert the GUID based Vision excel files to a number based format
 
     Args:
@@ -237,8 +236,9 @@ def convert_guid_vision_excel(
         terms_changed = {}
     xls = load_excel_file(excel_file)
     cvtr = UUID2IntCvtr()
-    dir_name, file_name = os.path.split(excel_file)
-    new_excel_name = os.path.join(dir_name, f"new_{file_name}")
+    excel_file_path = Path(excel_file)
+    dir_name, file_name = excel_file_path.parent, excel_file_path.name
+    new_excel_name = dir_name / f"new_{file_name}"
 
     for i, sheet_name in enumerate(xls.sheet_names):
         df = xls.parse(sheet_name)

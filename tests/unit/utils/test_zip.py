@@ -65,7 +65,7 @@ def test_extract__invalid_file_extension():
 
 def test_extract__invalid_dst_dir(temp_dir: Path):
     # Arrange
-    with open(temp_dir / "notadir.txt", "wb"):
+    with (temp_dir / "notadir.txt").open("wb"):
         pass
 
     # Act / Assert
@@ -82,7 +82,7 @@ def test_extract__file_exists(mock_tqdm: MagicMock, temp_dir: Path):
     mock_tqdm.side_effect = MockTqdm
 
     dst_dir_path.mkdir()
-    with open(dst_dir_path / "foo.txt", "wb") as fp:
+    with (dst_dir_path / "foo.txt").open("wb") as fp:
         fp.write(b"\0")
 
     # Act / Assert
@@ -99,7 +99,7 @@ def test_extract__skip_if_exists(mock_tqdm: MagicMock, temp_dir: Path):
     mock_tqdm.side_effect = MockTqdm
 
     dst_dir_path.mkdir()
-    with open(dst_dir_path / "foo.txt", "wb") as fp:
+    with (dst_dir_path / "foo.txt").open("wb") as fp:
         fp.write(b"\0")
 
     # Act / Assert
@@ -132,7 +132,7 @@ def test_get_only_item_in_dir__no_items(temp_dir):
 
 def test_get_only_item_in_dir__one_file(temp_dir):
     # Arrange
-    with open(temp_dir / "file.txt", "wb"):
+    with (temp_dir / "file.txt").open("wb"):
         pass
 
     # Act / Assert
@@ -149,9 +149,9 @@ def test_get_only_item_in_dir__one_dir(temp_dir):
 
 def test_get_only_item_in_dir__two_files(temp_dir):
     # Arrange
-    with open(temp_dir / "file_1.txt", "wb"):
+    with (temp_dir / "file_1.txt").open("wb"):
         pass
-    with open(temp_dir / "file_2.txt", "wb"):
+    with (temp_dir / "file_2.txt").open("wb"):
         pass
 
     # Act / Assert
