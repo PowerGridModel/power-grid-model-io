@@ -17,6 +17,10 @@ from power_grid_model.data_types import SingleDataset
 from power_grid_model.validation import assert_valid_input_data
 
 from power_grid_model_io.converters import PandaPowerConverter
+from power_grid_model_io.converters.pandapower_converter import (
+    PP_COMPATIBILITY_VERSION_3_4_0,
+    PP_CONVERSION_VERSION,
+)
 from power_grid_model_io.data_types import ExtraInfo
 from power_grid_model_io.utils.json import JsonEncoder
 
@@ -25,6 +29,11 @@ from ..utils import compare_extra_info, component_attributes, component_objects,
 
 VALIDATION_FILE = Path(__file__).parents[2] / "data" / "pandapower" / "pgm_input_data.json"
 VALIDATION_FILE_ZERO_SEQ = Path(__file__).parents[2] / "data" / "pandapower" / "pgm_input_data_trafo_zero_seq.json"
+
+if PP_CONVERSION_VERSION < PP_COMPATIBILITY_VERSION_3_4_0:
+    mag0_multiplier = 1.0
+else:
+    mag0_multiplier = 100.0
 
 
 @lru_cache
@@ -168,7 +177,7 @@ def test_simple_example():
 def test_trafo_zero_seq_params_conversion():
     net = pp_net_3ph_minimal_trafo()
     net.trafo.vector_group = "YNyn"
-    net.trafo.mag0_percent = 1e3
+    net.trafo.mag0_percent = 1e3 * mag0_multiplier
     net.trafo.mag0_rx = 0.1
     net.trafo.shift_degree = 0
     converter = PandaPowerConverter()
@@ -194,7 +203,7 @@ def test_trafo_zero_seq_params_conversion():
 def test_trafo_zero_seq_params_calculation(kwargs):
     net = pp_net_3ph_minimal_trafo()
     net.trafo.vector_group = "YNyn"
-    net.trafo.mag0_percent = kwargs["mag0_percent"]
+    net.trafo.mag0_percent = kwargs["mag0_percent"] * mag0_multiplier
     net.trafo.mag0_rx = 0.1
     net.trafo.shift_degree = 0
     converter = PandaPowerConverter()
