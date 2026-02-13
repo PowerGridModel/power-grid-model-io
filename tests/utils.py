@@ -89,16 +89,11 @@ class MockFn:
         else:
             obj = MockFn(fn, left)
         if MockFn._is_operator(right) and (
-            (obj.fn == "+"
-            and right.fn == "+")
-            or (obj.fn == "-"
-            and right.fn == "+")
-            or (obj.fn == "*"
-            and right.fn == "*")
-            or (obj.fn == "/"
-            and right.fn == "*")
-            or (obj.fn == "&"
-            and right.fn == "&")
+            (obj.fn == "+" and right.fn == "+")
+            or (obj.fn == "-" and right.fn == "+")
+            or (obj.fn == "*" and right.fn == "*")
+            or (obj.fn == "/" and right.fn == "*")
+            or (obj.fn == "&" and right.fn == "&")
         ):
             obj.args += right.args
             return obj

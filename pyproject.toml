@@ -166,7 +166,7 @@ select = [
     # pytest-style
     #"PT",
 ]
-ignore = ["SIM108", "SIM118", "SIM110", "SIM211"]
+ignore = ["SIM108", "SIM118"]
 
 [tool.ruff.lint.isort]
 # Imports that are imported using keyword "as" and are from the same source - are combined.
