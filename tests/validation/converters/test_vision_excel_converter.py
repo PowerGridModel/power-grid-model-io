@@ -313,7 +313,7 @@ def test_log_levels(capsys):
     assert "debug" not in outerr.out
 
 
-def prep_vision_97(language: str) -> VisionExcelConverter:
+def prep_vision_97(language: str) -> VisionExcelConverter:  # noqa: ARG001
     source_file = Path(str(SOURCE_FILE_97).format(language=LANGUAGE_EN))
     return VisionExcelConverter(
         source_file, language="en", mapping_file=VISION_97_MAPPING_FILE, terms_changed=terms_changed

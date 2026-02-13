@@ -37,7 +37,7 @@ class ExcelFileStore(BaseDataStore[TabularData]):
     same values) or renamed.
     """
 
-    __slots__ = ("_file_paths", "_excel_files", "_header_rows")
+    __slots__ = ("_excel_files", "_file_paths", "_header_rows")
 
     _unnamed_pattern: re.Pattern = re.compile(r"Unnamed: \d+_level_\d+")
 
@@ -223,7 +223,7 @@ class ExcelFileStore(BaseDataStore[TabularData]):
                 )
             for counter, dup_idx in enumerate(sorted(dup_idxs), start=2):
                 if isinstance(col_name, tuple):
-                    to_rename[dup_idx] = (f"{col_name[0]}_{counter}",) + col_name[1:]
+                    to_rename[dup_idx] = (f"{col_name[0]}_{counter}", *col_name[1:])
                 else:
                     to_rename[dup_idx] = f"{col_name}_{counter}"
 

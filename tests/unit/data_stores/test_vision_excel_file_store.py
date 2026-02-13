@@ -32,7 +32,7 @@ def test_name_column_dtype_conversion(mock_excel_file: MagicMock):
 
     preview_df = pd.DataFrame(columns=["Mock.Name", "Other.Column", "ID"])
 
-    def mock_parse(*args, **kwargs):
+    def mock_parse(*_args, **kwargs):
         if kwargs.get("nrows") == 0:
             return preview_df
 

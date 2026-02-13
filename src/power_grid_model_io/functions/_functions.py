@@ -81,7 +81,7 @@ def degrees_to_clock(degrees: float) -> int:
     """
     Return the clock
     """
-    return int(round(degrees / 30.0)) % 12
+    return round(degrees / 30.0) % 12
 
 
 def is_greater_than(left_side, right_side) -> bool:

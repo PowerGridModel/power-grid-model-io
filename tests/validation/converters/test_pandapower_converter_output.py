@@ -402,7 +402,7 @@ def test_output_data_3ph__powers():
         pgm = PowerGridModel(input_data)
         output_data = pgm.calculate_power_flow(symmetric=False)
         output_tables = pgm_converter.convert(output_data)
-        for table in output_tables.keys():
+        for table in output_tables:
             net[table] = output_tables[table]
 
     net = pp_networks.ieee_european_lv_asymmetric()
@@ -476,7 +476,7 @@ def test_output_data__powers():
         pgm = PowerGridModel(input_data)
         output_data = pgm.calculate_power_flow(symmetric=True)
         output_tables = pgm_converter.convert(output_data)
-        for table in output_tables.keys():
+        for table in output_tables:
             net[table] = output_tables[table]
 
     net = pp_networks.ieee_european_lv_asymmetric()

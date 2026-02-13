@@ -47,7 +47,7 @@ class FieldMapping(Generic[T]):
 
         # Otherwise, use the values as regular expressions
         for key in keys:
-            for pattern in self._values_re.keys():
+            for pattern in self._values_re:
                 if pattern.fullmatch(key):
                     return self._values_re[pattern]
 

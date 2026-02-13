@@ -62,7 +62,7 @@ def pgm_sparse_batch_data():
 
 
 def test_parse_data(converter: PgmJsonConverter, structured_input_data, structured_batch_data):
-    with pytest.raises(PowerGridSerializationError, match="Map or an array expected."):
+    with pytest.raises(PowerGridSerializationError, match=r"Map or an array expected."):
         converter._parse_data(data="str", data_type=DatasetType.input, extra_info=None)  # type: ignore
 
     # test for input dataset
