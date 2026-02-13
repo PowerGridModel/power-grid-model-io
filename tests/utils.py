@@ -84,10 +84,7 @@ class MockFn:
 
     @staticmethod
     def _apply_operator(fn: str, left: Any, right: Any):
-        if MockFn._is_operator(left) and left.fn == fn:
-            obj = copy(left)
-        else:
-            obj = MockFn(fn, left)
+        obj = copy(left) if MockFn._is_operator(left) and left.fn == fn else MockFn(fn, left)
         if MockFn._is_operator(right) and (
             (obj.fn == "+" and right.fn == "+")
             or (obj.fn == "-" and right.fn == "+")

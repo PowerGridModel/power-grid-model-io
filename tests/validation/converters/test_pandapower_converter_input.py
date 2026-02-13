@@ -30,10 +30,7 @@ from ..utils import compare_extra_info, component_attributes, component_objects,
 VALIDATION_FILE = Path(__file__).parents[2] / "data" / "pandapower" / "pgm_input_data.json"
 VALIDATION_FILE_ZERO_SEQ = Path(__file__).parents[2] / "data" / "pandapower" / "pgm_input_data_trafo_zero_seq.json"
 
-if PP_CONVERSION_VERSION < PP_COMPATIBILITY_VERSION_3_4_0:
-    mag0_multiplier = 1.0
-else:
-    mag0_multiplier = 100.0
+mag0_multiplier = 1.0 if PP_CONVERSION_VERSION < PP_COMPATIBILITY_VERSION_3_4_0 else 100.0
 
 
 @lru_cache

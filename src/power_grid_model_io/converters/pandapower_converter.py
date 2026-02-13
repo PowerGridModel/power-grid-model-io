@@ -1636,10 +1636,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         element: "load", "motor" or "ward"
         symmetric: True or False
         """
-        if symmetric:
-            res_table = "res_" + element
-        else:
-            res_table = "res_" + element + "_3ph"
+        res_table = "res_" + element if symmetric else "res_" + element + "_3ph"
 
         if element == "load":
             load_id_names = ["const_power", "const_impedance", "const_current"]
@@ -2597,10 +2594,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         attr_data = pp_component_data[attribute]
 
         # If any of the attribute values are missing, and a default is supplied, fill the nans with the default value
-        if attr_data.dtype is np.dtype("O"):
-            nan_values = np.equal(attr_data, None)  # type: ignore
-        else:
-            nan_values = np.isnan(attr_data)
+        nan_values = np.equal(attr_data, None) if attr_data.dtype is np.dtype("O") else np.isnan(attr_data)
 
         if any(nan_values):
             attr_data = attr_data.fillna(value=default, inplace=False)
