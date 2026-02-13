@@ -68,7 +68,7 @@ def idx_to_str(idx: str | int | slice | Tuple[int | slice, ...]) -> str:
 
 
 class MockFn:
-    __slots__ = ["fn", "args", "kwargs", "postfix"]
+    __slots__ = ["args", "fn", "kwargs", "postfix"]
 
     __array_struct__ = np.array([]).__array_struct__
 
@@ -89,16 +89,16 @@ class MockFn:
         else:
             obj = MockFn(fn, left)
         if MockFn._is_operator(right) and (
-            obj.fn == "+"
-            and right.fn == "+"
-            or obj.fn == "-"
-            and right.fn == "+"
-            or obj.fn == "*"
-            and right.fn == "*"
-            or obj.fn == "/"
-            and right.fn == "*"
-            or obj.fn == "&"
-            and right.fn == "&"
+            (obj.fn == "+"
+            and right.fn == "+")
+            or (obj.fn == "-"
+            and right.fn == "+")
+            or (obj.fn == "*"
+            and right.fn == "*")
+            or (obj.fn == "/"
+            and right.fn == "*")
+            or (obj.fn == "&"
+            and right.fn == "&")
         ):
             obj.args += right.args
             return obj
@@ -222,7 +222,7 @@ class MockFn:
     def __repr__(self):
         if self.is_operator():
             return "(" + f" {self.fn} ".join(repr(arg) for arg in self.args) + ")"
-        args = [repr(arg) for arg in self.args] + [f"{key}={repr(val)}" for key, val in self.kwargs.items()]
+        args = [repr(arg) for arg in self.args] + [f"{key}={val!r}" for key, val in self.kwargs.items()]
         return f"{self.fn}({', '.join(args)}){self.postfix}"
 
     def __getattr__(self, item):
@@ -237,7 +237,7 @@ class MockFn:
 
     def __call__(self, *args, **kwargs):
         mock_fn = copy(self)
-        arguments = ", ".join(chain(map(repr, args), map(lambda k, v: f"{k}={repr(v)}", kwargs.items())))
+        arguments = ", ".join(chain(map(repr, args), map(lambda k, v: f"{k}={v!r}", kwargs.items())))
         mock_fn.postfix += f"({arguments})"
         return mock_fn
 

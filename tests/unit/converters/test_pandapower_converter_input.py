@@ -305,7 +305,7 @@ def test__serialize_data__invalid_output():
     # Act
     with pytest.raises(
         TypeError,
-        match="Invalid output data dictionary supplied.",
+        match=r"Invalid output data dictionary supplied.",
     ):
         converter._serialize_data(data={ComponentType.line: np.array([])}, extra_info=None)
 
@@ -773,7 +773,7 @@ def test_create_pgm_input_sym_loads__delta() -> None:
 
     # Act/Assert
     with pytest.raises(
-        NotImplementedError, match="Delta loads are not implemented, only wye loads are supported in PGM."
+        NotImplementedError, match=r"Delta loads are not implemented, only wye loads are supported in PGM."
     ):
         converter._create_pgm_input_sym_loads()
 
@@ -789,7 +789,7 @@ def test_create_pgm_input_asym_loads__delta() -> None:
 
     # Act/Assert
     with pytest.raises(
-        NotImplementedError, match="Delta loads are not implemented, only wye loads are supported in PGM."
+        NotImplementedError, match=r"Delta loads are not implemented, only wye loads are supported in PGM."
     ):
         converter._create_pgm_input_asym_loads()
 

@@ -156,7 +156,7 @@ select = [
     # raise
     #"RSE",
     # ruff sepcific rules
-    #"RUF",
+    "RUF",
     # bandit
     #"S",
     # boolean positional value in call

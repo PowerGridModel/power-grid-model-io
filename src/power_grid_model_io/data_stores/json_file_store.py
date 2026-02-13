@@ -19,7 +19,7 @@ class JsonFileStore(BaseDataStore[StructuredData]):
     The json file store expects each json file to be eiter a single dictionary, or a list of dictonaries.
     """
 
-    __slots__ = ("_indent", "_compact", "_file_path")
+    __slots__ = ("_compact", "_file_path", "_indent")
 
     def __init__(self, file_path: Path):
         super().__init__()

@@ -171,7 +171,7 @@ def test_simple_example():
     pp_net = example_simple()
     pp_net["gen"] = pp_net["gen"].iloc[:0]
     pp_converter = PandaPowerConverter()
-    data, _ = pp_converter.load_input_data(pp_net)
+    _, _ = pp_converter.load_input_data(pp_net)
 
 
 def test_trafo_zero_seq_params_conversion():
@@ -181,8 +181,8 @@ def test_trafo_zero_seq_params_conversion():
     net.trafo.mag0_rx = 0.1
     net.trafo.shift_degree = 0
     converter = PandaPowerConverter()
-    actual_data, extra_info = converter.load_input_data(net)
-    expected_data, extra_info = load_json_single_dataset(VALIDATION_FILE_ZERO_SEQ, data_type=DatasetType.input)
+    actual_data, _ = converter.load_input_data(net)
+    expected_data, _ = load_json_single_dataset(VALIDATION_FILE_ZERO_SEQ, data_type=DatasetType.input)
     np.testing.assert_allclose(
         actual_data["transformer"]["i0_zero_sequence"], expected_data["transformer"]["i0_zero_sequence"], rtol=1e-3
     )
@@ -207,7 +207,7 @@ def test_trafo_zero_seq_params_calculation(kwargs):
     net.trafo.mag0_rx = 0.1
     net.trafo.shift_degree = 0
     converter = PandaPowerConverter()
-    data, extra_info = converter.load_input_data(net)
+    data, _ = converter.load_input_data(net)
     assert_valid_input_data(data)
     pgm_net = PowerGridModel(data)
     output = pgm_net.calculate_power_flow(symmetric=False)

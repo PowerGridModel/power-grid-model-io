@@ -28,7 +28,7 @@ def test_get_function__module_doesnt_exist():
 
 def test_get_function__function_doesnt_exist():
     with raises(
-        AttributeError, match="Function 'unknown_function' does not exist in module 'power_grid_model_io.functions'!"
+        AttributeError, match=r"Function 'unknown_function' does not exist in module 'power_grid_model_io.functions'!"
     ):
         assert get_function("power_grid_model_io.functions.unknown_function")
 
