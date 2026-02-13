@@ -929,7 +929,8 @@ def test_parse_auto_id__named_keys(
 
 
 def test_parse_auto_id__invalid_key_definition(
-    converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData  # noqa: ARG001
+    converter: TabularConverter,
+    tabular_data_no_units_no_substitutions: TabularData,  # noqa: ARG001
 ):
     with pytest.raises(TypeError, match="Invalid key definition type 'int': 123"):
         converter._parse_auto_id(
