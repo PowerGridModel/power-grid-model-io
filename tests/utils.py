@@ -286,7 +286,7 @@ class MockExcelFile:
 class MockTqdm:
     """To use: for x in tqdm(iterable)"""
 
-    def __init__(self, iterable=None, **kwargs):
+    def __init__(self, iterable=None, **_kwargs):
         self.iterable = iterable
 
     def __iter__(self):
