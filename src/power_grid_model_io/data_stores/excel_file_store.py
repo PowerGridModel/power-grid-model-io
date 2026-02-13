@@ -98,9 +98,7 @@ class ExcelFileStore(BaseDataStore[TabularData]):
                 sheet_data = self._remove_unnamed_column_placeholders(data=sheet_data)
                 sheet_data = self._handle_duplicate_columns(data=sheet_data, sheet_name=xls_sheet_name)
                 sheet_data = self._process_uuid_columns(data=sheet_data, sheet_name=xls_sheet_name)
-                sheet_data = self._update_column_names(data=sheet_data)
-
-                return sheet_data
+                return self._update_column_names(data=sheet_data)
 
             return sheet_loader
 

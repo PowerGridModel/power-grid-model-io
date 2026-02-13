@@ -36,7 +36,7 @@ def temp_dir():
 
 
 def make_file(file_path: Path, file_size: int = 0):
-    with open(file_path, "wb") as fp:
+    with file_path.open("wb") as fp:
         fp.write(b"\0" * file_size)
 
 
@@ -206,7 +206,7 @@ def test_download__empty_file(
     download_path = temp_dir / "data.zip"
 
     def urlretrieve(*_args, **_kwargs):
-        with open(temp_file, "wb"):
+        with temp_file.open("wb"):
             pass
         return temp_file, None
 

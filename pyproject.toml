@@ -133,12 +133,47 @@ select = [
     "FURB",
     "FLY",
     "SLOT",
+    # pylint
+    #"PL",
+    # Numpy-specific rules
+    "NPY",
+    # Warning
+    "W",
+    # use pathlib
+    "PTH",
+    # tidy imports
+    "TID",
+    # unused arguments
+    #"ARG",
+    # Return
+    "RET",
+    # pie
+    "PIE",
+    # self
+    #"SLF",
+    # pyupgrade
+    #"UP",
+    # raise
+    #"RSE",
+    # ruff sepcific rules
+    #"RUF",
+    # bandit
+    #"S",
+    # boolean positional value in call
+    #"FBT003",
+    # raise vanilla args
+    #"TRY002",
+    # pytest-style
+    #"PT",
 ]
 ignore = ["SIM108", "SIM118", "SIM110", "SIM211"]
 
 [tool.ruff.lint.isort]
 # Imports that are imported using keyword "as" and are from the same source - are combined.
 combine-as-imports = true
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["TID252"] # intentional relative imports inside tests
 
 [tool.mypy]
 follow_imports = "silent"

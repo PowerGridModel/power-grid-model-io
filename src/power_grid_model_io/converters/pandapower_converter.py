@@ -2444,8 +2444,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # no need to fill na because bool(NaN) == True
         if Version(version("pandas")) >= Version("3.0.0"):
             return pd.Series(switch_states.astype(bool))
-        else:
-            return pd.Series(switch_states.astype(bool, copy=False))
+        return pd.Series(switch_states.astype(bool, copy=False))
 
     def get_switch_states(self, pp_table: str) -> pd.DataFrame:
         """

@@ -20,10 +20,10 @@ Requirements:
     - zipfile to handle the Excel file as a ZIP archive for parsing.
 """
 
-import os
 import xml.etree.ElementTree as ET
 import zipfile
 from collections import Counter
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 XML_NAME_SPACE = {"": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}  # NOSONAR
@@ -63,7 +63,8 @@ class ExcelAmbiguityChecker:
             file_path (str): The path to the Excel file.
             column_name_in_row (int): The row index (0-based) where column names are expected. Default is 0.
         """
-        self._valid_file = file_path.endswith(".xlsx") and os.path.exists(file_path)
+        path = Path(file_path)
+        self._valid_file = path.suffix.lower() == ".xlsx" and path.exists()
         if self._valid_file:
             self._file_path = file_path
             self._col_name_in_row = column_name_in_row
