@@ -42,7 +42,7 @@ def test_abstract_methods():
 
 def test_load_input_data(converter: DummyConverter):
     # Arrange
-    def add_extra_info(data, data_type, extra_info):  # noqa: ARG001
+    def add_extra_info(extra_info, **_kwargs):
         extra_info[1] = "Foo"
         return {"foo": 1}
 

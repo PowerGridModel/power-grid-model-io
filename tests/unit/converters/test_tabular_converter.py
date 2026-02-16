@@ -928,10 +928,8 @@ def test_parse_auto_id__named_keys(
     assert extra_info[102] == {"id_reference": {"table": "lines", "key": {"id": 3, "node": 1}}}
 
 
-def test_parse_auto_id__invalid_key_definition(
-    converter: TabularConverter,
-    tabular_data_no_units_no_substitutions: TabularData,  # noqa: ARG001
-):
+@pytest.mark.usefixtures("tabular_data_no_units_no_substitutions")
+def test_parse_auto_id__invalid_key_definition(converter: TabularConverter):
     with pytest.raises(TypeError, match="Invalid key definition type 'int': 123"):
         converter._parse_auto_id(
             data=TabularData(),
@@ -1328,7 +1326,7 @@ def test_parse_table_filters(
 ):
     filtering_functions = [{"test_fn": {"kwarg_1": "a"}}]
 
-    def bool_fn_filter(row: pd.Series, **kwargs):  # noqa: ARG001
+    def bool_fn_filter(_row: pd.Series, **kwargs):
         assert kwargs == {"kwarg_1": "a"}
         return bool_fn
 
