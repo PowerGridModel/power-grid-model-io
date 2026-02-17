@@ -117,7 +117,7 @@ def test_get_winding_from(code: str, winding_type: WindingType):
     ],
 )
 def test_get_winding_from__no_neutral_grounding(code: str, winding_type: WindingType):
-    assert get_winding_from(code, False) == winding_type
+    assert get_winding_from(conn_str=code, neutral_grounding=False) == winding_type
 
 
 def test_get_winding_from__exception():
@@ -166,7 +166,7 @@ def test_get_winding_to(code: str, winding_type: WindingType):
     ],
 )
 def test_get_winding_to__no_neutral_grounding(code: str, winding_type: WindingType):
-    assert get_winding_to(code, False) == winding_type
+    assert get_winding_to(conn_str=code, neutral_grounding=False) == winding_type
 
 
 def test_get_winding_to__exception():
@@ -235,7 +235,7 @@ def test_get_winding_1(code: str, winding_type: WindingType):
     ],
 )
 def test_get_winding_1__no_neutral_grounding(code: str, winding_type: WindingType):
-    assert get_winding_1(code, False) == winding_type
+    assert get_winding_1(conn_str=code, neutral_grounding=False) == winding_type
 
 
 def test_get_winding_1__exception():
@@ -284,7 +284,7 @@ def test_get_winding_2(code: str, winding_type: WindingType):
     ],
 )
 def test_get_winding_2__no_neutral_grounding(code: str, winding_type: WindingType):
-    assert get_winding_2(code, False) == winding_type
+    assert get_winding_2(conn_str=code, neutral_grounding=False) == winding_type
 
 
 def test_get_winding_2__exception():
@@ -333,7 +333,7 @@ def test_get_winding_3(code: str, winding_type: WindingType):
     ],
 )
 def test_get_winding_3__no_neutral_grounding(code: str, winding_type: WindingType):
-    assert get_winding_3(code, False) == winding_type
+    assert get_winding_3(conn_str=code, neutral_grounding=False) == winding_type
 
 
 def test_get_winding_3__exception():
