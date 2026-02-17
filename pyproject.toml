@@ -162,7 +162,7 @@ select = [
     # boolean positional value in call
     #"FBT003",
     # raise vanilla args
-    #"TRY002",
+    "TRY002",
     # pytest-style
     #"PT",
 ]
