@@ -35,7 +35,7 @@ class TabularMapping:
         Yields:
             table_name
         """
-        return (key for key in self._mapping.keys())
+        return (key for key in self._mapping)
 
     def instances(self, table: str) -> Generator[Tuple[str, InstanceAttributes], None, None]:
         """

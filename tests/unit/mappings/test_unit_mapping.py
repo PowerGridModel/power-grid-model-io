@@ -39,7 +39,7 @@ def test_set_mapping__multiple_mappings():
     units = {"X": {"A": 111.0}, "Y": {"A": 222.0}}
 
     # Act / Assert
-    with pytest.raises(ValueError, match="Multiple unit definitions for 'A': 1A = 111.0X = 222.0Y"):
+    with pytest.raises(ValueError, match=r"Multiple unit definitions for 'A': 1A = 111.0X = 222.0Y"):
         mapping.set_mapping(mapping=units)
 
 
@@ -58,7 +58,7 @@ def test_set_mapping__invalid_si_to_si_mapping():
     units = {"A": {"A": 2.0}}
 
     # Act / Assert
-    with pytest.raises(ValueError, match="Invalid unit definition for 'A': 1A cannot be 2.0A"):
+    with pytest.raises(ValueError, match=r"Invalid unit definition for 'A': 1A cannot be 2.0A"):
         mapping.set_mapping(mapping=units)
 
 

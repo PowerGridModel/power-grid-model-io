@@ -10,7 +10,7 @@
     ],
   "line":
     [
-      {"id": 6, "from_node": 2, "to_node": 1, "from_status": 1, "to_status": 1, "r1": 0.12792, "x1": 0.0492, "c1": 6.4206e-07, "tan1": 0, "i_n": 108, "id_reference": {"table": "line", "index": 101}, "pgm_input": {"from_node": 2, "to_node": 1, "i_n": 108.0}}
+      {"id": 6, "from_node": 2, "to_node": 1, "from_status": 1, "to_status": 1, "r1": 0.12792, "x1": 0.0492, "c1": 6.4206e-07, "tan1": 0, "c0": 0, "tan0": 0, "i_n": 108, "id_reference": {"table": "line", "index": 101}, "pgm_input": {"from_node": 2, "to_node": 1, "i_n": 108.0}}
     ],
   "source":
     [

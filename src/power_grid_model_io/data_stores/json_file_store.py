@@ -19,7 +19,7 @@ class JsonFileStore(BaseDataStore[StructuredData]):
     The json file store expects each json file to be eiter a single dictionary, or a list of dictonaries.
     """
 
-    __slots__ = ("_indent", "_compact", "_file_path")
+    __slots__ = ("_compact", "_file_path", "_indent")
 
     def __init__(self, file_path: Path):
         super().__init__()
@@ -102,8 +102,5 @@ class JsonFileStore(BaseDataStore[StructuredData]):
 
         if isinstance(data, list) and any(not isinstance(x, dict) for x in data):
             type_names = sorted({type(x).__name__ for x in data})
-            if len(type_names) == 1:
-                type_str = type_names.pop()
-            else:
-                type_str = " | ".join(type_names)
+            type_str = type_names.pop() if len(type_names) == 1 else " | ".join(type_names)
             raise TypeError(f"Invalid data type for {type(self).__name__}: List[{type_str}]")

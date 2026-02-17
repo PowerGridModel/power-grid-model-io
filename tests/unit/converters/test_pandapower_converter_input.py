@@ -305,7 +305,7 @@ def test__serialize_data__invalid_output():
     # Act
     with pytest.raises(
         TypeError,
-        match="Invalid output data dictionary supplied.",
+        match=r"Invalid output data dictionary supplied.",
     ):
         converter._serialize_data(data={ComponentType.line: np.array([])}, extra_info=None)
 
@@ -773,7 +773,7 @@ def test_create_pgm_input_sym_loads__delta() -> None:
 
     # Act/Assert
     with pytest.raises(
-        NotImplementedError, match="Delta loads are not implemented, only wye loads are supported in PGM."
+        NotImplementedError, match=r"Delta loads are not implemented, only wye loads are supported in PGM."
     ):
         converter._create_pgm_input_sym_loads()
 
@@ -789,7 +789,7 @@ def test_create_pgm_input_asym_loads__delta() -> None:
 
     # Act/Assert
     with pytest.raises(
-        NotImplementedError, match="Delta loads are not implemented, only wye loads are supported in PGM."
+        NotImplementedError, match=r"Delta loads are not implemented, only wye loads are supported in PGM."
     ):
         converter._create_pgm_input_asym_loads()
 
@@ -870,9 +870,9 @@ def test_create_pgm_input_shunts(mock_init_array: MagicMock, two_pp_objs, conver
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 @patch("power_grid_model_io.converters.pandapower_converter.np.round", new=lambda x: x)
-@patch("power_grid_model_io.converters.pandapower_converter.np.sqrt", new=lambda x, **kwargs: x)
-@patch("power_grid_model_io.converters.pandapower_converter.np.less", new=lambda x, _, **kwargs: x)
-@patch("power_grid_model_io.converters.pandapower_converter.np.divide", new=lambda x, _, **kwargs: x)
+@patch("power_grid_model_io.converters.pandapower_converter.np.sqrt", new=lambda x, **_kwargs: x)
+@patch("power_grid_model_io.converters.pandapower_converter.np.less", new=lambda x, _, **_kwargs: x)
+@patch("power_grid_model_io.converters.pandapower_converter.np.divide", new=lambda x, _, **_kwargs: x)
 @patch("power_grid_model_io.converters.pandapower_converter.np.bitwise_and", new=lambda x, _: x)
 @patch("power_grid_model_io.converters.pandapower_converter.np.logical_and", new=lambda x, _: x)
 @patch("power_grid_model_io.converters.pandapower_converter.np.allclose", new=lambda x, _: x)
@@ -1706,9 +1706,9 @@ def test_create_pgm_input_dclines(mock_init_array: MagicMock, two_pp_objs, conve
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
-@patch("power_grid_model_io.converters.pandapower_converter.np.divide", new=lambda x, _, **kwargs: x)
-@patch("power_grid_model_io.converters.pandapower_converter.np.power", new=lambda x, _, **kwargs: x)
-@patch("power_grid_model_io.converters.pandapower_converter.np.sqrt", new=lambda x, **kwargs: x)
+@patch("power_grid_model_io.converters.pandapower_converter.np.divide", new=lambda x, _, **_kwargs: x)
+@patch("power_grid_model_io.converters.pandapower_converter.np.power", new=lambda x, _, **_kwargs: x)
+@patch("power_grid_model_io.converters.pandapower_converter.np.sqrt", new=lambda x, **_kwargs: x)
 def test_create_pgm_input_motors(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
     converter.pp_input_data["motor"] = two_pp_objs

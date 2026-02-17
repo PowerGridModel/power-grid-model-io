@@ -36,7 +36,7 @@ def test_relative_no_load_current(i_0: float, p_0: float, s_nom: float, u_nom: f
 
 
 def test_relative_no_load_current__exception():
-    with raises(ValueError, match="can't be more than 100% .* 346.41%"):
+    with raises(ValueError, match=r"can't be more than 100% .* 346.41%"):
         relative_no_load_current(500.0, 1000.0, 100000.0, 400.0)
 
 

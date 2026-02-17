@@ -59,11 +59,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
     """
 
     __slots__ = (
-        "pp_input_data",
-        "pgm_input_data",
         "idx",
         "idx_lookup",
         "next_idx",
+        "pgm_input_data",
+        "pp_input_data",
         "system_frequency",
     )
 
@@ -312,13 +312,13 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 shape=len(data),
                 fill_value=nan,
                 dtype={
-                    "names": ["id"] + node_cols + other_cols,
+                    "names": ["id", *node_cols, *other_cols],
                     "formats": [dtype] * num_cols + [other_cols_dtype] * num_other_cols,
                 },
             )
             for i, pgm_id in enumerate(data["id"]):
                 extra = extra_info[pgm_id].get("pgm_input", {})
-                ref[i] = (pgm_id,) + tuple(extra[col] for col in node_cols + other_cols)
+                ref[i] = (pgm_id, *tuple(extra[col] for col in node_cols + other_cols))
             self.pgm_input_data[component] = ref
 
     def _extra_info_to_pp_input_data(self, extra_info: ExtraInfo):
@@ -1464,7 +1464,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         elif self.trafo_loading == "power":
             loading = pgm_output_transformers["loading"] * loading_multiplier * 1e2
         else:
-            raise ValueError(f"Invalid transformer loading type: {str(self.trafo_loading)}")
+            raise ValueError(f"Invalid transformer loading type: {self.trafo_loading!s}")
 
         pp_output_trafos = pd.DataFrame(
             columns=[
@@ -1636,10 +1636,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         element: "load", "motor" or "ward"
         symmetric: True or False
         """
-        if symmetric:
-            res_table = "res_" + element
-        else:
-            res_table = "res_" + element + "_3ph"
+        res_table = "res_" + element if symmetric else "res_" + element + "_3ph"
 
         if element == "load":
             load_id_names = ["const_power", "const_impedance", "const_current"]
@@ -1870,7 +1867,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                         self.pgm_output_data[component][q_col][:, 1],
                         self.pgm_output_data[component][q_col][:, 2],
                     ),
-                    columns=[node_col] + power_columns,
+                    columns=[node_col, *power_columns],
                 )
 
                 # Accumulate the powers and index by panda power bus index
@@ -2090,7 +2087,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 pgm_output_transformers["s_to"][:, 2],
             ) / (pgm_input_transformers["sn"] / 3)
         else:
-            raise ValueError(f"Invalid transformer loading type: {str(self.trafo_loading)}")
+            raise ValueError(f"Invalid transformer loading type: {self.trafo_loading!s}")
 
         loading = np.maximum(np.maximum(loading_a_percent, loading_b_percent), loading_c_percent)
 
@@ -2597,10 +2594,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         attr_data = pp_component_data[attribute]
 
         # If any of the attribute values are missing, and a default is supplied, fill the nans with the default value
-        if attr_data.dtype is np.dtype("O"):
-            nan_values = np.equal(attr_data, None)  # type: ignore
-        else:
-            nan_values = np.isnan(attr_data)
+        nan_values = np.equal(attr_data, None) if attr_data.dtype is np.dtype("O") else np.isnan(attr_data)  # type: ignore
 
         if any(nan_values):
             attr_data = attr_data.fillna(value=default, inplace=False)

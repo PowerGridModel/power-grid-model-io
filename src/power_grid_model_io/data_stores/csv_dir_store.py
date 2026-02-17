@@ -22,7 +22,7 @@ class CsvDirStore(BaseDataStore[TabularData]):
     extension of this class.
     """
 
-    __slots__ = ("_dir_path", "_csv_kwargs", "_header_rows")
+    __slots__ = ("_csv_kwargs", "_dir_path", "_header_rows")
 
     def __init__(self, dir_path: Path, **csv_kwargs):
         super().__init__()

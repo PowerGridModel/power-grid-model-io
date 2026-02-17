@@ -67,7 +67,7 @@ def tabular_data_no_units_no_substitutions() -> TabularData:
 
 
 def test_set_mapping_file(converter: TabularConverter):
-    with pytest.raises(ValueError, match="Mapping file should be a .yaml file, .txt provided."):
+    with pytest.raises(ValueError, match=r"Mapping file should be a .yaml file, .txt provided."):
         converter.set_mapping_file(mapping_file=Path("dummy/path.txt"))
 
     dummy_path = Path(__file__).parents[2] / "data" / "config" / "dummy_mapping.yaml"
@@ -696,7 +696,7 @@ def test_parse_col_def_filter__auto_id(mock_parse_auto_id: MagicMock, converter:
     pd.testing.assert_frame_equal(result, auto_id_result)
 
     # Act/Assert:
-    with pytest.raises(ValueError, match="Invalid auto_id definition: {'a': 1, 'b': 2}"):
+    with pytest.raises(ValueError, match=r"Invalid auto_id definition: {'a': 1, 'b': 2}"):
         converter._parse_col_def_filter(
             data=data,
             table="",
@@ -742,7 +742,7 @@ def test_parse_col_def_filter__reference(mock_parse_reference: MagicMock, conver
     assert result is reference_result
 
     # Act/Assert:
-    with pytest.raises(ValueError, match="Invalid reference definition: {'a': 1, 'b': 2}"):
+    with pytest.raises(ValueError, match=r"Invalid reference definition: {'a': 1, 'b': 2}"):
         converter._parse_col_def_filter(
             data=data,
             table="",
@@ -928,9 +928,8 @@ def test_parse_auto_id__named_keys(
     assert extra_info[102] == {"id_reference": {"table": "lines", "key": {"id": 3, "node": 1}}}
 
 
-def test_parse_auto_id__invalid_key_definition(
-    converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData
-):
+@pytest.mark.usefixtures("tabular_data_no_units_no_substitutions")
+def test_parse_auto_id__invalid_key_definition(converter: TabularConverter):
     with pytest.raises(TypeError, match="Invalid key definition type 'int': 123"):
         converter._parse_auto_id(
             data=TabularData(),
@@ -1037,7 +1036,7 @@ def test_parse_pandas_function__invalid(mock_parse_col_def: MagicMock, converter
         converter._parse_pandas_function(data=MagicMock(), table="foo", fn_name="bar", col_def=[], table_mask=None)
 
     # Act / Assert
-    with pytest.raises(ValueError, match="Invalid pandas function DataFrame.apply"):
+    with pytest.raises(ValueError, match=r"Invalid pandas function DataFrame.apply"):
         converter._parse_pandas_function(data=MagicMock(), table="foo", fn_name="apply", col_def=[], table_mask=None)
 
 
@@ -1078,7 +1077,7 @@ def test_parse_function__no_data(
     mock_get_function.return_value = multiply_by_two
     mock_parse_col_def.return_value = pd.DataFrame()
 
-    with pytest.raises(ValueError, match="multiply_by_two.*empty DataFrame"):
+    with pytest.raises(ValueError, match=r"multiply_by_two.*empty DataFrame"):
         converter._parse_function(
             data=TabularData(nodes=pd.DataFrame([], columns=["u_nom"])),
             table="nodes",
@@ -1327,7 +1326,7 @@ def test_parse_table_filters(
 ):
     filtering_functions = [{"test_fn": {"kwarg_1": "a"}}]
 
-    def bool_fn_filter(row: pd.Series, **kwargs):
+    def bool_fn_filter(_row: pd.Series, **kwargs):
         assert kwargs == {"kwarg_1": "a"}
         return bool_fn
 
