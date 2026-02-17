@@ -13,8 +13,7 @@ from structlog.testing import capture_logs
 
 from power_grid_model_io.converters.pgm_json_converter import PgmJsonConverter
 from power_grid_model_io.data_types import ExtraInfo
-
-from ...utils import assert_log_match
+from tests.utils import assert_log_match
 
 
 @pytest.fixture

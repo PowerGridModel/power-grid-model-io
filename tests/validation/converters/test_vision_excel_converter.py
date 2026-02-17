@@ -20,8 +20,13 @@ from power_grid_model_io.data_stores.base_data_store import DICT_KEY_NUMBER, LAN
 from power_grid_model_io.data_types import ExtraInfo
 from power_grid_model_io.utils.json import JsonEncoder
 from power_grid_model_io.utils.uuid_excel_cvtr import convert_guid_vision_excel
-
-from ..utils import compare_extra_info, component_attributes, component_objects, load_json_single_dataset, select_values
+from tests.validation.utils import (
+    compare_extra_info,
+    component_attributes,
+    component_objects,
+    load_json_single_dataset,
+    select_values,
+)
 
 DATA_PATH = Path(__file__).parents[2] / "data" / "vision"
 SOURCE_FILE = DATA_PATH / "vision_{language:s}.xlsx"

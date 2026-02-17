@@ -27,8 +27,7 @@ from power_grid_model_io.converters.pandapower_converter import (
     PP_CONVERSION_VERSION,
     PandaPowerConverter,
 )
-
-from ...utils import MockDf, MockFn, assert_struct_array_equal
+from tests.utils import MockDf, MockFn, assert_struct_array_equal
 
 PandaPowerNet: TypeAlias = pp.pandapowerNet  # type: ignore
 

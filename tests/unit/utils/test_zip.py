@@ -10,8 +10,7 @@ import pytest
 import structlog.testing
 
 from power_grid_model_io.utils.zip import _get_only_item_in_dir, extract
-
-from ...utils import MockTqdm, assert_log_exists
+from tests.utils import MockTqdm, assert_log_exists
 
 DATA_DIR = Path(__file__).parents[2] / "data" / "zip"
 ZIP1 = DATA_DIR / "foo.zip"

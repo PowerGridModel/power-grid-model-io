@@ -14,8 +14,7 @@ from structlog.testing import capture_logs
 
 from power_grid_model_io.data_stores.excel_file_store import ExcelFileStore
 from power_grid_model_io.data_types.tabular_data import TabularData
-
-from ...utils import MockExcelFile, assert_log_exists
+from tests.utils import MockExcelFile, assert_log_exists
 
 PandasExcelData = Dict[str, pd.DataFrame]
 

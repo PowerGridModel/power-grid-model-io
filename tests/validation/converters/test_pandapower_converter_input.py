@@ -23,9 +23,14 @@ from power_grid_model_io.converters.pandapower_converter import (
 )
 from power_grid_model_io.data_types import ExtraInfo
 from power_grid_model_io.utils.json import JsonEncoder
-
-from ...data.pandapower.pp_validation import pp_net, pp_net_3ph_minimal_trafo
-from ..utils import compare_extra_info, component_attributes, component_objects, load_json_single_dataset, select_values
+from tests.data.pandapower.pp_validation import pp_net, pp_net_3ph_minimal_trafo
+from tests.validation.utils import (
+    compare_extra_info,
+    component_attributes,
+    component_objects,
+    load_json_single_dataset,
+    select_values,
+)
 
 VALIDATION_FILE = Path(__file__).parents[2] / "data" / "pandapower" / "pgm_input_data.json"
 VALIDATION_FILE_ZERO_SEQ = Path(__file__).parents[2] / "data" / "pandapower" / "pgm_input_data_trafo_zero_seq.json"

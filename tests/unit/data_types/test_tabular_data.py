@@ -12,8 +12,7 @@ from structlog.testing import capture_logs
 from power_grid_model_io.data_types import TabularData
 from power_grid_model_io.mappings.unit_mapping import UnitMapping
 from power_grid_model_io.mappings.value_mapping import ValueMapping
-
-from ...utils import assert_log_exists
+from tests.utils import assert_log_exists
 
 
 @pytest.fixture()
