@@ -5,14 +5,14 @@
 Tabular data mapping helper class
 """
 
-from typing import Dict, Generator, List, Tuple
+from collections.abc import Generator
 
 import structlog
 
-AttributeValue = int | float | str | Dict | List
-InstanceAttributes = Dict[str, AttributeValue]
-Components = Dict[str, InstanceAttributes | List[InstanceAttributes]]
-Tables = Dict[str, Components]
+AttributeValue = int | float | str | dict | list
+InstanceAttributes = dict[str, AttributeValue]
+Components = dict[str, InstanceAttributes | list[InstanceAttributes]]
+Tables = dict[str, Components]
 
 
 class TabularMapping:
@@ -37,7 +37,7 @@ class TabularMapping:
         """
         return (key for key in self._mapping)
 
-    def instances(self, table: str) -> Generator[Tuple[str, InstanceAttributes], None, None]:
+    def instances(self, table: str) -> Generator[tuple[str, InstanceAttributes], None, None]:
         """
         Return instance definitions (as a generator)
 

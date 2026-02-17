@@ -5,8 +5,8 @@
 Module utilities, expecially useful for loading optional dependencies
 """
 
+from collections.abc import Callable
 from importlib import import_module
-from typing import Callable
 
 
 def get_function(fn_name: str) -> Callable:

@@ -6,11 +6,8 @@ Abstract data store class
 """
 
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
 
 import structlog
-
-T = TypeVar("T")
 
 LANGUAGE_EN = "en"
 LANGUAGE_NL = "nl"
@@ -28,7 +25,7 @@ VISION_EXCEL_LAN_DICT = {
 }
 
 
-class BaseDataStore(Generic[T], ABC):
+class BaseDataStore[T](ABC):
     """
     Abstract data store class
     """

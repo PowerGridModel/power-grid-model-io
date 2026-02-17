@@ -2,7 +2,8 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from typing import Any, Callable, Dict, List
+from collections.abc import Callable
+from typing import Any
 from unittest.mock import ANY, MagicMock, call, patch
 
 import numpy as np
@@ -101,7 +102,7 @@ def test_create_output_data_3ph():
         (PandaPowerConverter._pp_asym_gens_output_3ph, "asym_gen", {}),
     ],
 )
-def test_create_pp_output_object__empty(create_fn: Callable[..., None], table: str, create_fn_kwargs: Dict[str, Any]):
+def test_create_pp_output_object__empty(create_fn: Callable[..., None], table: str, create_fn_kwargs: dict[str, Any]):
     # Arrange: No table
     converter = PandaPowerConverter()
 
@@ -568,7 +569,7 @@ def test_output_load_types(
     element: str,
     symmetric: bool,
     table: str,
-    load_id_names: List[str],
+    load_id_names: list[str],
     result_suffix: str,
 ):
     # Arrange

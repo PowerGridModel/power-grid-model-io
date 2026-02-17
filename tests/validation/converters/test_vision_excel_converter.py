@@ -6,7 +6,6 @@ import json
 import logging
 from functools import lru_cache
 from pathlib import Path
-from typing import List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -50,7 +49,7 @@ def vision_excel_converter(language: str) -> VisionExcelConverter:
 
 
 @lru_cache
-def load_and_convert_excel_file(language: str) -> Tuple[SingleDataset, ExtraInfo]:
+def load_and_convert_excel_file(language: str) -> tuple[SingleDataset, ExtraInfo]:
     """
     Convert the excel file
     """
@@ -59,7 +58,7 @@ def load_and_convert_excel_file(language: str) -> Tuple[SingleDataset, ExtraInfo
 
 
 @lru_cache
-def load_validation_data(language: str) -> Tuple[SingleDataset, ExtraInfo]:
+def load_validation_data(language: str) -> tuple[SingleDataset, ExtraInfo]:
     """
     Load the validation data from the json file
     """
@@ -69,7 +68,7 @@ def load_validation_data(language: str) -> Tuple[SingleDataset, ExtraInfo]:
 
 
 @pytest.fixture
-def input_data(request) -> Tuple[SingleDataset, SingleDataset]:
+def input_data(request) -> tuple[SingleDataset, SingleDataset]:
     """
     Read the excel file and the json file, and return the input_data
     """
@@ -79,7 +78,7 @@ def input_data(request) -> Tuple[SingleDataset, SingleDataset]:
 
 
 @pytest.fixture
-def extra_info(request) -> Tuple[ExtraInfo, ExtraInfo]:
+def extra_info(request) -> tuple[ExtraInfo, ExtraInfo]:
     """
     Read the excel file and the json file, and return the extra_info
     """
@@ -89,7 +88,7 @@ def extra_info(request) -> Tuple[ExtraInfo, ExtraInfo]:
 
 
 @pytest.mark.parametrize("input_data", LANGUAGES, indirect=True)
-def test_input_data(input_data: Tuple[SingleDataset, SingleDataset]):
+def test_input_data(input_data: tuple[SingleDataset, SingleDataset]):
     """
     Unit test to preload the expected and actual data
     """
@@ -118,7 +117,7 @@ def test_input_data_custom_yaml():
 
 @pytest.mark.parametrize(("component", "attribute"), component_attributes(VALIDATION_EN, data_type=DatasetType.input))
 @pytest.mark.parametrize("input_data", LANGUAGES, indirect=True)
-def test_attributes(input_data: Tuple[SingleDataset, SingleDataset], component: ComponentType, attribute: str):
+def test_attributes(input_data: tuple[SingleDataset, SingleDataset], component: ComponentType, attribute: str):
     """
     For each attribute, check if the actual values are consistent with the expected values
     """
@@ -137,7 +136,7 @@ def test_attributes(input_data: Tuple[SingleDataset, SingleDataset], component: 
     (pytest.param(component, objects, id=component) for component, objects in component_objects(VALIDATION_EN)),
 )
 @pytest.mark.parametrize("extra_info", LANGUAGES, indirect=True)
-def test_extra_info(extra_info: Tuple[ExtraInfo, ExtraInfo], component: ComponentType, obj_ids: List[int]):
+def test_extra_info(extra_info: tuple[ExtraInfo, ExtraInfo], component: ComponentType, obj_ids: list[int]):
     """
     For each object, check if the actual extra info is consistent with the expected extra info
     """
@@ -230,7 +229,7 @@ def test_get_branch_id(language: str, table: str, column: str):
         ("nl", "Spoelen", ["Knooppunt.Nummer", "Subnummer"]),
     ],
 )
-def test_get_get_appliance_id(language: str, table: str, columns: List[str]):
+def test_get_get_appliance_id(language: str, table: str, columns: list[str]):
     # Arrange
     converter = vision_excel_converter(language=language)
     _, extra_info = load_and_convert_excel_file(language=language)
@@ -264,7 +263,7 @@ def test_get_get_appliance_id(language: str, table: str, columns: List[str]):
     ],
 )
 def test_get_get_virtual_id(
-    language: str, table: str, name: str, columns: List[str], filtering_mask: Optional[np.ndarray]
+    language: str, table: str, name: str, columns: list[str], filtering_mask: np.ndarray | None
 ):
     # Arrange
     converter = vision_excel_converter(language=language)

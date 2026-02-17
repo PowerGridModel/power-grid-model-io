@@ -7,7 +7,7 @@ Automatic ID generator class
 
 import collections
 from collections.abc import Hashable
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class AutoID:
@@ -45,10 +45,10 @@ class AutoID:
     """
 
     def __init__(self) -> None:
-        self._keys: Dict[Hashable, int] = {}
-        self._items: List[Any] = []
+        self._keys: dict[Hashable, int] = {}
+        self._items: list[Any] = []
 
-    def __call__(self, item: Optional[Any] = None, key: Optional[Hashable] = None):
+    def __call__(self, item: Any | None = None, key: Hashable | None = None):
         """
         Generate a new unique numerical id for the item, or retrieve the previously generated id.
         If the item is not hashable (or not unique) a unique key should be supplied

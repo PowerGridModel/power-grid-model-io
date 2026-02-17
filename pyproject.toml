@@ -152,7 +152,7 @@ select = [
     # self
     #"SLF",
     # pyupgrade
-    #"UP",
+    "UP",
     # raise
     #"RSE",
     # ruff sepcific rules

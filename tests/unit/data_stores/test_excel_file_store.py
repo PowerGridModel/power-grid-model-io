@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from pathlib import Path
-from typing import Dict
 from unittest.mock import MagicMock, call, patch
 
 import numpy as np
@@ -16,7 +15,7 @@ from power_grid_model_io.data_stores.excel_file_store import ExcelFileStore
 from power_grid_model_io.data_types.tabular_data import TabularData
 from tests.utils import MockExcelFile, assert_log_exists
 
-PandasExcelData = Dict[str, pd.DataFrame]
+PandasExcelData = dict[str, pd.DataFrame]
 
 
 @pytest.fixture()

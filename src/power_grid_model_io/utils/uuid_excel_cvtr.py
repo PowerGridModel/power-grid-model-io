@@ -15,7 +15,6 @@ nieuw_bestand = convert_guid_vision_excel("vision_97_nl.xlsx", number="Nummer", 
 
 import re
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 
@@ -56,7 +55,7 @@ class UUID2IntCvtr:
     Class for bookkeeping the conversion of GUIDs to integers
     """
 
-    def __init__(self, uuids: Optional[list] = None) -> None:
+    def __init__(self, uuids: list | None = None) -> None:
         """Initialize with a list of UUIDs, or empty list
 
         Args:
@@ -88,7 +87,7 @@ class UUID2IntCvtr:
             self._uuids_int[uuid] = self._counter
             self._counter += 1
 
-    def query(self, uuid: str) -> Optional[int]:
+    def query(self, uuid: str) -> int | None:
         """Get the singular integer value respective of a UUID input
 
         Args:
@@ -220,7 +219,7 @@ def save_df_to_excel(df: pd.DataFrame, file_name: Path | str, sheet_name: str, i
 def convert_guid_vision_excel(
     excel_file: Path | str,
     number: str = VISION_EXCEL_LAN_DICT[LANGUAGE_EN][DICT_KEY_NUMBER],
-    terms_changed: Optional[dict] = None,
+    terms_changed: dict | None = None,
 ) -> Path:
     """Main entry function. Convert the GUID based Vision excel files to a number based format
 

@@ -5,8 +5,6 @@
 These functions can be used in the mapping files to apply filter functions to vision data
 """
 
-from typing import List
-
 import pandas as pd
 
 from power_grid_model_io.functions import has_value
@@ -40,7 +38,7 @@ def exclude_value(row: pd.Series, col: str, value: float | str) -> bool:
     return col_value != value
 
 
-def exclude_all_columns_empty_or_zero(row: pd.Series, cols: List[str]) -> bool:
+def exclude_all_columns_empty_or_zero(row: pd.Series, cols: list[str]) -> bool:
     """
     filter out empty or zero values in multiple columns.
     This is same as not all(not exclude_value or not exclude_empty)

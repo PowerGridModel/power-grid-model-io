@@ -7,9 +7,10 @@ Tabular Data Converter: Load data from multiple tables and use a mapping file to
 
 import inspect
 import logging
+from collections.abc import Collection, Mapping
 from enum import Enum
 from pathlib import Path
-from typing import Any, Collection, Dict, List, Mapping, Optional, cast
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -32,9 +33,9 @@ class TabularConverter(BaseConverter[TabularData]):
 
     def __init__(
         self,
-        mapping_file: Optional[Path] = None,
-        source: Optional[BaseDataStore[TabularData]] = None,
-        destination: Optional[BaseDataStore[TabularData]] = None,
+        mapping_file: Path | None = None,
+        source: BaseDataStore[TabularData] | None = None,
+        destination: BaseDataStore[TabularData] | None = None,
         log_level: int = logging.INFO,
     ):
         """
@@ -45,9 +46,9 @@ class TabularConverter(BaseConverter[TabularData]):
         """
         super().__init__(source=source, destination=destination, log_level=log_level)
         self._mapping: TabularMapping = TabularMapping(mapping={}, logger=self._log)
-        self._units: Optional[UnitMapping] = None
-        self._substitutions: Optional[ValueMapping] = None
-        self._multipliers: Optional[MultiplierMapping] = None
+        self._units: UnitMapping | None = None
+        self._substitutions: ValueMapping | None = None
+        self._multipliers: MultiplierMapping | None = None
         if mapping_file is not None:
             self.set_mapping_file(mapping_file=mapping_file)
 
@@ -90,7 +91,7 @@ class TabularConverter(BaseConverter[TabularData]):
         if "multipliers" in mapping:
             self._multipliers = MultiplierMapping(cast(Multipliers, mapping["multipliers"]), logger=self._log)
 
-    def _parse_data(self, data: TabularData, data_type: DatasetType, extra_info: Optional[ExtraInfo]) -> Dataset:
+    def _parse_data(self, data: TabularData, data_type: DatasetType, extra_info: ExtraInfo | None) -> Dataset:
         """This function parses tabular data and returns power-grid-model data
 
         Args:
@@ -115,7 +116,7 @@ class TabularConverter(BaseConverter[TabularData]):
             data.set_substitutions(self._substitutions)
 
         # Initialize some empty data structures
-        pgm: Dict[ComponentType, List[np.ndarray]] = {}
+        pgm: dict[ComponentType, list[np.ndarray]] = {}
 
         # For each table in the mapping
         for table in self._mapping.tables():
@@ -150,8 +151,8 @@ class TabularConverter(BaseConverter[TabularData]):
         table: str,
         component: str | Enum,
         attributes: InstanceAttributes,
-        extra_info: Optional[ExtraInfo],
-    ) -> Optional[np.ndarray]:
+        extra_info: ExtraInfo | None,
+    ) -> np.ndarray | None:
         """
         This function converts a single table/sheet of TabularData to a power-grid-model input/update array. One table
         corresponds to one component
@@ -220,7 +221,7 @@ class TabularConverter(BaseConverter[TabularData]):
 
         return pgm_data
 
-    def _parse_table_filters(self, data: TabularData, table: str, filtering_functions: Any) -> Optional[np.ndarray]:
+    def _parse_table_filters(self, data: TabularData, table: str, filtering_functions: Any) -> np.ndarray | None:
         if not isinstance(data[table], pd.DataFrame):
             return None
 
@@ -239,8 +240,8 @@ class TabularConverter(BaseConverter[TabularData]):
         component: str | Enum,
         attr: str,
         col_def: Any,
-        table_mask: Optional[np.ndarray],
-        extra_info: Optional[ExtraInfo],
+        table_mask: np.ndarray | None,
+        extra_info: ExtraInfo | None,
     ):
         """This function updates one of the attributes of pgm_data, based on the corresponding table/column in a tabular
         dataset
@@ -312,8 +313,8 @@ class TabularConverter(BaseConverter[TabularData]):
         table: str,
         col_def: Any,
         uuids: np.ndarray,
-        table_mask: Optional[np.ndarray],
-        extra_info: Optional[ExtraInfo],
+        table_mask: np.ndarray | None,
+        extra_info: ExtraInfo | None,
     ) -> None:
         """This function can extract extra info from the tabular data and store it in the extra_info dict
 
@@ -411,7 +412,7 @@ class TabularConverter(BaseConverter[TabularData]):
         return final_list
 
     @staticmethod
-    def _merge_pgm_data(data: Dict[ComponentType, List[np.ndarray]]) -> Dict[ComponentType, np.ndarray]:
+    def _merge_pgm_data(data: dict[ComponentType, list[np.ndarray]]) -> dict[ComponentType, np.ndarray]:
         """During the conversion, multiple numpy arrays can be produced for the same type of component. These arrays
         should be concatenated to form one large table.
 
@@ -434,7 +435,7 @@ class TabularConverter(BaseConverter[TabularData]):
 
         return merged
 
-    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfo]) -> TabularData:
+    def _serialize_data(self, data: Dataset, extra_info: ExtraInfo | None) -> TabularData:
         if extra_info is not None:
             raise NotImplementedError("Extra info can not (yet) be stored for tabular data")
         if isinstance(data, list):
@@ -446,8 +447,8 @@ class TabularConverter(BaseConverter[TabularData]):
         data: TabularData,
         table: str,
         col_def: Any,
-        table_mask: Optional[np.ndarray],
-        extra_info: Optional[ExtraInfo],
+        table_mask: np.ndarray | None,
+        extra_info: ExtraInfo | None,
         *,
         allow_missing: bool = False,
     ) -> pd.DataFrame:
@@ -497,7 +498,7 @@ class TabularConverter(BaseConverter[TabularData]):
         data: TabularData,
         table: str,
         col_def: int | float,
-        table_mask: Optional[np.ndarray] = None,
+        table_mask: np.ndarray | None = None,
     ) -> pd.DataFrame:
         """Create a single column pandas DataFrame containing the const value.
 
@@ -521,7 +522,7 @@ class TabularConverter(BaseConverter[TabularData]):
         data: TabularData,
         table: str,
         col_def: str,
-        table_mask: Optional[np.ndarray] = None,
+        table_mask: np.ndarray | None = None,
         allow_missing: bool = False,
     ) -> pd.DataFrame:
         """Extract a column from the data. If the column doesn't exist, check if the col_def is a special float value,
@@ -588,7 +589,7 @@ class TabularConverter(BaseConverter[TabularData]):
         query_column: str,
         key_column: str,
         value_column: str,
-        table_mask: Optional[np.ndarray],
+        table_mask: np.ndarray | None,
     ) -> pd.DataFrame:
         """
         Find and extract a column from a different table.
@@ -615,9 +616,9 @@ class TabularConverter(BaseConverter[TabularData]):
         self,
         data: TabularData,
         table: str,
-        col_def: Dict[str, Any],
-        table_mask: Optional[np.ndarray],
-        extra_info: Optional[ExtraInfo],
+        col_def: dict[str, Any],
+        table_mask: np.ndarray | None,
+        extra_info: ExtraInfo | None,
     ) -> pd.DataFrame:
         """
         Parse column filters like 'auto_id', 'reference', 'function', etc
@@ -685,11 +686,11 @@ class TabularConverter(BaseConverter[TabularData]):
         self,
         data: TabularData,
         table: str,
-        ref_table: Optional[str],
-        ref_name: Optional[str],
-        key_col_def: str | List[str] | Dict[str, str],
-        table_mask: Optional[np.ndarray],
-        extra_info: Optional[ExtraInfo],
+        ref_table: str | None,
+        ref_name: str | None,
+        key_col_def: str | list[str] | dict[str, str],
+        table_mask: np.ndarray | None,
+        extra_info: ExtraInfo | None,
     ) -> pd.DataFrame:
         """
         Create (or retrieve) a unique numerical id for each object (row) in `data[table]`, based on the `name`
@@ -764,8 +765,8 @@ class TabularConverter(BaseConverter[TabularData]):
         data: TabularData,
         table: str,
         fn_name: str,
-        col_def: List[Any],
-        table_mask: Optional[np.ndarray],
+        col_def: list[Any],
+        table_mask: np.ndarray | None,
     ) -> pd.DataFrame:
         """Special vectorized functions.
 
@@ -818,8 +819,8 @@ class TabularConverter(BaseConverter[TabularData]):
         data: TabularData,
         table: str,
         function: str,
-        col_def: Dict[str, Any],
-        table_mask: Optional[np.ndarray],
+        col_def: dict[str, Any],
+        table_mask: np.ndarray | None,
     ) -> pd.DataFrame:
         """Import the function by name and apply it to each row.
 
@@ -856,7 +857,7 @@ class TabularConverter(BaseConverter[TabularData]):
         data: TabularData,
         table: str,
         col_def: list,
-        table_mask: Optional[np.ndarray],
+        table_mask: np.ndarray | None,
         allow_missing: bool = False,
     ) -> pd.DataFrame:
         """Select multiple columns (each is created from a column definition) and return them as a new DataFrame.
@@ -893,7 +894,7 @@ class TabularConverter(BaseConverter[TabularData]):
             return pd.DataFrame(index=index)
         return pd.concat(non_empty_columns, axis=1)
 
-    def _get_id(self, table: str, key: Mapping[str, int], name: Optional[str]) -> int:
+    def _get_id(self, table: str, key: Mapping[str, int], name: str | None) -> int:
         """
         Get a unique numerical ID for the supplied name / key combination
         Args:
@@ -905,7 +906,7 @@ class TabularConverter(BaseConverter[TabularData]):
         auto_id_key = (table, tuple(sorted(key.items())), name)
         return self._auto_id(item=(table, key, name), key=auto_id_key)
 
-    def get_id(self, table: str, key: Mapping[str, int], name: Optional[str] = None) -> int:
+    def get_id(self, table: str, key: Mapping[str, int], name: str | None = None) -> int:
         """
         Get a the numerical ID previously associated with the supplied name / key combination
         Args:
@@ -922,9 +923,9 @@ class TabularConverter(BaseConverter[TabularData]):
     def get_ids(
         self,
         keys: pd.DataFrame,
-        table: Optional[str] = None,
-        name: Optional[str] = None,
-    ) -> List[int]:
+        table: str | None = None,
+        name: str | None = None,
+    ) -> list[int]:
         """
         Get a the numerical ID previously associated with the supplied name / key combination
         Args:
@@ -942,7 +943,7 @@ class TabularConverter(BaseConverter[TabularData]):
 
         return keys.apply(get_id, axis=1).to_list()
 
-    def lookup_id(self, pgm_id: int) -> Dict[str, str | Dict[str, int]]:
+    def lookup_id(self, pgm_id: int) -> dict[str, str | dict[str, int]]:
         """
         Retrieve the original name / key combination of a pgm object
         Args:

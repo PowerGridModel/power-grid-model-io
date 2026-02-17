@@ -6,10 +6,9 @@ General dictionary utilities
 """
 
 from copy import deepcopy
-from typing import Dict
 
 
-def merge_dicts(*dictionaries: Dict) -> Dict:
+def merge_dicts(*dictionaries: dict) -> dict:
     """
     Merge two dictionaries, ignore duplicate key/values
     Args:

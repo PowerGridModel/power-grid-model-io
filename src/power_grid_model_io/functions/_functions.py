@@ -6,7 +6,7 @@
 These functions can be used in the mapping files to apply functions to tabular data
 """
 
-from typing import Any, Optional, TypeVar, cast
+from typing import Any, TypeVar, cast
 
 import numpy as np
 import structlog
@@ -36,14 +36,14 @@ def has_value(value: Any) -> bool:
     return value != ""
 
 
-def value_or_default(value: Optional[T], default: T) -> T:
+def value_or_default[T](value: T | None, default: T) -> T:
     """
     Return the value, or a default value if no value was supplied.
     """
     return cast(T, value) if has_value(value) else default
 
 
-def value_or_zero(value: Optional[float]) -> float:
+def value_or_zero(value: float | None) -> float:
     """
     Return the value, or a zero value if no value was supplied.
     """

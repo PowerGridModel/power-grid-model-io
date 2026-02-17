@@ -7,29 +7,26 @@ RegEx attribute based mapping class
 
 import re
 from functools import lru_cache
-from typing import Dict, Generic, Optional, TypeVar
 
 import structlog
 
-T = TypeVar("T")
-
 
 # pylint: disable=too-few-public-methods
-class FieldMapping(Generic[T]):
+class FieldMapping[T]:
     """
     RegEx attribute based mapping class
     """
 
-    def __init__(self, mapping: Optional[Dict[str, T]] = None, logger=None):
+    def __init__(self, mapping: dict[str, T] | None = None, logger=None):
         if logger is None:
             self._log = structlog.get_logger(f"{__name__}_{id(self)}")
         else:
             self._log = logger
-        self._values: Dict[str, T] = mapping or {}
-        self._values_re: Dict[re.Pattern, T] = {re.compile(pattern): value for pattern, value in self._values.items()}
+        self._values: dict[str, T] = mapping or {}
+        self._values_re: dict[re.Pattern, T] = {re.compile(pattern): value for pattern, value in self._values.items()}
 
     @lru_cache
-    def _get_mapping(self, attr: str, table: Optional[str] = None) -> T:
+    def _get_mapping(self, attr: str, table: str | None = None) -> T:
         """
         Find the mapping for a given attribute.
         """

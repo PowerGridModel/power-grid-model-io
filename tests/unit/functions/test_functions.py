@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
-from typing import List
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -142,7 +141,7 @@ def test_degrees_to_clock(degrees: float, expected: int):
         (2.0, 1.0, True),
     ],
 )
-def test_is_greater_than(left_side: float, right_side: List[float], expected: float):
+def test_is_greater_than(left_side: float, right_side: list[float], expected: float):
     actual = is_greater_than(left_side, right_side)
     assert actual == expected
 

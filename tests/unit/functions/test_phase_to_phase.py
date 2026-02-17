@@ -394,7 +394,7 @@ def test_reactive_power_to_susceptance(q_var: float, u_nom: float, expected: flo
 @mark.parametrize(
     ("p", "efficiency_type", "expected"),
     [
-        (float("nan"), str(""), float("nan")),
+        (float("nan"), "", float("nan")),
         (1000.0, "0,1 pu: 93 %; 1 pu: 97 %", 970.0),
         (1000.0, "0,1..1 pu: 95 %", 950.0),
         (1000.0, "100 %", 1000.0),
