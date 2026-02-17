@@ -154,7 +154,7 @@ select = [
     # pyupgrade
     "UP",
     # raise
-    #"RSE",
+    "RSE",
     # ruff sepcific rules
     "RUF",
     # bandit
