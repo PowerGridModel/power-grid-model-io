@@ -172,9 +172,6 @@ ignore = []
 # Imports that are imported using keyword "as" and are from the same source - are combined.
 combine-as-imports = true
 
-#[tool.ruff.lint.per-file-ignores]
-#"tests/**/*.py" = ["TID252"] # intentional relative imports inside tests
-
 [tool.mypy]
 follow_imports = "silent"
 ignore_missing_imports = true
