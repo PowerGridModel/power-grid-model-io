@@ -102,7 +102,7 @@ class TabularConverter(BaseConverter[TabularData]):
         power-grid-model data) can be specified
           data: TabularData:
           data_type: str:
-          extra_info: Optional[ExtraInfo]:
+          extra_info: ExtraInfo | None:
 
         Returns:
           a power-grid-model dataset, i.e. a dictionary as {component: np.ndarray}
@@ -171,7 +171,7 @@ class TabularConverter(BaseConverter[TabularData]):
           table: str:
           component: str | Enum:
           attributes: InstanceAttributes:
-          extra_info: Optional[ExtraInfo]:
+          extra_info: ExtraInfo | None:
 
         Returns:
           returns a power-grid-model structured array for one component
@@ -262,7 +262,8 @@ class TabularConverter(BaseConverter[TabularData]):
           component: str | Enum:
           attr: str:
           col_def: Any:
-          extra_info: Optional[ExtraInfo]:
+          table_mask: np.ndarray | None:
+          extra_info: ExtraInfo | None:
 
         Returns:
           the function updates pgm_data, it should not return something
@@ -330,7 +331,8 @@ class TabularConverter(BaseConverter[TabularData]):
           table: str:
           col_def: Any:
           uuids: np.ndarray:
-          extra_info: Optional[ExtraInfo]:
+          table_mask: np.ndarray | None:
+          extra_info: ExtraInfo | None:
 
         Returns:
 
@@ -458,7 +460,8 @@ class TabularConverter(BaseConverter[TabularData]):
           data: TabularData:
           table: str:
           col_def: Any:
-          extra_info: Optional[ExtraInfo]:
+          table_mask: np.ndarray | None:
+          extra_info: ExtraInfo | None:
           allow_missing: bool: If True, missing columns will return empty DataFrame instead of raising KeyError
 
         Returns:
@@ -506,6 +509,7 @@ class TabularConverter(BaseConverter[TabularData]):
           data: TabularData:
           table: str:
           col_def: int | float:
+          table_mask: np.ndarray | None:
 
         Returns:
 
@@ -532,6 +536,7 @@ class TabularConverter(BaseConverter[TabularData]):
           data: TabularData:
           table: str:
           col_def: str:
+          table_mask: np.ndarray | None:
           allow_missing: bool: If True, return empty DataFrame when column is missing instead of raising KeyError
 
         Returns:
@@ -598,9 +603,10 @@ class TabularConverter(BaseConverter[TabularData]):
             data: The data
             table: The current table named
             other_table: The table in which we would like to find a value
-            key_column: The column in the current table that stores the keys
             query_column: The column in the other table in which we should look for the keys
+            key_column: The column in the current table that stores the keys
             value_column: The column in the other table which stores the values that we would like to return
+            table_mask: np.ndarray | None:
 
         Returns:
 
@@ -703,6 +709,8 @@ class TabularConverter(BaseConverter[TabularData]):
             ref_table: The table name to which the id refers. If None, use the current table name.
             ref_name: A custom textual identifier, to be used for the auto_id. If None, ignore it.
             key_col_def: A column definition which should be unique for each object within the current table
+            table_mask: np.ndarray | None:
+            extra_info: ExtraInfo | None
 
         Returns: A single column containing numerical ids
 
@@ -775,6 +783,7 @@ class TabularConverter(BaseConverter[TabularData]):
           table: The name of the current table
           fn_name: The name of the function.
           col_def: The definition of the function arguments
+          table_mask: np.ndarray | None:
 
         Returns:
 
@@ -829,6 +838,7 @@ class TabularConverter(BaseConverter[TabularData]):
           table: The name of the current table
           function: The name (or path) of the function.
           col_def: The definition of the function keyword arguments
+          table_mask: np.ndarray | None:
 
         Returns:
 
@@ -866,6 +876,7 @@ class TabularConverter(BaseConverter[TabularData]):
           data: TabularData:
           table: str:
           col_def: list:
+          table_mask: np.ndarray | None:
           allow_missing: bool: If True, skip missing columns instead of raising errors
 
         Returns:

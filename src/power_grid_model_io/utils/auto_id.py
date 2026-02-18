@@ -54,7 +54,7 @@ class AutoID:
         If the item is not hashable (or not unique) a unique key should be supplied
 
         Args:
-            item: The original item
+            item: Optional original item
             key: An optional key (if the item is not hashable or not unique)
 
         Returns:

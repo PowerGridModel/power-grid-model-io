@@ -63,7 +63,7 @@ class BaseConverter[T](ABC):
         Note: You shouldn't have to overwrite this method. Check _parse_data() instead.
 
         Args:
-          data: Optional[T]:  (Default value = None)
+          data: T | None:  (Default value = None)
 
         Returns:
 
@@ -77,7 +77,7 @@ class BaseConverter[T](ABC):
         Note: You shouldn't have to overwrite this method. Check _parse_data() instead.
 
         Args:
-          data: Optional[T]:  (Default value = None)
+          data: T | None:  (Default value = None)
 
         Returns:
 
@@ -91,7 +91,7 @@ class BaseConverter[T](ABC):
         Note: You shouldn't have to overwrite this method. Check _parse_data() instead.
 
         Args:
-          data: Optional[T]:  (Default value = None)
+          data: T | None:  (Default value = None)
 
         Returns:
 
@@ -105,7 +105,7 @@ class BaseConverter[T](ABC):
         Note: You shouldn't have to overwrite this method. Check _parse_data() instead.
 
         Args:
-          data: Optional[T]:  (Default value = None)
+          data: T | None:  (Default value = None)
 
         Returns:
 
@@ -120,7 +120,7 @@ class BaseConverter[T](ABC):
 
         Args:
           data: Dataset:
-          extra_info: Optional[ExtraInfo]:  (Default value = None)
+          extra_info: ExtraInfo | None:  (Default value = None)
 
         Returns:
 
@@ -139,8 +139,8 @@ class BaseConverter[T](ABC):
 
         Args:
           data: Dataset:
-          extra_info: Optional[ExtraInfo]:  (Default value = None)
-          destination: Optional[BaseDataStore[T]]:  (Default value = None)
+          extra_info: ExtraInfo | None:  (Default value = None)
+          destination: BaseDataStore[T] | None:  (Default value = None)
 
         Returns:
 

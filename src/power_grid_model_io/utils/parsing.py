@@ -95,7 +95,7 @@ def parse_node_ref(string: str) -> dict[str, str]:
         ValueError: If the input string is not a node reference.
 
     Returns:
-        Optional[Dict[str, str]]: The prefix and suffix (may be empty).
+        Dict[str, str]: The prefix and suffix (may be empty).
     """
 
     def _raise():
@@ -159,7 +159,7 @@ def parse_pvs_efficiency_type(string: str) -> str:
         ValueError: If the input string is not a PVS efficiency type.
 
     Returns:
-        Optional[str]: The efficiency type percentage string at 1 pu.
+        str: The efficiency type percentage string at 1 pu.
     """
     match = _PVS_EFFICIENCY_TYPE_RE.search(string)
     if not match:

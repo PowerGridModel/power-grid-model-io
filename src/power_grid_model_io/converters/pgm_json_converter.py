@@ -67,7 +67,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
         power-grid-model data) can be specified
           data: StructuredData:
           data_type: str:
-          extra_info: Optional[ExtraInfo]:
+          extra_info: ExtraInfo | None:
 
         Returns:
           a dictionary containing the components as keys and their corresponding numpy arrays as values: a
@@ -105,7 +105,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
         power-grid-model data) can be specified
           data: SinglePythonDataset:
           data_type: str:
-          extra_info: Optional[ExtraInfo]:  (Default value = None)
+          extra_info: ExtraInfo | None:  (Default value = None)
 
         Returns:
           a dictionary containing the components as keys and their corresponding numpy arrays as values: a
@@ -135,7 +135,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
           objects: ComponentList:
           component: str:
           data_type: str:
-          extra_info: Optional[ExtraInfo]:  (Default value = None)
+          extra_info: ExtraInfo | None:  (Default value = None)
 
         Returns:
           a numpy structured array for a power-grid-model component
@@ -181,7 +181,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
         structured dataset. The keys in this dictionary should match with id's of components in the power-grid-model
         dataset. Note, extra info can only be supplied for single datasets
           data: Dataset:
-          extra_info: Optional[ExtraInfo]:  (Default value = None)
+          extra_info: ExtraInfo | None:  (Default value = None)
 
         Returns:
           the function returns a structured dataset
@@ -237,7 +237,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
         structured dataset. The keys in this dictionary should match with id's of components in the power-grid-model
         dataset
           data: SingleDataset:
-          extra_info: Optional[ExtraInfo]:  (Default value = None)
+          extra_info: ExtraInfo | None:  (Default value = None)
 
         Returns:
           the function returns a structured dataset
