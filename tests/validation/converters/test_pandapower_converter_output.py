@@ -5,7 +5,6 @@
 from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
-from typing import Tuple
 
 import numpy as np
 import pandapower.networks as pp_networks
@@ -23,13 +22,12 @@ from power_grid_model_io.converters.pandapower_converter import (
     PandaPowerData,
     get_loss_params_3ph,
 )
-
-from ...data.pandapower.pp_validation import (
+from tests.data.pandapower.pp_validation import (
     pp_net,
     pp_net_3ph,
     pp_net_3ph_minimal_trafo,
 )
-from ..utils import component_attributes_df
+from tests.validation.utils import component_attributes_df
 
 pp = pytest.importorskip("pandapower", reason="pandapower is not installed")
 # we add this to enable python 3.13 testing even though pandapower 3.0 is not yet compatible with it
@@ -101,7 +99,7 @@ def load_validation_data_3ph(trafo_loading="power") -> PandaPowerData:
 
 
 @pytest.fixture(params=["power", "current"])
-def output_data(request) -> Tuple[PandaPowerData, PandaPowerData]:
+def output_data(request) -> tuple[PandaPowerData, PandaPowerData]:
     """
     Load the pandapower network and the json file, and return the output_data
     """
@@ -111,7 +109,7 @@ def output_data(request) -> Tuple[PandaPowerData, PandaPowerData]:
 
 
 @pytest.fixture(params=["power", "current"])
-def output_data_3ph(request) -> Tuple[PandaPowerData, PandaPowerData]:
+def output_data_3ph(request) -> tuple[PandaPowerData, PandaPowerData]:
     """
     Load the pandapower network and the json file, and return the output_data
     """
@@ -275,7 +273,7 @@ def test_output_trafos_3ph__power__with_comparison():
     compare_result(pgm_net, pp_net, rtol=0.005)
 
 
-def test_output_data(output_data: Tuple[PandaPowerData, PandaPowerData]):
+def test_output_data(output_data: tuple[PandaPowerData, PandaPowerData]):
     """
     Unit test to preload the expected and actual data
     """
@@ -286,7 +284,7 @@ def test_output_data(output_data: Tuple[PandaPowerData, PandaPowerData]):
     assert all(key in expected for key in actual)
 
 
-def test_output_data_3ph(output_data_3ph: Tuple[PandaPowerData, PandaPowerData]):
+def test_output_data_3ph(output_data_3ph: tuple[PandaPowerData, PandaPowerData]):
     """
     Unit test to preload the expected and actual data for asym output
     """
@@ -298,7 +296,7 @@ def test_output_data_3ph(output_data_3ph: Tuple[PandaPowerData, PandaPowerData])
 
 
 @pytest.mark.parametrize(("component", "attribute"), component_attributes_df(load_and_convert_pgm_data()))
-def test_attributes(output_data: Tuple[PandaPowerData, PandaPowerData], component: str, attribute: str):
+def test_attributes(output_data: tuple[PandaPowerData, PandaPowerData], component: str, attribute: str):
     """
     For each attribute, check if the actual values are consistent with the expected values
     """
@@ -315,7 +313,7 @@ def test_attributes(output_data: Tuple[PandaPowerData, PandaPowerData], componen
 
 @pytest.mark.parametrize(("component", "attribute"), component_attributes_df(load_and_convert_pgm_data_3ph()))
 def test_attributes_3ph(
-    output_data_3ph: Tuple[PandaPowerData, PandaPowerData],
+    output_data_3ph: tuple[PandaPowerData, PandaPowerData],
     component: str,
     attribute: str,
 ):

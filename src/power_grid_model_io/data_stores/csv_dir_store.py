@@ -6,7 +6,7 @@ CSV Directory Store
 """
 
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import pandas as pd
 
@@ -27,8 +27,8 @@ class CsvDirStore(BaseDataStore[TabularData]):
     def __init__(self, dir_path: Path, **csv_kwargs):
         super().__init__()
         self._dir_path = Path(dir_path)
-        self._csv_kwargs: Dict[str, Any] = csv_kwargs
-        self._header_rows: List[int] = [0]
+        self._csv_kwargs: dict[str, Any] = csv_kwargs
+        self._header_rows: list[int] = [0]
 
     def load(self) -> TabularData:
         """
@@ -41,7 +41,7 @@ class CsvDirStore(BaseDataStore[TabularData]):
 
             return csv_loader
 
-        data: Dict[str, LazyDataFrame] = {}
+        data: dict[str, LazyDataFrame] = {}
         for path in self._dir_path.glob("*.csv"):
             data[path.stem] = lazy_csv_loader(path)
 

@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import warnings
+from collections.abc import Callable
 from importlib import metadata
-from typing import Callable, TypeAlias
 from unittest.mock import ANY, MagicMock, call, patch
 
 import numpy as np
@@ -27,10 +27,9 @@ from power_grid_model_io.converters.pandapower_converter import (
     PP_CONVERSION_VERSION,
     PandaPowerConverter,
 )
+from tests.utils import MockDf, MockFn, assert_struct_array_equal
 
-from ...utils import MockDf, MockFn, assert_struct_array_equal
-
-PandaPowerNet: TypeAlias = pp.pandapowerNet  # type: ignore
+type PandaPowerNet = pp.pandapowerNet
 
 
 def _generate_ids(*args, **kwargs):

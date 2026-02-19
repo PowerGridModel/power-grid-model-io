@@ -14,7 +14,6 @@ file as long as the files exist.
 
 import zipfile
 from pathlib import Path
-from typing import Optional
 
 import structlog
 from tqdm import tqdm
@@ -22,7 +21,7 @@ from tqdm import tqdm
 _log = structlog.get_logger(__name__)
 
 
-def extract(src_file_path: Path, dst_dir_path: Optional[Path] = None, skip_if_exists=False) -> Path:
+def extract(src_file_path: Path, dst_dir_path: Path | None = None, skip_if_exists=False) -> Path:
     """
     Extract a .zip file and return the destination dir
 
@@ -69,7 +68,7 @@ def extract(src_file_path: Path, dst_dir_path: Optional[Path] = None, skip_if_ex
     return dst_dir_path.resolve()
 
 
-def _get_only_item_in_dir(dir_path: Path) -> Optional[Path]:
+def _get_only_item_in_dir(dir_path: Path) -> Path | None:
     """
     If dir path contains only a single item, return that item.
     Return None otherwise (if there are no items at all, or more than one item).
@@ -81,7 +80,7 @@ def _get_only_item_in_dir(dir_path: Path) -> Optional[Path]:
         A path to the only item (dir or file) in the directory
     """
 
-    only_item: Optional[Path] = None
+    only_item: Path | None = None
     for item in dir_path.iterdir():
         # If only_item is not None at this point, it must have been set in the first iteration, i.e. there are more
         # than one items in the directory, so return None.

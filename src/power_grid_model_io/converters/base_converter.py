@@ -7,7 +7,6 @@ Abstract converter class
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Generic, Optional, Tuple, TypeVar
 
 import structlog
 from power_grid_model import DatasetType
@@ -17,16 +16,14 @@ from power_grid_model_io.data_stores.base_data_store import BaseDataStore
 from power_grid_model_io.data_types import ExtraInfo
 from power_grid_model_io.utils.auto_id import AutoID
 
-T = TypeVar("T")
 
-
-class BaseConverter(Generic[T], ABC):
+class BaseConverter[T](ABC):
     """Abstract converter class"""
 
     def __init__(
         self,
-        source: Optional[BaseDataStore[T]] = None,
-        destination: Optional[BaseDataStore[T]] = None,
+        source: BaseDataStore[T] | None = None,
+        destination: BaseDataStore[T] | None = None,
         log_level: int = logging.INFO,
     ):
         """
@@ -39,9 +36,7 @@ class BaseConverter(Generic[T], ABC):
         self._destination = destination
         self._auto_id = AutoID()
 
-    def load_input_data(
-        self, data: Optional[T] = None, make_extra_info: bool = True
-    ) -> Tuple[SingleDataset, ExtraInfo]:
+    def load_input_data(self, data: T | None = None, make_extra_info: bool = True) -> tuple[SingleDataset, ExtraInfo]:
         """Load input data and extra info
 
         Note: You shouldn't have to overwrite this method. Check _parse_data() instead.
@@ -62,13 +57,13 @@ class BaseConverter(Generic[T], ABC):
             raise TypeError("Input data can not be batch data")
         return parsed_data, extra_info
 
-    def load_update_data(self, data: Optional[T] = None) -> Dataset:
+    def load_update_data(self, data: T | None = None) -> Dataset:
         """Load update data
 
         Note: You shouldn't have to overwrite this method. Check _parse_data() instead.
 
         Args:
-          data: Optional[T]:  (Default value = None)
+          data: T | None:  (Default value = None)
 
         Returns:
 
@@ -76,13 +71,13 @@ class BaseConverter(Generic[T], ABC):
         data = self._load_data(data)
         return self._parse_data(data=data, data_type=DatasetType.update, extra_info=None)
 
-    def load_sym_output_data(self, data: Optional[T] = None) -> Dataset:
+    def load_sym_output_data(self, data: T | None = None) -> Dataset:
         """Load symmetric output data
 
         Note: You shouldn't have to overwrite this method. Check _parse_data() instead.
 
         Args:
-          data: Optional[T]:  (Default value = None)
+          data: T | None:  (Default value = None)
 
         Returns:
 
@@ -90,13 +85,13 @@ class BaseConverter(Generic[T], ABC):
         data = self._load_data(data)
         return self._parse_data(data=data, data_type=DatasetType.sym_output, extra_info=None)
 
-    def load_asym_output_data(self, data: Optional[T] = None) -> Dataset:
+    def load_asym_output_data(self, data: T | None = None) -> Dataset:
         """Load asymmetric output data
 
         Note: You shouldn't have to overwrite this method. Check _parse_data() instead.
 
         Args:
-          data: Optional[T]:  (Default value = None)
+          data: T | None:  (Default value = None)
 
         Returns:
 
@@ -104,13 +99,13 @@ class BaseConverter(Generic[T], ABC):
         data = self._load_data(data)
         return self._parse_data(data=data, data_type=DatasetType.asym_output, extra_info=None)
 
-    def load_sc_output_data(self, data: Optional[T] = None) -> Dataset:
+    def load_sc_output_data(self, data: T | None = None) -> Dataset:
         """Load sc output data
 
         Note: You shouldn't have to overwrite this method. Check _parse_data() instead.
 
         Args:
-          data: Optional[T]:  (Default value = None)
+          data: T | None:  (Default value = None)
 
         Returns:
 
@@ -118,14 +113,14 @@ class BaseConverter(Generic[T], ABC):
         data = self._load_data(data)
         return self._parse_data(data=data, data_type=DatasetType.sc_output, extra_info=None)
 
-    def convert(self, data: Dataset, extra_info: Optional[ExtraInfo] = None) -> T:
+    def convert(self, data: Dataset, extra_info: ExtraInfo | None = None) -> T:
         """Convert input/update/(a)sym_output data and optionally extra info.
 
         Note: You shouldn't have to overwrite this method. Check _serialize_data() instead.
 
         Args:
           data: Dataset:
-          extra_info: Optional[ExtraInfo]:  (Default value = None)
+          extra_info: ExtraInfo | None:  (Default value = None)
 
         Returns:
 
@@ -135,8 +130,8 @@ class BaseConverter(Generic[T], ABC):
     def save(
         self,
         data: Dataset,
-        extra_info: Optional[ExtraInfo] = None,
-        destination: Optional[BaseDataStore[T]] = None,
+        extra_info: ExtraInfo | None = None,
+        destination: BaseDataStore[T] | None = None,
     ) -> None:
         """Save input/update/(a)sym_output data and optionally extra info.
 
@@ -144,8 +139,8 @@ class BaseConverter(Generic[T], ABC):
 
         Args:
           data: Dataset:
-          extra_info: Optional[ExtraInfo]:  (Default value = None)
-          destination: Optional[BaseDataStore[T]]:  (Default value = None)
+          extra_info: ExtraInfo | None:  (Default value = None)
+          destination: BaseDataStore[T] | None:  (Default value = None)
 
         Returns:
 
@@ -177,7 +172,7 @@ class BaseConverter(Generic[T], ABC):
         """
         return self._logger.getEffectiveLevel()
 
-    def _load_data(self, data: Optional[T]) -> T:
+    def _load_data(self, data: T | None) -> T:
         if data is not None:
             return data
         if self._source is not None:
@@ -185,9 +180,9 @@ class BaseConverter(Generic[T], ABC):
         raise ValueError("No data supplied!")
 
     @abstractmethod  # pragma: nocover
-    def _parse_data(self, data: T, data_type: DatasetType, extra_info: Optional[ExtraInfo]) -> Dataset:
+    def _parse_data(self, data: T, data_type: DatasetType, extra_info: ExtraInfo | None) -> Dataset:
         pass
 
     @abstractmethod  # pragma: nocover
-    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfo]) -> T:
+    def _serialize_data(self, data: Dataset, extra_info: ExtraInfo | None) -> T:
         pass

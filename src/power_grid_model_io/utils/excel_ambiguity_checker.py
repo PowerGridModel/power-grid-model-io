@@ -24,7 +24,6 @@ import xml.etree.ElementTree as ET
 import zipfile
 from collections import Counter
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 XML_NAME_SPACE = {"": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}  # NOSONAR
 WORK_BOOK = "xl/workbook.xml"
@@ -68,10 +67,10 @@ class ExcelAmbiguityChecker:
         if self._valid_file:
             self._file_path = file_path
             self._col_name_in_row = column_name_in_row
-            self.sheets: Dict[str, List[str]] = {}
+            self.sheets: dict[str, list[str]] = {}
             self._parse_excel_file()
 
-    def _parse_zip(self, zip_file) -> List[Optional[str]]:
+    def _parse_zip(self, zip_file) -> list[str | None]:
         """
         Parses the shared strings XML file within the Excel ZIP archive to extract all shared strings.
 
@@ -82,13 +81,13 @@ class ExcelAmbiguityChecker:
             list: A list of shared strings used in the Excel file.
         """
         shared_strings_path = SHARED_STR_PATH
-        shared_strings: List[Optional[str]] = []
+        shared_strings: list[str | None] = []
         with zip_file.open(shared_strings_path) as f:
             tree = ET.parse(f)
             shared_strings.extend(si.text for si in tree.findall(FIND_T, namespaces=XML_NAME_SPACE))
         return shared_strings
 
-    def _get_column_names_from_row(self, row, shared_strings) -> List[Optional[str]]:
+    def _get_column_names_from_row(self, row, shared_strings) -> list[str | None]:
         """
         Extracts column names from a specified row using shared strings for strings stored in the shared string table.
 
@@ -132,7 +131,7 @@ class ExcelAmbiguityChecker:
                         column_names = self._get_column_names_from_row(rows[self._col_name_in_row], shared_strings)
                         self.sheets[sheet_name] = [name for name in column_names if name is not None]
 
-    def list_sheets(self) -> List[str]:
+    def list_sheets(self) -> list[str]:
         """
         Get the list of all sheet names in the Excel file.
 
@@ -141,7 +140,7 @@ class ExcelAmbiguityChecker:
         """
         return list(self.sheets.keys())
 
-    def check_ambiguity(self) -> Tuple[bool, Dict[str, List[str]]]:
+    def check_ambiguity(self) -> tuple[bool, dict[str, list[str]]]:
         """
         Check if there is ambiguity in column names across sheets.
 
@@ -149,7 +148,7 @@ class ExcelAmbiguityChecker:
             Tuple[bool, Dict[str, List[str]]]: A tuple containing a boolean indicating if any ambiguity was found,
             and a dictionary with sheet names as keys and lists of ambiguous column names as values.
         """
-        res: Dict[str, List[str]] = {}
+        res: dict[str, list[str]] = {}
         if not self._valid_file:
             return False, res
         for sheet_name, column_names in self.sheets.items():

@@ -7,9 +7,9 @@ Panda Power Converter
 """
 
 import logging
+from collections.abc import MutableMapping
 from functools import lru_cache
 from importlib.metadata import PackageNotFoundError, version
-from typing import Dict, List, MutableMapping, Optional, Tuple, Type
 
 import numpy as np
 import pandas as pd
@@ -87,15 +87,15 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self.pp_output_data: PandaPowerData = {}
         self.pgm_output_data: SingleDataset = {}
         self.pgm_nodes_lookup: pd.DataFrame = pd.DataFrame()
-        self.idx: Dict[Tuple[str, Optional[str]], pd.Series] = {}
-        self.idx_lookup: Dict[Tuple[str, Optional[str]], pd.Series] = {}
+        self.idx: dict[tuple[str, str | None], pd.Series] = {}
+        self.idx_lookup: dict[tuple[str, str | None], pd.Series] = {}
         self.next_idx = 0
 
     def _parse_data(
         self,
         data: PandaPowerData,
         data_type: DatasetType,
-        extra_info: Optional[ExtraInfo] = None,
+        extra_info: ExtraInfo | None = None,
     ) -> Dataset:
         """
         Set up for conversion from PandaPower to power-grid-model
@@ -132,7 +132,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         return self.pgm_input_data
 
-    def _serialize_data(self, data: Dataset, extra_info: Optional[ExtraInfo]) -> PandaPowerData:
+    def _serialize_data(self, data: Dataset, extra_info: ExtraInfo | None) -> PandaPowerData:
         """
         Set up for conversion from power-grid-model to PandaPower
 
@@ -266,7 +266,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
         self.idx = {}
         self.idx_lookup = {}
-        pgm_to_pp_id: Dict[Tuple[str, Optional[str]], List[Tuple[int, int]]] = {}
+        pgm_to_pp_id: dict[tuple[str, str | None], list[tuple[int, int]]] = {}
         for pgm_idx, extra in extra_info.items():
             if "id_reference" not in extra:
                 continue
@@ -1657,7 +1657,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             pp_component_name=element, load_id_names=load_id_names
         )
 
-    def _pp_load_result_accumulate(self, pp_component_name: str, load_id_names: List[str]) -> pd.DataFrame:
+    def _pp_load_result_accumulate(self, pp_component_name: str, load_id_names: list[str]) -> pd.DataFrame:
         """
         This function converts a power-grid-model Symmetrical and asymmetrical load output array
         to a respective Dataframe of PandaPower.
@@ -2261,13 +2261,14 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         assert "res_asymmetric_sgen_3ph" not in self.pp_output_data
         self.pp_output_data["res_asymmetric_sgen_3ph"] = pp_output_asym_gens_3ph
 
-    def _generate_ids(self, pp_table: str, pp_idx: pd.Index, name: Optional[str] = None) -> np.ndarray:
+    def _generate_ids(self, pp_table: str, pp_idx: pd.Index, name: str | None = None) -> np.ndarray:
         """
         Generate numerical power-grid-model IDs for a PandaPower component
 
         Args:
             pp_table: Table name (e.g. "bus")
             pp_idx: PandaPower component identifier
+            name: optional name for the index
 
         Returns:
             the generated IDs
@@ -2284,8 +2285,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
     def _get_pgm_ids(
         self,
         pp_table: str,
-        pp_idx: Optional[pd.Series | np.ndarray] = None,
-        name: Optional[str] = None,
+        pp_idx: pd.Series | np.ndarray | None = None,
+        name: str | None = None,
     ) -> pd.Series:
         """
         Get numerical power-grid-model IDs for a PandaPower component
@@ -2293,6 +2294,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Args:
             pp_table: Table name (e.g. "bus")
             pp_idx: PandaPower component identifier
+            name: optional name for the index
 
         Returns:
             the power-grid-model IDs if they were previously generated
@@ -2307,8 +2309,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
     def _get_pp_ids(
         self,
         pp_table: str,
-        pgm_idx: Optional[pd.Series] = None,
-        name: Optional[str] = None,
+        pgm_idx: pd.Series | None = None,
+        name: str | None = None,
     ) -> pd.Series:
         """
         Get numerical PandaPower IDs for a PandaPower component
@@ -2316,6 +2318,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Args:
             pp_table: Table name (e.g. "bus")
             pgm_idx: power-grid-model component identifier
+            name: optional name for the index
 
         Returns:
             the PandaPower IDs if they were previously generated
@@ -2563,8 +2566,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self,
         table: str,
         attribute: str,
-        expected_type: Optional[str] = None,
-        default: Optional[float | bool | str] = None,
+        expected_type: str | None = None,
+        default: float | bool | str | None = None,
     ) -> np.ndarray:
         """
         Returns the selected PandaPower attribute from the selected PandaPower table.
@@ -2572,13 +2575,15 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Args:
             table: Table name (e.g. "bus")
             attribute: an attribute from the table (e.g "vn_kv")
+            expected_type: optional expected type of the attribute
+            default: optional default value for the attribute
 
         Returns:
             the selected PandaPower attribute from the selected PandaPower table
         """
         pp_component_data = self.pp_input_data[table]
 
-        exp_dtype: str | Type = "O"
+        exp_dtype: str | type = "O"
         if expected_type is not None:
             exp_dtype = expected_type
         elif default is not None:
@@ -2601,7 +2606,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         return attr_data.to_numpy(dtype=exp_dtype, copy=True)
 
-    def get_id(self, pp_table: str, pp_idx: int, name: Optional[str] = None) -> int:
+    def get_id(self, pp_table: str, pp_idx: int, name: str | None = None) -> int:
         """
         Get a numerical ID previously associated with the supplied table / index combination
 
@@ -2615,7 +2620,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
         return self.idx[(pp_table, name)][pp_idx]
 
-    def lookup_id(self, pgm_id: int) -> Dict[str, str | int]:
+    def lookup_id(self, pgm_id: int) -> dict[str, str | int]:
         """
         Retrieve the original name / key combination of a pgm object
 

@@ -6,12 +6,11 @@ General regular expressions
 """
 
 import re
-from typing import Dict
 
 _TRAFO_CONNECTION_RE = re.compile(r"^(Y|YN|D|Z|ZN)(y|yn|d|z|zn)(-?\d|1[0-2]|-1[0-2])?$")
 
 
-def parse_trafo_connection(string: str) -> Dict[str, str]:
+def parse_trafo_connection(string: str) -> dict[str, str]:
     r"""Parse a trafo connection string.
 
     Matches the following regular expression to the winding_from and winding_to codes.
@@ -44,7 +43,7 @@ _TRAFO3_CONNECTION_RE = re.compile(
 )
 
 
-def parse_trafo3_connection(string: str) -> Dict[str, str]:
+def parse_trafo3_connection(string: str) -> dict[str, str]:
     r"""Parse a trafo connection string.
 
     Matches the following regular expression to the winding_1, winding_2 and winding_3 codes.
@@ -80,7 +79,7 @@ def parse_trafo3_connection(string: str) -> Dict[str, str]:
     }
 
 
-def parse_node_ref(string: str) -> Dict[str, str]:
+def parse_node_ref(string: str) -> dict[str, str]:
     """Parse a node reference string.
 
     Matches if the input is the word 'node' with an optional prefix or suffix. E.g.:
@@ -96,7 +95,7 @@ def parse_node_ref(string: str) -> Dict[str, str]:
         ValueError: If the input string is not a node reference.
 
     Returns:
-        Optional[Dict[str, str]]: The prefix and suffix (may be empty).
+        dict[str, str]: The prefix and suffix (may be empty).
     """
 
     def _raise():
@@ -160,7 +159,7 @@ def parse_pvs_efficiency_type(string: str) -> str:
         ValueError: If the input string is not a PVS efficiency type.
 
     Returns:
-        Optional[str]: The efficiency type percentage string at 1 pu.
+        str: The efficiency type percentage string at 1 pu.
     """
     match = _PVS_EFFICIENCY_TYPE_RE.search(string)
     if not match:

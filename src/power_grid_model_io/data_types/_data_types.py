@@ -5,9 +5,9 @@
 Common data types used in the Power Grid Model project
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
-ExtraInfo = Dict[int, Any]
+ExtraInfo = dict[int, Any]
 """
 ExtraInfo is information about power grid model objects that are not part of the calculations. E.g. the original ID or
 name of a node, or the material of a cable (line) etc.
@@ -36,7 +36,7 @@ ExtraInfoLookup = ExtraInfo
 Legacy type name; use ExtraInfo instead!
 """
 
-StructuredData = Dict[str, List[Dict[str, Any]]] | List[Dict[str, List[Dict[str, Any]]]]
+StructuredData = dict[str, list[dict[str, Any]]] | list[dict[str, list[dict[str, Any]]]]
 """
 Structured data is a multi dimensional structure (component_type -> objects -> attribute -> value) or a list of those
 dictionaries:

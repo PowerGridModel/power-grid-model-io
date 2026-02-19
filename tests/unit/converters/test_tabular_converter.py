@@ -1,8 +1,8 @@
 # SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Tuple
 from unittest.mock import MagicMock, call, patch
 
 import numpy as np
@@ -976,7 +976,7 @@ def test_parse_pandas_function(
     mock_parse_col_def: MagicMock,
     converter: TabularConverter,
     function: str,
-    expected: Tuple[int, int, int],
+    expected: tuple[int, int, int],
 ):
     # Arrange
     data = MagicMock()

@@ -117,7 +117,7 @@ def test_get_winding_from(code: str, winding_type: WindingType):
     ],
 )
 def test_get_winding_from__no_neutral_grounding(code: str, winding_type: WindingType):
-    assert get_winding_from(code, False) == winding_type
+    assert get_winding_from(conn_str=code, neutral_grounding=False) == winding_type
 
 
 def test_get_winding_from__exception():
@@ -166,7 +166,7 @@ def test_get_winding_to(code: str, winding_type: WindingType):
     ],
 )
 def test_get_winding_to__no_neutral_grounding(code: str, winding_type: WindingType):
-    assert get_winding_to(code, False) == winding_type
+    assert get_winding_to(conn_str=code, neutral_grounding=False) == winding_type
 
 
 def test_get_winding_to__exception():
@@ -235,7 +235,7 @@ def test_get_winding_1(code: str, winding_type: WindingType):
     ],
 )
 def test_get_winding_1__no_neutral_grounding(code: str, winding_type: WindingType):
-    assert get_winding_1(code, False) == winding_type
+    assert get_winding_1(conn_str=code, neutral_grounding=False) == winding_type
 
 
 def test_get_winding_1__exception():
@@ -284,7 +284,7 @@ def test_get_winding_2(code: str, winding_type: WindingType):
     ],
 )
 def test_get_winding_2__no_neutral_grounding(code: str, winding_type: WindingType):
-    assert get_winding_2(code, False) == winding_type
+    assert get_winding_2(conn_str=code, neutral_grounding=False) == winding_type
 
 
 def test_get_winding_2__exception():
@@ -333,7 +333,7 @@ def test_get_winding_3(code: str, winding_type: WindingType):
     ],
 )
 def test_get_winding_3__no_neutral_grounding(code: str, winding_type: WindingType):
-    assert get_winding_3(code, False) == winding_type
+    assert get_winding_3(conn_str=code, neutral_grounding=False) == winding_type
 
 
 def test_get_winding_3__exception():
@@ -394,7 +394,7 @@ def test_reactive_power_to_susceptance(q_var: float, u_nom: float, expected: flo
 @mark.parametrize(
     ("p", "efficiency_type", "expected"),
     [
-        (float("nan"), str(""), float("nan")),
+        (float("nan"), "", float("nan")),
         (1000.0, "0,1 pu: 93 %; 1 pu: 97 %", 970.0),
         (1000.0, "0,1..1 pu: 95 %", 950.0),
         (1000.0, "100 %", 1000.0),

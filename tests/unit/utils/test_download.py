@@ -17,8 +17,7 @@ from power_grid_model_io.utils.download import (
     get_download_path,
     get_response_info,
 )
-
-from ...utils import assert_log_exists
+from tests.utils import assert_log_exists
 
 Response = namedtuple("Response", ["status", "headers"])
 

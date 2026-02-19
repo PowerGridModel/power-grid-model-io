@@ -7,7 +7,6 @@ The json file store
 
 import json
 from pathlib import Path
-from typing import Optional
 
 from power_grid_model_io.data_stores.base_data_store import BaseDataStore
 from power_grid_model_io.data_types import StructuredData
@@ -23,7 +22,7 @@ class JsonFileStore(BaseDataStore[StructuredData]):
 
     def __init__(self, file_path: Path):
         super().__init__()
-        self._indent: Optional[int] = 2
+        self._indent: int | None = 2
         self._compact: bool = True
         self._file_path: Path = Path(file_path)
 
@@ -31,7 +30,7 @@ class JsonFileStore(BaseDataStore[StructuredData]):
         if file_path.suffix.lower() != ".json":
             raise ValueError(f"JsonFile file should be a .json file, {file_path.suffix} provided.")
 
-    def set_indent(self, indent: Optional[int]) -> None:
+    def set_indent(self, indent: int | None) -> None:
         """
         Change the number of spaces used for each indent level (affects output only)
 

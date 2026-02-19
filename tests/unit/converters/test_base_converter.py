@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
-from typing import Dict, List
 from unittest.mock import ANY, MagicMock
 
 import numpy as np
@@ -13,7 +12,7 @@ from power_grid_model import ComponentType, DatasetType
 from power_grid_model_io.converters.base_converter import BaseConverter
 
 
-class DummyConverter(BaseConverter[Dict[str, List[Dict[str, int]]]]):
+class DummyConverter(BaseConverter[dict[str, list[dict[str, int]]]]):
     def __init__(self, source=None, destination=None, log_level=logging.ERROR):
         super().__init__(source, destination, log_level)
 

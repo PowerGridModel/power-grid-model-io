@@ -152,17 +152,17 @@ select = [
     # self
     #"SLF",
     # pyupgrade
-    #"UP",
+    "UP",
     # raise
-    #"RSE",
+    "RSE",
     # ruff sepcific rules
     "RUF",
     # bandit
     #"S",
     # boolean positional value in call
-    #"FBT003",
+    "FBT003",
     # raise vanilla args
-    #"TRY002",
+    "TRY002",
     # pytest-style
     #"PT",
 ]
@@ -171,9 +171,6 @@ ignore = []
 [tool.ruff.lint.isort]
 # Imports that are imported using keyword "as" and are from the same source - are combined.
 combine-as-imports = true
-
-[tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["TID252"] # intentional relative imports inside tests
 
 [tool.mypy]
 follow_imports = "silent"

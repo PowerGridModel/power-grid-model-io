@@ -6,7 +6,6 @@ import json
 import warnings
 from functools import lru_cache
 from pathlib import Path
-from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -23,9 +22,14 @@ from power_grid_model_io.converters.pandapower_converter import (
 )
 from power_grid_model_io.data_types import ExtraInfo
 from power_grid_model_io.utils.json import JsonEncoder
-
-from ...data.pandapower.pp_validation import pp_net, pp_net_3ph_minimal_trafo
-from ..utils import compare_extra_info, component_attributes, component_objects, load_json_single_dataset, select_values
+from tests.data.pandapower.pp_validation import pp_net, pp_net_3ph_minimal_trafo
+from tests.validation.utils import (
+    compare_extra_info,
+    component_attributes,
+    component_objects,
+    load_json_single_dataset,
+    select_values,
+)
 
 VALIDATION_FILE = Path(__file__).parents[2] / "data" / "pandapower" / "pgm_input_data.json"
 VALIDATION_FILE_ZERO_SEQ = Path(__file__).parents[2] / "data" / "pandapower" / "pgm_input_data_trafo_zero_seq.json"
@@ -34,7 +38,7 @@ mag0_multiplier = 1.0 if PP_CONVERSION_VERSION < PP_COMPATIBILITY_VERSION_3_4_0 
 
 
 @lru_cache
-def load_and_convert_pp_data() -> Tuple[SingleDataset, ExtraInfo]:
+def load_and_convert_pp_data() -> tuple[SingleDataset, ExtraInfo]:
     """
     Load and convert the pandapower validation network
     """
@@ -45,7 +49,7 @@ def load_and_convert_pp_data() -> Tuple[SingleDataset, ExtraInfo]:
 
 
 @lru_cache
-def load_validation_data() -> Tuple[SingleDataset, ExtraInfo]:
+def load_validation_data() -> tuple[SingleDataset, ExtraInfo]:
     """
     Load the validation data from the json file
     """
@@ -58,7 +62,7 @@ def load_validation_data() -> Tuple[SingleDataset, ExtraInfo]:
 
 
 @pytest.fixture
-def input_data() -> Tuple[SingleDataset, SingleDataset]:
+def input_data() -> tuple[SingleDataset, SingleDataset]:
     """
     Load the pandapower network and the json file, and return the input_data
     """
@@ -68,7 +72,7 @@ def input_data() -> Tuple[SingleDataset, SingleDataset]:
 
 
 @pytest.fixture
-def extra_info() -> Tuple[ExtraInfo, ExtraInfo]:
+def extra_info() -> tuple[ExtraInfo, ExtraInfo]:
     """
     Load the pandapower network and the json file, and return the extra_info
     """
@@ -77,7 +81,7 @@ def extra_info() -> Tuple[ExtraInfo, ExtraInfo]:
     return actual, expected
 
 
-def test_input_data(input_data: Tuple[SingleDataset, SingleDataset]):
+def test_input_data(input_data: tuple[SingleDataset, SingleDataset]):
     """
     Unit test to preload the expected and actual data
     """
@@ -92,7 +96,7 @@ def test_input_data(input_data: Tuple[SingleDataset, SingleDataset]):
 
 
 @pytest.mark.parametrize(("component", "attribute"), component_attributes(VALIDATION_FILE, data_type=DatasetType.input))
-def test_attributes(input_data: Tuple[SingleDataset, SingleDataset], component: ComponentType, attribute: str):
+def test_attributes(input_data: tuple[SingleDataset, SingleDataset], component: ComponentType, attribute: str):
     """
     For each attribute, check if the actual values are consistent with the expected values
     """
@@ -116,7 +120,7 @@ def test_attributes(input_data: Tuple[SingleDataset, SingleDataset], component: 
     ("component", "obj_ids"),
     (pytest.param(component, objects, id=component) for component, objects in component_objects(VALIDATION_FILE)),
 )
-def test_extra_info(extra_info: Tuple[ExtraInfo, ExtraInfo], component: ComponentType, obj_ids: List[int]):
+def test_extra_info(extra_info: tuple[ExtraInfo, ExtraInfo], component: ComponentType, obj_ids: list[int]):
     """
     For each object, check if the actual extra info is consistent with the expected extra info
     """

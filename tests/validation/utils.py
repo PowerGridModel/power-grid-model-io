@@ -4,8 +4,8 @@
 
 import json
 import warnings
+from collections.abc import Generator, Mapping
 from pathlib import Path
-from typing import Generator, List, Mapping, Tuple
 
 import numpy as np
 import pandas as pd
@@ -18,7 +18,7 @@ from power_grid_model.utils import import_json_data, json_deserialize_from_file
 from power_grid_model_io.data_types import ExtraInfo
 
 
-def component_objects(json_path: Path) -> Generator[Tuple[ComponentType, List[int]], None, None]:
+def component_objects(json_path: Path) -> Generator[tuple[ComponentType, list[int]], None, None]:
     """
     Read the json file (only the components and their ids are are used, i.e. the component names and attribute name)
 
@@ -41,7 +41,7 @@ def component_objects(json_path: Path) -> Generator[Tuple[ComponentType, List[in
             yield component, obj_ids
 
 
-def component_attributes(json_path: Path, data_type: DatasetType) -> Generator[Tuple[ComponentType, str], None, None]:
+def component_attributes(json_path: Path, data_type: DatasetType) -> Generator[tuple[ComponentType, str], None, None]:
     """
     Read the json file (only the structure is used, i.e. the component names and attribute name)
 
@@ -71,7 +71,7 @@ def component_attributes(json_path: Path, data_type: DatasetType) -> Generator[T
 
 def component_attributes_df(
     data: Mapping[str, pd.DataFrame],
-) -> Generator[Tuple[str, str], None, None]:
+) -> Generator[tuple[str, str], None, None]:
     """
     Extract the component and attribute names from the DataFrames
 
@@ -159,7 +159,7 @@ def extract_extra_info(data: SinglePythonDataset, data_type: DatasetType) -> Ext
     return extra_info
 
 
-def load_json_single_dataset(file_path: Path, data_type: DatasetType) -> Tuple[SingleDataset, ExtraInfo]:
+def load_json_single_dataset(file_path: Path, data_type: DatasetType) -> tuple[SingleDataset, ExtraInfo]:
     """
     Loads and parses a json file in the most basic way, without using power_grid_model_io functions.
 
@@ -198,7 +198,7 @@ def load_json_single_dataset(file_path: Path, data_type: DatasetType) -> Tuple[S
     return dataset, extra_info
 
 
-def compare_extra_info(actual: ExtraInfo, expected: ExtraInfo, component: ComponentType, obj_ids: List[int]):
+def compare_extra_info(actual: ExtraInfo, expected: ExtraInfo, component: ComponentType, obj_ids: list[int]):
     # We'll collect all errors, instead of terminating at the first error
     errors = []
 

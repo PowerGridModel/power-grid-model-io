@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
-from typing import Any, Tuple
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
@@ -68,7 +68,7 @@ def test_exclude_value__invalid_col():
         (("", ""), False),
     ],
 )
-def test_exclude_all_columns_empty_or_zero(row_value: Tuple[float, float], expected: bool):
+def test_exclude_all_columns_empty_or_zero(row_value: tuple[float, float], expected: bool):
     row = pd.Series({"foo": row_value[0], "bar": row_value[1]})
     actual = exclude_all_columns_empty_or_zero(row=row, cols=["foo", "bar"])
     assert actual == expected

@@ -29,7 +29,6 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from shutil import rmtree as remove_dir
-from typing import Optional
 from urllib import request
 
 import structlog
@@ -47,8 +46,8 @@ class ResponseInfo:
     """
 
     status: int
-    file_name: Optional[str] = None
-    file_size: Optional[int] = None
+    file_name: str | None = None
+    file_size: int | None = None
 
 
 class DownloadProgressHook:  # pylint: disable=too-few-public-methods
@@ -81,7 +80,7 @@ class DownloadProgressHook:  # pylint: disable=too-few-public-methods
 
 
 def download_and_extract(
-    url: str, dir_path: Optional[Path] = None, file_name: Optional[str | Path] = None, overwrite: bool = False
+    url: str, dir_path: Path | None = None, file_name: str | Path | None = None, overwrite: bool = False
 ) -> Path:
     """
     Download a file from a URL and store it locally, extract the contents and return the path to the contents.
@@ -112,7 +111,7 @@ def download_and_extract(
 
 
 def download(
-    url: str, file_name: Optional[str | Path] = None, dir_path: Optional[Path] = None, overwrite: bool = False
+    url: str, file_name: str | Path | None = None, dir_path: Path | None = None, overwrite: bool = False
 ) -> Path:
     """
     Download a file from a URL and store it locally
@@ -132,7 +131,7 @@ def download(
     # get the response info, if the status is not 200
     info = get_response_info(url=url)
     if info.status != 200:
-        raise IOError(f"Could not download from URL, status={info.status}")
+        raise OSError(f"Could not download from URL, status={info.status}")
 
     if file_name is None and info.file_name:
         file_name = info.file_name
@@ -199,9 +198,9 @@ def get_response_info(url: str) -> ResponseInfo:
 
 
 def get_download_path(
-    dir_path: Optional[Path] = None,
-    file_name: Optional[str | Path] = None,
-    unique_key: Optional[str] = None,
+    dir_path: Path | None = None,
+    file_name: str | Path | None = None,
+    unique_key: str | None = None,
 ) -> Path:
     """
     Determine the file path based on dir_path, file_name and/or data

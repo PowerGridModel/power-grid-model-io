@@ -3,9 +3,10 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import sys
+from collections.abc import Mapping, MutableMapping
 from copy import copy, deepcopy
 from itertools import chain
-from typing import Any, Dict, List, Mapping, MutableMapping, Optional, Tuple
+from typing import Any
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -17,7 +18,7 @@ def contains(needle: Mapping[str, Any], data: Mapping[str, Any]) -> bool:
     return all(item in data.items() for item in needle.items())
 
 
-def assert_struct_array_equal(actual: np.ndarray, expected: np.ndarray | pd.DataFrame | List[Dict[str, Any]]):
+def assert_struct_array_equal(actual: np.ndarray, expected: np.ndarray | pd.DataFrame | list[dict[str, Any]]):
     """
     Compare two structured numpy arrays by converting them to pandas DataFrames first
     """
@@ -25,7 +26,7 @@ def assert_struct_array_equal(actual: np.ndarray, expected: np.ndarray | pd.Data
 
 
 def assert_log_exists(
-    capture: List[MutableMapping[str, Any]], log_level: Optional[str] = None, event: Optional[str] = None, **kwargs
+    capture: list[MutableMapping[str, Any]], log_level: str | None = None, event: str | None = None, **kwargs
 ):
     if log_level is not None:
         kwargs["log_level"] = log_level
@@ -41,9 +42,7 @@ def assert_log_exists(
         raise KeyError(f"Log {kwargs} does not exist")
 
 
-def assert_log_match(
-    capture: MutableMapping[str, Any], level: Optional[str] = None, event: Optional[str] = None, **kwargs
-):
+def assert_log_match(capture: MutableMapping[str, Any], level: str | None = None, event: str | None = None, **kwargs):
     if level is not None:
         kwargs["log_level"] = level
     if event is not None:
@@ -54,7 +53,7 @@ def assert_log_match(
         raise KeyError(f"Expected log {kwargs} does not match actual log {capture}")
 
 
-def idx_to_str(idx: str | int | slice | Tuple[int | slice, ...]) -> str:
+def idx_to_str(idx: str | int | slice | tuple[int | slice, ...]) -> str:
     if isinstance(idx, tuple):
         return ", ".join(idx_to_str(i) for i in idx)
     if isinstance(idx, slice):
@@ -254,7 +253,7 @@ class MockVal(MockFn):
 class MockDf:
     __slots__ = ["columns", "empty", "index", "shape"]
 
-    def __init__(self, shape: int | Tuple[int, ...]):
+    def __init__(self, shape: int | tuple[int, ...]):
         self.shape = shape
         self.empty = shape == 0 or (isinstance(shape, tuple) and (len(shape) == 0 or shape[0] == 0))
         self.index = MagicMock(name="DataFrame.index")
@@ -272,11 +271,11 @@ class MockDf:
 
 
 class MockExcelFile:
-    def __init__(self, data: Dict[str, pd.DataFrame]):
+    def __init__(self, data: dict[str, pd.DataFrame]):
         self.data = data
 
     @property
-    def sheet_names(self) -> List[str]:
+    def sheet_names(self) -> list[str]:
         return list(self.data.keys())
 
     def parse(self, sheet_name: str, **_kwargs) -> pd.DataFrame:
@@ -290,5 +289,4 @@ class MockTqdm:
         self.iterable = iterable
 
     def __iter__(self):
-        for item in self.iterable:
-            yield item
+        yield from self.iterable

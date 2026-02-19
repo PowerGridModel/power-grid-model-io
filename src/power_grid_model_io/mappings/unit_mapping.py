@@ -6,13 +6,12 @@ Unit mapping helper class
 """
 
 from numbers import Number
-from typing import Dict, Optional, Set, Tuple
 
 import numpy as np
 import structlog
 
 #            si-unit   unit factor
-Units = Dict[str, Optional[Dict[str, float]]]
+Units = dict[str, dict[str, float] | None]
 
 
 class UnitMapping:
@@ -28,13 +27,13 @@ class UnitMapping:
      }
     """
 
-    def __init__(self, mapping: Optional[Units] = None, logger=None):
+    def __init__(self, mapping: Units | None = None, logger=None):
         if logger is None:
             self._log = structlog.get_logger(f"{__name__}_{id(self)}")
         else:
             self._log = logger
-        self._si_units: Set[str] = set()
-        self._mapping: Dict[str, Tuple[float, str]] = {}
+        self._si_units: set[str] = set()
+        self._mapping: dict[str, tuple[float, str]] = {}
         self.set_mapping(mapping=mapping if mapping is not None else {})
 
     def set_mapping(self, mapping: Units):
@@ -72,7 +71,7 @@ class UnitMapping:
             "Set unit definitions", n_units=len(self._si_units | self._mapping.keys()), n_si_units=len(self._si_units)
         )
 
-    def get_unit_multiplier(self, unit: str) -> Tuple[float, str]:
+    def get_unit_multiplier(self, unit: str) -> tuple[float, str]:
         """
         Find the correct unit multiplier and the corresponding SI unit
         """

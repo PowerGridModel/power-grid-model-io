@@ -7,7 +7,7 @@ which supports unit conversions and value substitutions
 """
 
 import logging
-from typing import Callable, Dict, Generator, Iterable, Optional, Tuple
+from collections.abc import Callable, Generator, Iterable
 
 import numpy as np
 import pandas as pd
@@ -48,9 +48,9 @@ class TabularData:
                     f"Invalid data type for table '{table_name}'; "
                     f"expected a pandas DataFrame or NumPy array, got {type(table_data).__name__}."
                 )
-        self._data: Dict[str, pd.DataFrame | np.ndarray | LazyDataFrame] = tables
-        self._units: Optional[UnitMapping] = None
-        self._substitution: Optional[ValueMapping] = None
+        self._data: dict[str, pd.DataFrame | np.ndarray | LazyDataFrame] = tables
+        self._units: UnitMapping | None = None
+        self._substitution: ValueMapping | None = None
 
     def set_unit_multipliers(self, units: UnitMapping) -> None:
         """
@@ -206,7 +206,7 @@ class TabularData:
 
         return self._data.keys()
 
-    def items(self) -> Generator[Tuple[str, pd.DataFrame | np.ndarray], None, None]:
+    def items(self) -> Generator[tuple[str, pd.DataFrame | np.ndarray], None, None]:
         """
         Mimic the dictionary .items() function
 

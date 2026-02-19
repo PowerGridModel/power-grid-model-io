@@ -7,7 +7,6 @@ Excel File Store
 
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
 
 import pandas as pd
 
@@ -43,16 +42,16 @@ class ExcelFileStore(BaseDataStore[TabularData]):
 
     def __init__(
         self,
-        file_path: Optional[Path] = None,
+        file_path: Path | None = None,
         *,
         language: str = "en",
-        terms_changed: Optional[dict] = None,
+        terms_changed: dict | None = None,
         **extra_paths: Path,
     ):
         super().__init__()
         # Create a dictionary of all supplied file paths:
         # {"": file_path, extra_name[0]: extra_path[0], extra_name[1]: extra_path[1], ...}
-        self._file_paths: Dict[str, Path] = {}
+        self._file_paths: dict[str, Path] = {}
         if file_path is not None:
             self._file_paths[""] = file_path
         for name, path in extra_paths.items():
@@ -63,13 +62,13 @@ class ExcelFileStore(BaseDataStore[TabularData]):
                 name = name.title() if name else "Excel"
                 raise ValueError(f"{name} file should be a .xls or .xlsx file, {path.suffix} provided.")
 
-        self._header_rows: List[int] = [0]
+        self._header_rows: list[int] = [0]
         self._language = language
         self._vision_excel_key_mapping = VISION_EXCEL_LAN_DICT[self._language]
         self._terms_changed = terms_changed if terms_changed is not None else {}
         self._uuid_cvtr = UUID2IntCvtr()
 
-    def files(self) -> Dict[str, Path]:
+    def files(self) -> dict[str, Path]:
         """
         The files as supplied in the constructor. Note that the file names are read-only.
 
@@ -102,7 +101,7 @@ class ExcelFileStore(BaseDataStore[TabularData]):
 
             return sheet_loader
 
-        data: Dict[str, LazyDataFrame] = {}
+        data: dict[str, LazyDataFrame] = {}
         for name, path in self._file_paths.items():
             excel_file = pd.ExcelFile(path)
             for sheet_name in excel_file.sheet_names:
@@ -126,7 +125,7 @@ class ExcelFileStore(BaseDataStore[TabularData]):
 
         # First group all sheets per file. Each sheet name that starts with a file name is assigned to that file.
         # Sheets that don't start with a file name are assigned to the first file.
-        sheets: Dict[str, Dict[str, pd.DataFrame]] = {file_name: {} for file_name in self._file_paths}
+        sheets: dict[str, dict[str, pd.DataFrame]] = {file_name: {} for file_name in self._file_paths}
         for sheet_name, sheet_data in data.items():
             if "." in sheet_name:
                 file_name, alt_sheet_name = sheet_name.split(".", maxsplit=1)
@@ -190,10 +189,10 @@ class ExcelFileStore(BaseDataStore[TabularData]):
 
         return data
 
-    def _check_duplicate_values(self, sheet_name: str, data: pd.DataFrame) -> Dict[int, str | Tuple[str, ...]]:
+    def _check_duplicate_values(self, sheet_name: str, data: pd.DataFrame) -> dict[int, str | tuple[str, ...]]:
         grouped = self._group_columns_by_index(data=data)
 
-        to_rename: Dict[int, str | Tuple[str, ...]] = {}
+        to_rename: dict[int, str | tuple[str, ...]] = {}
 
         for col_name, col_idxs in grouped.items():
             # No duplicate column names
@@ -256,8 +255,8 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         return data
 
     @staticmethod
-    def _group_columns_by_index(data: pd.DataFrame) -> Dict[str | Tuple[str, ...], Set[int]]:
-        grouped: Dict[str | Tuple[str, ...], Set[int]] = {}
+    def _group_columns_by_index(data: pd.DataFrame) -> dict[str | tuple[str, ...], set[int]]:
+        grouped: dict[str | tuple[str, ...], set[int]] = {}
         columns = data.columns.values
         for col_idx, col_name in enumerate(columns):
             if col_name[0] not in grouped:
