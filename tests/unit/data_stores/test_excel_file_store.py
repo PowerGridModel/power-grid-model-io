@@ -18,7 +18,7 @@ from tests.utils import MockExcelFile, assert_log_exists
 PandasExcelData = dict[str, pd.DataFrame]
 
 
-@pytest.fixture()
+@pytest.fixture
 def objects_excel() -> PandasExcelData:
     return {
         "Nodes": pd.DataFrame([["A", 111.0], ["B", 222.0]], columns=("NAME", "U_NOM")),
@@ -26,7 +26,7 @@ def objects_excel() -> PandasExcelData:
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def specs_excel() -> PandasExcelData:
     return {
         "Colors": pd.DataFrame([["A", "Red"], ["B", "Yellow"]], columns=("NODE", "COLOR")),

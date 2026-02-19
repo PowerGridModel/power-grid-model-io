@@ -14,7 +14,7 @@ from power_grid_model_io.data_stores.csv_dir_store import CsvDirStore
 from power_grid_model_io.data_types import TabularData
 
 
-@pytest.fixture()
+@pytest.fixture
 def temp_dir():
     with tempfile.TemporaryDirectory() as tmp:
         yield Path(tmp).resolve()

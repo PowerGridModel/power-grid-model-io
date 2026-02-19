@@ -11,12 +11,12 @@ from power_grid_model_io.data_stores.json_file_store import JsonFileStore, Struc
 from power_grid_model_io.utils.json import JsonEncoder
 
 
-@pytest.fixture()
+@pytest.fixture
 def single_data() -> StructuredData:
     return {"node": [{"id": 0, "u_rated": 10.5e3}]}
 
 
-@pytest.fixture()
+@pytest.fixture
 def batch_data() -> StructuredData:
     return [{"source": [{"id": 1, "p_specified": 1e6}]}, {"source": [{"id": 1, "p_specified": 2e6}]}]
 
