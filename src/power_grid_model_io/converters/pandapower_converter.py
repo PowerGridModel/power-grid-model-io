@@ -2268,7 +2268,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Args:
             pp_table: Table name (e.g. "bus")
             pp_idx: PandaPower component identifier
-            name: options name for the index
+            name: optional name for the index
 
         Returns:
             the generated IDs
@@ -2294,7 +2294,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Args:
             pp_table: Table name (e.g. "bus")
             pp_idx: PandaPower component identifier
-            name: options name for the index
+            name: optional name for the index
 
         Returns:
             the power-grid-model IDs if they were previously generated
@@ -2318,7 +2318,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Args:
             pp_table: Table name (e.g. "bus")
             pgm_idx: power-grid-model component identifier
-            name: options name for the index
+            name: optional name for the index
 
         Returns:
             the PandaPower IDs if they were previously generated
