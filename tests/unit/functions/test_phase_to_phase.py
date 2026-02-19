@@ -121,7 +121,7 @@ def test_get_winding_from__no_neutral_grounding(code: str, winding_type: Winding
 
 
 def test_get_winding_from__exception():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"Invalid transformer connection string: 'XNd11'"):
         get_winding_from("XNd11")
 
 
@@ -170,7 +170,7 @@ def test_get_winding_to__no_neutral_grounding(code: str, winding_type: WindingTy
 
 
 def test_get_winding_to__exception():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"Invalid transformer connection string: 'YNx11'"):
         get_winding_to("YNx11")
 
 
@@ -190,7 +190,7 @@ def test_get_clock(code: str, clock: int):
 
 @pytest.mark.parametrize("code", ["YNd-15", "YNd13"])
 def test_get_clock__exception(code):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=f"Invalid transformer connection string: '{code}'"):
         get_clock(code)
 
 
@@ -239,7 +239,7 @@ def test_get_winding_1__no_neutral_grounding(code: str, winding_type: WindingTyp
 
 
 def test_get_winding_1__exception():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"Invalid three winding transformer connection string: 'XNy0d11'"):
         get_winding_1("XNy0d11")
 
 
@@ -288,7 +288,7 @@ def test_get_winding_2__no_neutral_grounding(code: str, winding_type: WindingTyp
 
 
 def test_get_winding_2__exception():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"Invalid three winding transformer connection string: 'YNx0d11'"):
         get_winding_2("YNx0d11")
 
 
@@ -337,7 +337,7 @@ def test_get_winding_3__no_neutral_grounding(code: str, winding_type: WindingTyp
 
 
 def test_get_winding_3__exception():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"Invalid three winding transformer connection string: 'XNy0d11'"):
         get_winding_3("XNy0d11")
 
 
@@ -356,7 +356,7 @@ def test_get_clock_12(code: str, clock: int):
 
 @pytest.mark.parametrize("code", ["YNd-1", "YNd13"])
 def test_get_clock_12__exception(code):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=f"Invalid three winding transformer connection string: '{code}'"):
         get_clock_12(code)
 
 
@@ -375,7 +375,7 @@ def test_get_clock_13(code: str, clock: int):
 
 @pytest.mark.parametrize("code", ["YNd-1", "YNd13"])
 def test_get_clock_13__exception(code):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=f"Invalid three winding transformer connection string: '{code}'"):
         get_clock_13(code)
 
 

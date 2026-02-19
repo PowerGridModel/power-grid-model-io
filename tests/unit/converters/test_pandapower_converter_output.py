@@ -834,7 +834,7 @@ def test_pp_switch_output():
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.np.matmul")
-def test_output_bus_3ph(_mock_np_array: MagicMock, converter):
+def test_output_bus_3ph(mock_np_array: MagicMock, converter):
     # Arrange
     mock_pgm_array = MagicMock()
     converter.pgm_output_data[ComponentType.node] = mock_pgm_array
@@ -867,6 +867,7 @@ def test_output_bus_3ph(_mock_np_array: MagicMock, converter):
 
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_bus_3ph", mock_pp_df.return_value)
+    mock_np_array.assert_called_once()
 
 
 def test_output_line_3ph(converter):

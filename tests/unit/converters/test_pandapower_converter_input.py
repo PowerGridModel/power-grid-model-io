@@ -158,7 +158,7 @@ def test_parse_data__update_data():
     converter = PandaPowerConverter()
 
     # Act/Assert
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"Data type: 'update' is not implemented"):
         converter._parse_data(data={}, data_type=DatasetType.update, extra_info=None)
 
 
@@ -2034,7 +2034,7 @@ def test_get_winding_types__value_error():
     converter.pp_input_data = {"trafo": pd.DataFrame([(1, "ADyn")], columns=["id", "vector_group"])}
 
     # Act / Assert
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"Invalid transformer connection string: 'ADyn'"):
         converter.get_trafo_winding_types()
 
 
@@ -2044,7 +2044,7 @@ def test_get_trafo3w_winding_types__value_error():
     converter.pp_input_data = {"trafo3w": pd.DataFrame([(1, "ADyndrr")], columns=["id", "vector_group"])}
 
     # Act / Assert
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"Invalid three winding transformer connection string: 'ADyndrr'"):
         converter.get_trafo3w_winding_types()
 
 

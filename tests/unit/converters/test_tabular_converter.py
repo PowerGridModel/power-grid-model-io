@@ -168,7 +168,7 @@ def test_convert_table_to_component(converter: TabularConverter, tabular_data_no
     "power_grid_model_io.converters.tabular_converter.TabularConverter._parse_table_filters",
 )
 def test_convert_table_to_component__filters(
-    _parse_table_filters: MagicMock,
+    parse_table_filters: MagicMock,
     converter: TabularConverter,
     tabular_data_no_units_no_substitutions: TabularData,
 ):
@@ -185,7 +185,7 @@ def test_convert_table_to_component__filters(
         attributes=node_attributes_with_filter,
         extra_info=None,
     )
-    _parse_table_filters.assert_called_once_with(
+    parse_table_filters.assert_called_once_with(
         data=tabular_data_no_units_no_substitutions,
         table="nodes",
         filtering_functions=node_attributes_with_filter["filters"],
@@ -200,8 +200,8 @@ def test_convert_table_to_component__filters(
     side_effect=np.array([False, False]),
 )
 def test_convert_table_to_component__filters_all_false(
-    _parse_table_filters: MagicMock,
-    _convert_col_def_to_attribute: MagicMock,
+    parse_table_filters: MagicMock,
+    convert_col_def_to_attribute: MagicMock,
     converter: TabularConverter,
     tabular_data_no_units_no_substitutions: TabularData,
 ):
@@ -220,12 +220,12 @@ def test_convert_table_to_component__filters_all_false(
     )
 
     assert actual is None
-    _parse_table_filters.assert_called_once_with(
+    parse_table_filters.assert_called_once_with(
         data=tabular_data_no_units_no_substitutions,
         table="nodes",
         filtering_functions=node_attributes_with_filter["filters"],
     )
-    _convert_col_def_to_attribute.assert_not_called()
+    convert_col_def_to_attribute.assert_not_called()
 
 
 def test_convert_col_def_to_attribute(
