@@ -8,7 +8,6 @@ from unittest.mock import MagicMock, call, patch
 import numpy as np
 import pandas as pd
 import pytest
-from pytest import param
 from structlog.testing import capture_logs
 
 from power_grid_model_io.data_stores.excel_file_store import ExcelFileStore
@@ -233,11 +232,11 @@ def test_save__multiple_files(mock_to_excel: MagicMock, mock_excel_writer):
 @pytest.mark.parametrize(
     ("column_name", "is_unnamed"),
     [
-        param("", False, id="empty"),
-        param("id", False, id="id"),
-        param("Unnamed: 123_level_1", True, id="unnamed"),
-        param("Unnamed", False, id="not_unnamed"),
-        param("123", False, id="number_as_str"),
+        pytest.param("", False, id="empty"),
+        pytest.param("id", False, id="id"),
+        pytest.param("Unnamed: 123_level_1", True, id="unnamed"),
+        pytest.param("Unnamed", False, id="not_unnamed"),
+        pytest.param("123", False, id="number_as_str"),
     ],
 )
 def test_unnamed_pattern(column_name: str, is_unnamed: bool):
