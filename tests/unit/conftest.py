@@ -10,6 +10,5 @@ from packaging.version import Version
 
 if Version(version("pandas")) < Version("3.0.0"):
     # Opt-in to Pandas 3 behavior for Pandas 2.x
-    copy_on_write_option = True
     with suppress(pd.errors.OptionError):
-        pd.set_option("mode.copy_on_write", copy_on_write_option)
+        pd.options.mode.copy_on_write = True

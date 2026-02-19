@@ -10,6 +10,5 @@ from packaging.version import Version
 
 if Version(version("pandas")) < Version("3.0.0"):
     # Opt-in to Pandas 3 behavior for Pandas 2.x
-    no_silent_downcasting_option = True
     with suppress(pd.errors.OptionError):
-        pd.set_option("future.no_silent_downcasting", no_silent_downcasting_option)
+        pd.options.future.no_silent_downcasting = True
