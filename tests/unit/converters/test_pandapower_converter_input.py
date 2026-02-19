@@ -125,9 +125,12 @@ def test_parse_data(
     create_input_data_mock.assert_called_once_with()
     fill_pgm_extra_info_mock.assert_not_called()
     fill_pp_extra_info_mock.assert_not_called()
-    assert len(converter.pp_input_data) == 1 and "bus" in converter.pp_input_data
-    assert len(converter.pgm_input_data) == 1 and ComponentType.node in converter.pgm_input_data
-    assert len(result) == 1 and ComponentType.node in result
+    assert len(converter.pp_input_data) == 1
+    assert "bus" in converter.pp_input_data
+    assert len(converter.pgm_input_data) == 1
+    assert ComponentType.node in converter.pgm_input_data
+    assert len(result) == 1
+    assert ComponentType.node in result
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._fill_pgm_extra_info")
@@ -155,7 +158,7 @@ def test_parse_data__update_data():
     converter = PandaPowerConverter()
 
     # Act/Assert
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"Data type: 'update' is not implemented"):
         converter._parse_data(data={}, data_type=DatasetType.update, extra_info=None)
 
 
@@ -265,9 +268,12 @@ def test__serialize_data__sym(
     create_output_data_mock.assert_called_once_with()
     extra_info_to_idx_lookup.assert_not_called()
     extra_info_pgm_input_data.assert_not_called()
-    assert len(converter.pp_output_data) == 1 and "res_line" in converter.pp_output_data
-    assert len(converter.pgm_output_data) == 1 and ComponentType.line in converter.pgm_output_data
-    assert len(result) == 1 and "res_line" in result
+    assert len(converter.pp_output_data) == 1
+    assert "res_line" in converter.pp_output_data
+    assert len(converter.pgm_output_data) == 1
+    assert ComponentType.line in converter.pgm_output_data
+    assert len(result) == 1
+    assert "res_line" in result
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.PandaPowerConverter._extra_info_to_idx_lookup")
@@ -292,9 +298,12 @@ def test__serialize_data__asym(
     create_output_data_3ph_mock.assert_called_once_with()
     extra_info_to_idx_lookup.assert_not_called()
     extra_info_pgm_input_data.assert_not_called()
-    assert len(converter.pp_output_data) == 1 and "res_line_3ph" in converter.pp_output_data
-    assert len(converter.pgm_output_data) == 1 and ComponentType.line in converter.pgm_output_data
-    assert len(result) == 1 and "res_line_3ph" in result
+    assert len(converter.pp_output_data) == 1
+    assert "res_line_3ph" in converter.pp_output_data
+    assert len(converter.pgm_output_data) == 1
+    assert ComponentType.line in converter.pgm_output_data
+    assert len(result) == 1
+    assert "res_line_3ph" in result
 
 
 def test__serialize_data__invalid_output():
@@ -1786,7 +1795,6 @@ def test_create_pgm_input_motors__existing_loads() -> None:
         PandaPowerConverter._create_pgm_input_transformers,
         PandaPowerConverter._create_pgm_input_wards,
         PandaPowerConverter._create_pgm_input_xwards,
-        PandaPowerConverter._create_pgm_input_sources,
         PandaPowerConverter._create_pgm_input_generators,
         PandaPowerConverter._create_pgm_input_dclines,
     ],
@@ -2026,7 +2034,7 @@ def test_get_winding_types__value_error():
     converter.pp_input_data = {"trafo": pd.DataFrame([(1, "ADyn")], columns=["id", "vector_group"])}
 
     # Act / Assert
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"Invalid transformer connection string: 'ADyn'"):
         converter.get_trafo_winding_types()
 
 
@@ -2036,7 +2044,7 @@ def test_get_trafo3w_winding_types__value_error():
     converter.pp_input_data = {"trafo3w": pd.DataFrame([(1, "ADyndrr")], columns=["id", "vector_group"])}
 
     # Act / Assert
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"Invalid three winding transformer connection string: 'ADyndrr'"):
         converter.get_trafo3w_winding_types()
 
 

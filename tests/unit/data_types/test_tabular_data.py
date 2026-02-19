@@ -15,36 +15,36 @@ from power_grid_model_io.mappings.value_mapping import ValueMapping
 from tests.utils import assert_log_exists
 
 
-@pytest.fixture()
+@pytest.fixture
 def nodes() -> pd.DataFrame:
     return pd.DataFrame([(0, 150e3), (1, 10.5e3), (2, 400.0)], columns=["id", "u_rated"])
 
 
-@pytest.fixture()
+@pytest.fixture
 def nodes_iso() -> pd.DataFrame:
     return pd.DataFrame(
         [(0, 150e3), (1, 10.5e3), (2, 400.0)], columns=pd.MultiIndex.from_tuples((("id", ""), ("u_rated", "V")))
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def nodes_kv() -> pd.DataFrame:
     return pd.DataFrame(
         [(0, 150), (1, 10.5), (2, 0.4)], columns=pd.MultiIndex.from_tuples((("id", ""), ("u_rated", "kV")))
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def nodes_vl() -> pd.DataFrame:
     return pd.DataFrame([(0, "hv"), (1, "mv"), (2, "lv")], columns=("id", "u_rated"))
 
 
-@pytest.fixture()
+@pytest.fixture
 def nodes_np() -> np.ndarray:
     return np.array([(0, 150e3), (1, 10.5e3), (2, 400.0)], dtype=[("id", "i4"), ("u_rated", "f4")])
 
 
-@pytest.fixture()
+@pytest.fixture
 def lines() -> pd.DataFrame:
     return pd.DataFrame([(2, 0, 1), (3, 2, 3)], columns=("id", "from_node", "to_node"))
 

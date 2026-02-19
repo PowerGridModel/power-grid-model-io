@@ -2,8 +2,8 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 import numpy as np
+import pytest
 from power_grid_model.enum import WindingType
-from pytest import approx, mark, param, raises
 
 from power_grid_model_io.functions.phase_to_phase import (
     get_clock,
@@ -22,7 +22,7 @@ from power_grid_model_io.functions.phase_to_phase import (
 )
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("i_0", "p_0", "s_nom", "u_nom", "expected"),
     [
         (float("nan"), float("nan"), float("nan"), float("nan"), float("nan")),
@@ -32,15 +32,15 @@ from power_grid_model_io.functions.phase_to_phase import (
 )
 def test_relative_no_load_current(i_0: float, p_0: float, s_nom: float, u_nom: float, expected: float):
     actual = relative_no_load_current(i_0, p_0, s_nom, u_nom)
-    assert actual == approx(expected) or (np.isnan(actual) and np.isnan(expected))
+    assert actual == pytest.approx(expected) or (np.isnan(actual) and np.isnan(expected))
 
 
 def test_relative_no_load_current__exception():
-    with raises(ValueError, match=r"can't be more than 100% .* 346.41%"):
+    with pytest.raises(ValueError, match=r"can't be more than 100% .* 346.41%"):
         relative_no_load_current(500.0, 1000.0, 100000.0, 400.0)
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("p", "cos_phi", "expected"),
     [
         (float("nan"), float("nan"), float("nan")),
@@ -49,34 +49,34 @@ def test_relative_no_load_current__exception():
 )
 def test_reactive_power(p: float, cos_phi: float, expected: float):
     actual = reactive_power(p, cos_phi)
-    assert actual == approx(expected) or (np.isnan(actual) and np.isnan(expected))
+    assert actual == pytest.approx(expected) or (np.isnan(actual) and np.isnan(expected))
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("kwargs", "expected"),
     [
-        param({"wind_speed": 0.0, "axis_height": 10.0}, 0.0, id="no-wind"),
-        param({"wind_speed": 1.5, "axis_height": 10.0}, 0.0, id="half-way-cut-in"),
-        param({"wind_speed": 3.0, "axis_height": 10.0}, 0.0, id="cut-in"),
-        param({"wind_speed": 8.5, "axis_height": 10.0}, 125000.0, id="cut-in-to-nominal"),
-        param({"wind_speed": 14.0, "axis_height": 10.0}, 1000000.0, id="nominal"),  # nominal
-        param({"wind_speed": 19.5, "axis_height": 10.0}, 1000000.0, id="nominal-to-cutting-out"),
-        param({"wind_speed": 25.0, "axis_height": 10.0}, 1000000.0, id="cutting-out"),
-        param({"wind_speed": 27.5, "axis_height": 10.0}, 500000.0, id="cutting-out-to-cut-out"),
-        param({"wind_speed": 30.0, "axis_height": 10.0}, 0.0, id="cut-out"),
-        param({"wind_speed": 50.0, "axis_height": 10.0}, 0.0, id="more-than-cut-out"),
+        pytest.param({"wind_speed": 0.0, "axis_height": 10.0}, 0.0, id="no-wind"),
+        pytest.param({"wind_speed": 1.5, "axis_height": 10.0}, 0.0, id="half-way-cut-in"),
+        pytest.param({"wind_speed": 3.0, "axis_height": 10.0}, 0.0, id="cut-in"),
+        pytest.param({"wind_speed": 8.5, "axis_height": 10.0}, 125000.0, id="cut-in-to-nominal"),
+        pytest.param({"wind_speed": 14.0, "axis_height": 10.0}, 1000000.0, id="nominal"),  # nominal
+        pytest.param({"wind_speed": 19.5, "axis_height": 10.0}, 1000000.0, id="nominal-to-cutting-out"),
+        pytest.param({"wind_speed": 25.0, "axis_height": 10.0}, 1000000.0, id="cutting-out"),
+        pytest.param({"wind_speed": 27.5, "axis_height": 10.0}, 500000.0, id="cutting-out-to-cut-out"),
+        pytest.param({"wind_speed": 30.0, "axis_height": 10.0}, 0.0, id="cut-out"),
+        pytest.param({"wind_speed": 50.0, "axis_height": 10.0}, 0.0, id="more-than-cut-out"),
         # 30 meters high
-        param({"wind_speed": 3.0, "axis_height": 30.0}, 99.86406950142123, id="cut-in-at-30m"),
-        param({"wind_speed": 20.0, "axis_height": 30.0}, 1000000.0, id="nominal-at-30m"),
-        param({"wind_speed": 25.0, "axis_height": 30.0}, 149427.79246831674, id="cutting-out-at-30m"),
-        param({"wind_speed": 25.63851786, "axis_height": 30.0}, 0.0, id="cut-out-at-30m"),
+        pytest.param({"wind_speed": 3.0, "axis_height": 30.0}, 99.86406950142123, id="cut-in-at-30m"),
+        pytest.param({"wind_speed": 20.0, "axis_height": 30.0}, 1000000.0, id="nominal-at-30m"),
+        pytest.param({"wind_speed": 25.0, "axis_height": 30.0}, 149427.79246831674, id="cutting-out-at-30m"),
+        pytest.param({"wind_speed": 25.63851786, "axis_height": 30.0}, 0.0, id="cut-out-at-30m"),
     ],
 )
 def test_power_wind_speed(kwargs, expected):
-    assert power_wind_speed(p_nom=1e6, **kwargs) == approx(expected)
+    assert power_wind_speed(p_nom=1e6, **kwargs) == pytest.approx(expected)
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("code", "winding_type"),
     [
         ("Yy1", WindingType.wye),
@@ -98,7 +98,7 @@ def test_get_winding_from(code: str, winding_type: WindingType):
     assert get_winding_from(code) == winding_type
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("code", "winding_type"),
     [
         ("Yy1", WindingType.wye),
@@ -121,11 +121,11 @@ def test_get_winding_from__no_neutral_grounding(code: str, winding_type: Winding
 
 
 def test_get_winding_from__exception():
-    with raises(ValueError):
+    with pytest.raises(ValueError, match=r"Invalid transformer connection string: 'XNd11'"):
         get_winding_from("XNd11")
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("code", "winding_type"),
     [
         ("Yy0", WindingType.wye),
@@ -147,7 +147,7 @@ def test_get_winding_to(code: str, winding_type: WindingType):
     assert get_winding_to(code) == winding_type
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("code", "winding_type"),
     [
         ("Yy0", WindingType.wye),
@@ -170,11 +170,11 @@ def test_get_winding_to__no_neutral_grounding(code: str, winding_type: WindingTy
 
 
 def test_get_winding_to__exception():
-    with raises(ValueError):
+    with pytest.raises(ValueError, match=r"Invalid transformer connection string: 'YNx11'"):
         get_winding_to("YNx11")
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("code", "clock"),
     [
         ("YNd0", 0),
@@ -188,13 +188,13 @@ def test_get_clock(code: str, clock: int):
     assert get_clock(code) == clock
 
 
-@mark.parametrize("code", ["YNd-15", "YNd13"])
+@pytest.mark.parametrize("code", ["YNd-15", "YNd13"])
 def test_get_clock__exception(code):
-    with raises(ValueError):
+    with pytest.raises(ValueError, match=f"Invalid transformer connection string: '{code}'"):
         get_clock(code)
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("code", "winding_type"),
     [
         ("Yd0y1", WindingType.wye),
@@ -216,7 +216,7 @@ def test_get_winding_1(code: str, winding_type: WindingType):
     assert get_winding_1(code) == winding_type
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("code", "winding_type"),
     [
         ("Yd0y1", WindingType.wye),
@@ -239,11 +239,11 @@ def test_get_winding_1__no_neutral_grounding(code: str, winding_type: WindingTyp
 
 
 def test_get_winding_1__exception():
-    with raises(ValueError):
+    with pytest.raises(ValueError, match=r"Invalid three winding transformer connection string: 'XNy0d11'"):
         get_winding_1("XNy0d11")
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("code", "winding_type"),
     [
         ("Dy0y1", WindingType.wye),
@@ -265,7 +265,7 @@ def test_get_winding_2(code: str, winding_type: WindingType):
     assert get_winding_2(code) == winding_type
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("code", "winding_type"),
     [
         ("Dy0y1", WindingType.wye),
@@ -288,11 +288,11 @@ def test_get_winding_2__no_neutral_grounding(code: str, winding_type: WindingTyp
 
 
 def test_get_winding_2__exception():
-    with raises(ValueError):
+    with pytest.raises(ValueError, match=r"Invalid three winding transformer connection string: 'YNx0d11'"):
         get_winding_2("YNx0d11")
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("code", "winding_type"),
     [
         ("Yd0y1", WindingType.wye),
@@ -314,7 +314,7 @@ def test_get_winding_3(code: str, winding_type: WindingType):
     assert get_winding_3(code) == winding_type
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("code", "winding_type"),
     [
         ("Yd0y1", WindingType.wye),
@@ -337,11 +337,11 @@ def test_get_winding_3__no_neutral_grounding(code: str, winding_type: WindingTyp
 
 
 def test_get_winding_3__exception():
-    with raises(ValueError):
+    with pytest.raises(ValueError, match=r"Invalid three winding transformer connection string: 'XNy0d11'"):
         get_winding_3("XNy0d11")
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("code", "clock"),
     [
         ("YNd0y4", 0),
@@ -354,13 +354,13 @@ def test_get_clock_12(code: str, clock: int):
     assert get_clock_12(code) == clock
 
 
-@mark.parametrize("code", ["YNd-1", "YNd13"])
+@pytest.mark.parametrize("code", ["YNd-1", "YNd13"])
 def test_get_clock_12__exception(code):
-    with raises(ValueError):
+    with pytest.raises(ValueError, match=f"Invalid three winding transformer connection string: '{code}'"):
         get_clock_12(code)
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("code", "clock"),
     [
         ("YNd0y4", 4),
@@ -373,13 +373,13 @@ def test_get_clock_13(code: str, clock: int):
     assert get_clock_13(code) == clock
 
 
-@mark.parametrize("code", ["YNd-1", "YNd13"])
+@pytest.mark.parametrize("code", ["YNd-1", "YNd13"])
 def test_get_clock_13__exception(code):
-    with raises(ValueError):
+    with pytest.raises(ValueError, match=f"Invalid three winding transformer connection string: '{code}'"):
         get_clock_13(code)
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("q_var", "u_nom", "expected"),
     [
         (float("nan"), float("nan"), float("nan")),
@@ -388,10 +388,10 @@ def test_get_clock_13__exception(code):
 )
 def test_reactive_power_to_susceptance(q_var: float, u_nom: float, expected: float):
     actual = reactive_power_to_susceptance(q_var, u_nom)
-    assert actual == approx(expected) or (np.isnan(actual) and np.isnan(expected))
+    assert actual == pytest.approx(expected) or (np.isnan(actual) and np.isnan(expected))
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("p", "efficiency_type", "expected"),
     [
         (float("nan"), "", float("nan")),
@@ -404,4 +404,4 @@ def test_reactive_power_to_susceptance(q_var: float, u_nom: float, expected: flo
 )
 def test_pvs_power_adjustment(p: float, efficiency_type: str, expected: float):
     actual = pvs_power_adjustment(p, efficiency_type)
-    assert actual == approx(expected) or (np.isnan(actual) and np.isnan(expected))
+    assert actual == pytest.approx(expected) or (np.isnan(actual) and np.isnan(expected))

@@ -4,8 +4,8 @@
 from unittest.mock import MagicMock, patch
 
 import numpy as np
+import pytest
 from power_grid_model import WindingType
-from pytest import approx, mark
 
 from power_grid_model_io.functions import (
     both_zeros_to_nan,
@@ -20,7 +20,7 @@ from power_grid_model_io.functions import (
 )
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("value", "expected"),
     [
         (None, False),
@@ -37,7 +37,7 @@ from power_grid_model_io.functions import (
     ],
 )
 def test_has_value(value, expected):
-    assert has_value(value) == approx(expected)
+    assert has_value(value) == pytest.approx(expected)
 
 
 @patch("power_grid_model_io.functions.has_value")
@@ -58,7 +58,7 @@ def test_value_or_zero(mock_value_or_default: MagicMock):
     mock_value_or_default.assert_called_once_with(value=1.23, default=0.0)
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("real", "imag", "expected"),
     [
         (float("nan"), float("nan"), float("nan")),
@@ -70,10 +70,10 @@ def test_value_or_zero(mock_value_or_default: MagicMock):
 )
 def test_complex_inverse_real_part(real: float, imag: float, expected: float):
     actual = complex_inverse_real_part(real, imag)
-    assert actual == approx(expected) or (np.isnan(actual) and np.isnan(expected))
+    assert actual == pytest.approx(expected) or (np.isnan(actual) and np.isnan(expected))
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("real", "imag", "expected"),
     [
         (float("nan"), float("nan"), float("nan")),
@@ -85,10 +85,10 @@ def test_complex_inverse_real_part(real: float, imag: float, expected: float):
 )
 def test_complex_inverse_imaginary_part(real: float, imag: float, expected: float):
     actual = complex_inverse_imaginary_part(real, imag)
-    assert actual == approx(expected) or (np.isnan(actual) and np.isnan(expected))
+    assert actual == pytest.approx(expected) or (np.isnan(actual) and np.isnan(expected))
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("winding", "neutral_grounding", "expected"),
     [
         ("Y", True, WindingType.wye),
@@ -118,7 +118,7 @@ def test_get_winding(winding: str, neutral_grounding: bool, expected: WindingTyp
     assert actual == expected
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("degrees", "expected"),
     [
         (360, 0),
@@ -129,10 +129,10 @@ def test_get_winding(winding: str, neutral_grounding: bool, expected: WindingTyp
 )
 def test_degrees_to_clock(degrees: float, expected: int):
     actual = degrees_to_clock(degrees)
-    assert actual == approx(expected) or (np.isnan(actual) and np.isnan(expected))
+    assert actual == pytest.approx(expected) or (np.isnan(actual) and np.isnan(expected))
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("left_side", "right_side", "expected"),
     [
         (float("nan"), float("nan"), False),
@@ -146,7 +146,7 @@ def test_is_greater_than(left_side: float, right_side: list[float], expected: fl
     assert actual == expected
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("value", "other_value", "expected"),
     [
         (float("nan"), float("nan"), float("nan")),
@@ -162,4 +162,4 @@ def test_is_greater_than(left_side: float, right_side: list[float], expected: fl
 )
 def test_both_zeros_to_nan(value: float, other_value: float, expected: float):
     actual = both_zeros_to_nan(value, other_value)
-    assert actual == approx(expected) or (np.isnan(actual) and np.isnan(expected))
+    assert actual == pytest.approx(expected) or (np.isnan(actual) and np.isnan(expected))

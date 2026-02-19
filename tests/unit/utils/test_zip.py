@@ -17,7 +17,7 @@ ZIP1 = DATA_DIR / "foo.zip"
 ZIP2 = DATA_DIR / "foo-bar.zip"
 
 
-@pytest.fixture()
+@pytest.fixture
 def temp_dir():
     with tempfile.TemporaryDirectory() as tmp:
         yield Path(tmp).resolve()

@@ -5,12 +5,11 @@ import logging
 
 import pytest
 import structlog
-from pytest import fixture
 
 from power_grid_model_io.mappings.value_mapping import ValueMapping
 
 
-@fixture
+@pytest.fixture
 def mapping() -> ValueMapping:
     return ValueMapping(
         {

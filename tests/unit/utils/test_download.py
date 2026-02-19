@@ -28,7 +28,7 @@ FOO_KEY = "LCa0a2j_xo_5m0U8HTBBNBNCLXBkg7-g-YpeiGJm564"
 TEMP_DIR = Path(tempfile.gettempdir()).resolve()
 
 
-@pytest.fixture()
+@pytest.fixture
 def temp_dir():
     with tempfile.TemporaryDirectory() as tmp:
         yield Path(tmp).resolve()

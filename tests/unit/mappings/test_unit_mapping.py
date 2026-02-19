@@ -6,12 +6,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import structlog
-from pytest import fixture
 
 from power_grid_model_io.mappings.unit_mapping import UnitMapping, Units
 
 
-@fixture
+@pytest.fixture
 def units() -> Units:
     return {"A": None, "W": {"kW": 1000.0, "MW": 1000000.0}}
 

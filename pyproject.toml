@@ -164,7 +164,7 @@ select = [
     # raise vanilla args
     "TRY002",
     # pytest-style
-    #"PT",
+    "PT",
 ]
 ignore = []
 
