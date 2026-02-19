@@ -95,7 +95,7 @@ def parse_node_ref(string: str) -> dict[str, str]:
         ValueError: If the input string is not a node reference.
 
     Returns:
-        Dict[str, str]: The prefix and suffix (may be empty).
+        dict[str, str]: The prefix and suffix (may be empty).
     """
 
     def _raise():
