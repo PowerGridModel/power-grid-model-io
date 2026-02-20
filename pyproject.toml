@@ -28,6 +28,7 @@ classifiers=[
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "defusedxml>=0.7",
     "numpy>=2.0",
     "openpyxl",
     "packaging>=25.0",
