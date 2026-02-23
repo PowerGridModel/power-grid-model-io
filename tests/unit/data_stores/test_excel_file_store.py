@@ -8,7 +8,6 @@ from unittest.mock import MagicMock, call, patch
 import numpy as np
 import pandas as pd
 import pytest
-from pytest import param
 from structlog.testing import capture_logs
 
 from power_grid_model_io.data_stores.excel_file_store import ExcelFileStore
@@ -18,7 +17,7 @@ from tests.utils import MockExcelFile, assert_log_exists
 PandasExcelData = dict[str, pd.DataFrame]
 
 
-@pytest.fixture()
+@pytest.fixture
 def objects_excel() -> PandasExcelData:
     return {
         "Nodes": pd.DataFrame([["A", 111.0], ["B", 222.0]], columns=("NAME", "U_NOM")),
@@ -26,7 +25,7 @@ def objects_excel() -> PandasExcelData:
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def specs_excel() -> PandasExcelData:
     return {
         "Colors": pd.DataFrame([["A", "Red"], ["B", "Yellow"]], columns=("NODE", "COLOR")),
@@ -233,11 +232,11 @@ def test_save__multiple_files(mock_to_excel: MagicMock, mock_excel_writer):
 @pytest.mark.parametrize(
     ("column_name", "is_unnamed"),
     [
-        param("", False, id="empty"),
-        param("id", False, id="id"),
-        param("Unnamed: 123_level_1", True, id="unnamed"),
-        param("Unnamed", False, id="not_unnamed"),
-        param("123", False, id="number_as_str"),
+        pytest.param("", False, id="empty"),
+        pytest.param("id", False, id="id"),
+        pytest.param("Unnamed: 123_level_1", True, id="unnamed"),
+        pytest.param("Unnamed", False, id="not_unnamed"),
+        pytest.param("123", False, id="number_as_str"),
     ],
 )
 def test_unnamed_pattern(column_name: str, is_unnamed: bool):

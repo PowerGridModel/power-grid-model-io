@@ -6,12 +6,11 @@ import logging
 
 import pytest
 import structlog
-from pytest import fixture
 
 from power_grid_model_io.mappings.tabular_mapping import TabularMapping
 
 
-@fixture
+@pytest.fixture
 def mapping() -> TabularMapping:
     # Arrange
     return TabularMapping(
