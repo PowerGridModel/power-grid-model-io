@@ -1372,19 +1372,19 @@ wheels = [
 
 [[package]]
 name = "power-grid-model"
-version = "1.13.10"
+version = "1.13.11"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/bd/2e/9865a5b6059319acca1152fb988bf7d4ffd0fd59ba7411dbf9213caa87da/power_grid_model-1.13.10.tar.gz", hash = "sha256:0f1e9bcf0b5618a9b32af2bd8d8d56be4292eaebd02f7ffc818787022be4ec15", size = 1451767, upload-time = "2026-02-19T16:16:46.205Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/12/7a/357f5d73ee6e9ca8761ff75edfd914c7000cee29f6f8c42a5077c24c546c/power_grid_model-1.13.11.tar.gz", hash = "sha256:1d38d3c57d220f10e0f2cd8122d6fd9e66c314b9d9705d75300a3045e8093461", size = 1451483, upload-time = "2026-02-22T11:09:54.682Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/18/a2/c8b6b73dc148e93581aed086a643c9186f283ef6cc7d2f8edccefc71d80a/power_grid_model-1.13.10-py3-none-macosx_13_0_arm64.whl", hash = "sha256:50554b693172c2cbfa24821d666bb62f1c8f6432fa1ab6b339042c9c61106ab5", size = 1445680, upload-time = "2026-02-19T16:16:34.427Z" },
-    { url = "https://files.pythonhosted.org/packages/90/d5/64144b4c54487a99b4edadc15b0f5beeb88cd2bfab0feb4b94a2c45998d6/power_grid_model-1.13.10-py3-none-macosx_13_0_x86_64.whl", hash = "sha256:ea3228c8d3c9c62c81d5d5748b6e7473f16af8e6f51bd507550f7956aae91a47", size = 1650348, upload-time = "2026-02-19T16:16:36.277Z" },
-    { url = "https://files.pythonhosted.org/packages/5b/d3/e7c3cedb2e9889c1f5249aed98896971632f094b197b0ae16cf66ce419e3/power_grid_model-1.13.10-py3-none-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:77a50bbd030adebd41fc6dbd1b3087173cd9d64a52ed33e464bf8bded697600a", size = 1975342, upload-time = "2026-02-19T16:16:38.218Z" },
-    { url = "https://files.pythonhosted.org/packages/8a/81/b87625f9f8a2950013ee85812c31f321515ebd35f77cd35aae30dc776a63/power_grid_model-1.13.10-py3-none-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:a88be3c018173e0311a76a5b910d2aa3ffd36d55cdbeb5878e8d1498be6469e1", size = 2147052, upload-time = "2026-02-19T16:16:40.335Z" },
-    { url = "https://files.pythonhosted.org/packages/28/47/cda0f77da52b33b204b25001fa83ee7c8b1f59c0ba158f1e0109b14d2dd2/power_grid_model-1.13.10-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:48b4cff3be3c9b2e0605eff7f433f14027ee7ca12565d59a71582c5f5a29bb7d", size = 3003620, upload-time = "2026-02-19T16:16:42.783Z" },
-    { url = "https://files.pythonhosted.org/packages/7f/ed/d7a88864a90ad5290fd3729e18a95f789febadea940f2d62bb4ff1543c17/power_grid_model-1.13.10-py3-none-win_amd64.whl", hash = "sha256:4eca24ab3f6363d94450b9ac0c9ab18c55cb510ffeee7157944b9a9969ba4519", size = 894776, upload-time = "2026-02-19T16:16:44.791Z" },
+    { url = "https://files.pythonhosted.org/packages/b1/1e/af1deda3a0bd3aa274566b015c05612f1dedce74f12de03d76520fdb9f46/power_grid_model-1.13.11-py3-none-macosx_13_0_arm64.whl", hash = "sha256:a46c127aa0b8f376e8754e587e187544b85f8661f4a7673fff8b482cbcb92acc", size = 1445674, upload-time = "2026-02-22T11:09:43.043Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/e4/b9c124e347a115d66a316430866a6241983557bd63c0394870786cf0bdd6/power_grid_model-1.13.11-py3-none-macosx_13_0_x86_64.whl", hash = "sha256:457ed871cf1a03460d45741e8e8e123bc74b322bc93f426d95012b17b4283e7a", size = 1650346, upload-time = "2026-02-22T11:09:44.934Z" },
+    { url = "https://files.pythonhosted.org/packages/03/ea/8f45082f67dac73f924f19d04a13a697ac1afa93c431f9220a8b341a768a/power_grid_model-1.13.11-py3-none-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:bd29c0fe15f8ed516cd028800ced1b7776f11b7818f596f0acab6a6bcbe6dd79", size = 1975347, upload-time = "2026-02-22T11:09:46.652Z" },
+    { url = "https://files.pythonhosted.org/packages/a9/8c/20a00bb411f59c0876513ef035001554fa5f6cd49d66d4dda3292385c964/power_grid_model-1.13.11-py3-none-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:018fdae80d8ab25e66bd138ea38be51b7f7dbecd25b2bfd974ef3ce2906ba298", size = 2147056, upload-time = "2026-02-22T11:09:48.542Z" },
+    { url = "https://files.pythonhosted.org/packages/25/62/cbf5295fd8d9a6a2cdeb8dce459bf83e3799ea8e8e39f17209704a8e4637/power_grid_model-1.13.11-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:5a685c852ed0b604a109b04e34737cdefa198412b548ebfd6c985bc764c01e10", size = 3003622, upload-time = "2026-02-22T11:09:50.205Z" },
+    { url = "https://files.pythonhosted.org/packages/31/3c/dc07b5d3581fab2fcab8db1ee7a992bcc591ca64f5df2ed817d2f777a93c/power_grid_model-1.13.11-py3-none-win_amd64.whl", hash = "sha256:6f9af48c43f6d1e9365255d836beb0d62f78ecca80ec3fe0fc7d615daff67b06", size = 894776, upload-time = "2026-02-22T11:09:52.025Z" },
 ]
 
 [[package]]
@@ -2408,16 +2408,16 @@ wheels = [
 
 [[package]]
 name = "virtualenv"
-version = "20.38.0"
+version = "20.39.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "distlib" },
     { name = "filelock" },
     { name = "platformdirs" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d2/03/a94d404ca09a89a7301a7008467aed525d4cdeb9186d262154dd23208709/virtualenv-20.38.0.tar.gz", hash = "sha256:94f39b1abaea5185bf7ea5a46702b56f1d0c9aa2f41a6c2b8b0af4ddc74c10a7", size = 5864558, upload-time = "2026-02-19T07:48:02.385Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ed/54/809199edc537dbace273495ac0884d13df26436e910a5ed4d0ec0a69806b/virtualenv-20.39.0.tar.gz", hash = "sha256:a15f0cebd00d50074fd336a169d53422436a12dfe15149efec7072cfe817df8b", size = 5869141, upload-time = "2026-02-23T18:09:13.349Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/42/d7/394801755d4c8684b655d35c665aea7836ec68320304f62ab3c94395b442/virtualenv-20.38.0-py3-none-any.whl", hash = "sha256:d6e78e5889de3a4742df2d3d44e779366325a90cf356f15621fddace82431794", size = 5837778, upload-time = "2026-02-19T07:47:59.778Z" },
+    { url = "https://files.pythonhosted.org/packages/f7/b4/8268da45f26f4fe84f6eae80a6ca1485ffb490a926afecff75fc48f61979/virtualenv-20.39.0-py3-none-any.whl", hash = "sha256:44888bba3775990a152ea1f73f8e5f566d49f11bbd1de61d426fd7732770043e", size = 5839121, upload-time = "2026-02-23T18:09:11.173Z" },
 ]
 
 [[package]]
