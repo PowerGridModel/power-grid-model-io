@@ -1088,6 +1088,38 @@ def test_output_trafos_3ph__invalid_trafo_loading(converter):
         converter._pp_trafos_output_3ph()
 
 
+def test_output_shunts_3ph(converter):
+    # Arrange
+    mock_pgm_array = MagicMock()
+    converter.pgm_input_data[ComponentType.shunt] = mock_pgm_array
+    converter.pgm_output_data[ComponentType.shunt] = mock_pgm_array
+    converter.pgm_nodes_lookup = pd.DataFrame({"u_pu": mock_pgm_array}, index=mock_pgm_array)
+
+    with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
+        # Act
+        converter._pp_shunts_output_3ph()
+
+        # Assert
+
+        # initialization
+        converter._get_pp_ids.assert_called_once_with(ComponentType.shunt, mock_pgm_array["X"])
+
+        # retrieval
+        mock_pgm_array.__getitem__.assert_any_call("id")
+        # mock_pgm_array.__getitem__.assert_any_call("node")
+        mock_pgm_array.__getitem__.assert_any_call("p")
+        mock_pgm_array.__getitem__.assert_any_call("q")
+        # mock_pgm_array.__getitem__.assert_any_call("u_pu")
+
+        # assignment
+        mock_pp_df.return_value.__setitem__.assert_any_call("p_mw", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call("q_mvar", ANY)
+        # mock_pp_df.return_value.__setitem__.assert_any_call("vm_pu", ANY)
+
+        # result
+        converter.pp_output_data.__setitem__.assert_called_once_with("res_shunt_3ph", mock_pp_df.return_value)
+
+
 def test_output_asymmetric_load_3ph(converter):
     # Arrange
     mock_pgm_array = MagicMock()

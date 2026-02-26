@@ -535,6 +535,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_shunts.empty:
             return
 
+        if ComponentType.shunt in self.pgm_input_data:
+            raise ValueError("Shunt component already exists in pgm_input_data")
+
         vn_kv = self._get_pp_attr("shunt", "vn_kv", expected_type="f8")
         vn_kv_2 = vn_kv * vn_kv
 
@@ -553,8 +556,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_shunts["g0"] = g1_shunt
         pgm_shunts["b0"] = b1_shunt
 
-        if ComponentType.shunt in self.pgm_input_data:
-            raise ValueError("Shunt component already exists in pgm_input_data")
         self.pgm_input_data[ComponentType.shunt] = pgm_shunts
 
     def _create_pgm_input_sym_gens(self):
@@ -570,6 +571,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_sgens.empty:
             return
 
+        if ComponentType.sym_gen in self.pgm_input_data:
+            raise ValueError("Symmetric generator component already exists in pgm_input_data")
+
         scaling = self._get_pp_attr("sgen", "scaling", expected_type="f8", default=1.0)
 
         pgm_sym_gens = initialize_array(
@@ -584,8 +588,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         )
         pgm_sym_gens["type"] = LoadGenType.const_power
 
-        if ComponentType.sym_gen in self.pgm_input_data:
-            raise ValueError("Symmetrical Generator component already exists in pgm_input_data")
         self.pgm_input_data[ComponentType.sym_gen] = pgm_sym_gens
 
     def _create_pgm_input_asym_gens(self):
@@ -601,6 +603,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         if pp_asym_gens.empty:
             return
+
+        if ComponentType.asym_gen in self.pgm_input_data:
+            raise ValueError("Asymmetric generator component already exists in pgm_input_data")
 
         scaling = self._get_pp_attr("asymmetric_sgen", "scaling", expected_type="f8")
         multiplier = 1e6 * scaling
@@ -635,8 +640,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         )
         pgm_asym_gens["type"] = LoadGenType.const_power
 
-        if ComponentType.asym_gen in self.pgm_input_data:
-            raise ValueError("Asymmetrical Generator component already exists in pgm_input_data")
         self.pgm_input_data[ComponentType.asym_gen] = pgm_asym_gens
 
     def _create_pgm_input_sym_loads(self):
