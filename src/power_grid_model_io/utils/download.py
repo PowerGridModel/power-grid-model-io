@@ -235,7 +235,8 @@ def get_download_path(
         dir_path = Path(tempfile.gettempdir())
 
     # Combine the two paths
-    assert file_name is not None
+    if file_name is None:
+        raise ValueError("file_name should not be None.")
     file_path = (dir_path / file_name) if dir_path else Path(file_name)
 
     # If the file_path exists, it should be a file (not a dir)

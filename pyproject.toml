@@ -28,6 +28,7 @@ classifiers=[
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "defusedxml>=0.7",
     "numpy>=2.0",
     "openpyxl",
     "packaging>=25.0",
@@ -158,7 +159,7 @@ select = [
     # ruff sepcific rules
     "RUF",
     # bandit
-    #"S",
+    "S",
     # boolean positional value in call
     "FBT003",
     # raise vanilla args
@@ -171,6 +172,10 @@ ignore = []
 [tool.ruff.lint.isort]
 # Imports that are imported using keyword "as" and are from the same source - are combined.
 combine-as-imports = true
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"] # assert statements are used in tests
+"src/power_grid_model_io/utils/download.py" = ["S310"] # TODO: Resolve this ignore.
 
 [tool.mypy]
 follow_imports = "silent"
