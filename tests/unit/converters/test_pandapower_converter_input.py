@@ -368,6 +368,14 @@ def test_extra_info_to_idx_lookup():
         converter.idx_lookup[("load", "const_current")], pd.Series([201, 202, 203], index=[3, 4, 5])
     )
 
+def test_extra_info_to_idx_lookup__invalid_input():
+    converter = PandaPowerConverter()
+    extra_info = {
+        0: {"id_reference": ["bus", 101]}
+    }
+
+    with pytest.raises(TypeError, match="Expected 'id_reference' to be a dict for pgm_id 0, got list"):
+        converter._extra_info_to_idx_lookup(extra_info=extra_info)
 
 def test_extra_info_to_pgm_input_data():
     # Arrange
@@ -391,6 +399,21 @@ def test_extra_info_to_pgm_input_data():
         [{"id": 12, "from_node": 1, "to_node": 2, "i_n": 105.0}, {"id": 23, "from_node": 2, "to_node": 3, "i_n": 5.0}],
     )
 
+def test_extra_info_to_pgm_input_data__non_empty_input_data():
+    converter = PandaPowerConverter()
+    converter.pgm_input_data[ComponentType.node] = initialize_array(DatasetType.input, ComponentType.node, 1)
+    converter.pgm_input_data[ComponentType.node]["id"] = [1]
+    converter.pgm_output_data[ComponentType.node] = initialize_array(DatasetType.sym_output, ComponentType.node, 1)
+    converter.pgm_output_data[ComponentType.node]["id"] = [1]
+
+    with pytest.raises(ValueError, match="pgm_input_data should be empty"):
+        converter._extra_info_to_pgm_input_data(extra_info={})
+
+def test_extra_info_to_pgm_input_data__empty_output_data():
+    converter = PandaPowerConverter()
+
+    with pytest.raises(ValueError, match="pgm_output_data should not be empty"):
+        converter._extra_info_to_pgm_input_data(extra_info={})
 
 def test__extra_info_to_pp_input_data():
     converter = PandaPowerConverter()
@@ -421,6 +444,19 @@ def test__extra_info_to_pp_input_data__empty():
     converter._extra_info_to_pp_input_data({})
     assert len(converter.pp_input_data) == 0
 
+def test__extra_info_to_pp_input_data__non_empty_input_data():
+    converter = PandaPowerConverter()
+    converter.pp_input_data["bus"] = pd.DataFrame(data={"vn_kv": [11.0]}, index=[101])
+    converter.pgm_output_data[ComponentType.line] = initialize_array(DatasetType.sym_output, ComponentType.line, 3)
+
+    with pytest.raises(ValueError, match="pp_input_data should be empty"):
+        converter._extra_info_to_pp_input_data({})
+
+def test__extra_info_to_pp_input_data__empty_output_data():
+    converter = PandaPowerConverter()
+
+    with pytest.raises(ValueError, match="pgm_output_data should not be empty"):
+        converter._extra_info_to_pp_input_data({})
 
 def test_create_input_data():
     # Arrange
@@ -509,6 +545,13 @@ def test_create_pgm_input_nodes(mock_init_array: MagicMock, two_pp_objs: MockDf,
     # result
     assert converter.pgm_input_data[ComponentType.node] == mock_init_array.return_value
 
+def test_create_pgm_input_nodes__overwrite():
+    converter = PandaPowerConverter()
+    converter.pp_input_data["bus"] = pd.DataFrame(data={"vn_kv": [11.0]}, index=[101])
+    converter.pgm_input_data[ComponentType.node] = initialize_array(DatasetType.input, ComponentType.node, 1)
+
+    with pytest.raises(ValueError, match="Node component already exists in pgm_input_data"):
+        converter._create_pgm_input_nodes()
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, converter):
@@ -614,6 +657,14 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
 
     # result
     assert converter.pgm_input_data[ComponentType.line] == mock_init_array.return_value
+
+def test_create_pgm_input_lines__overwrite():
+    converter = PandaPowerConverter()
+    converter.pp_input_data["line"] = pd.DataFrame(data={"from_bus": [101], "to_bus": [102]}, index=[101])
+    converter.pgm_input_data[ComponentType.line] = initialize_array(DatasetType.input, ComponentType.line, 1)
+
+    with pytest.raises(ValueError, match="Line component already exists in pgm_input_data"):
+        converter._create_pgm_input_lines()
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")

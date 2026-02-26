@@ -272,8 +272,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 continue
             if not isinstance(extra["id_reference"], dict):
                 raise TypeError(
-                    f"Expected 'id_reference' to be a dict for pgm_id {pgm_idx}, \
-                                got {type(extra['id_reference'])}"
+                    f"Expected 'id_reference' to be a dict for pgm_id {pgm_idx}, "
+                    f"got {type(extra['id_reference']).__name__}"
                 )
             pp_table = extra["id_reference"]["table"]
             pp_index = extra["id_reference"]["index"]
@@ -411,14 +411,15 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_busses.empty:
             return
 
+        if ComponentType.node in self.pgm_input_data:
+            raise ValueError("Node component already exists in pgm_input_data")
+
         pgm_nodes = initialize_array(
             data_type=DatasetType.input, component_type=ComponentType.node, shape=len(pp_busses)
         )
         pgm_nodes["id"] = self._generate_ids("bus", pp_busses.index)
         pgm_nodes["u_rated"] = self._get_pp_attr("bus", "vn_kv", expected_type="f8") * 1e3
 
-        if ComponentType.node in self.pgm_input_data:
-            raise ValueError("Node component already exists in pgm_input_data")
         self.pgm_input_data[ComponentType.node] = pgm_nodes
 
     def _create_pgm_input_lines(self):
@@ -432,6 +433,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         if pp_lines.empty:
             return
+
+        if ComponentType.line in self.pgm_input_data:
+            raise ValueError("Line component already exists in pgm_input_data")
 
         switch_states = self.get_switch_states("line")
         in_service = self._get_pp_attr("line", "in_service", expected_type="bool", default=True)
@@ -473,8 +477,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             where=np.logical_not(np.isclose(c0_nf_per_km, 0.0)),
             out=None,
         )
-        if ComponentType.line in self.pgm_input_data:
-            raise ValueError("Line component already exists in pgm_input_data")
+
         self.pgm_input_data[ComponentType.line] = pgm_lines
 
     def _create_pgm_input_sources(self):
@@ -488,6 +491,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         if pp_ext_grid.empty:
             return
+
+        if ComponentType.source in self.pgm_input_data:
+            raise ValueError("Source component already exists in pgm_input_data")
 
         rx_max = self._get_pp_attr("ext_grid", "rx_max", expected_type="f8", default=np.nan)
         r0x0_max = self._get_pp_attr("ext_grid", "r0x0_max", expected_type="f8", default=np.nan)
@@ -515,8 +521,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         )
         pgm_sources["sk"] = self._get_pp_attr("ext_grid", "s_sc_max_mva", expected_type="f8", default=np.nan) * 1e6
 
-        if ComponentType.source in self.pgm_input_data:
-            raise ValueError("Source component already exists in pgm_input_data")
         self.pgm_input_data[ComponentType.source] = pgm_sources
 
     def _create_pgm_input_shunts(self):
