@@ -168,3 +168,8 @@ Hence if the mapping has an incorrect sheet name, they would not be considered i
 out.
 The user should use the adequate mapping file for different vision versions.
 And if the default mapping is modified, it is advised to verify if all required sheets are being converted.
+
+## Security Considerations
+
+Safe XML parsing is used to process Excel-based inputs, ensuring secure handling of mapping and tabular data.
+See security considerations of the [tabular_converter](converters/tabular_converter.md#security-considerations)
