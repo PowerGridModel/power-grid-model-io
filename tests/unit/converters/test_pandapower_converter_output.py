@@ -148,6 +148,7 @@ def test_output_bus(converter):
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_bus", mock_pp_df.return_value)
 
+
 def test_output_bus__overwrite():
     # Arrange
     converter = PandaPowerConverter()
@@ -155,6 +156,7 @@ def test_output_bus__overwrite():
 
     with pytest.raises(ValueError, match=r"res_bus already exists in pp_output_data."):
         converter._pp_buses_output()
+
 
 def test_output_line(converter):
     # Arrange
@@ -197,6 +199,7 @@ def test_output_line(converter):
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_line", mock_pp_df.return_value)
 
+
 def test_output_line__overwrite():
     # Arrange
     converter = PandaPowerConverter()
@@ -204,6 +207,7 @@ def test_output_line__overwrite():
 
     with pytest.raises(ValueError, match=r"res_line already exists in pp_output_data."):
         converter._pp_lines_output()
+
 
 def test_output_line__node_lookup():
     # Arrange
@@ -279,6 +283,7 @@ def test_output_ext_grids(converter):
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_ext_grid", mock_pp_df.return_value)
 
+
 def test_output_ext_grid__overwrite(converter):
     # Arrange
     converter = PandaPowerConverter()
@@ -286,6 +291,7 @@ def test_output_ext_grid__overwrite(converter):
 
     with pytest.raises(ValueError, match=r"res_ext_grid already exists in pp_output_data."):
         converter._pp_ext_grids_output()
+
 
 def test_output_shunts(converter):
     # Arrange
@@ -318,6 +324,7 @@ def test_output_shunts(converter):
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_shunt", mock_pp_df.return_value)
 
+
 def test_output_shunt__overwrite(converter):
     # Arrange
     converter = PandaPowerConverter()
@@ -325,6 +332,7 @@ def test_output_shunt__overwrite(converter):
 
     with pytest.raises(ValueError, match=r"res_shunt already exists in pp_output_data."):
         converter._pp_shunts_output()
+
 
 def test_output_sgen(converter):
     # Arrange
@@ -352,6 +360,7 @@ def test_output_sgen(converter):
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_sgen", mock_pp_df.return_value)
 
+
 def test_output_sgen__overwrite(converter):
     # Arrange
     converter = PandaPowerConverter()
@@ -359,6 +368,7 @@ def test_output_sgen__overwrite(converter):
 
     with pytest.raises(ValueError, match=r"res_sgen already exists in pp_output_data."):
         converter._pp_sgens_output()
+
 
 def test_output_trafos__current(converter):
     # Arrange
@@ -447,6 +457,7 @@ def test_output_trafos__invalid_trafo_loading(converter):
     with pytest.raises(ValueError, match="Invalid transformer loading type: abcd"):
         converter._pp_trafos_output()
 
+
 def test_output_trafo__overwrite(converter):
     # Arrange
     converter = PandaPowerConverter()
@@ -454,6 +465,7 @@ def test_output_trafo__overwrite(converter):
 
     with pytest.raises(ValueError, match=r"res_trafo already exists in pp_output_data."):
         converter._pp_trafos_output()
+
 
 def test_output_trafo3w(converter):
     # Arrange
@@ -515,6 +527,7 @@ def test_output_trafo3w(converter):
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_trafo3w", mock_pp_df.return_value)
 
+
 def test_output_trafo3w__overwrite(converter):
     # Arrange
     converter = PandaPowerConverter()
@@ -522,6 +535,7 @@ def test_output_trafo3w__overwrite(converter):
 
     with pytest.raises(ValueError, match=r"res_trafo3w already exists in pp_output_data."):
         converter._pp_trafos3w_output()
+
 
 def test_pp_load_result_accumulate__sym():
     # Arrange
@@ -655,6 +669,7 @@ def test_output_load_ward():
     converter._pp_load_result_accumulate.assert_called_once_with(pp_component_name="ward", load_id_names=load_id_names)
     assert converter.pp_output_data["res_ward"] == converter._pp_load_result_accumulate.return_value
 
+
 def test_output_load_ward__overwrite(converter):
     # Arrange
     converter = PandaPowerConverter()
@@ -662,6 +677,7 @@ def test_output_load_ward__overwrite(converter):
 
     with pytest.raises(ValueError, match=r"res_ward already exists in pp_output_data."):
         converter._pp_load_elements_output(element="ward", symmetric=True)
+
 
 def test_output_asymmetric_load(converter):
     # Arrange
@@ -689,6 +705,7 @@ def test_output_asymmetric_load(converter):
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_asymmetric_load", mock_pp_df.return_value)
 
+
 def test_output_asymmetric_load__overwrite(converter):
     # Arrange
     converter = PandaPowerConverter()
@@ -696,6 +713,7 @@ def test_output_asymmetric_load__overwrite(converter):
 
     with pytest.raises(ValueError, match=r"res_asymmetric_load already exists in pp_output_data."):
         converter._pp_asym_loads_output()
+
 
 def test_output_asymmetric_sgen(converter):
     # Arrange
@@ -723,6 +741,7 @@ def test_output_asymmetric_sgen(converter):
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_asymmetric_sgen", mock_pp_df.return_value)
 
+
 def test_output_asymmetric_sgen__overwrite(converter):
     # Arrange
     converter = PandaPowerConverter()
@@ -730,6 +749,7 @@ def test_output_asymmetric_sgen__overwrite(converter):
 
     with pytest.raises(ValueError, match=r"res_asymmetric_sgen already exists in pp_output_data."):
         converter._pp_asym_gens_output()
+
 
 def test_pp_buses_output__accumulate_power__zero():
     # Arrange
@@ -939,6 +959,7 @@ def test_output_bus_3ph(mock_np_array: MagicMock, converter):
         converter.pp_output_data.__setitem__.assert_called_once_with("res_bus_3ph", mock_pp_df.return_value)
     mock_np_array.assert_called_once()
 
+
 def test_output_bus_3ph__overwrite(converter):
     # Arrange
     converter = PandaPowerConverter()
@@ -946,6 +967,7 @@ def test_output_bus_3ph__overwrite(converter):
 
     with pytest.raises(ValueError, match=r"res_bus_3ph already exists in pp_output_data."):
         converter._pp_buses_output_3ph()
+
 
 def test_output_line_3ph(converter):
     # Arrange
@@ -1013,6 +1035,7 @@ def test_output_line_3ph(converter):
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_line_3ph", mock_pp_df.return_value)
 
+
 def test_output_line_3ph__overwrite(converter):
     # Arrange
     converter = PandaPowerConverter()
@@ -1020,6 +1043,7 @@ def test_output_line_3ph__overwrite(converter):
 
     with pytest.raises(ValueError, match=r"res_line_3ph already exists in pp_output_data."):
         converter._pp_lines_output_3ph()
+
 
 def test_output_ext_grids_3ph(converter):
     # Arrange
@@ -1051,6 +1075,7 @@ def test_output_ext_grids_3ph(converter):
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_ext_grid_3ph", mock_pp_df.return_value)
 
+
 def test_output_ext_grids_3ph__overwrite(converter):
     # Arrange
     converter = PandaPowerConverter()
@@ -1058,6 +1083,7 @@ def test_output_ext_grids_3ph__overwrite(converter):
 
     with pytest.raises(ValueError, match=r"res_ext_grid_3ph already exists in pp_output_data."):
         converter._pp_ext_grids_output_3ph()
+
 
 def test_output_sgen_3ph(converter):
     # Arrange
@@ -1083,6 +1109,7 @@ def test_output_sgen_3ph(converter):
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_sgen_3ph", mock_pp_df.return_value)
 
+
 def test_output_sgen_3ph__overwrite(converter):
     # Arrange
     converter = PandaPowerConverter()
@@ -1090,6 +1117,7 @@ def test_output_sgen_3ph__overwrite(converter):
 
     with pytest.raises(ValueError, match=r"res_sgen_3ph already exists in pp_output_data."):
         converter._pp_sgens_output_3ph()
+
 
 def test_output_trafos_3ph__current(converter):
     # Arrange
@@ -1185,6 +1213,7 @@ def test_output_trafos_3ph__invalid_trafo_loading(converter):
     with pytest.raises(ValueError, match="Invalid transformer loading type: abcd"):
         converter._pp_trafos_output_3ph()
 
+
 def test_output_trafo_3ph__overwrite(converter):
     # Arrange
     converter = PandaPowerConverter()
@@ -1192,6 +1221,7 @@ def test_output_trafo_3ph__overwrite(converter):
 
     with pytest.raises(ValueError, match=r"res_trafo_3ph already exists in pp_output_data."):
         converter._pp_trafos_output_3ph()
+
 
 def test_output_shunts_3ph(converter):
     # Arrange
@@ -1224,6 +1254,7 @@ def test_output_shunts_3ph(converter):
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_shunt_3ph", mock_pp_df.return_value)
 
+
 def test_output_shunt_3ph__overwrite(converter):
     # Arrange
     converter = PandaPowerConverter()
@@ -1231,6 +1262,7 @@ def test_output_shunt_3ph__overwrite(converter):
 
     with pytest.raises(ValueError, match=r"res_shunt_3ph already exists in pp_output_data."):
         converter._pp_shunts_output_3ph()
+
 
 def test_output_asymmetric_load_3ph(converter):
     # Arrange
@@ -1262,6 +1294,7 @@ def test_output_asymmetric_load_3ph(converter):
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_asymmetric_load_3ph", mock_pp_df.return_value)
 
+
 def test_output_asymmetric_load_3ph__overwrite(converter):
     # Arrange
     converter = PandaPowerConverter()
@@ -1269,6 +1302,7 @@ def test_output_asymmetric_load_3ph__overwrite(converter):
 
     with pytest.raises(ValueError, match=r"res_asymmetric_load_3ph already exists in pp_output_data."):
         converter._pp_asym_loads_output_3ph()
+
 
 def test_output_asymmetric_sgen_3ph(converter):
     # Arrange
@@ -1300,6 +1334,7 @@ def test_output_asymmetric_sgen_3ph(converter):
         # result
         converter.pp_output_data.__setitem__.assert_called_once_with("res_asymmetric_sgen_3ph", mock_pp_df.return_value)
 
+
 def test_output_asymmetric_sgen_3ph__overwrite(converter):
     # Arrange
     converter = PandaPowerConverter()
@@ -1307,6 +1342,7 @@ def test_output_asymmetric_sgen_3ph__overwrite(converter):
 
     with pytest.raises(ValueError, match=r"res_asymmetric_sgen_3ph already exists in pp_output_data."):
         converter._pp_asym_gens_output_3ph()
+
 
 def test_pp_buses_output_3ph__accumulate_power__zero():
     # Arrange
