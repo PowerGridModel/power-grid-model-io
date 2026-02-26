@@ -26,6 +26,7 @@ import base64
 import hashlib
 import re
 import tempfile
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from shutil import rmtree as remove_dir
@@ -79,8 +80,67 @@ class DownloadProgressHook:  # pylint: disable=too-few-public-methods
         self._last_block = block_num
 
 
+def _safe_urlretrieve(url: str, reporthook: DownloadProgressHook, unsafe: bool = False):
+    if not url.startswith(("http:", "https:")) and not unsafe:
+        raise ValueError("URL must start with 'http:' or 'https:'")
+
+    return request.urlretrieve(url, reporthook=reporthook)  # noqa: S310 # URL is safe or deliberately unsafe access requested
+
+
+def _safe_urlopen(url: str, unsafe: bool = False):
+    if not url.startswith(("http:", "https:")) and not unsafe:
+        raise ValueError("URL must start with 'http:' or 'https:'")
+
+    return request.urlopen(url)  # noqa: S310 # URL is safe or deliberately access requested
+
+
+def _deprecated_unsafe_url_message(old_name: str, new_name: str) -> str:
+    return f"Default unsafe access in '{old_name}' is deprecated. Please use the safe method '{new_name}' instead."
+
+
+def safe_download_and_extract(
+    url: str,
+    *,
+    dir_path: Path | None = None,
+    file_name: str | Path | None = None,
+    overwrite: bool = False,
+    unsafe: bool = False,
+) -> Path:
+    """
+    Download a file from a URL and store it locally, extract the contents and return the path to the contents.
+
+    Args:
+        url:       The url to the .zip file
+
+    Kwargs:
+        dir_path:  An optional dir path to store the downloaded file. If no dir_path is given the current working dir
+                   will be used.
+        file_name: An optional file name (or path relative to dir_path). If no file_name is given, a file name is
+                   generated based on the url
+        overwrite: Should we download the file, even if we have downloaded already (and the file size still matches)?
+                   Be careful with this option, as it will remove files from your drive irreversibly!
+        unsafe:    Whether to allow unsafe paths. WARNING: use at your own discretion!
+
+    Returns:
+        The path to the downloaded file
+    """
+    # Download the file and use the file name as the base name for the extraction directory
+    src_file_path = safe_download(url=url, file_name=file_name, dir_path=dir_path, overwrite=overwrite, unsafe=unsafe)
+    dst_dir_path = src_file_path.with_suffix("")
+
+    # If we explicitly want to overwrite the extracted files, remove the destination dir.
+    if overwrite and dst_dir_path.is_dir():
+        remove_dir(dst_dir_path)
+
+    # Extract the files and return the path of the extraction directory
+    return extract(src_file_path=src_file_path, dst_dir_path=dst_dir_path, skip_if_exists=not overwrite)
+
+
 def download_and_extract(
-    url: str, dir_path: Path | None = None, file_name: str | Path | None = None, overwrite: bool = False
+    url: str,
+    dir_path: Path | None = None,
+    file_name: str | Path | None = None,
+    overwrite: bool = False,
 ) -> Path:
     """
     Download a file from a URL and store it locally, extract the contents and return the path to the contents.
@@ -97,32 +157,33 @@ def download_and_extract(
     Returns:
         The path to the downloaded file
     """
-
-    # Download the file and use the file name as the base name for the extraction directory
-    src_file_path = download(url=url, file_name=file_name, dir_path=dir_path, overwrite=overwrite)
-    dst_dir_path = src_file_path.with_suffix("")
-
-    # If we explicitly want to overwrite the extracted files, remove the destination dir.
-    if overwrite and dst_dir_path.is_dir():
-        remove_dir(dst_dir_path)
-
-    # Extract the files and return the path of the extraction directory
-    return extract(src_file_path=src_file_path, dst_dir_path=dst_dir_path, skip_if_exists=not overwrite)
+    warnings.warn(
+        _deprecated_unsafe_url_message("download_and_extract", "safe_download_and_extract"), DeprecationWarning
+    )
+    return safe_download_and_extract(url=url, unsafe=True, dir_path=dir_path, file_name=file_name, overwrite=overwrite)
 
 
-def download(
-    url: str, file_name: str | Path | None = None, dir_path: Path | None = None, overwrite: bool = False
+def safe_download(
+    url: str,
+    *,
+    file_name: str | Path | None = None,
+    dir_path: Path | None = None,
+    overwrite: bool = False,
+    unsafe: bool = False,
 ) -> Path:
     """
     Download a file from a URL and store it locally
 
     Args:
         url:       The url to the file
+
+    Kwargs:
         file_name: An optional file name (or path relative to dir_path). If no file_name is given, a file name is
                    generated based on the url
         dir_path:  An optional dir path to store the downloaded file. If no dir_path is given the current working dir
                    will be used.
         overwrite: Should we download the file, even if we have downloaded already (and the file size still matches)?
+        unsafe:    Whether to allow unsafe paths. WARNING: use at your own discretion!
 
     Returns:
         The path to the downloaded file
@@ -159,7 +220,7 @@ def download(
     # Download to a temp file first, so the results are not stored if the transfer fails
     with tqdm(desc="Downloading", unit="B", unit_scale=True, leave=True) as progress_bar:
         report_hook = DownloadProgressHook(progress_bar)
-        temp_file, _headers = request.urlretrieve(url, reporthook=report_hook)
+        temp_file, _headers = _safe_urlretrieve(url, reporthook=report_hook, unsafe=unsafe)
 
     # Check if the file contains any content
     temp_path = Path(temp_file)
@@ -177,6 +238,53 @@ def download(
     return file_path
 
 
+def download(
+    url: str, file_name: str | Path | None = None, dir_path: Path | None = None, overwrite: bool = False
+) -> Path:
+    """
+    Download a file from a URL and store it locally
+
+    Args:
+        url:       The url to the file
+        file_name: An optional file name (or path relative to dir_path). If no file_name is given, a file name is
+                   generated based on the url
+        dir_path:  An optional dir path to store the downloaded file. If no dir_path is given the current working dir
+                   will be used.
+        overwrite: Should we download the file, even if we have downloaded already (and the file size still matches)?
+
+    Returns:
+        The path to the downloaded file
+    """
+    warnings.warn(
+        _deprecated_unsafe_url_message("download", "safe_download"),
+        DeprecationWarning,
+    )
+    return safe_download(url=url, unsafe=True, file_name=file_name, dir_path=dir_path, overwrite=overwrite)
+
+
+def safe_get_response_info(url: str, *, unsafe=False) -> ResponseInfo:
+    """
+    Retrieve the file size of a given URL (based on it's header)
+
+    Args:
+        url: The url to the file
+
+    Kwargs:
+        unsafe: Whether to allow unsafe paths. WARNING: use at your own discretion!
+
+    Return:
+        The file size in bytes
+    """
+    with _safe_urlopen(url, unsafe=unsafe) as context:
+        status = context.status
+        headers = context.headers
+    file_size = int(headers["Content-Length"]) if "Content-Length" in headers else None
+    matches = re.findall(r"filename=\"(.+)\"", headers.get("Content-Disposition", ""))
+    file_name = matches[0] if matches else None
+
+    return ResponseInfo(status=status, file_size=file_size, file_name=file_name)
+
+
 def get_response_info(url: str) -> ResponseInfo:
     """
     Retrieve the file size of a given URL (based on it's header)
@@ -187,14 +295,8 @@ def get_response_info(url: str) -> ResponseInfo:
     Return:
         The file size in bytes
     """
-    with request.urlopen(url) as context:
-        status = context.status
-        headers = context.headers
-    file_size = int(headers["Content-Length"]) if "Content-Length" in headers else None
-    matches = re.findall(r"filename=\"(.+)\"", headers.get("Content-Disposition", ""))
-    file_name = matches[0] if matches else None
-
-    return ResponseInfo(status=status, file_size=file_size, file_name=file_name)
+    warnings.warn(_deprecated_unsafe_url_message("get_response_info", "safe_get_response_info"), DeprecationWarning)
+    return safe_get_response_info(url=url, unsafe=True)
 
 
 def get_download_path(
