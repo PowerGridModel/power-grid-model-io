@@ -656,6 +656,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_loads.empty:
             return
 
+        if ComponentType.sym_load in self.pgm_input_data:
+            raise ValueError("Symmetrical Load component already exists in pgm_input_data")
+
         if np.any(self._get_pp_attr("load", "type", expected_type="O", default=None) == "delta"):
             raise NotImplementedError("Delta loads are not implemented, only wye loads are supported in PGM.")
 
@@ -719,8 +722,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_loads["p_specified"][-n_loads:] = const_i_p_multiplier * p_mw
         pgm_sym_loads["q_specified"][-n_loads:] = const_i_q_multiplier * q_mvar
 
-        if ComponentType.sym_load in self.pgm_input_data:
-            raise ValueError("Symmetrical Load component already exists in pgm_input_data")
         self.pgm_input_data[ComponentType.sym_load] = pgm_sym_loads
 
     def _create_pgm_input_asym_loads(self):
@@ -735,6 +736,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         if pp_asym_loads.empty:
             return
+
+        if ComponentType.asym_load in self.pgm_input_data:
+            raise ValueError("Asymmetric Load component already exists in pgm_input_data")
 
         if np.any(self._get_pp_attr("asymmetric_load", "type", expected_type="O", default=None) == "delta"):
             raise NotImplementedError("Delta loads are not implemented, only wye loads are supported in PGM.")
@@ -774,8 +778,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         )
         pgm_asym_loads["type"] = LoadGenType.const_power
 
-        if ComponentType.asym_load in self.pgm_input_data:
-            raise ValueError("Asymmetrical Load component already exists in pgm_input_data")
         self.pgm_input_data[ComponentType.asym_load] = pgm_asym_loads
 
     def _create_pgm_input_transformers(self):  # pylint: disable=too-many-statements, disable-msg=too-many-locals
@@ -790,6 +792,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         if pp_trafo.empty:
             return
+
+        if ComponentType.transformer in self.pgm_input_data:
+            raise ValueError("Transformer component already exists in pgm_input_data")
 
         # Check for unsupported pandapower features
         if "tap_dependent_impedance" in pp_trafo.columns and any(pp_trafo["tap_dependent_impedance"]):
@@ -915,8 +920,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_transformers["tap_max"] = self._get_pp_attr("trafo", "tap_max", expected_type="i4", default=0)
         pgm_transformers["tap_size"] = tap_size
 
-        if ComponentType.transformer in self.pgm_input_data:
-            raise ValueError("Transformer component already exists in pgm_input_data")
         self.pgm_input_data[ComponentType.transformer] = pgm_transformers
 
     def _create_pgm_input_three_winding_transformers(self):
@@ -932,6 +935,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         if pp_trafo3w.empty:
             return
+
+        if ComponentType.three_winding_transformer in self.pgm_input_data:
+            raise ValueError("Three-winding transformer component already exists in pgm_input_data")
 
         # Check for unsupported pandapower features
         if "tap_dependent_impedance" in pp_trafo3w.columns and any(pp_trafo3w["tap_dependent_impedance"]):
@@ -1052,8 +1058,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_3wtransformers["tap_max"] = self._get_pp_attr("trafo3w", "tap_max", expected_type="i4", default=0)
         pgm_3wtransformers["tap_size"] = tap_size
 
-        if ComponentType.three_winding_transformer in self.pgm_input_data:
-            raise ValueError("Three winding transformer component already exists in pgm_input_data")
         self.pgm_input_data[ComponentType.three_winding_transformer] = pgm_3wtransformers
 
     def _create_pgm_input_links(self):
@@ -1069,6 +1073,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if pp_switches.empty:
             return
 
+        if ComponentType.link in self.pgm_input_data:
+            raise ValueError("Link component already exists in pgm_input_data")
+
         # This should take all the switches which are b2b
         pp_switches = pp_switches[pp_switches["et"] == "b"]
 
@@ -1081,8 +1088,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_links["from_status"] = pp_switches["closed"]
         pgm_links["to_status"] = pp_switches["closed"]
 
-        if ComponentType.link in self.pgm_input_data:
-            raise ValueError("Link component already exists in pgm_input_data")
         self.pgm_input_data[ComponentType.link] = pgm_links
 
     def _create_pgm_input_storages(self):
@@ -1235,7 +1240,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
         # TODO: create unit tests for the function
         if "res_bus" in self.pp_output_data:
-            raise ValueError("res_bus already exists in pp_output_data")
+            raise ValueError("res_bus already exists in pp_output_data.")
 
         if ComponentType.node not in self.pgm_output_data or self.pgm_output_data[ComponentType.node].size == 0:
             return
@@ -1330,7 +1335,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
         # TODO: create unit tests for the function
         if "res_line" in self.pp_output_data:
-            raise ValueError("res_line already exists in pp_output_data")
+            raise ValueError("res_line already exists in pp_output_data.")
 
         if ComponentType.line not in self.pgm_output_data or self.pgm_output_data[ComponentType.line].size == 0:
             return
@@ -1389,7 +1394,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the External Grid component
         """
         if "res_ext_grid" in self.pp_output_data:
-            raise ValueError("res_ext_grid already exists in pp_output_data")
+            raise ValueError("res_ext_grid already exists in pp_output_data.")
 
         if ComponentType.source not in self.pgm_output_data or self.pgm_output_data[ComponentType.source].size == 0:
             return
@@ -1414,7 +1419,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
         # TODO: create unit tests for the function
         if "res_shunt" in self.pp_output_data:
-            raise ValueError("res_shunt already exists in pp_output_data")
+            raise ValueError("res_shunt already exists in pp_output_data.")
 
         if ComponentType.shunt not in self.pgm_output_data or self.pgm_output_data[ComponentType.shunt].size == 0:
             return
@@ -1444,7 +1449,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Static Generator component
         """
         if "res_sgen" in self.pp_output_data:
-            raise ValueError("res_sgen already exists in pp_output_data")
+            raise ValueError("res_sgen already exists in pp_output_data.")
 
         if ComponentType.sym_gen not in self.pgm_output_data or self.pgm_output_data[ComponentType.sym_gen].size == 0:
             return
@@ -1470,7 +1475,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
         # TODO: create unit tests for the function
         if "res_trafo" in self.pp_output_data:
-            raise ValueError("res_trafo already exists in pp_output_data")
+            raise ValueError("res_trafo already exists in pp_output_data.")
 
         if (
             ComponentType.transformer not in self.pgm_output_data
@@ -1542,7 +1547,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
         # TODO: create unit tests for the function
         if "res_trafo3w" in self.pp_output_data:
-            raise ValueError("res_trafo3w already exists in pp_output_data")
+            raise ValueError("res_trafo3w already exists in pp_output_data.")
 
         if (
             ComponentType.three_winding_transformer not in self.pgm_output_data
@@ -1617,7 +1622,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
         # TODO: create unit tests for the function
         if "res_asymmetric_load" in self.pp_output_data:
-            raise ValueError("res_asymmetric_load already exists in pp_output_data")
+            raise ValueError("res_asymmetric_load already exists in pp_output_data.")
 
         if (
             ComponentType.asym_load not in self.pgm_output_data
@@ -1647,7 +1652,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
         # TODO: create unit tests for the function
         if "res_asymmetric_sgen" in self.pp_output_data:
-            raise ValueError("res_asymmetric_sgen already exists in pp_output_data")
+            raise ValueError("res_asymmetric_sgen already exists in pp_output_data.")
 
         if ComponentType.asym_gen not in self.pgm_output_data or self.pgm_output_data[ComponentType.asym_gen].size == 0:
             return
@@ -1673,7 +1678,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
         res_table = "res_" + element if symmetric else "res_" + element + "_3ph"
         if res_table in self.pp_output_data:
-            raise ValueError(f"res_table {res_table} already exists in pp_output_data")
+            raise ValueError(f"{res_table} already exists in pp_output_data.")
 
         if element == "load":
             load_id_names = ["const_power", "const_impedance", "const_current"]
@@ -1808,11 +1813,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the Bus component
         """
+        if "res_bus_3ph" in self.pp_output_data:
+            raise ValueError("res_bus_3ph already exists in pp_output_data.")
+
         if ComponentType.node not in self.pgm_output_data or self.pgm_output_data[ComponentType.node].size == 0:
             return
-
-        if "res_bus_3ph" in self.pp_output_data:
-            raise ValueError("res_bus_3ph already exists in pp_output_data")
 
         pgm_nodes = self.pgm_output_data[ComponentType.node]
 
@@ -1931,14 +1936,14 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the Line component
         """
+        if "res_line_3ph" in self.pp_output_data:
+            raise ValueError("res_line_3ph already exists in pp_output_data.")
+
         if any(
             (comp not in self.pgm_output_data or self.pgm_output_data[comp].size == 0)
             for comp in [ComponentType.node, ComponentType.line]
         ):
             return
-
-        if "res_line_3ph" in self.pp_output_data:
-            raise ValueError("res_line_3ph already exists in pp_output_data")
 
         pgm_input_lines = self.pgm_input_data[ComponentType.line]
         pgm_output_lines = self.pgm_output_data[ComponentType.line]
@@ -2047,11 +2052,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the External Grid component
         """
+        if "res_ext_grid_3ph" in self.pp_output_data:
+            raise ValueError("res_ext_grid_3ph already exists in pp_output_data.")
+
         if ComponentType.source not in self.pgm_output_data or self.pgm_output_data[ComponentType.source].size == 0:
             return
-
-        if "res_ext_grid_3ph" in self.pp_output_data:
-            raise ValueError("res_ext_grid_3ph already exists in pp_output_data")
 
         pgm_output_sources = self.pgm_output_data[ComponentType.source]
 
@@ -2076,11 +2081,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the Static Generator component
         """
+        if "res_sgen_3ph" in self.pp_output_data:
+            raise ValueError("res_sgen_3ph already exists in pp_output_data.")
+
         if ComponentType.sym_gen not in self.pgm_output_data or self.pgm_output_data[ComponentType.sym_gen].size == 0:
             return
-
-        if "res_sgen_3ph" in self.pp_output_data:
-            raise ValueError("res_sgen_3ph already exists in pp_output_data")
 
         pgm_output_sym_gens = self.pgm_output_data[ComponentType.sym_gen]
 
@@ -2101,14 +2106,14 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the Transformer component
         """
+        if "res_trafo_3ph" in self.pp_output_data:
+            raise ValueError("res_trafo_3ph already exists in pp_output_data.")
+
         if (
             ComponentType.transformer not in self.pgm_output_data
             or self.pgm_output_data[ComponentType.transformer].size == 0
         ) or ("trafo" not in self.pp_input_data or len(self.pp_input_data["trafo"]) == 0):
             return
-
-        if "res_trafo_3ph" in self.pp_output_data:
-            raise ValueError("res_trafo_3ph already exists in pp_output_data")
 
         pgm_input_transformers = self.pgm_input_data[ComponentType.transformer]
         pp_input_transformers = self.pp_input_data["trafo"]
@@ -2226,7 +2231,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
         # TODO: create unit tests for the function
         if "res_shunt_3ph" in self.pp_output_data:
-            raise ValueError("res_shunt_3ph already exists in pp_output_data")
+            raise ValueError("res_shunt_3ph already exists in pp_output_data.")
 
         if ComponentType.shunt not in self.pgm_output_data or self.pgm_output_data[ComponentType.shunt].size == 0:
             return
@@ -2252,15 +2257,14 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             a PandaPower Dataframe for the Asymmetrical Load component
         """
         # TODO: create unit tests for the function
+        if "res_asymmetric_load_3ph" in self.pp_output_data:
+            raise ValueError("res_asymmetric_load_3ph already exists in pp_output_data.")
 
         if (
             ComponentType.asym_load not in self.pgm_output_data
             or self.pgm_output_data[ComponentType.asym_load].size == 0
         ):
             return
-
-        if "res_asymmetric_load_3ph" in self.pp_output_data:
-            raise ValueError("res_asymmetric_load_3ph already exists in pp_output_data")
 
         pgm_output_asym_loads = self.pgm_output_data[ComponentType.asym_load]
 
@@ -2289,11 +2293,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the Asymmetric Static Generator component
         """
+        if "res_asymmetric_sgen_3ph" in self.pp_output_data:
+            raise ValueError("res_asymmetric_sgen_3ph already exists in pp_output_data.")
+
         if "asym_gen" not in self.pgm_output_data or self.pgm_output_data[ComponentType.asym_gen].size == 0:
             return
-
-        if "res_asymmetric_sgen_3ph" in self.pp_output_data:
-            raise ValueError("res_asymmetric_sgen_3ph already exists in pp_output_data")
 
         pgm_output_asym_gens = self.pgm_output_data[ComponentType.asym_gen]
 
