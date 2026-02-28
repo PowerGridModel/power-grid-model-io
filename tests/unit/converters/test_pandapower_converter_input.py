@@ -472,7 +472,7 @@ def test_create_input_data():
     PandaPowerConverter._create_input_data(self=converter)  # type: ignore
 
     # Assert
-    assert len(converter.method_calls) == 18
+    assert len(converter.method_calls) == 19
     converter._create_pgm_input_nodes.assert_called_once_with()
     converter._create_pgm_input_lines.assert_called_once_with()
     converter._create_pgm_input_sources.assert_called_once_with()
@@ -596,7 +596,7 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     converter._get_pp_attr.assert_any_call("line", "x0_ohm_per_km", expected_type="f8", default=np.nan)
     converter._get_pp_attr.assert_any_call("line", "c0_nf_per_km", expected_type="f8", default=0)
     converter._get_pp_attr.assert_any_call("line", "g0_us_per_km", expected_type="f8", default=0)
-    assert len(converter._get_pp_attr.call_args_list) == 15
+    assert len(converter._get_pp_attr.call_args_list) == 16
 
     # assignment
     pgm: MagicMock = mock_init_array.return_value.__setitem__
