@@ -53,7 +53,7 @@ jobs:
         run: echo "version=$(cat PYPI_VERSION)" >> $GITHUB_OUTPUT
 
       - name: Store built wheel file
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: power-grid-model-io
           path: wheelhouse/
