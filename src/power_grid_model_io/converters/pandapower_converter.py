@@ -443,6 +443,17 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pgm_input_data[ComponentType.node] = pgm_nodes
 
+    def _get_asymmetric_lines_mask(self):
+        pp_lines = self.pp_input_data["line"]
+        if not pp_lines.empty:
+            std_type = self._get_pp_attr("line", "std_type")
+            if self.asym_line_params is not None:
+                asym_lines = list(self.asym_line_params.keys())
+                asym_lines_mask = np.isin(std_type, asym_lines)
+            else:
+                asym_lines_mask = np.zeros_like(std_type, dtype=bool)
+        return asym_lines_mask
+
     def _create_pgm_input_lines(self):
         """
         This function converts a Line Dataframe of PandaPower to a power-grid-model Line input array.
@@ -455,14 +466,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if ComponentType.line in self.pgm_input_data:
             raise ValueError("Line component already exists in pgm_input_data")
 
-        if not pp_lines.empty:
-            std_type = self._get_pp_attr("line", "std_type")
-            if self.asym_line_params is not None:
-                asym_lines = list(self.asym_line_params.keys())
-                sym_lines_mask = ~np.isin(std_type, asym_lines)
-            else:
-                sym_lines_mask = np.zeros_like(std_type, dtype=bool)
-            pp_lines = pp_lines.loc[sym_lines_mask]
+        sym_lines_mask = ~self._get_asymmetric_lines_mask()
+        pp_lines = pp_lines[sym_lines_mask]
 
         if pp_lines.empty:
             return
@@ -532,6 +537,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if self.asym_line_params is None:
             return
 
+        asym_lines_mask = self._get_asymmetric_lines_mask()
         if not pp_lines.empty:
             std_type = self._get_pp_attr("line", "std_type")
             if self.asym_line_params is not None:
@@ -544,7 +550,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         if pp_lines.empty:
             return
-        std_type = std_type[asym_lines_mask]
 
         switch_states = self.get_switch_states("line")[asym_lines_mask]
         in_service = self._get_pp_attr("line", "in_service", expected_type="bool", default=True, table=pp_lines)
@@ -552,6 +557,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         parallel = self._get_pp_attr("line", "parallel", expected_type="u4", default=1, table=pp_lines)
         c_nf_per_km = self._get_pp_attr("line", "c_nf_per_km", expected_type="f8", default=0, table=pp_lines)
         c0_nf_per_km = self._get_pp_attr("line", "c0_nf_per_km", expected_type="f8", default=0, table=pp_lines)
+        std_type = self._get_pp_attr("line", "std_type", table=pp_lines)
         multiplier = length_km / parallel
 
         pgm_lines = initialize_array(
