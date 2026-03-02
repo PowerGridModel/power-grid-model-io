@@ -1,0 +1,21 @@
+"""Custom exceptions for power-grid-model-io."""
+
+
+class PowerGridModelIoError(Exception):
+    """Base exception for all power-grid-model-io errors."""
+
+
+class ComponentAlreadyExistsError(ValueError, PowerGridModelIoError):
+    """Raised when a component already exists in the dataset."""
+
+
+class ComponentNotFoundError(KeyError, PowerGridModelIoError):
+    """Raised when a required component or attribute is missing."""
+
+
+class InvalidComponentTypeError(ValueError, PowerGridModelIoError):
+    """Raised when an invalid component type is encountered."""
+
+
+class InvalidDataFormatError(ValueError, PowerGridModelIoError):
+    """Raised when data format parsing or validation fails."""

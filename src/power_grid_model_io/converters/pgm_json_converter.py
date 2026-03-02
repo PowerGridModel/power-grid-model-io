@@ -20,6 +20,10 @@ from power_grid_model.utils import json_deserialize, json_serialize
 from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_stores.json_file_store import JsonFileStore
 from power_grid_model_io.data_types import ExtraInfo, StructuredData
+from power_grid_model_io.exceptions import (
+    InvalidComponentTypeError,
+    InvalidDataFormatError,
+)
 from power_grid_model_io.utils.dict import merge_dicts
 
 _NAN_FUNC = {
@@ -144,7 +148,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
         # We'll initialize an 1d-array with NaN values for all the objects of this component type
         array = initialize_array(data_type, component, len(objects))
         if array.dtype.names is None:
-            raise ValueError(f"Invalid component type: {component.value}")
+            raise InvalidComponentTypeError(f"Invalid component type: {component.value}")
 
         for i, obj in enumerate(objects):
             # As each object is a separate dictionary, and the attributes may differ per object, we need to check
@@ -164,7 +168,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
                 elif extra_info is not None:
                     obj_id = obj["id"]
                     if not isinstance(obj_id, int):
-                        raise ValueError(f"Invalid 'id' value for {component.value} {data_type.value} data")
+                        raise InvalidDataFormatError(f"Invalid 'id' value for {component.value} {data_type.value} data")
                     if obj_id not in extra_info:
                         extra_info[obj_id] = {}
                     extra_info[obj_id][attribute] = value
@@ -247,7 +251,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
         # This should be a single data set
         for array in data.values():
             if not isinstance(array, np.ndarray) or array.ndim != 1:
-                raise ValueError("Invalid data format")
+                raise InvalidDataFormatError("Invalid data format")
 
         if extra_info is None:
             extra_info = {}
