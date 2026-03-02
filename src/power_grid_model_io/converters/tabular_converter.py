@@ -514,7 +514,8 @@ class TabularConverter(BaseConverter[TabularData]):
         Returns:
 
         """
-        assert isinstance(col_def, (int, float))
+        if not isinstance(col_def, (int, float)):
+            raise TypeError(f"col_def must be int or float, got {type(col_def).__name__}")
         const_df = pd.DataFrame([col_def] * len(data[table]))
         if table_mask is not None:
             # Required to retain indices before filter
@@ -542,7 +543,8 @@ class TabularConverter(BaseConverter[TabularData]):
         Returns:
 
         """
-        assert isinstance(col_def, str)
+        if not isinstance(col_def, str):
+            raise TypeError(f"col_def must be str, got {type(col_def).__name__}")
 
         table_data = data[table]
         if table_mask is not None:
@@ -629,7 +631,8 @@ class TabularConverter(BaseConverter[TabularData]):
         """
         Parse column filters like 'auto_id', 'reference', 'function', etc
         """
-        assert isinstance(col_def, dict)
+        if not isinstance(col_def, dict):
+            raise TypeError(f"col_def must be dict, got {type(col_def).__name__}")
         data_frames = []
         for name, sub_def in col_def.items():
             if name == "auto_id":
@@ -788,7 +791,8 @@ class TabularConverter(BaseConverter[TabularData]):
         Returns:
 
         """
-        assert isinstance(col_def, list)
+        if not isinstance(col_def, list):
+            raise TypeError(f"col_def must be list, got {type(col_def).__name__}")
 
         # "multiply" is an alias for "prod"
         if fn_name == "multiply":
@@ -843,7 +847,8 @@ class TabularConverter(BaseConverter[TabularData]):
         Returns:
 
         """
-        assert isinstance(col_def, dict)
+        if not isinstance(col_def, dict):
+            raise TypeError(f"col_def must be dict, got {type(col_def).__name__}")
 
         fn_ptr = get_function(function)
         key_words = list(col_def.keys())
@@ -882,7 +887,8 @@ class TabularConverter(BaseConverter[TabularData]):
         Returns:
 
         """
-        assert isinstance(col_def, list)
+        if not isinstance(col_def, list):
+            raise TypeError(f"col_def must be list, got {type(col_def).__name__}")
         columns = [
             self._parse_col_def(
                 data=data,

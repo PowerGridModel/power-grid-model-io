@@ -24,8 +24,8 @@ from power_grid_model import (
 
 from power_grid_model_io.converters.pandapower_converter import (
     PP_COMPATIBILITY_VERSION_3_2_0,
-    PP_CONVERSION_VERSION,
     PandaPowerConverter,
+    get_loss_params_3ph,
 )
 from tests.utils import MockDf, MockFn, assert_struct_array_equal
 
@@ -369,6 +369,14 @@ def test_extra_info_to_idx_lookup():
     )
 
 
+def test_extra_info_to_idx_lookup__invalid_input():
+    converter = PandaPowerConverter()
+    extra_info = {0: {"id_reference": ["bus", 101]}}
+
+    with pytest.raises(TypeError, match="Expected 'id_reference' to be a dict for pgm_id 0, got list"):
+        converter._extra_info_to_idx_lookup(extra_info=extra_info)
+
+
 def test_extra_info_to_pgm_input_data():
     # Arrange
     converter = PandaPowerConverter()
@@ -390,6 +398,24 @@ def test_extra_info_to_pgm_input_data():
         converter.pgm_input_data[ComponentType.line],
         [{"id": 12, "from_node": 1, "to_node": 2, "i_n": 105.0}, {"id": 23, "from_node": 2, "to_node": 3, "i_n": 5.0}],
     )
+
+
+def test_extra_info_to_pgm_input_data__non_empty_input_data():
+    converter = PandaPowerConverter()
+    converter.pgm_input_data[ComponentType.node] = initialize_array(DatasetType.input, ComponentType.node, 1)
+    converter.pgm_input_data[ComponentType.node]["id"] = [1]
+    converter.pgm_output_data[ComponentType.node] = initialize_array(DatasetType.sym_output, ComponentType.node, 1)
+    converter.pgm_output_data[ComponentType.node]["id"] = [1]
+
+    with pytest.raises(ValueError, match="pgm_input_data should be empty"):
+        converter._extra_info_to_pgm_input_data(extra_info={})
+
+
+def test_extra_info_to_pgm_input_data__empty_output_data():
+    converter = PandaPowerConverter()
+
+    with pytest.raises(ValueError, match="pgm_output_data should not be empty"):
+        converter._extra_info_to_pgm_input_data(extra_info={})
 
 
 def test__extra_info_to_pp_input_data():
@@ -420,6 +446,22 @@ def test__extra_info_to_pp_input_data__empty():
 
     converter._extra_info_to_pp_input_data({})
     assert len(converter.pp_input_data) == 0
+
+
+def test__extra_info_to_pp_input_data__non_empty_input_data():
+    converter = PandaPowerConverter()
+    converter.pp_input_data["bus"] = pd.DataFrame(data={"vn_kv": [11.0]}, index=[101])
+    converter.pgm_output_data[ComponentType.line] = initialize_array(DatasetType.sym_output, ComponentType.line, 3)
+
+    with pytest.raises(ValueError, match="pp_input_data should be empty"):
+        converter._extra_info_to_pp_input_data({})
+
+
+def test__extra_info_to_pp_input_data__empty_output_data():
+    converter = PandaPowerConverter()
+
+    with pytest.raises(ValueError, match="pgm_output_data should not be empty"):
+        converter._extra_info_to_pp_input_data({})
 
 
 def test_create_input_data():
@@ -508,6 +550,15 @@ def test_create_pgm_input_nodes(mock_init_array: MagicMock, two_pp_objs: MockDf,
 
     # result
     assert converter.pgm_input_data[ComponentType.node] == mock_init_array.return_value
+
+
+def test_create_pgm_input_nodes__bad_input():
+    converter = PandaPowerConverter()
+    converter.pp_input_data["bus"] = pd.DataFrame(data={"vn_kv": [11.0]}, index=[101])
+    converter.pgm_input_data[ComponentType.node] = initialize_array(DatasetType.input, ComponentType.node, 1)
+
+    with pytest.raises(ValueError, match="Node component already exists in pgm_input_data"):
+        converter._create_pgm_input_nodes()
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -616,6 +667,15 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     assert converter.pgm_input_data[ComponentType.line] == mock_init_array.return_value
 
 
+def test_create_pgm_input_lines__bad_input():
+    converter = PandaPowerConverter()
+    converter.pp_input_data["line"] = pd.DataFrame(data={"from_bus": [101], "to_bus": [102]}, index=[101])
+    converter.pgm_input_data[ComponentType.line] = initialize_array(DatasetType.input, ComponentType.line, 1)
+
+    with pytest.raises(ValueError, match="Line component already exists in pgm_input_data"):
+        converter._create_pgm_input_lines()
+
+
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_sources(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
@@ -660,6 +720,15 @@ def test_create_pgm_input_sources(mock_init_array: MagicMock, two_pp_objs, conve
     assert converter.pgm_input_data[ComponentType.source] == mock_init_array.return_value
 
 
+def test_create_pgm_input_sources__bad_input():
+    converter = PandaPowerConverter()
+    converter.pp_input_data["ext_grid"] = pd.DataFrame(data={"bus": [101]}, index=[201])
+    converter.pgm_input_data[ComponentType.source] = initialize_array(DatasetType.input, ComponentType.source, 1)
+
+    with pytest.raises(ValueError, match="Source component already exists in pgm_input_data"):
+        converter._create_pgm_input_sources()
+
+
 @pytest.mark.parametrize("kwargs", [{"r0x0_max": 0.5, "rx_max": 4}, {"x0x_max": 0.6}])
 def test_create_pgm_input_sources__zero_sequence(kwargs) -> None:
     pp_net: PandaPowerNet = pp.create_empty_network()
@@ -675,8 +744,15 @@ def test_create_pgm_input_sources__zero_sequence(kwargs) -> None:
         mock_logger.warning.assert_called_once()
 
 
+@pytest.mark.parametrize(
+    "pp_version",
+    [
+        version.Version("3.1.2"),
+        version.Version("3.4.0"),
+    ],
+)
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
-def test_create_pgm_input_sym_loads(mock_init_array: MagicMock, two_pp_objs, converter):
+def test_create_pgm_input_sym_loads(mock_init_array: MagicMock, two_pp_objs, converter, pp_version, monkeypatch):
     # Arrange
     converter.pp_input_data["load"] = two_pp_objs
     pgm_attr = ["id", "node", "status", "p_specified", "q_specified", "type"]
@@ -688,6 +764,7 @@ def test_create_pgm_input_sym_loads(mock_init_array: MagicMock, two_pp_objs, con
     assert slices[2].indices(3 * 2) == (4, 6, 1)
 
     # Act
+    monkeypatch.setattr("power_grid_model_io.converters.pandapower_converter.PP_CONVERSION_VERSION", pp_version)
     converter._create_pgm_input_sym_loads()
 
     # Assert
@@ -706,7 +783,7 @@ def test_create_pgm_input_sym_loads(mock_init_array: MagicMock, two_pp_objs, con
     converter._get_pp_attr.assert_any_call("load", "scaling", expected_type="f8", default=1)
     converter._get_pp_attr.assert_any_call("load", "in_service", expected_type="bool", default=True)
     converter._get_pp_attr.assert_any_call("load", "type", expected_type="O", default=None)
-    if PP_CONVERSION_VERSION < PP_COMPATIBILITY_VERSION_3_2_0:
+    if pp_version < PP_COMPATIBILITY_VERSION_3_2_0:
         converter._get_pp_attr.assert_any_call("load", "const_z_percent", expected_type="f8", default=0)
         converter._get_pp_attr.assert_any_call("load", "const_i_percent", expected_type="f8", default=0)
         assert len(converter._get_pp_attr.call_args_list) == 8
@@ -725,6 +802,15 @@ def test_create_pgm_input_sym_loads(mock_init_array: MagicMock, two_pp_objs, con
 
     # result
     assert converter.pgm_input_data[ComponentType.sym_load] == pgm
+
+
+def test_create_pgm_input_sym_loads__bad_input():
+    converter = PandaPowerConverter()
+    converter.pp_input_data["load"] = pd.DataFrame(data={"bus": [101]}, index=[201])
+    converter.pgm_input_data[ComponentType.sym_load] = initialize_array(DatasetType.input, ComponentType.sym_load, 1)
+
+    with pytest.raises(ValueError, match="Symmetrical Load component already exists in pgm_input_data"):
+        converter._create_pgm_input_sym_loads()
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -768,6 +854,15 @@ def test_create_pgm_input_asym_loads(mock_init_array: MagicMock, two_pp_objs, co
     assert len(pgm.call_args_list) == 6
     # result
     assert converter.pgm_input_data[ComponentType.asym_load] == mock_init_array.return_value
+
+
+def test_create_pgm_input_asym_loads__bad_input():
+    converter = PandaPowerConverter()
+    converter.pp_input_data["asymmetric_load"] = pd.DataFrame(data={"bus": [101]}, index=[201])
+    converter.pgm_input_data[ComponentType.asym_load] = initialize_array(DatasetType.input, ComponentType.asym_load, 1)
+
+    with pytest.raises(ValueError, match="Asymmetric Load component already exists in pgm_input_data"):
+        converter._create_pgm_input_asym_loads()
 
 
 def test_create_pgm_input_sym_loads__delta() -> None:
@@ -876,6 +971,15 @@ def test_create_pgm_input_shunts(mock_init_array: MagicMock, two_pp_objs, conver
     assert converter.pgm_input_data[ComponentType.shunt] == mock_init_array.return_value
 
 
+def test_create_pgm_input_shunts__bad_input():
+    converter = PandaPowerConverter()
+    converter.pp_input_data["shunt"] = pd.DataFrame(data={"bus": [101]}, index=[201])
+    converter.pgm_input_data[ComponentType.shunt] = initialize_array(DatasetType.input, ComponentType.shunt, 1)
+
+    with pytest.raises(ValueError, match="Shunt component already exists in pgm_input_data"):
+        converter._create_pgm_input_shunts()
+
+
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 @patch("power_grid_model_io.converters.pandapower_converter.np.round", new=lambda x: x)
 @patch("power_grid_model_io.converters.pandapower_converter.np.sqrt", new=lambda x, **_kwargs: x)
@@ -962,6 +1066,17 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
 
     # result
     assert converter.pgm_input_data[ComponentType.transformer] == mock_init_array.return_value
+
+
+def test_create_pgm_input_transformers__bad_input():
+    converter = PandaPowerConverter()
+    converter.pp_input_data["trafo"] = pd.DataFrame(data={"hv_bus": [101], "lv_bus": [102]}, index=[201])
+    converter.pgm_input_data[ComponentType.transformer] = initialize_array(
+        DatasetType.input, ComponentType.transformer, 1
+    )
+
+    with pytest.raises(ValueError, match="Transformer component already exists in pgm_input_data"):
+        converter._create_pgm_input_transformers()
 
 
 @patch(
@@ -1094,6 +1209,15 @@ def test_create_pgm_input_sym_gens(mock_init_array: MagicMock, two_pp_objs, conv
     assert converter.pgm_input_data[ComponentType.sym_gen] == mock_init_array.return_value
 
 
+def test_create_pgm_input_sym_gens__bad_input():
+    converter = PandaPowerConverter()
+    converter.pp_input_data["sgen"] = pd.DataFrame(data={"bus": [101]}, index=[201])
+    converter.pgm_input_data[ComponentType.sym_gen] = initialize_array(DatasetType.input, ComponentType.sym_gen, 1)
+
+    with pytest.raises(ValueError, match="Symmetric generator component already exists in pgm_input_data"):
+        converter._create_pgm_input_sym_gens()
+
+
 @pytest.mark.parametrize(
     "kwargs",
     [
@@ -1180,6 +1304,15 @@ def test_create_pgm_input_asym_gens(mock_init_array: MagicMock, two_pp_objs, con
 
     # result
     assert converter.pgm_input_data[ComponentType.asym_gen] == mock_init_array.return_value
+
+
+def test_create_pgm_input_asym_gens__bad_input():
+    converter = PandaPowerConverter()
+    converter.pp_input_data["asymmetric_sgen"] = pd.DataFrame(data={"bus": [101]}, index=[201])
+    converter.pgm_input_data[ComponentType.asym_gen] = initialize_array(DatasetType.input, ComponentType.asym_gen, 1)
+
+    with pytest.raises(ValueError, match="Asymmetric generator component already exists in pgm_input_data"):
+        converter._create_pgm_input_asym_gens()
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -1281,6 +1414,19 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
 
     # result
     assert converter.pgm_input_data[ComponentType.three_winding_transformer] == mock_init_array.return_value
+
+
+def test_create_pgm_input_three_winding_transformers__bad_input():
+    converter = PandaPowerConverter()
+    converter.pp_input_data["trafo3w"] = pd.DataFrame(
+        data={"hv_bus": [101], "mv_bus": [102], "lv_bus": [103]}, index=[201]
+    )
+    converter.pgm_input_data[ComponentType.three_winding_transformer] = initialize_array(
+        DatasetType.input, ComponentType.three_winding_transformer, 1
+    )
+
+    with pytest.raises(ValueError, match="Three-winding transformer component already exists in pgm_input_data"):
+        converter._create_pgm_input_three_winding_transformers()
 
 
 @patch(
@@ -1584,6 +1730,19 @@ def test_create_pgm_input_links(mock_init_array: MagicMock, converter):
 
     # result
     assert converter.pgm_input_data[ComponentType.link] == mock_init_array.return_value
+
+
+def test_create_pgm_input_links__bad_input():
+    converter = PandaPowerConverter()
+    converter.pp_input_data["switch"] = pd.DataFrame(
+        [[0, 0, "b", False], [0, 0, "l", False], [0, 0, "b", False]],
+        index=[1, 2, 3],
+        columns=["bus", "element", "et", "closed"],
+    )
+    converter.pgm_input_data[ComponentType.link] = initialize_array(DatasetType.input, ComponentType.link, 1)
+
+    with pytest.raises(ValueError, match="Link component already exists in pgm_input_data"):
+        converter._create_pgm_input_links()
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -2251,3 +2410,21 @@ def test_get_pp_attr_use_default():
 
     # Assert
     np.testing.assert_array_equal(actual, expected)
+
+
+def test_get_loss_params_3ph__pandapower_3_1_2(monkeypatch):
+    monkeypatch.setattr(
+        "power_grid_model_io.converters.pandapower_converter.PP_CONVERSION_VERSION",
+        version.Version("3.1.0"),
+    )
+
+    result = get_loss_params_3ph()
+
+    assert result == [
+        "p_a_l_mw",
+        "q_a_l_mvar",
+        "p_b_l_mw",
+        "q_b_l_mvar",
+        "p_c_l_mw",
+        "q_c_l_mvar",
+    ]

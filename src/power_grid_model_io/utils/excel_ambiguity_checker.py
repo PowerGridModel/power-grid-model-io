@@ -20,10 +20,11 @@ Requirements:
     - zipfile to handle the Excel file as a ZIP archive for parsing.
 """
 
-import xml.etree.ElementTree as ET
 import zipfile
 from collections import Counter
 from pathlib import Path
+
+from defusedxml import ElementTree as ET
 
 XML_NAME_SPACE = {"": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}  # NOSONAR
 WORK_BOOK = "xl/workbook.xml"

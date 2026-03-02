@@ -504,7 +504,7 @@ def test_parse_col_def(converter: TabularConverter, tabular_data_no_units_no_sub
 
 
 def test_parse_col_def_const(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError, match="col_def must be int or float, got str"):
         converter._parse_col_def_const(
             data=tabular_data_no_units_no_substitutions,
             table="nodes",
@@ -544,7 +544,7 @@ def test_parse_col_def_const__no_filter(
 
 
 def test_parse_col_def_column_name(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError, match="col_def must be str, got int"):
         converter._parse_col_def_column_name(
             data=tabular_data_no_units_no_substitutions,
             table="nodes",
@@ -593,7 +593,7 @@ def test_parse_reference(converter: TabularConverter, tabular_data_no_units_no_s
 
 def test_parse_col_def_filter(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
     # Act/Assert:
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError, match="col_def must be dict, got list"):
         converter._parse_col_def_filter(
             data=tabular_data_no_units_no_substitutions,
             table="",
@@ -1022,7 +1022,7 @@ def test_parse_pandas_function__invalid(mock_parse_col_def: MagicMock, converter
     mock_parse_col_def.return_value = pd.DataFrame()
 
     # Act / Assert
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError, match="col_def must be list, got int"):
         converter._parse_pandas_function(
             data=MagicMock(),
             table="foo",
@@ -1088,7 +1088,7 @@ def test_parse_function__no_data(
 
 
 def test_parse_col_def_composite(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError, match="col_def must be list, got str"):
         converter._parse_col_def_composite(
             data=tabular_data_no_units_no_substitutions,
             table="nodes",

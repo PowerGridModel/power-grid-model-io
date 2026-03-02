@@ -381,6 +381,9 @@ Mapping files enable the specification of custom mappings or filter functions.
 These functions can come from the `power-grid-model-io` library, be user-provided, or even supplied by third parties.
 To ensure security, we have implemented several measures.
 Best practices are recommended to prevent malicious code execution.
+XML parsing is performed using the defusedxml library instead of the standard library xml module.
+This ensures that unsafe XML features are disabled by default when processing mapping files or related inputs.
+[Python XML security](https://docs.python.org/3/library/xml.html#xml-security)
 
 ### Safe Loading of Configuration Files
 

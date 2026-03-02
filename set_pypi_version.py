@@ -41,7 +41,7 @@ def set_version(pkg_dir: Path):
 
 
 def get_pypi_latest():
-    request = requests.get("https://pypi.org/pypi/power-grid-model-io/json")
+    request = requests.get("https://pypi.org/pypi/power-grid-model-io/json", timeout=100)
     data = request.json()
     version = str(data["info"]["version"])
     return (int(x) for x in version.split("."))

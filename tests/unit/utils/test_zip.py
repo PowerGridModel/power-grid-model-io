@@ -58,8 +58,12 @@ def test_extract__auto_dir(mock_tqdm: MagicMock, temp_dir: Path):
 
 def test_extract__invalid_file_extension():
     # Act / Assert
-    with pytest.raises(ValueError, match=r"Only files with \.zip extension are supported, got tempfile\.download"):
-        extract(src_file_path=Path("/tmp/dir/tempfile.download"))
+    with tempfile.TemporaryDirectory() as tmp:
+        invalid_file = Path(tmp) / "tempfile.download"
+        invalid_file.write_text("")
+
+        with pytest.raises(ValueError, match=r"Only files with \.zip extension are supported, got tempfile\.download"):
+            extract(src_file_path=invalid_file)
 
 
 def test_extract__invalid_dst_dir(temp_dir: Path):
