@@ -14,6 +14,7 @@ from power_grid_model.data_types import SingleDataset
 
 from power_grid_model_io.converters.tabular_converter import TabularConverter
 from power_grid_model_io.data_types import ExtraInfo, TabularData
+from power_grid_model_io.errors import ComponentNotFoundError, InvalidComponentTypeError, InvalidDataFormatError
 from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes
 from power_grid_model_io.mappings.unit_mapping import UnitMapping
 
@@ -67,7 +68,7 @@ def tabular_data_no_units_no_substitutions() -> TabularData:
 
 
 def test_set_mapping_file(converter: TabularConverter):
-    with pytest.raises(ValueError, match=r"Mapping file should be a .yaml file, .txt provided."):
+    with pytest.raises(InvalidDataFormatError, match=r"Mapping file should be a .yaml file, .txt provided."):
         converter.set_mapping_file(mapping_file=Path("dummy/path.txt"))
 
     dummy_path = Path(__file__).parents[2] / "data" / "config" / "dummy_mapping.yaml"
@@ -115,7 +116,7 @@ def test_convert_table_to_component(converter: TabularConverter, tabular_data_no
     )
     assert none_data is None
     # wrong component
-    with pytest.raises(KeyError, match="Invalid component type 'dummy' or data type 'input'"):
+    with pytest.raises(InvalidComponentTypeError, match="Invalid component type 'dummy' or data type 'input'"):
         converter._convert_table_to_component(
             data=tabular_data_no_units_no_substitutions,
             data_type=DatasetType.input,
@@ -125,7 +126,7 @@ def test_convert_table_to_component(converter: TabularConverter, tabular_data_no
             extra_info=None,
         )
     # wrong data_type
-    with pytest.raises(KeyError, match="Invalid component type 'node' or data type 'some_type'"):
+    with pytest.raises(InvalidComponentTypeError, match="Invalid component type 'node' or data type 'some_type'"):
         converter._convert_table_to_component(
             data=tabular_data_no_units_no_substitutions,
             data_type="some_type",
@@ -135,7 +136,7 @@ def test_convert_table_to_component(converter: TabularConverter, tabular_data_no
             extra_info=None,
         )
     # no 'id' in attributes
-    with pytest.raises(KeyError, match="No mapping for the attribute 'id' for 'nodes'!"):
+    with pytest.raises(ComponentNotFoundError, match="No mapping for the attribute 'id' for 'nodes'!"):
         converter._convert_table_to_component(
             data=tabular_data_no_units_no_substitutions,
             data_type=DatasetType.input,
@@ -234,7 +235,7 @@ def test_convert_col_def_to_attribute(
     pgm_node_empty: SingleDataset,
 ):
     with pytest.raises(
-        KeyError,
+        ComponentNotFoundError,
         match=r"Could not find attribute 'incorrect_attribute' for 'nodes'. \(choose from: id, u_rated\)",
     ):
         converter._convert_col_def_to_attribute(
@@ -275,7 +276,7 @@ def test_convert_col_def_to_attribute(
     assert (pgm_node_empty[ComponentType.node]["u_rated"] == [10500.0, 400.0]).all()
 
     with pytest.raises(
-        ValueError,
+        InvalidDataFormatError,
         match=r"DataFrame for (ComponentType\.)?node.u_rated should contain a single column "
         r"\(Index\(\['id_number', 'u_nom'\], dtype='(str|object)'\)\)",
     ):
@@ -696,7 +697,7 @@ def test_parse_col_def_filter__auto_id(mock_parse_auto_id: MagicMock, converter:
     pd.testing.assert_frame_equal(result, auto_id_result)
 
     # Act/Assert:
-    with pytest.raises(ValueError, match=r"Invalid auto_id definition: {'a': 1, 'b': 2}"):
+    with pytest.raises(InvalidDataFormatError, match=r"Invalid auto_id definition: {'a': 1, 'b': 2}"):
         converter._parse_col_def_filter(
             data=data,
             table="",
@@ -742,7 +743,7 @@ def test_parse_col_def_filter__reference(mock_parse_reference: MagicMock, conver
     assert result is reference_result
 
     # Act/Assert:
-    with pytest.raises(ValueError, match=r"Invalid reference definition: {'a': 1, 'b': 2}"):
+    with pytest.raises(InvalidDataFormatError, match=r"Invalid reference definition: {'a': 1, 'b': 2}"):
         converter._parse_col_def_filter(
             data=data,
             table="",
@@ -1032,11 +1033,11 @@ def test_parse_pandas_function__invalid(mock_parse_col_def: MagicMock, converter
         )  # type: ignore
 
     # Act / Assert
-    with pytest.raises(ValueError, match="Pandas DataFrame has no function 'bar'"):
+    with pytest.raises(InvalidDataFormatError, match="Pandas DataFrame has no function 'bar'"):
         converter._parse_pandas_function(data=MagicMock(), table="foo", fn_name="bar", col_def=[], table_mask=None)
 
     # Act / Assert
-    with pytest.raises(ValueError, match=r"Invalid pandas function DataFrame.apply"):
+    with pytest.raises(InvalidDataFormatError, match=r"Invalid pandas function DataFrame.apply"):
         converter._parse_pandas_function(data=MagicMock(), table="foo", fn_name="apply", col_def=[], table_mask=None)
 
 
@@ -1077,7 +1078,7 @@ def test_parse_function__no_data(
     mock_get_function.return_value = multiply_by_two
     mock_parse_col_def.return_value = pd.DataFrame()
 
-    with pytest.raises(ValueError, match=r"multiply_by_two.*empty DataFrame"):
+    with pytest.raises(InvalidDataFormatError, match=r"multiply_by_two.*empty DataFrame"):
         converter._parse_function(
             data=TabularData(nodes=pd.DataFrame([], columns=["u_nom"])),
             table="nodes",
@@ -1699,7 +1700,7 @@ def test_convert_col_def_to_attribute__pgm_data_without_dtype_names():
     assert pgm_data.dtype.names is None
 
     # Act & Assert
-    with pytest.raises(ValueError, match="pgm_data for 'nodes' has no attributes defined"):
+    with pytest.raises(InvalidDataFormatError, match="pgm_data for 'nodes' has no attributes defined"):
         converter._convert_col_def_to_attribute(
             data=data,
             pgm_data=pgm_data,

@@ -21,7 +21,7 @@ from power_grid_model.data_types import Dataset
 from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_stores.base_data_store import BaseDataStore
 from power_grid_model_io.data_types import ExtraInfo, TabularData
-from power_grid_model_io.exceptions import (
+from power_grid_model_io.errors import (
     ComponentNotFoundError,
     InvalidComponentTypeError,
     InvalidDataFormatError,
@@ -282,7 +282,7 @@ class TabularConverter(BaseConverter[TabularData]):
         component_str = component.value if isinstance(component, Enum) else component
 
         if pgm_data.dtype.names is None:
-            raise ValueError(f"pgm_data for '{component_str}s' has no attributes defined. (dtype.names is None)")
+            raise InvalidDataFormatError(f"pgm_data for '{component_str}s' has no attributes defined. (dtype.names is None)")
 
         if attr not in pgm_data.dtype.names and attr not in ["extra", "filters"]:
             attrs = ", ".join(pgm_data.dtype.names)
@@ -313,7 +313,7 @@ class TabularConverter(BaseConverter[TabularData]):
         )
 
         if len(attr_data.columns) != 1:
-            raise ValueError(f"DataFrame for {component}.{attr} should contain a single column ({attr_data.columns})")
+            raise InvalidDataFormatError(f"DataFrame for {component}.{attr} should contain a single column ({attr_data.columns})")
 
         pgm_data[attr] = attr_data.iloc[:, 0]
 
@@ -818,7 +818,7 @@ class TabularConverter(BaseConverter[TabularData]):
         try:
             fn_ptr = getattr(col_data, fn_name)
         except AttributeError as ex:
-            raise ValueError(f"Pandas DataFrame has no function '{fn_name}'") from ex
+            raise InvalidDataFormatError(f"Pandas DataFrame has no function '{fn_name}'") from ex
 
         # If the function expects an 'other' argument, apply the function per column (e.g. divide)
         empty = inspect.Parameter.empty
@@ -831,8 +831,8 @@ class TabularConverter(BaseConverter[TabularData]):
             return pd.DataFrame(result)
 
         # If the function expects any argument
-        if any(param.default == empty for name, param in fn_sig.parameters.items() if name != "kwargs"):
-            raise ValueError(f"Invalid pandas function DataFrame.{fn_name}")
+        if not callable(fn_ptr) or getattr(fn_ptr, "__name__", "") in ("apply", "applymap", "map"):
+            raise InvalidDataFormatError(f"Invalid pandas function DataFrame.{fn_name}")
 
         return pd.DataFrame(fn_ptr(axis=1))
 
@@ -870,8 +870,8 @@ class TabularConverter(BaseConverter[TabularData]):
             extra_info=None,
         )
 
-        if col_data.empty:
-            raise ValueError(f"Cannot apply function {function} to an empty DataFrame")
+        if len(col_data) == 0:
+            raise InvalidDataFormatError(f"Cannot apply function {function} to an empty DataFrame")
 
         col_data = col_data.apply(lambda row, fn=fn_ptr: fn(**dict(zip(key_words, row))), axis=1, raw=True)
         return pd.DataFrame(col_data)

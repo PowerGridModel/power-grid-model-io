@@ -20,7 +20,7 @@ from power_grid_model.utils import json_deserialize, json_serialize
 from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_stores.json_file_store import JsonFileStore
 from power_grid_model_io.data_types import ExtraInfo, StructuredData
-from power_grid_model_io.exceptions import (
+from power_grid_model_io.errors import (
     InvalidComponentTypeError,
     InvalidDataFormatError,
 )
