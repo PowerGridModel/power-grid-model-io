@@ -452,69 +452,68 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
         pp_lines = self.pp_input_data["line"]
 
-        if pp_lines.empty:
-            return
-
         if ComponentType.line in self.pgm_input_data:
             raise ValueError("Line component already exists in pgm_input_data")
 
-        switch_states = self.get_switch_states("line")
-        in_service = self._get_pp_attr("line", "in_service", expected_type="bool", default=True)
-        length_km = self._get_pp_attr("line", "length_km", expected_type="f8")
-        parallel = self._get_pp_attr("line", "parallel", expected_type="u4", default=1)
-        c_nf_per_km = self._get_pp_attr("line", "c_nf_per_km", expected_type="f8", default=0)
-        c0_nf_per_km = self._get_pp_attr("line", "c0_nf_per_km", expected_type="f8", default=0)
-        std_type = self._get_pp_attr("line", "std_type")
+        if not pp_lines.empty:
+            std_type = self._get_pp_attr("line", "std_type")
+            if self.asym_line_params is not None:
+                asym_lines = list(self.asym_line_params.keys())
+                sym_lines_mask = ~np.isin(std_type, asym_lines)
+            else:
+                sym_lines_mask = np.zeros_like(std_type, dtype=bool)
+            pp_lines = pp_lines.loc[sym_lines_mask]
+
+        if pp_lines.empty:
+            return
+
+        switch_states = self.get_switch_states("line")[sym_lines_mask]
+        in_service = self._get_pp_attr("line", "in_service", expected_type="bool", default=True, table=pp_lines)
+        length_km = self._get_pp_attr("line", "length_km", expected_type="f8", table=pp_lines)
+        parallel = self._get_pp_attr("line", "parallel", expected_type="u4", default=1, table=pp_lines)
+        c_nf_per_km = self._get_pp_attr("line", "c_nf_per_km", expected_type="f8", default=0, table=pp_lines)
+        c0_nf_per_km = self._get_pp_attr("line", "c0_nf_per_km", expected_type="f8", default=0, table=pp_lines)
         multiplier = length_km / parallel
-        if self.asym_line_params is not None:
-            asym_lines = list(self.asym_line_params.keys())
-            sym_lines_mask = ~np.isin(std_type, asym_lines)
-        else:
-            sym_lines_mask = np.zeros_like(std_type, dtype=bool)
-        pp_lines = pp_lines.loc[sym_lines_mask]
-        multiplier = multiplier[sym_lines_mask]
         pgm_lines = initialize_array(
             data_type=DatasetType.input, component_type=ComponentType.line, shape=len(pp_lines)
         )
         pgm_lines["id"] = self._generate_ids("line", pp_lines.index)
-        pgm_lines["from_node"] = self._get_pgm_ids("bus", self._get_pp_attr("line", "from_bus", expected_type="u4"))[
-            sym_lines_mask
-        ]
-        pgm_lines["from_status"] = (in_service & switch_states["from"])[sym_lines_mask]
-        pgm_lines["to_node"] = self._get_pgm_ids("bus", self._get_pp_attr("line", "to_bus", expected_type="u4"))[
-            sym_lines_mask
-        ]
-        pgm_lines["to_status"] = (in_service & switch_states["to"])[sym_lines_mask]
-        pgm_lines["r1"] = (self._get_pp_attr("line", "r_ohm_per_km", expected_type="f8")[sym_lines_mask]) * multiplier
-        pgm_lines["x1"] = (self._get_pp_attr("line", "x_ohm_per_km", expected_type="f8")[sym_lines_mask]) * multiplier
-        pgm_lines["c1"] = (c_nf_per_km * length_km * parallel * 1e-9)[sym_lines_mask]
+        pgm_lines["from_node"] = self._get_pgm_ids(
+            "bus", self._get_pp_attr("line", "from_bus", expected_type="u4", table=pp_lines)
+        )
+        pgm_lines["from_status"] = in_service & (switch_states["from"])
+        pgm_lines["to_node"] = self._get_pgm_ids(
+            "bus", self._get_pp_attr("line", "to_bus", expected_type="u4", table=pp_lines)
+        )
+        pgm_lines["to_status"] = in_service & (switch_states["to"])
+        pgm_lines["r1"] = self._get_pp_attr("line", "r_ohm_per_km", expected_type="f8", table=pp_lines) * multiplier
+        pgm_lines["x1"] = self._get_pp_attr("line", "x_ohm_per_km", expected_type="f8", table=pp_lines) * multiplier
+        pgm_lines["c1"] = c_nf_per_km * length_km * parallel * 1e-9
         # The formula for tan1 = R_1 / Xc_1 = (g * 1e-6) / (2 * pi * f * c * 1e-9) = g / (2 * pi * f * c * 1e-3)
         pgm_lines["tan1"] = np.divide(
-            self._get_pp_attr("line", "g_us_per_km", expected_type="f8", default=0),
+            self._get_pp_attr("line", "g_us_per_km", expected_type="f8", default=0, table=pp_lines),
             c_nf_per_km * (2 * np.pi * self.system_frequency * 1e-3),
             where=np.logical_not(np.isclose(c_nf_per_km, 0.0)),
             out=None,
-        )[sym_lines_mask]
+        )
         pgm_lines["i_n"] = (
-            (self._get_pp_attr("line", "max_i_ka", expected_type="f8", default=np.nan) * 1e3)
-            * self._get_pp_attr("line", "df", expected_type="f8", default=1)
+            (self._get_pp_attr("line", "max_i_ka", expected_type="f8", default=np.nan, table=pp_lines) * 1e3)
+            * self._get_pp_attr("line", "df", expected_type="f8", default=1, table=pp_lines)
             * parallel
-        )[sym_lines_mask]
+        )
         pgm_lines["r0"] = (
-            (self._get_pp_attr("line", "r0_ohm_per_km", expected_type="f8", default=np.nan)[sym_lines_mask])
-            * multiplier
+            self._get_pp_attr("line", "r0_ohm_per_km", expected_type="f8", default=np.nan, table=pp_lines) * multiplier
         )
         pgm_lines["x0"] = (
-            (self._get_pp_attr("line", "x0_ohm_per_km", expected_type="f8", default=np.nan)[sym_lines_mask])
-            * multiplier
+            self._get_pp_attr("line", "x0_ohm_per_km", expected_type="f8", default=np.nan, table=pp_lines) * multiplier
         )
-        pgm_lines["c0"] = (c0_nf_per_km * length_km * parallel * 1e-9)[sym_lines_mask]
+        pgm_lines["c0"] = c0_nf_per_km * length_km * parallel * 1e-9
         pgm_lines["tan0"] = np.divide(
-            self._get_pp_attr("line", "g0_us_per_km", expected_type="f8", default=0),
+            self._get_pp_attr("line", "g0_us_per_km", expected_type="f8", default=0, table=pp_lines),
             c0_nf_per_km * (2 * np.pi * self.system_frequency * 1e-3),
             where=np.logical_not(np.isclose(c0_nf_per_km, 0.0)),
             out=None,
-        )[sym_lines_mask]
+        )
         self.pgm_input_data[ComponentType.line] = pgm_lines
 
     def _create_pgm_input_asym_lines(self):
@@ -527,115 +526,77 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
         pp_lines = self.pp_input_data["line"]
 
-        if pp_lines.empty:
-            return
-
         if ComponentType.asym_line in self.pgm_input_data:
             raise ValueError("Asym Line component already exists in pgm_input_data.")
 
         if self.asym_line_params is None:
             return
 
-        switch_states = self.get_switch_states("line")
-        in_service = self._get_pp_attr("line", "in_service", expected_type="bool", default=True)
-        length_km = self._get_pp_attr("line", "length_km", expected_type="f8")
-        parallel = self._get_pp_attr("line", "parallel", expected_type="u4", default=1)
-        c_nf_per_km = self._get_pp_attr("line", "c_nf_per_km", expected_type="f8", default=0)
-        c0_nf_per_km = self._get_pp_attr("line", "c0_nf_per_km", expected_type="f8", default=0)
-        std_type = self._get_pp_attr("line", "std_type")
-        multiplier = length_km / parallel
-        if self.asym_line_params is not None:
-            asym_lines = list(self.asym_line_params.keys())
-            asym_lines_mask = np.isin(std_type, asym_lines)
-        else:
-            asym_lines_mask = np.zeros_like(std_type, dtype=bool)
+        if not pp_lines.empty:
+            std_type = self._get_pp_attr("line", "std_type")
+            if self.asym_line_params is not None:
+                asym_lines = list(self.asym_line_params.keys())
+                asym_lines_mask = np.isin(std_type, asym_lines)
+            else:
+                asym_lines_mask = np.zeros_like(std_type, dtype=bool)
+
+        pp_lines = pp_lines.loc[asym_lines_mask]
+
+        if pp_lines.empty:
+            return
         std_type = std_type[asym_lines_mask]
-        pp_lines = pp_lines[asym_lines_mask]
-        multiplier = multiplier[asym_lines_mask]
+
+        switch_states = self.get_switch_states("line")[asym_lines_mask]
+        in_service = self._get_pp_attr("line", "in_service", expected_type="bool", default=True, table=pp_lines)
+        length_km = self._get_pp_attr("line", "length_km", expected_type="f8", table=pp_lines)
+        parallel = self._get_pp_attr("line", "parallel", expected_type="u4", default=1, table=pp_lines)
+        c_nf_per_km = self._get_pp_attr("line", "c_nf_per_km", expected_type="f8", default=0, table=pp_lines)
+        c0_nf_per_km = self._get_pp_attr("line", "c0_nf_per_km", expected_type="f8", default=0, table=pp_lines)
+        multiplier = length_km / parallel
 
         pgm_lines = initialize_array(
             data_type=DatasetType.input, component_type=ComponentType.asym_line, shape=len(pp_lines)
         )
         pgm_lines["id"] = self._generate_ids("line", pp_lines.index, name="asym")
-        pgm_lines["from_node"] = self._get_pgm_ids("bus", self._get_pp_attr("line", "from_bus", expected_type="u4"))[
-            asym_lines_mask
-        ]
-        pgm_lines["from_status"] = (in_service & switch_states["from"])[asym_lines_mask]
-        pgm_lines["to_node"] = self._get_pgm_ids("bus", self._get_pp_attr("line", "to_bus", expected_type="u4"))[
-            asym_lines_mask
-        ]
-        pgm_lines["to_status"] = (in_service & switch_states["to"])[asym_lines_mask]
+        pgm_lines["from_node"] = self._get_pgm_ids(
+            "bus", self._get_pp_attr("line", "from_bus", expected_type="u4", table=pp_lines)
+        )
+        pgm_lines["from_status"] = in_service & switch_states["from"]
+        pgm_lines["to_node"] = self._get_pgm_ids(
+            "bus", self._get_pp_attr("line", "to_bus", expected_type="u4", table=pp_lines)
+        )
+        pgm_lines["to_status"] = in_service & switch_states["to"]
+        impedance_matrix_entries = ["aa", "ba", "bb", "ca", "cb", "cc", "na", "nb", "nc", "nn"]
+        admittance_matrix_entries = ["aa", "ba", "bb", "ca", "cb", "cc"]
         for asym_line_type in asym_lines:
             asym_line_type_mask = np.isin(std_type, [asym_line_type])
-            pgm_lines["r_aa"][asym_line_type_mask] = (
-                self._get_asym_line_attr(asym_line_type, "r_aa") * multiplier[asym_line_type_mask]
-            )
-            pgm_lines["r_ba"][asym_line_type_mask] = (
-                self._get_asym_line_attr(asym_line_type, "r_ba") * multiplier[asym_line_type_mask]
-            )
-            pgm_lines["r_bb"][asym_line_type_mask] = (
-                self._get_asym_line_attr(asym_line_type, "r_bb") * multiplier[asym_line_type_mask]
-            )
-            pgm_lines["r_ca"][asym_line_type_mask] = (
-                self._get_asym_line_attr(asym_line_type, "r_ca") * multiplier[asym_line_type_mask]
-            )
-            pgm_lines["r_cb"][asym_line_type_mask] = (
-                self._get_asym_line_attr(asym_line_type, "r_cb") * multiplier[asym_line_type_mask]
-            )
-            pgm_lines["r_cc"][asym_line_type_mask] = (
-                self._get_asym_line_attr(asym_line_type, "r_cc") * multiplier[asym_line_type_mask]
-            )
-            pgm_lines["r_na"][asym_line_type_mask] = (
-                self._get_asym_line_attr(asym_line_type, "r_na") * multiplier[asym_line_type_mask]
-            )
-            pgm_lines["r_nb"][asym_line_type_mask] = (
-                self._get_asym_line_attr(asym_line_type, "r_nb") * multiplier[asym_line_type_mask]
-            )
-            pgm_lines["r_nc"][asym_line_type_mask] = (
-                self._get_asym_line_attr(asym_line_type, "r_nc") * multiplier[asym_line_type_mask]
-            )
-            pgm_lines["r_nn"][asym_line_type_mask] = (
-                self._get_asym_line_attr(asym_line_type, "r_nn") * multiplier[asym_line_type_mask]
-            )
+            for impedance in ["r", "x"]:
+                for impedance_element in impedance_matrix_entries:
+                    pgm_key = impedance + "_" + impedance_element
+                    pp_key = pgm_key + "_ohm_per_km"
+                    pgm_lines[pgm_key][asym_line_type_mask] = (
+                        self._get_asym_line_attr(asym_line_type, pp_key) * multiplier[asym_line_type_mask]
+                    )
+            for admittance_element in admittance_matrix_entries:
+                pgm_key = "c_" + admittance_element
+                pp_key = pgm_key + "_nf_per_km"
+                pgm_lines[pgm_key][asym_line_type_mask] = (
+                    self._get_asym_line_attr(asym_line_type, pp_key)
+                    * length_km[asym_line_type_mask]
+                    * parallel[asym_line_type_mask]
+                    * 1e-9
+                )
+        cap_invalid_mask = np.ones_like(pgm_lines["c_aa"], dtype=bool)
+        for admittance_element in admittance_matrix_entries:
+            cap_invalid_mask = np.logical_and(cap_invalid_mask, np.isnan(pgm_lines["c_" + admittance_element]))
 
-            pgm_lines["x_aa"][asym_line_type_mask] = (
-                self._get_asym_line_attr(asym_line_type, "x_aa") * multiplier[asym_line_type_mask]
-            )
-            pgm_lines["x_ba"][asym_line_type_mask] = (
-                self._get_asym_line_attr(asym_line_type, "x_ba") * multiplier[asym_line_type_mask]
-            )
-            pgm_lines["x_bb"][asym_line_type_mask] = (
-                self._get_asym_line_attr(asym_line_type, "x_bb") * multiplier[asym_line_type_mask]
-            )
-            pgm_lines["x_ca"][asym_line_type_mask] = (
-                self._get_asym_line_attr(asym_line_type, "x_ca") * multiplier[asym_line_type_mask]
-            )
-            pgm_lines["x_cb"][asym_line_type_mask] = (
-                self._get_asym_line_attr(asym_line_type, "x_cb") * multiplier[asym_line_type_mask]
-            )
-            pgm_lines["x_cc"][asym_line_type_mask] = (
-                self._get_asym_line_attr(asym_line_type, "x_cc") * multiplier[asym_line_type_mask]
-            )
-            pgm_lines["x_na"][asym_line_type_mask] = (
-                self._get_asym_line_attr(asym_line_type, "x_na") * multiplier[asym_line_type_mask]
-            )
-            pgm_lines["x_nb"][asym_line_type_mask] = (
-                self._get_asym_line_attr(asym_line_type, "x_nb") * multiplier[asym_line_type_mask]
-            )
-            pgm_lines["x_nc"][asym_line_type_mask] = (
-                self._get_asym_line_attr(asym_line_type, "x_nc") * multiplier[asym_line_type_mask]
-            )
-            pgm_lines["x_nn"][asym_line_type_mask] = (
-                self._get_asym_line_attr(asym_line_type, "x_nn") * multiplier[asym_line_type_mask]
-            )
-
-        pgm_lines["c1"] = (c_nf_per_km * length_km * parallel * 1e-9)[asym_lines_mask]
+        pgm_lines["c1"][cap_invalid_mask] = (c_nf_per_km * length_km * parallel * 1e-9)[cap_invalid_mask]
+        pgm_lines["c0"] = (c0_nf_per_km * length_km * parallel * 1e-9)[cap_invalid_mask]
         pgm_lines["i_n"] = (
-            (self._get_pp_attr("line", "max_i_ka", expected_type="f8", default=np.nan) * 1e3)
-            * self._get_pp_attr("line", "df", expected_type="f8", default=1)
+            (self._get_pp_attr("line", "max_i_ka", expected_type="f8", default=np.nan, table=pp_lines) * 1e3)
+            * self._get_pp_attr("line", "df", expected_type="f8", default=1, table=pp_lines)
             * parallel
-        )[asym_lines_mask]
-        pgm_lines["c0"] = (c0_nf_per_km * length_km * parallel * 1e-9)[asym_lines_mask]
+        )
 
         self.pgm_input_data[ComponentType.asym_line] = pgm_lines
 
@@ -2762,10 +2723,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
     def _get_pp_attr(
         self,
-        table: str,
+        table_name: str,
         attribute: str,
         expected_type: str | None = None,
         default: float | bool | str | None = None,
+        table: pd.DataFrame | None = None,
     ) -> np.ndarray:
         """
         Returns the selected PandaPower attribute from the selected PandaPower table.
@@ -2779,7 +2741,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             the selected PandaPower attribute from the selected PandaPower table
         """
-        pp_component_data = self.pp_input_data[table]
+        pp_component_data = self.pp_input_data[table_name] if table is None else table
 
         exp_dtype: str | type = "O"
         if expected_type is not None:
