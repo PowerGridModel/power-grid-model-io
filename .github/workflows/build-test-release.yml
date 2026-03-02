@@ -77,7 +77,7 @@ jobs:
           python-version: ${{ matrix.python }}
 
       - name: Load built wheel file
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: power-grid-model-io
           path: wheelhouse/
@@ -110,7 +110,7 @@ jobs:
           python-version: ${{ matrix.python }}
 
       - name: Load built wheel file
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: power-grid-model-io
           path: wheelhouse/
@@ -137,7 +137,7 @@ jobs:
         uses: astral-sh/setup-uv@v7
 
       - name: Load built wheel file
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: power-grid-model-io
           path: wheelhouse/
