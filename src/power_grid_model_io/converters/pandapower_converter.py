@@ -444,14 +444,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self.pgm_input_data[ComponentType.node] = pgm_nodes
 
     def _get_asymmetric_lines_mask(self):
-        pp_lines = self.pp_input_data["line"]
-        if not pp_lines.empty:
-            std_type = self._get_pp_attr("line", "std_type")
-            if self.asym_line_params is not None:
-                asym_lines = list(self.asym_line_params.keys())
-                asym_lines_mask = np.isin(std_type, asym_lines)
-            else:
-                asym_lines_mask = np.zeros_like(std_type, dtype=bool)
+        std_type = self._get_pp_attr("line", "std_type")
+        asym_lines_mask = np.zeros_like(std_type, dtype=bool)
+        if self.asym_line_params is not None:
+            asym_lines = list(self.asym_line_params.keys())
+            asym_lines_mask = np.isin(std_type, asym_lines)
         return asym_lines_mask
 
     def _create_pgm_input_lines(self):
@@ -466,8 +463,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if ComponentType.line in self.pgm_input_data:
             raise ValueError("Line component already exists in pgm_input_data")
 
-        sym_lines_mask = ~self._get_asymmetric_lines_mask()
-        pp_lines = pp_lines[sym_lines_mask]
+        if not pp_lines.empty:
+            sym_lines_mask = ~self._get_asymmetric_lines_mask()
+            pp_lines = pp_lines[sym_lines_mask]
 
         if pp_lines.empty:
             return
@@ -537,20 +535,14 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if self.asym_line_params is None:
             return
 
-        asym_lines_mask = self._get_asymmetric_lines_mask()
         if not pp_lines.empty:
-            std_type = self._get_pp_attr("line", "std_type")
-            if self.asym_line_params is not None:
-                asym_lines = list(self.asym_line_params.keys())
-                asym_lines_mask = np.isin(std_type, asym_lines)
-            else:
-                asym_lines_mask = np.zeros_like(std_type, dtype=bool)
-
-        pp_lines = pp_lines.loc[asym_lines_mask]
+            asym_lines_mask = self._get_asymmetric_lines_mask()
+            pp_lines = pp_lines.loc[asym_lines_mask]
 
         if pp_lines.empty:
             return
 
+        asym_lines = list(self.asym_line_params.keys())
         switch_states = self.get_switch_states("line")[asym_lines_mask]
         in_service = self._get_pp_attr("line", "in_service", expected_type="bool", default=True, table=pp_lines)
         length_km = self._get_pp_attr("line", "length_km", expected_type="f8", table=pp_lines)
