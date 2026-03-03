@@ -1443,54 +1443,59 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if "res_line" in self.pp_output_data:
             raise ValueError("res_line already exists in pp_output_data.")
 
-        if ComponentType.line not in self.pgm_output_data or self.pgm_output_data[ComponentType.line].size == 0:
-            return
+        pp_output_lines = None
 
-        pgm_input_lines = self.pgm_input_data[ComponentType.line]
-        pgm_output_lines = self.pgm_output_data[ComponentType.line]
+        for line_type in [ComponentType.line, ComponentType.asym_line]:
+            if line_type not in self.pgm_output_data or self.pgm_output_data[line_type].size == 0:
+                continue
+            name = "asym" if line_type == ComponentType.asym_line else None
+            pgm_input_lines = self.pgm_input_data[line_type]
+            pgm_output_lines = self.pgm_output_data[line_type]
 
-        if not np.array_equal(pgm_input_lines["id"], pgm_output_lines["id"]):
-            raise ValueError("The output line ids should correspond to the input line ids")
+            if not np.array_equal(pgm_input_lines["id"], pgm_output_lines["id"]):
+                raise ValueError("The output line ids should correspond to the input line ids")
 
-        pp_output_lines = pd.DataFrame(
-            columns=[
-                "p_from_mw",
-                "q_from_mvar",
-                "p_to_mw",
-                "q_to_mvar",
-                "pl_mw",
-                "ql_mvar",
-                "i_from_ka",
-                "i_to_ka",
-                "i_ka",
-                "vm_from_pu",
-                "vm_to_pu",
-                "va_from_degree",
-                "va_to_degree",
-                "loading_percent",
-            ],
-            index=self._get_pp_ids(ComponentType.line, pgm_output_lines["id"]),
-        )
+            output_lines = pd.DataFrame(
+                columns=[
+                    "p_from_mw",
+                    "q_from_mvar",
+                    "p_to_mw",
+                    "q_to_mvar",
+                    "pl_mw",
+                    "ql_mvar",
+                    "i_from_ka",
+                    "i_to_ka",
+                    "i_ka",
+                    "vm_from_pu",
+                    "vm_to_pu",
+                    "va_from_degree",
+                    "va_to_degree",
+                    "loading_percent",
+                ],
+                index=self._get_pp_ids(ComponentType.line, pgm_output_lines["id"], name=name),
+            )
 
-        from_nodes = self.pgm_nodes_lookup.loc[pgm_input_lines["from_node"]]
-        to_nodes = self.pgm_nodes_lookup.loc[pgm_input_lines["to_node"]]
+            from_nodes = self.pgm_nodes_lookup.loc[pgm_input_lines["from_node"]]
+            to_nodes = self.pgm_nodes_lookup.loc[pgm_input_lines["to_node"]]
 
-        pp_output_lines["p_from_mw"] = pgm_output_lines["p_from"] * 1e-6
-        pp_output_lines["q_from_mvar"] = pgm_output_lines["q_from"] * 1e-6
-        pp_output_lines["p_to_mw"] = pgm_output_lines["p_to"] * 1e-6
-        pp_output_lines["q_to_mvar"] = pgm_output_lines["q_to"] * 1e-6
-        pp_output_lines["pl_mw"] = (pgm_output_lines["p_from"] + pgm_output_lines["p_to"]) * 1e-6
-        pp_output_lines["ql_mvar"] = (pgm_output_lines["q_from"] + pgm_output_lines["q_to"]) * 1e-6
-        pp_output_lines["i_from_ka"] = pgm_output_lines["i_from"] * 1e-3
-        pp_output_lines["i_to_ka"] = pgm_output_lines["i_to"] * 1e-3
-        pp_output_lines["i_ka"] = np.maximum(pgm_output_lines["i_from"], pgm_output_lines["i_to"]) * 1e-3
-        pp_output_lines["vm_from_pu"] = from_nodes["u_pu"].values
-        pp_output_lines["vm_to_pu"] = to_nodes["u_pu"].values
-        pp_output_lines["va_from_degree"] = from_nodes["u_degree"].values
-        pp_output_lines["va_to_degree"] = to_nodes["u_degree"].values
-        pp_output_lines["loading_percent"] = pgm_output_lines["loading"] * 1e2
+            output_lines["p_from_mw"] = pgm_output_lines["p_from"] * 1e-6
+            output_lines["q_from_mvar"] = pgm_output_lines["q_from"] * 1e-6
+            output_lines["p_to_mw"] = pgm_output_lines["p_to"] * 1e-6
+            output_lines["q_to_mvar"] = pgm_output_lines["q_to"] * 1e-6
+            output_lines["pl_mw"] = (pgm_output_lines["p_from"] + pgm_output_lines["p_to"]) * 1e-6
+            output_lines["ql_mvar"] = (pgm_output_lines["q_from"] + pgm_output_lines["q_to"]) * 1e-6
+            output_lines["i_from_ka"] = pgm_output_lines["i_from"] * 1e-3
+            output_lines["i_to_ka"] = pgm_output_lines["i_to"] * 1e-3
+            output_lines["i_ka"] = np.maximum(pgm_output_lines["i_from"], pgm_output_lines["i_to"]) * 1e-3
+            output_lines["vm_from_pu"] = from_nodes["u_pu"].values
+            output_lines["vm_to_pu"] = to_nodes["u_pu"].values
+            output_lines["va_from_degree"] = from_nodes["u_degree"].values
+            output_lines["va_to_degree"] = to_nodes["u_degree"].values
+            output_lines["loading_percent"] = pgm_output_lines["loading"] * 1e2
 
-        self.pp_output_data["res_line"] = pp_output_lines
+            pp_output_lines = output_lines if pp_output_lines is None else pd.concat([pp_output_lines, output_lines])
+
+            self.pp_output_data["res_line"] = pp_output_lines
 
     def _pp_ext_grids_output(self):
         """
@@ -2759,7 +2764,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # If any of the attribute values are missing, and a default is supplied, fill the nans with the default value
         nan_values = attr_data.isna()  # type: ignore
 
-        if any(nan_values):
+        if any(nan_values) and default is not None:
             attr_data = attr_data.fillna(value=default, inplace=False)
 
         return attr_data.to_numpy(dtype=exp_dtype, copy=True)

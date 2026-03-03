@@ -160,19 +160,33 @@ def test_output_bus__bad_input():
 
 def test_output_line(converter):
     # Arrange
-    mock_pgm_array = MagicMock()
-    converter.pgm_nodes_lookup = MagicMock()
+    mock_array = MagicMock()
+    mock_array.size = 2
+    mock_pgm_array = mock_array
+    converter.pgm_nodes_lookup = mock_array
     converter.pgm_output_data[ComponentType.line] = mock_pgm_array
-    converter.pgm_input_data[ComponentType.line] = MagicMock()
+    converter.pgm_output_data[ComponentType.asym_line] = mock_pgm_array
+    converter.pgm_input_data[ComponentType.line] = mock_array
+    converter.pgm_input_data[ComponentType.asym_line] = mock_array
 
-    with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
+    with (
+        patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df,
+        patch(
+            "power_grid_model_io.converters.pandapower_converter.pd.concat", return_value=mock_array
+        ) as mock_df_concat,
+    ):
         # Act
         converter._pp_lines_output()
 
         # Assert
 
         # initialization
-        converter._get_pp_ids.assert_called_once_with(ComponentType.line, mock_pgm_array["id"])
+        converter._get_pp_ids.assert_has_calls(
+            [
+                call(ComponentType.line, mock_pgm_array["id"], name=None),
+                call(ComponentType.line, mock_pgm_array["id"], name="asym"),
+            ]
+        )
 
         # retrieval
         mock_pgm_array.__getitem__.assert_any_call("id")
@@ -197,7 +211,12 @@ def test_output_line(converter):
         mock_pp_df.return_value.__setitem__.assert_any_call("loading_percent", ANY)
 
         # result
-        converter.pp_output_data.__setitem__.assert_called_once_with("res_line", mock_pp_df.return_value)
+        converter.pp_output_data.__setitem__.assert_has_calls(
+            [
+                call("res_line", mock_pp_df.return_value),
+                call("res_line", mock_df_concat.return_value),
+            ]
+        )
 
 
 def test_output_line__bad_input():
