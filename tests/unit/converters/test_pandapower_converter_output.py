@@ -991,19 +991,34 @@ def test_output_bus_3ph__bad_input(converter):
 def test_output_line_3ph(converter):
     # Arrange
     mock_pgm_array = MagicMock()
+    mock_pgm_array.size = 3
+    mock_pgm_input_array = MagicMock()
+    mock_pgm_input_array.size = 3
     converter.pgm_nodes_lookup = MagicMock()
     converter.pgm_output_data[ComponentType.line] = mock_pgm_array
+    converter.pgm_output_data[ComponentType.asym_line] = mock_pgm_array
     converter.pgm_output_data[ComponentType.node] = mock_pgm_array
-    converter.pgm_input_data[ComponentType.line] = MagicMock()
+    converter.pgm_input_data[ComponentType.line] = mock_pgm_input_array
+    converter.pgm_input_data[ComponentType.asym_line] = mock_pgm_input_array
 
-    with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
+    with (
+        patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df,
+        patch(
+            "power_grid_model_io.converters.pandapower_converter.pd.concat", return_value=mock_pgm_array
+        ) as mock_df_concat,
+    ):
         # Act
         converter._pp_lines_output_3ph()
 
         # Assert
 
         # initialization
-        converter._get_pp_ids.assert_called_once_with(ComponentType.line, mock_pgm_array["X"])
+        converter._get_pp_ids.assert_has_calls(
+            [
+                call("line", mock_pgm_array["X"], name=None),
+                call("line", mock_pgm_array["X"], name="asym_line"),
+            ]
+        )
 
         # retrieval
         mock_pgm_array.__getitem__.assert_any_call("id")
@@ -1052,7 +1067,12 @@ def test_output_line_3ph(converter):
         mock_pp_df.return_value.__setitem__.assert_any_call("loading_c_percent", ANY)
 
         # result
-        converter.pp_output_data.__setitem__.assert_called_once_with("res_line_3ph", mock_pp_df.return_value)
+        converter.pp_output_data.__setitem__.assert_has_calls(
+            [
+                call("res_line_3ph", mock_pp_df.return_value),
+                call("res_line_3ph", mock_df_concat.return_value),
+            ]
+        )
 
 
 def test_output_line_3ph__bad_input(converter):

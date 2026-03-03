@@ -2045,111 +2045,126 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if "res_line_3ph" in self.pp_output_data:
             raise ValueError("res_line_3ph already exists in pp_output_data.")
 
-        if any(
-            (comp not in self.pgm_output_data or self.pgm_output_data[comp].size == 0)
-            for comp in [ComponentType.node, ComponentType.line]
-        ):
+        if ComponentType.node not in self.pgm_output_data or (self.pgm_output_data[ComponentType.node].size == 0):
             return
 
-        pgm_input_lines = self.pgm_input_data[ComponentType.line]
-        pgm_output_lines = self.pgm_output_data[ComponentType.line]
         pgm_output_nodes = self.pgm_output_data[ComponentType.node]
-
         u_complex = pd.DataFrame(
             pgm_output_nodes["u"] * np.exp(1j * pgm_output_nodes["u_angle"]),
             index=self.pgm_output_data[ComponentType.node]["id"],
         )
-        from_nodes = pgm_input_lines["from_node"]
-        to_nodes = pgm_input_lines["to_node"]
-        i_from = (pgm_output_lines["p_from"] + 1j * pgm_output_lines["q_from"]) / u_complex.iloc[from_nodes, :]
-        i_to = (pgm_output_lines["p_to"] + 1j * pgm_output_lines["q_to"]) / u_complex.iloc[to_nodes, :]
 
-        loss_params = get_loss_params_3ph()
-        pp_output_lines_3ph = pd.DataFrame(
-            columns=[
-                "p_a_from_mw",
-                "q_a_from_mvar",
-                "p_b_from_mw",
-                "q_b_from_mvar",
-                "p_c_from_mw",
-                "q_c_from_mvar",
-                "p_a_to_mw",
-                "q_a_to_mvar",
-                "p_b_to_mw",
-                "q_b_to_mvar",
-                "p_c_to_mw",
-                "q_c_to_mvar",
-                loss_params[0],
-                loss_params[1],
-                loss_params[2],
-                loss_params[3],
-                loss_params[4],
-                loss_params[5],
-                "i_a_from_ka",
-                "i_b_from_ka",
-                "i_c_from_ka",
-                "i_n_from_ka",
-                "i_a_ka",
-                "i_b_ka",
-                "i_c_ka",
-                "i_n_ka",
-                "i_a_to_ka",
-                "i_b_to_ka",
-                "i_c_to_ka",
-                "i_n_to_ka",
-                "loading_a_percent",
-                "loading_b_percent",
-                "loading_c_percent",
-                "loading_percent",
-            ],
-            index=self._get_pp_ids("line", pgm_output_lines["id"]),
-        )
+        pp_output_lines_3ph = None
 
-        pp_output_lines_3ph["p_a_from_mw"] = pgm_output_lines["p_from"][:, 0] * 1e-6
-        pp_output_lines_3ph["q_a_from_mvar"] = pgm_output_lines["q_from"][:, 0] * 1e-6
-        pp_output_lines_3ph["p_b_from_mw"] = pgm_output_lines["p_from"][:, 1] * 1e-6
-        pp_output_lines_3ph["q_b_from_mvar"] = pgm_output_lines["q_from"][:, 1] * 1e-6
-        pp_output_lines_3ph["p_c_from_mw"] = pgm_output_lines["p_from"][:, 2] * 1e-6
-        pp_output_lines_3ph["q_c_from_mvar"] = pgm_output_lines["q_from"][:, 2] * 1e-6
-        pp_output_lines_3ph["p_a_to_mw"] = pgm_output_lines["p_to"][:, 0] * 1e-6
-        pp_output_lines_3ph["q_a_to_mvar"] = pgm_output_lines["q_to"][:, 0] * 1e-6
-        pp_output_lines_3ph["p_b_to_mw"] = pgm_output_lines["p_to"][:, 1] * 1e-6
-        pp_output_lines_3ph["q_b_to_mvar"] = pgm_output_lines["q_to"][:, 1] * 1e-6
-        pp_output_lines_3ph["p_c_to_mw"] = pgm_output_lines["p_to"][:, 2] * 1e-6
-        pp_output_lines_3ph["q_c_to_mvar"] = pgm_output_lines["q_to"][:, 2] * 1e-6
-        pp_output_lines_3ph[loss_params[0]] = (pgm_output_lines["p_from"][:, 0] + pgm_output_lines["p_to"][:, 0]) * 1e-6
-        pp_output_lines_3ph[loss_params[1]] = (pgm_output_lines["q_from"][:, 0] + pgm_output_lines["q_to"][:, 0]) * 1e-6
-        pp_output_lines_3ph[loss_params[2]] = (pgm_output_lines["p_from"][:, 1] + pgm_output_lines["p_to"][:, 1]) * 1e-6
-        pp_output_lines_3ph[loss_params[3]] = (pgm_output_lines["q_from"][:, 1] + pgm_output_lines["q_to"][:, 1]) * 1e-6
-        pp_output_lines_3ph[loss_params[4]] = (pgm_output_lines["p_from"][:, 2] + pgm_output_lines["p_to"][:, 2]) * 1e-6
-        pp_output_lines_3ph[loss_params[5]] = (pgm_output_lines["q_from"][:, 2] + pgm_output_lines["q_to"][:, 2]) * 1e-6
-        pp_output_lines_3ph["i_a_from_ka"] = pgm_output_lines["i_from"][:, 0] * 1e-3
-        pp_output_lines_3ph["i_b_from_ka"] = pgm_output_lines["i_from"][:, 1] * 1e-3
-        pp_output_lines_3ph["i_c_from_ka"] = pgm_output_lines["i_from"][:, 2] * 1e-3
-        pp_output_lines_3ph["i_n_from_ka"] = np.array(np.abs(np.sum(i_from, axis=1))) * 1e-3
-        pp_output_lines_3ph["i_a_to_ka"] = pgm_output_lines["i_to"][:, 0] * 1e-3
-        pp_output_lines_3ph["i_b_to_ka"] = pgm_output_lines["i_to"][:, 1] * 1e-3
-        pp_output_lines_3ph["i_c_to_ka"] = pgm_output_lines["i_to"][:, 2] * 1e-3
-        pp_output_lines_3ph["i_n_to_ka"] = np.array(np.abs(np.sum(i_to, axis=1))) * 1e-3
-        pp_output_lines_3ph["i_a_ka"] = np.maximum(pp_output_lines_3ph["i_a_from_ka"], pp_output_lines_3ph["i_a_to_ka"])
-        pp_output_lines_3ph["i_b_ka"] = np.maximum(pp_output_lines_3ph["i_b_from_ka"], pp_output_lines_3ph["i_b_to_ka"])
-        pp_output_lines_3ph["i_c_ka"] = np.maximum(pp_output_lines_3ph["i_c_from_ka"], pp_output_lines_3ph["i_c_to_ka"])
-        pp_output_lines_3ph["i_n_ka"] = np.maximum(pp_output_lines_3ph["i_n_from_ka"], pp_output_lines_3ph["i_n_to_ka"])
-        pp_output_lines_3ph["loading_a_percent"] = (
-            np.maximum(pp_output_lines_3ph["i_a_from_ka"], pp_output_lines_3ph["i_a_to_ka"]) / pgm_input_lines["i_n"]
-        ) * 1e5
-        pp_output_lines_3ph["loading_b_percent"] = (
-            np.maximum(pp_output_lines_3ph["i_b_from_ka"], pp_output_lines_3ph["i_b_to_ka"]) / pgm_input_lines["i_n"]
-        ) * 1e5
-        pp_output_lines_3ph["loading_c_percent"] = (
-            np.maximum(pp_output_lines_3ph["i_c_from_ka"], pp_output_lines_3ph["i_c_to_ka"]) / pgm_input_lines["i_n"]
-        ) * 1e5
-        pp_output_lines_3ph["loading_percent"] = np.maximum(
-            np.maximum(pp_output_lines_3ph["loading_a_percent"], pp_output_lines_3ph["loading_b_percent"]),
-            pp_output_lines_3ph["loading_c_percent"],
-        )
+        for line_type in [ComponentType.line, ComponentType.asym_line]:
+            pgm_input_lines = self.pgm_input_data[line_type]
+            pgm_output_lines = self.pgm_output_data[line_type]
+            if (pgm_input_lines.size == 0) or (pgm_output_lines.size == 0):
+                continue
 
-        self.pp_output_data["res_line_3ph"] = pp_output_lines_3ph
+            from_nodes = pgm_input_lines["from_node"]
+            to_nodes = pgm_input_lines["to_node"]
+            i_from = (pgm_output_lines["p_from"] + 1j * pgm_output_lines["q_from"]) / u_complex.iloc[from_nodes, :]
+            i_to = (pgm_output_lines["p_to"] + 1j * pgm_output_lines["q_to"]) / u_complex.iloc[to_nodes, :]
+
+            loss_params = get_loss_params_3ph()
+            name = "asym_line" if line_type == ComponentType.asym_line else None
+            output_lines_3ph = pd.DataFrame(
+                columns=[
+                    "p_a_from_mw",
+                    "q_a_from_mvar",
+                    "p_b_from_mw",
+                    "q_b_from_mvar",
+                    "p_c_from_mw",
+                    "q_c_from_mvar",
+                    "p_a_to_mw",
+                    "q_a_to_mvar",
+                    "p_b_to_mw",
+                    "q_b_to_mvar",
+                    "p_c_to_mw",
+                    "q_c_to_mvar",
+                    loss_params[0],
+                    loss_params[1],
+                    loss_params[2],
+                    loss_params[3],
+                    loss_params[4],
+                    loss_params[5],
+                    "i_a_from_ka",
+                    "i_b_from_ka",
+                    "i_c_from_ka",
+                    "i_n_from_ka",
+                    "i_a_ka",
+                    "i_b_ka",
+                    "i_c_ka",
+                    "i_n_ka",
+                    "i_a_to_ka",
+                    "i_b_to_ka",
+                    "i_c_to_ka",
+                    "i_n_to_ka",
+                    "loading_a_percent",
+                    "loading_b_percent",
+                    "loading_c_percent",
+                    "loading_percent",
+                ],
+                index=self._get_pp_ids("line", pgm_output_lines["id"], name=name),
+            )
+
+            output_lines_3ph["p_a_from_mw"] = pgm_output_lines["p_from"][:, 0] * 1e-6
+            output_lines_3ph["q_a_from_mvar"] = pgm_output_lines["q_from"][:, 0] * 1e-6
+            output_lines_3ph["p_b_from_mw"] = pgm_output_lines["p_from"][:, 1] * 1e-6
+            output_lines_3ph["q_b_from_mvar"] = pgm_output_lines["q_from"][:, 1] * 1e-6
+            output_lines_3ph["p_c_from_mw"] = pgm_output_lines["p_from"][:, 2] * 1e-6
+            output_lines_3ph["q_c_from_mvar"] = pgm_output_lines["q_from"][:, 2] * 1e-6
+            output_lines_3ph["p_a_to_mw"] = pgm_output_lines["p_to"][:, 0] * 1e-6
+            output_lines_3ph["q_a_to_mvar"] = pgm_output_lines["q_to"][:, 0] * 1e-6
+            output_lines_3ph["p_b_to_mw"] = pgm_output_lines["p_to"][:, 1] * 1e-6
+            output_lines_3ph["q_b_to_mvar"] = pgm_output_lines["q_to"][:, 1] * 1e-6
+            output_lines_3ph["p_c_to_mw"] = pgm_output_lines["p_to"][:, 2] * 1e-6
+            output_lines_3ph["q_c_to_mvar"] = pgm_output_lines["q_to"][:, 2] * 1e-6
+            output_lines_3ph[loss_params[0]] = (
+                pgm_output_lines["p_from"][:, 0] + pgm_output_lines["p_to"][:, 0]
+            ) * 1e-6
+            output_lines_3ph[loss_params[1]] = (
+                pgm_output_lines["q_from"][:, 0] + pgm_output_lines["q_to"][:, 0]
+            ) * 1e-6
+            output_lines_3ph[loss_params[2]] = (
+                pgm_output_lines["p_from"][:, 1] + pgm_output_lines["p_to"][:, 1]
+            ) * 1e-6
+            output_lines_3ph[loss_params[3]] = (
+                pgm_output_lines["q_from"][:, 1] + pgm_output_lines["q_to"][:, 1]
+            ) * 1e-6
+            output_lines_3ph[loss_params[4]] = (
+                pgm_output_lines["p_from"][:, 2] + pgm_output_lines["p_to"][:, 2]
+            ) * 1e-6
+            output_lines_3ph[loss_params[5]] = (
+                pgm_output_lines["q_from"][:, 2] + pgm_output_lines["q_to"][:, 2]
+            ) * 1e-6
+            output_lines_3ph["i_a_from_ka"] = pgm_output_lines["i_from"][:, 0] * 1e-3
+            output_lines_3ph["i_b_from_ka"] = pgm_output_lines["i_from"][:, 1] * 1e-3
+            output_lines_3ph["i_c_from_ka"] = pgm_output_lines["i_from"][:, 2] * 1e-3
+            output_lines_3ph["i_n_from_ka"] = np.array(np.abs(np.sum(i_from, axis=1))) * 1e-3
+            output_lines_3ph["i_a_to_ka"] = pgm_output_lines["i_to"][:, 0] * 1e-3
+            output_lines_3ph["i_b_to_ka"] = pgm_output_lines["i_to"][:, 1] * 1e-3
+            output_lines_3ph["i_c_to_ka"] = pgm_output_lines["i_to"][:, 2] * 1e-3
+            output_lines_3ph["i_n_to_ka"] = np.array(np.abs(np.sum(i_to, axis=1))) * 1e-3
+            output_lines_3ph["i_a_ka"] = np.maximum(output_lines_3ph["i_a_from_ka"], output_lines_3ph["i_a_to_ka"])
+            output_lines_3ph["i_b_ka"] = np.maximum(output_lines_3ph["i_b_from_ka"], output_lines_3ph["i_b_to_ka"])
+            output_lines_3ph["i_c_ka"] = np.maximum(output_lines_3ph["i_c_from_ka"], output_lines_3ph["i_c_to_ka"])
+            output_lines_3ph["i_n_ka"] = np.maximum(output_lines_3ph["i_n_from_ka"], output_lines_3ph["i_n_to_ka"])
+            output_lines_3ph["loading_a_percent"] = (output_lines_3ph["i_a_ka"] / pgm_input_lines["i_n"]) * 1e5
+            output_lines_3ph["loading_b_percent"] = (output_lines_3ph["i_b_ka"] / pgm_input_lines["i_n"]) * 1e5
+            output_lines_3ph["loading_c_percent"] = (output_lines_3ph["i_c_ka"] / pgm_input_lines["i_n"]) * 1e5
+            output_lines_3ph["loading_percent"] = np.maximum(
+                np.maximum(output_lines_3ph["loading_a_percent"], output_lines_3ph["loading_b_percent"]),
+                output_lines_3ph["loading_c_percent"],
+            )
+
+            if pp_output_lines_3ph is None:
+                pp_output_lines_3ph = output_lines_3ph
+            else:
+                pp_output_lines_3ph = pd.concat([pp_output_lines_3ph, output_lines_3ph])
+
+            self.pp_output_data["res_line_3ph"] = pp_output_lines_3ph
 
     def _pp_ext_grids_output_3ph(self):
         """
