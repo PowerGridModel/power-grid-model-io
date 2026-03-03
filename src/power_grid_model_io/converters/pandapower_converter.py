@@ -2759,7 +2759,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # If any of the attribute values are missing, and a default is supplied, fill the nans with the default value
         nan_values = attr_data.isna()  # type: ignore
 
-        if any(nan_values):
+        if any(nan_values) and default is not None:
             attr_data = attr_data.fillna(value=default, inplace=False)
 
         return attr_data.to_numpy(dtype=exp_dtype, copy=True)
