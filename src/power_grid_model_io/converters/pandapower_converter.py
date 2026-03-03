@@ -2757,7 +2757,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         attr_data = pp_component_data[attribute]
 
         # If any of the attribute values are missing, and a default is supplied, fill the nans with the default value
-        nan_values = np.equal(attr_data, None) if attr_data.dtype in [np.dtype("O"), np.dtype("str")] else np.isnan(attr_data)  # type: ignore
+        nan_values = np.isnan(attr_data) if np.issubdtype(attr_data.dtype, np.number) else np.equal(attr_data, None)  # type: ignore
 
         if any(nan_values):
             attr_data = attr_data.fillna(value=default, inplace=False)
