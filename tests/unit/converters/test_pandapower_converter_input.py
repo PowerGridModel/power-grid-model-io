@@ -561,110 +561,60 @@ def test_create_pgm_input_nodes__bad_input():
         converter._create_pgm_input_nodes()
 
 
-@patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
-def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, converter):
+def test_create_pgm_input_lines():
     # Arrange
-    converter.pp_input_data["line"] = two_pp_objs
+    converter = PandaPowerConverter()
+    converter.pp_input_data["bus"] = pd.DataFrame(
+        data={
+            "vn_kv": [20, 20, 20],
+        },
+        index=[0, 1, 2],
+    )
+    line_data = pd.DataFrame(
+        data={
+            "from_bus": [0, 1],
+            "to_bus": [1, 2],
+            "length_km": [3.5, 2.5],
+            "std_type": ["", ""],
+            "r_ohm_per_km": [0.5939, 0.1220],
+            "x_ohm_per_km": [0.372, 0.112],
+            "c_nf_per_km": [9.5, 304],
+            "r0_ohm_per_km": [1.484, 6.25],
+            "x0_ohm_per_km": [1.116, 0.336],
+            "c0_nf_per_km": [9.5, 304],
+        }
+    )
+    converter.pp_input_data["line"] = line_data
+    converter.pp_input_data["switch"] = pd.DataFrame(columns=["bus", "element", "et", "closed"])
+
+    expected = initialize_array(
+        data_type=DatasetType.input, component_type=ComponentType.line, shape=len(converter.pp_input_data["line"])
+    )
+    expected["id"] = np.array([3, 4])
+    expected["from_node"] = np.array([0, 1])
+    expected["to_node"] = np.array([1, 2])
+    expected["from_status"] = np.array([1, 1])
+    expected["to_status"] = np.array([1, 1])
+    expected["r1"] = np.array([2.07865, 0.305])
+    expected["x1"] = np.array([1.302, 0.28])
+    expected["c1"] = np.array([3.325e-8, 7.6e-7])
+    expected["tan1"] = np.array([0.0, 0.0])
+    expected["r0"] = np.array([5.194, 15.625])
+    expected["x0"] = np.array([1.116 * 3.5, 0.336 * 2.5])
+    expected["c0"] = np.array([3.325e-8, 7.6e-7])
+    expected["tan0"] = np.array([0.0, 0.0])
 
     # Act
+    converter._create_pgm_input_nodes()
     converter._create_pgm_input_lines()
+    actual = converter.pgm_input_data["line"]
 
     # Assert
-
-    # administration
-    converter.get_switch_states.assert_called_once_with("line")
-    converter._generate_ids.assert_called_once_with("line", two_pp_objs.index)
-    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("line", "from_bus", expected_type="u4"))
-    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("line", "to_bus", expected_type="u4"))
-
-    # initialization
-    mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=ComponentType.line, shape=2)
-
-    # retrieval
-    converter._get_pp_attr.assert_any_call("line", "from_bus", expected_type="u4")
-    converter._get_pp_attr.assert_any_call("line", "to_bus", expected_type="u4")
-    converter._get_pp_attr.assert_any_call("line", "in_service", expected_type="bool", default=True)
-    converter._get_pp_attr.assert_any_call("line", "length_km", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("line", "parallel", expected_type="u4", default=1)
-    converter._get_pp_attr.assert_any_call("line", "r_ohm_per_km", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("line", "x_ohm_per_km", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("line", "c_nf_per_km", expected_type="f8", default=0)
-    converter._get_pp_attr.assert_any_call("line", "g_us_per_km", expected_type="f8", default=0)
-    converter._get_pp_attr.assert_any_call("line", "max_i_ka", expected_type="f8", default=np.nan)
-    converter._get_pp_attr.assert_any_call("line", "df", expected_type="f8", default=1)
-    converter._get_pp_attr.assert_any_call("line", "r0_ohm_per_km", expected_type="f8", default=np.nan)
-    converter._get_pp_attr.assert_any_call("line", "x0_ohm_per_km", expected_type="f8", default=np.nan)
-    converter._get_pp_attr.assert_any_call("line", "c0_nf_per_km", expected_type="f8", default=0)
-    converter._get_pp_attr.assert_any_call("line", "g0_us_per_km", expected_type="f8", default=0)
-    assert len(converter._get_pp_attr.call_args_list) == 16
-
-    # assignment
-    pgm: MagicMock = mock_init_array.return_value.__setitem__
-    pgm.assert_any_call("id", _generate_ids("line", two_pp_objs.index))
-    pgm.assert_any_call("from_node", _get_pgm_ids("bus", _get_pp_attr("line", "from_bus", expected_type="u4")))
-    pgm.assert_any_call(
-        "from_status",
-        _get_pp_attr("line", "in_service", expected_type="bool", default=True) & get_switch_states("line")["from"],
-    )
-    pgm.assert_any_call("to_node", _get_pgm_ids("bus", _get_pp_attr("line", "to_bus", expected_type="u4")))
-    pgm.assert_any_call(
-        "to_status",
-        _get_pp_attr("line", "in_service", expected_type="bool", default=True) & get_switch_states("line")["to"],
-    )
-    pgm.assert_any_call(
-        "r1",
-        _get_pp_attr("line", "r_ohm_per_km", expected_type="f8")
-        * (
-            _get_pp_attr("line", "length_km", expected_type="f8")
-            / _get_pp_attr("line", "parallel", expected_type="u4", default=1)
-        ),
-    )
-    pgm.assert_any_call(
-        "x1",
-        _get_pp_attr("line", "x_ohm_per_km", expected_type="f8")
-        * (
-            _get_pp_attr("line", "length_km", expected_type="f8")
-            / _get_pp_attr("line", "parallel", expected_type="u4", default=1)
-        ),
-    )
-    pgm.assert_any_call(
-        "c1",
-        _get_pp_attr("line", "c_nf_per_km", expected_type="f8", default=0)
-        * _get_pp_attr("line", "length_km", expected_type="f8")
-        * _get_pp_attr("line", "parallel", expected_type="u4", default=1)
-        * 1e-9,
-    )
-    pgm.assert_any_call(
-        "tan1",
-        np.divide(
-            _get_pp_attr("line", "g_us_per_km", expected_type="f8", default=0),
-            _get_pp_attr("line", "c_nf_per_km", expected_type="f8", default=0) * (np.pi / 10),
-            where=np.logical_not(np.isclose(_get_pp_attr("line", "c_nf_per_km", expected_type="f8", default=0), 0.0)),
-            out=None,
-        ),
-    )
-    pgm.assert_any_call(
-        "i_n",
-        (_get_pp_attr("line", "max_i_ka", expected_type="f8", default=np.nan) * 1e3)
-        * _get_pp_attr("line", "df", expected_type="f8", default=1)
-        * _get_pp_attr("line", "parallel", expected_type="u4", default=1),
-    )
-    pgm.assert_any_call(
-        "tan0",
-        np.divide(
-            _get_pp_attr("line", "g0_us_per_km", expected_type="f8", default=0),
-            _get_pp_attr("line", "c0_nf_per_km", expected_type="f8", default=0) * (np.pi / 10),
-            where=np.logical_not(np.isclose(_get_pp_attr("line", "c0_nf_per_km", expected_type="f8", default=0), 0.0)),
-            out=None,
-        ),
-    )
-    pgm.assert_any_call("r0", ANY)
-    pgm.assert_any_call("x0", ANY)
-    pgm.assert_any_call("c0", ANY)
-    assert len(pgm.call_args_list) == 14
-
-    # result
-    assert converter.pgm_input_data[ComponentType.line] == mock_init_array.return_value
+    for name in actual.dtype.names:
+        np.testing.assert_array_equal(
+            actual[name],
+            expected[name],
+        )
 
 
 def test_create_pgm_input_lines__bad_input():

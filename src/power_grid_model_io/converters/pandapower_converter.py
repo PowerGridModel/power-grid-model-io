@@ -444,7 +444,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self.pgm_input_data[ComponentType.node] = pgm_nodes
 
     def _get_asymmetric_lines_mask(self):
-        std_type = self._get_pp_attr("line", "std_type")
+        std_type = self._get_pp_attr("line", "std_type", default="")
         asym_lines_mask = np.zeros_like(std_type, dtype=bool)
         if self.asym_line_params is not None:
             asym_lines = list(self.asym_line_params.keys())
