@@ -14,7 +14,12 @@ from power_grid_model.data_types import SingleDataset
 
 from power_grid_model_io.converters.tabular_converter import TabularConverter
 from power_grid_model_io.data_types import ExtraInfo, TabularData
-from power_grid_model_io.errors import ComponentNotFoundError, InvalidComponentTypeError, InvalidDataFormatError
+from power_grid_model_io.errors import (
+    AttributeNotFoundError,
+    InvalidDataFormatError,
+    InvalidDatasetTypeError,
+    MappingNotFoundError,
+)
 from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes
 from power_grid_model_io.mappings.unit_mapping import UnitMapping
 
@@ -116,7 +121,7 @@ def test_convert_table_to_component(converter: TabularConverter, tabular_data_no
     )
     assert none_data is None
     # wrong component
-    with pytest.raises(InvalidComponentTypeError, match="Invalid component type 'dummy' or data type 'input'"):
+    with pytest.raises(InvalidDatasetTypeError, match="Invalid component type 'dummy' or data type 'input'"):
         converter._convert_table_to_component(
             data=tabular_data_no_units_no_substitutions,
             data_type=DatasetType.input,
@@ -126,7 +131,7 @@ def test_convert_table_to_component(converter: TabularConverter, tabular_data_no
             extra_info=None,
         )
     # wrong data_type
-    with pytest.raises(InvalidComponentTypeError, match="Invalid component type 'node' or data type 'some_type'"):
+    with pytest.raises(InvalidDatasetTypeError, match="Invalid component type 'node' or data type 'some_type'"):
         converter._convert_table_to_component(
             data=tabular_data_no_units_no_substitutions,
             data_type="some_type",
@@ -136,7 +141,7 @@ def test_convert_table_to_component(converter: TabularConverter, tabular_data_no
             extra_info=None,
         )
     # no 'id' in attributes
-    with pytest.raises(ComponentNotFoundError, match="No mapping for the attribute 'id' for 'nodes'!"):
+    with pytest.raises(MappingNotFoundError, match="No mapping for the attribute 'id' for 'nodes'!"):
         converter._convert_table_to_component(
             data=tabular_data_no_units_no_substitutions,
             data_type=DatasetType.input,
@@ -235,7 +240,7 @@ def test_convert_col_def_to_attribute(
     pgm_node_empty: SingleDataset,
 ):
     with pytest.raises(
-        ComponentNotFoundError,
+        AttributeNotFoundError,
         match=r"Could not find attribute 'incorrect_attribute' for 'nodes'. \(choose from: id, u_rated\)",
     ):
         converter._convert_col_def_to_attribute(

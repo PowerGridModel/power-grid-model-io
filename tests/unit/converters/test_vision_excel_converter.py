@@ -7,8 +7,8 @@ from unittest.mock import patch
 import pytest
 
 from power_grid_model_io.converters.vision_excel_converter import DEFAULT_MAPPING_FILE, VisionExcelConverter
+from power_grid_model_io.errors import MappingNotFoundError
 from power_grid_model_io.utils.excel_ambiguity_checker import ExcelAmbiguityChecker
-from power_grid_model_io.errors import ComponentNotFoundError
 
 
 @pytest.fixture
@@ -64,16 +64,16 @@ def test_id_lookup_exceptions():
     converter._id_reference = None
 
     # Act / Assert
-    with pytest.raises(ComponentNotFoundError, match=r"Missing .* for VisionExcelConverter\.get_node_id\(\)"):
+    with pytest.raises(MappingNotFoundError, match=r"Missing .* for VisionExcelConverter\.get_node_id\(\)"):
         converter.get_node_id(number=0)
 
-    with pytest.raises(ComponentNotFoundError, match=r"Missing .* VisionExcelConverter\.get_branch_id\(\)"):
+    with pytest.raises(MappingNotFoundError, match=r"Missing .* VisionExcelConverter\.get_branch_id\(\)"):
         converter.get_branch_id(table="", number=0)
 
-    with pytest.raises(ComponentNotFoundError, match=r"Missing .* VisionExcelConverter\.get_appliance_id\(\)"):
+    with pytest.raises(MappingNotFoundError, match=r"Missing .* VisionExcelConverter\.get_appliance_id\(\)"):
         converter.get_appliance_id(table="", node_number=0, sub_number=0)
 
-    with pytest.raises(ComponentNotFoundError, match=r"Missing .* VisionExcelConverter\.get_virtual_id\(\)"):
+    with pytest.raises(MappingNotFoundError, match=r"Missing .* VisionExcelConverter\.get_virtual_id\(\)"):
         converter.get_virtual_id(table="", obj_name="", node_number=0, sub_number=0)
 
 

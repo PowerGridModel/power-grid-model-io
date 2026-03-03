@@ -1,0 +1,32 @@
+﻿python : Traceback (most recent call last):
+At line:1 char:131
++ ... PATH="src"; python -c "import 
+power_grid_model_io.converters" 2>&1 |  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Trac 
+   eback (most recent call last)::String) [], Re  
+  moteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "<string>", line 1, in <module>
+    import power_grid_model_io.converters
+  File "C:\Users\jinuk\OneDrive\Documents\Projects
+\rocket chat\power-grid-model-io\src\power_grid_mo
+del_io\converters\__init__.py", line 9, in 
+<module>
+    from 
+power_grid_model_io.converters.pgm_json_converter 
+import PgmJsonConverter
+  File "C:\Users\jinuk\OneDrive\Documents\Projects
+\rocket chat\power-grid-model-io\src\power_grid_mo
+del_io\converters\pgm_json_converter.py", line 
+23, in <module>
+    from power_grid_model_io.errors import (
+    ...<2 lines>...
+    )
+ImportError: cannot import name 
+'InvalidComponentTypeError' from 
+'power_grid_model_io.errors' (C:\Users\jinuk\OneDr
+ive\Documents\Projects\rocket chat\power-grid-mode
+l-io\src\power_grid_model_io\errors.py)

@@ -22,9 +22,11 @@ from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_stores.base_data_store import BaseDataStore
 from power_grid_model_io.data_types import ExtraInfo, TabularData
 from power_grid_model_io.errors import (
+    AttributeNotFoundError,
     ComponentNotFoundError,
-    InvalidComponentTypeError,
     InvalidDataFormatError,
+    InvalidDatasetTypeError,
+    MappingNotFoundError,
 )
 from power_grid_model_io.mappings.multiplier_mapping import MultiplierMapping, Multipliers
 from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes, Tables, TabularMapping
@@ -200,12 +202,12 @@ class TabularConverter(BaseConverter[TabularData]):
         try:
             pgm_data = initialize_array(data_type=data_type_str, component_type=component_str, shape=n_records)
         except KeyError as ex:
-            raise InvalidComponentTypeError(
+            raise InvalidDatasetTypeError(
                 f"Invalid component type '{component_str}' or data type '{data_type_str}'"
             ) from ex
 
         if "id" not in attributes:
-            raise ComponentNotFoundError(f"No mapping for the attribute 'id' for '{component_str}s'!")
+            raise MappingNotFoundError(f"No mapping for the attribute 'id' for '{component_str}s'!")
 
         # Make sure that the "id" column is always parsed first (at least before "extra" is parsed)
         attributes_without_filter = {k: v for k, v in attributes.items() if k != "filters"}
@@ -282,11 +284,13 @@ class TabularConverter(BaseConverter[TabularData]):
         component_str = component.value if isinstance(component, Enum) else component
 
         if pgm_data.dtype.names is None:
-            raise InvalidDataFormatError(f"pgm_data for '{component_str}s' has no attributes defined. (dtype.names is None)")
+            raise InvalidDataFormatError(
+                f"pgm_data for '{component_str}s' has no attributes defined. (dtype.names is None)"
+            )
 
         if attr not in pgm_data.dtype.names and attr not in ["extra", "filters"]:
             attrs = ", ".join(pgm_data.dtype.names)
-            raise ComponentNotFoundError(
+            raise AttributeNotFoundError(
                 f"Could not find attribute '{attr}' for '{component_str}s'. (choose from: {attrs})"
             )
 
@@ -313,7 +317,9 @@ class TabularConverter(BaseConverter[TabularData]):
         )
 
         if len(attr_data.columns) != 1:
-            raise InvalidDataFormatError(f"DataFrame for {component}.{attr} should contain a single column ({attr_data.columns})")
+            raise InvalidDataFormatError(
+                f"DataFrame for {component}.{attr} should contain a single column ({attr_data.columns})"
+            )
 
         pgm_data[attr] = attr_data.iloc[:, 0]
 
@@ -583,7 +589,7 @@ class TabularConverter(BaseConverter[TabularData]):
                 return pd.DataFrame(index=index)
             # pylint: disable=raise-missing-from
             columns_str = " and ".join(f"'{col_name}'" for col_name in columns)
-            raise ComponentNotFoundError(f"Could not find column {columns_str} on table '{table}'") from e
+            raise MappingNotFoundError(f"Could not find column {columns_str} on table '{table}'") from e
 
         return self._parse_col_def_const(data=data, table=table, col_def=const_value, table_mask=table_mask)
 
@@ -831,7 +837,7 @@ class TabularConverter(BaseConverter[TabularData]):
             return pd.DataFrame(result)
 
         # If the function expects any argument
-        if not callable(fn_ptr) or getattr(fn_ptr, "__name__", "") in ("apply", "applymap", "map"):
+        if any(param.default == empty for name, param in fn_sig.parameters.items() if name != "kwargs"):
             raise InvalidDataFormatError(f"Invalid pandas function DataFrame.{fn_name}")
 
         return pd.DataFrame(fn_ptr(axis=1))
