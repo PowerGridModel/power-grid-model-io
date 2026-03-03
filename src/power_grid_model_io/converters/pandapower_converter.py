@@ -2057,6 +2057,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_lines_3ph = None
 
         for line_type in [ComponentType.line, ComponentType.asym_line]:
+            if (line_type not in self.pgm_input_data) or (line_type not in self.pgm_output_data):
+                continue
             pgm_input_lines = self.pgm_input_data[line_type]
             pgm_output_lines = self.pgm_output_data[line_type]
             if (pgm_input_lines.size == 0) or (pgm_output_lines.size == 0):
