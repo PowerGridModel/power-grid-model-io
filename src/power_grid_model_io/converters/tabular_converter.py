@@ -24,6 +24,7 @@ from power_grid_model_io.data_types import ExtraInfo, TabularData
 from power_grid_model_io.errors import (
     AttributeNotFoundError,
     ComponentNotFoundError,
+    InvalidComponentTypeError,
     InvalidDataFormatError,
     InvalidDatasetTypeError,
     MappingNotFoundError,
@@ -202,9 +203,9 @@ class TabularConverter(BaseConverter[TabularData]):
         try:
             pgm_data = initialize_array(data_type=data_type_str, component_type=component_str, shape=n_records)
         except KeyError as ex:
-            raise InvalidDatasetTypeError(
-                f"Invalid component type '{component_str}' or data type '{data_type_str}'"
-            ) from ex
+            if component_str in [c.value for c in ComponentType]:
+                raise InvalidDatasetTypeError(f"Invalid data type '{data_type_str}'") from ex
+            raise InvalidComponentTypeError(f"Invalid component type '{component_str}'") from ex
 
         if "id" not in attributes:
             raise MappingNotFoundError(f"No mapping for the attribute 'id' for '{component_str}s'!")

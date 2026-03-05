@@ -7,6 +7,8 @@
 PYPI_VERSION
 build/
 wheelhouse/
+import_diagnostic.txt
+export_diagnostic.txt
 
 # temporary_files
 __pycache__/
@@ -36,5 +38,3 @@ docs/_templates/
 docs/make.bat
 docs/Makefile
 
-# Ignore diagnostic output
-*diagnostic.txt
