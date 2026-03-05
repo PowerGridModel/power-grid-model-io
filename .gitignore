@@ -7,8 +7,6 @@
 PYPI_VERSION
 build/
 wheelhouse/
-import_diagnostic.txt
-export_diagnostic.txt
 
 # temporary_files
 __pycache__/

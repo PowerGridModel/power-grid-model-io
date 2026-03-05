@@ -1,0 +1,239 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.14.3, pytest-9.0.2, pluggy-1.6.0
+rootdir: C:\Users\jinuk\OneDrive\Documents\Projects\rocket chat\power-grid-model-io
+configfile: pyproject.toml
+plugins: cov-7.0.0, typeguard-4.5.1
+collected 78 items
+
+tests\unit\converters\test_tabular_converter.py ..F..................... [ 30%]
+......................................................
+ERROR: Coverage failure: total of 30 is less than fail-under=98
+                                                                         [100%]
+
+================================== FAILURES ===================================
+_______________________ test_convert_table_to_component _______________________
+
+self = <power_grid_model_io.converters.tabular_converter.TabularConverter object at 0x000002B387AAF890>
+data = <power_grid_model_io.data_types.tabular_data.TabularData object at 0x000002B387BDDA90>
+data_type = <DatasetType.input: 'input'>, table = 'nodes', component = 'dummy'
+attributes = {'key': 'value'}, extra_info = None
+
+    def _convert_table_to_component(  # pylint: disable = too-many-arguments,too-many-positional-arguments
+        self,
+        data: TabularData,
+        data_type: str | Enum,
+        table: str,
+        component: str | Enum,
+        attributes: InstanceAttributes,
+        extra_info: ExtraInfo | None,
+    ) -> np.ndarray | None:
+        """
+        This function converts a single table/sheet of TabularData to a power-grid-model input/update array. One table
+        corresponds to one component
+    
+        Args:
+          data: The full dataset with tabular data
+          data_type: The data type, i.e. DatasetType.input or DatasetType.update
+          table: The name of the table that should be converter
+          component: the component for which a power-grid-model array should be made
+          attributes: a dictionary with a mapping from the attribute names in the table to the corresponding
+        power-grid-model attribute names
+          extra_info: an optional dictionary where extra component info (that can't be specified in
+        power-grid-model data) can be specified
+          data: TabularData:
+          data_type: str | Enum:
+          table: str:
+          component: str | Enum:
+          attributes: InstanceAttributes:
+          extra_info: ExtraInfo | None:
+    
+        Returns:
+          returns a power-grid-model structured array for one component
+    
+        """
+        if table not in data:
+            return None
+    
+        if "filters" in attributes:
+            table_mask = self._parse_table_filters(data=data, table=table, filtering_functions=attributes["filters"])
+            if table_mask is not None and not table_mask.any():
+                return None
+        else:
+            table_mask = None
+    
+        n_records = np.sum(table_mask) if table_mask is not None else len(data[table])
+    
+        component_str = component.value if isinstance(component, Enum) else component
+        data_type_str = data_type.value if isinstance(data_type, Enum) else data_type
+    
+        try:
+>           pgm_data = initialize_array(data_type=data_type_str, component_type=component_str, shape=n_records)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+src\power_grid_model_io\converters\tabular_converter.py:204: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\power_grid_model\_core\power_grid_meta.py:215: in initialize_array
+    component_type = _str_to_component_type(component_type)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\power_grid_model\_core\dataset_definitions.py:103: in _str_to_component_type
+    return ComponentType[component]
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+cls = <enum 'ComponentType'>, name = 'dummy'
+
+    def __getitem__(cls, name):
+        """
+        Return the member matching `name`.
+        """
+>       return cls._member_map_[name]
+               ^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'dummy'
+
+C:\Users\jinuk\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\enum.py:775: KeyError
+
+The above exception was the direct cause of the following exception:
+
+converter = <power_grid_model_io.converters.tabular_converter.TabularConverter object at 0x000002B387AAF890>
+tabular_data_no_units_no_substitutions = <power_grid_model_io.data_types.tabular_data.TabularData object at 0x000002B387BDDA90>
+
+    def test_convert_table_to_component(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
+        # if table does not exist in data _convert_table_to_component should return None
+        none_data = converter._convert_table_to_component(
+            data=tabular_data_no_units_no_substitutions,
+            data_type=DatasetType.input,
+            table="some_random_table",
+            component=ComponentType.node,
+            attributes={"key": "value"},
+            extra_info=None,
+        )
+        assert none_data is None
+        # wrong component
+        with pytest.raises(InvalidDatasetTypeError, match="Invalid component type 'dummy' or data type 'input'"):
+>           converter._convert_table_to_component(
+                data=tabular_data_no_units_no_substitutions,
+                data_type=DatasetType.input,
+                table="nodes",
+                component="dummy",
+                attributes={"key": "value"},
+                extra_info=None,
+            )
+
+tests\unit\converters\test_tabular_converter.py:125: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <power_grid_model_io.converters.tabular_converter.TabularConverter object at 0x000002B387AAF890>
+data = <power_grid_model_io.data_types.tabular_data.TabularData object at 0x000002B387BDDA90>
+data_type = <DatasetType.input: 'input'>, table = 'nodes', component = 'dummy'
+attributes = {'key': 'value'}, extra_info = None
+
+    def _convert_table_to_component(  # pylint: disable = too-many-arguments,too-many-positional-arguments
+        self,
+        data: TabularData,
+        data_type: str | Enum,
+        table: str,
+        component: str | Enum,
+        attributes: InstanceAttributes,
+        extra_info: ExtraInfo | None,
+    ) -> np.ndarray | None:
+        """
+        This function converts a single table/sheet of TabularData to a power-grid-model input/update array. One table
+        corresponds to one component
+    
+        Args:
+          data: The full dataset with tabular data
+          data_type: The data type, i.e. DatasetType.input or DatasetType.update
+          table: The name of the table that should be converter
+          component: the component for which a power-grid-model array should be made
+          attributes: a dictionary with a mapping from the attribute names in the table to the corresponding
+        power-grid-model attribute names
+          extra_info: an optional dictionary where extra component info (that can't be specified in
+        power-grid-model data) can be specified
+          data: TabularData:
+          data_type: str | Enum:
+          table: str:
+          component: str | Enum:
+          attributes: InstanceAttributes:
+          extra_info: ExtraInfo | None:
+    
+        Returns:
+          returns a power-grid-model structured array for one component
+    
+        """
+        if table not in data:
+            return None
+    
+        if "filters" in attributes:
+            table_mask = self._parse_table_filters(data=data, table=table, filtering_functions=attributes["filters"])
+            if table_mask is not None and not table_mask.any():
+                return None
+        else:
+            table_mask = None
+    
+        n_records = np.sum(table_mask) if table_mask is not None else len(data[table])
+    
+        component_str = component.value if isinstance(component, Enum) else component
+        data_type_str = data_type.value if isinstance(data_type, Enum) else data_type
+    
+        try:
+            pgm_data = initialize_array(data_type=data_type_str, component_type=component_str, shape=n_records)
+        except KeyError as ex:
+            if component_str in [c.value for c in ComponentType]:
+                raise InvalidDatasetTypeError(f"Invalid data type '{data_type_str}'") from ex
+>           raise InvalidComponentTypeError(f"Invalid component type '{component_str}'") from ex
+E           power_grid_model_io.errors.InvalidComponentTypeError: Invalid component type 'dummy'
+
+src\power_grid_model_io\converters\tabular_converter.py:208: InvalidComponentTypeError
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.14.3-final-0 _______________
+
+Name                                                             Stmts   Miss  Cover
+------------------------------------------------------------------------------------
+src\power_grid_model_io\__init__.py                                  0      0   100%
+src\power_grid_model_io\config\__init__.py                           0      0   100%
+src\power_grid_model_io\config\examples\__init__.py                  0      0   100%
+src\power_grid_model_io\config\excel\__init__.py                     0      0   100%
+src\power_grid_model_io\converters\__init__.py                       4      0   100%
+src\power_grid_model_io\converters\base_converter.py                55     29    47%
+src\power_grid_model_io\converters\pandapower_converter.py        1212   1117     8%
+src\power_grid_model_io\converters\pgm_json_converter.py           106     74    30%
+src\power_grid_model_io\converters\tabular_converter.py            342     12    96%
+src\power_grid_model_io\converters\vision_excel_converter.py        46     26    43%
+src\power_grid_model_io\data_stores\__init__.py                      0      0   100%
+src\power_grid_model_io\data_stores\base_data_store.py              10      1    90%
+src\power_grid_model_io\data_stores\csv_dir_store.py                26     26     0%
+src\power_grid_model_io\data_stores\excel_file_store.py            139    119    14%
+src\power_grid_model_io\data_stores\json_file_store.py              40     27    32%
+src\power_grid_model_io\data_stores\vision_excel_file_store.py       7      2    71%
+src\power_grid_model_io\data_types\__init__.py                       3      0   100%
+src\power_grid_model_io\data_types\_data_types.py                    7      0   100%
+src\power_grid_model_io\data_types\tabular_data.py                  84     17    80%
+src\power_grid_model_io\errors.py                                   12      1    92%
+src\power_grid_model_io\functions\__init__.py                        2      0   100%
+src\power_grid_model_io\functions\_functions.py                     38     22    42%
+src\power_grid_model_io\functions\filters.py                        18     18     0%
+src\power_grid_model_io\functions\phase_to_phase.py                 57     57     0%
+src\power_grid_model_io\mappings\__init__.py                         0      0   100%
+src\power_grid_model_io\mappings\field_mapping.py                   24      1    96%
+src\power_grid_model_io\mappings\multiplier_mapping.py               9      0   100%
+src\power_grid_model_io\mappings\tabular_mapping.py                 24      2    92%
+src\power_grid_model_io\mappings\unit_mapping.py                    35      6    83%
+src\power_grid_model_io\mappings\value_mapping.py                   14      1    93%
+src\power_grid_model_io\utils\__init__.py                            0      0   100%
+src\power_grid_model_io\utils\auto_id.py                            29      6    79%
+src\power_grid_model_io\utils\dict.py                               14     12    14%
+src\power_grid_model_io\utils\download.py                           87     87     0%
+src\power_grid_model_io\utils\excel_ambiguity_checker.py            72     72     0%
+src\power_grid_model_io\utils\json.py                               36     30    17%
+src\power_grid_model_io\utils\modules.py                            15     12    20%
+src\power_grid_model_io\utils\parsing.py                            39     30    23%
+src\power_grid_model_io\utils\uuid_excel_cvtr.py                    76     55    28%
+src\power_grid_model_io\utils\zip.py                                35     35     0%
+------------------------------------------------------------------------------------
+TOTAL                                                             2717   1897    30%
+Coverage HTML written to dir cov_html
+Coverage XML written to file python_coverage.xml
+FAIL Required test coverage of 98.0% not reached. Total coverage: 30.18%
+=========================== short test summary info ===========================
+FAILED tests/unit/converters/test_tabular_converter.py::test_convert_table_to_component
+======================== 1 failed, 77 passed in 1.74s =========================

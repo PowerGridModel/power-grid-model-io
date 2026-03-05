@@ -13,7 +13,7 @@ class ComponentAlreadyExistsError(ValueError, PowerGridModelIoError):
     """Raised when a component already exists in the dataset."""
 
     def __init__(self, component: str, dataset: str):
-        super().__init__(f"'{component}' component already exists in {dataset}")
+        super().__init__(f"{component} component already exists in {dataset}")
 
 
 class ComponentNotFoundError(KeyError, PowerGridModelIoError):

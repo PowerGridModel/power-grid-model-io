@@ -16,6 +16,7 @@ from power_grid_model_io.converters.tabular_converter import TabularConverter
 from power_grid_model_io.data_types import ExtraInfo, TabularData
 from power_grid_model_io.errors import (
     AttributeNotFoundError,
+    InvalidComponentTypeError,
     InvalidDataFormatError,
     InvalidDatasetTypeError,
     MappingNotFoundError,
@@ -121,7 +122,7 @@ def test_convert_table_to_component(converter: TabularConverter, tabular_data_no
     )
     assert none_data is None
     # wrong component
-    with pytest.raises(InvalidDatasetTypeError, match="Invalid component type 'dummy' or data type 'input'"):
+    with pytest.raises(InvalidComponentTypeError, match="Invalid component type 'dummy'"):
         converter._convert_table_to_component(
             data=tabular_data_no_units_no_substitutions,
             data_type=DatasetType.input,
@@ -131,7 +132,7 @@ def test_convert_table_to_component(converter: TabularConverter, tabular_data_no
             extra_info=None,
         )
     # wrong data_type
-    with pytest.raises(InvalidDatasetTypeError, match="Invalid component type 'node' or data type 'some_type'"):
+    with pytest.raises(InvalidDatasetTypeError, match="Invalid data type 'some_type'"):
         converter._convert_table_to_component(
             data=tabular_data_no_units_no_substitutions,
             data_type="some_type",
