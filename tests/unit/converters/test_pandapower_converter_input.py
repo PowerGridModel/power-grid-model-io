@@ -27,6 +27,7 @@ from power_grid_model_io.converters.pandapower_converter import (
     PandaPowerConverter,
     get_loss_params_3ph,
 )
+from power_grid_model_io.errors import ComponentAlreadyExistsError
 from tests.utils import MockDf, MockFn, assert_struct_array_equal
 
 type PandaPowerNet = pp.pandapowerNet
@@ -557,7 +558,7 @@ def test_create_pgm_input_nodes__bad_input():
     converter.pp_input_data["bus"] = pd.DataFrame(data={"vn_kv": [11.0]}, index=[101])
     converter.pgm_input_data[ComponentType.node] = initialize_array(DatasetType.input, ComponentType.node, 1)
 
-    with pytest.raises(ValueError, match="Node component already exists in pgm_input_data"):
+    with pytest.raises(ComponentAlreadyExistsError):
         converter._create_pgm_input_nodes()
 
 
@@ -672,7 +673,7 @@ def test_create_pgm_input_lines__bad_input():
     converter.pp_input_data["line"] = pd.DataFrame(data={"from_bus": [101], "to_bus": [102]}, index=[101])
     converter.pgm_input_data[ComponentType.line] = initialize_array(DatasetType.input, ComponentType.line, 1)
 
-    with pytest.raises(ValueError, match="Line component already exists in pgm_input_data"):
+    with pytest.raises(ComponentAlreadyExistsError):
         converter._create_pgm_input_lines()
 
 
@@ -725,7 +726,7 @@ def test_create_pgm_input_sources__bad_input():
     converter.pp_input_data["ext_grid"] = pd.DataFrame(data={"bus": [101]}, index=[201])
     converter.pgm_input_data[ComponentType.source] = initialize_array(DatasetType.input, ComponentType.source, 1)
 
-    with pytest.raises(ValueError, match="Source component already exists in pgm_input_data"):
+    with pytest.raises(ComponentAlreadyExistsError):
         converter._create_pgm_input_sources()
 
 
@@ -809,7 +810,7 @@ def test_create_pgm_input_sym_loads__bad_input():
     converter.pp_input_data["load"] = pd.DataFrame(data={"bus": [101]}, index=[201])
     converter.pgm_input_data[ComponentType.sym_load] = initialize_array(DatasetType.input, ComponentType.sym_load, 1)
 
-    with pytest.raises(ValueError, match="Symmetrical Load component already exists in pgm_input_data"):
+    with pytest.raises(ComponentAlreadyExistsError):
         converter._create_pgm_input_sym_loads()
 
 
@@ -861,7 +862,7 @@ def test_create_pgm_input_asym_loads__bad_input():
     converter.pp_input_data["asymmetric_load"] = pd.DataFrame(data={"bus": [101]}, index=[201])
     converter.pgm_input_data[ComponentType.asym_load] = initialize_array(DatasetType.input, ComponentType.asym_load, 1)
 
-    with pytest.raises(ValueError, match="Asymmetric Load component already exists in pgm_input_data"):
+    with pytest.raises(ComponentAlreadyExistsError):
         converter._create_pgm_input_asym_loads()
 
 
@@ -976,7 +977,7 @@ def test_create_pgm_input_shunts__bad_input():
     converter.pp_input_data["shunt"] = pd.DataFrame(data={"bus": [101]}, index=[201])
     converter.pgm_input_data[ComponentType.shunt] = initialize_array(DatasetType.input, ComponentType.shunt, 1)
 
-    with pytest.raises(ValueError, match="Shunt component already exists in pgm_input_data"):
+    with pytest.raises(ComponentAlreadyExistsError):
         converter._create_pgm_input_shunts()
 
 
@@ -1075,7 +1076,7 @@ def test_create_pgm_input_transformers__bad_input():
         DatasetType.input, ComponentType.transformer, 1
     )
 
-    with pytest.raises(ValueError, match="Transformer component already exists in pgm_input_data"):
+    with pytest.raises(ComponentAlreadyExistsError):
         converter._create_pgm_input_transformers()
 
 
@@ -1214,7 +1215,7 @@ def test_create_pgm_input_sym_gens__bad_input():
     converter.pp_input_data["sgen"] = pd.DataFrame(data={"bus": [101]}, index=[201])
     converter.pgm_input_data[ComponentType.sym_gen] = initialize_array(DatasetType.input, ComponentType.sym_gen, 1)
 
-    with pytest.raises(ValueError, match="Symmetric generator component already exists in pgm_input_data"):
+    with pytest.raises(ComponentAlreadyExistsError):
         converter._create_pgm_input_sym_gens()
 
 
@@ -1311,7 +1312,7 @@ def test_create_pgm_input_asym_gens__bad_input():
     converter.pp_input_data["asymmetric_sgen"] = pd.DataFrame(data={"bus": [101]}, index=[201])
     converter.pgm_input_data[ComponentType.asym_gen] = initialize_array(DatasetType.input, ComponentType.asym_gen, 1)
 
-    with pytest.raises(ValueError, match="Asymmetric generator component already exists in pgm_input_data"):
+    with pytest.raises(ComponentAlreadyExistsError):
         converter._create_pgm_input_asym_gens()
 
 
@@ -1425,7 +1426,7 @@ def test_create_pgm_input_three_winding_transformers__bad_input():
         DatasetType.input, ComponentType.three_winding_transformer, 1
     )
 
-    with pytest.raises(ValueError, match="Three-winding transformer component already exists in pgm_input_data"):
+    with pytest.raises(ComponentAlreadyExistsError):
         converter._create_pgm_input_three_winding_transformers()
 
 
@@ -1741,7 +1742,7 @@ def test_create_pgm_input_links__bad_input():
     )
     converter.pgm_input_data[ComponentType.link] = initialize_array(DatasetType.input, ComponentType.link, 1)
 
-    with pytest.raises(ValueError, match="Link component already exists in pgm_input_data"):
+    with pytest.raises(ComponentAlreadyExistsError):
         converter._create_pgm_input_links()
 
 
