@@ -22,13 +22,12 @@ from power_grid_model import (
     initialize_array,
 )
 
-from power_grid_model_io.errors import ComponentAlreadyExistsError
-
 from power_grid_model_io.converters.pandapower_converter import (
     PP_COMPATIBILITY_VERSION_3_2_0,
     PandaPowerConverter,
     get_loss_params_3ph,
 )
+from power_grid_model_io.errors import ComponentAlreadyExistsError
 from tests.utils import MockDf, MockFn, assert_struct_array_equal
 
 type PandaPowerNet = pp.pandapowerNet
