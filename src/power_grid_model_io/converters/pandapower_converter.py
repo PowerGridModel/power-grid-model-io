@@ -31,7 +31,6 @@ from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_types import ExtraInfo
 from power_grid_model_io.errors import (
     ComponentAlreadyExistsError,
-    ComponentNotFoundError,
     IndexAlreadyExistsError,
     IndexToComponentNotFoundError,
     InvalidDatasetTypeError,
