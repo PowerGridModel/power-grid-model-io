@@ -14,6 +14,7 @@ from typing import Any
 from power_grid_model_io.converters.tabular_converter import TabularConverter
 from power_grid_model_io.data_stores.base_data_store import LANGUAGE_EN
 from power_grid_model_io.data_stores.vision_excel_file_store import VisionExcelFileStore
+from power_grid_model_io.errors import MappingNotFoundError
 
 CONFIG_PATH = Path(__file__).parent.parent / "config" / "excel"
 DEFAULT_MAPPING_FILE = CONFIG_PATH / "vision_{language:s}.yaml"
@@ -68,7 +69,7 @@ class VisionExcelConverter(TabularConverter):
         Get the automatically assigned id of a node
         """
         if self._id_reference is None:
-            raise ValueError(f"Missing ID reference definition for {type(self).__name__}.get_node_id()")
+            raise MappingNotFoundError(f"Missing ID reference definition for {type(self).__name__}.get_node_id()")
         table = self._id_reference.nodes_table
         key = {self._id_reference.number: number}
         return self.get_id(table=table, key=key)
@@ -78,7 +79,7 @@ class VisionExcelConverter(TabularConverter):
         Get the automatically assigned id of a branch (line, transformer, etc.)
         """
         if self._id_reference is None:
-            raise ValueError(f"Missing ID reference definition for {type(self).__name__}.get_branch_id()")
+            raise MappingNotFoundError(f"Missing ID reference definition for {type(self).__name__}.get_branch_id()")
         key = {self._id_reference.number: number}
         return self.get_id(table=table, key=key)
 
@@ -87,7 +88,7 @@ class VisionExcelConverter(TabularConverter):
         Get the automatically assigned id of an appliance (source, load, etc.)
         """
         if self._id_reference is None:
-            raise ValueError(f"Missing ID reference definition for {type(self).__name__}.get_appliance_id()")
+            raise MappingNotFoundError(f"Missing ID reference definition for {type(self).__name__}.get_appliance_id()")
         key = {self._id_reference.node_number: node_number, self._id_reference.sub_number: sub_number}
         return self.get_id(table=table, key=key)
 
@@ -96,6 +97,6 @@ class VisionExcelConverter(TabularConverter):
         Get the automatically assigned id of a virtual object (e.g. the internal node of a 'TransformerLoad')
         """
         if self._id_reference is None:
-            raise ValueError(f"Missing ID reference definition for {type(self).__name__}.get_virtual_id()")
+            raise MappingNotFoundError(f"Missing ID reference definition for {type(self).__name__}.get_virtual_id()")
         key = {self._id_reference.node_number: node_number, self._id_reference.sub_number: sub_number}
         return self.get_id(table=table, name=obj_name, key=key)

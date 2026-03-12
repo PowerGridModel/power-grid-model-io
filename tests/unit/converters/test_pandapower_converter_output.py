@@ -12,6 +12,7 @@ import pytest
 from power_grid_model import ComponentType, DatasetType, initialize_array
 
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter, get_loss_params_3ph
+from power_grid_model_io.errors import ComponentAlreadyExistsError
 from tests.utils import MockDf
 
 
@@ -154,7 +155,7 @@ def test_output_bus__bad_input():
     converter = PandaPowerConverter()
     converter.pp_output_data["res_bus"] = pd.DataFrame()
 
-    with pytest.raises(ValueError, match=r"res_bus already exists in pp_output_data."):
+    with pytest.raises(ComponentAlreadyExistsError, match="res_bus component already exists in pp_output_data"):
         converter._pp_buses_output()
 
 
@@ -205,7 +206,7 @@ def test_output_line__bad_input():
     converter = PandaPowerConverter()
     converter.pp_output_data["res_line"] = pd.DataFrame()
 
-    with pytest.raises(ValueError, match=r"res_line already exists in pp_output_data."):
+    with pytest.raises(ComponentAlreadyExistsError, match="res_line component already exists in pp_output_data"):
         converter._pp_lines_output()
 
 
@@ -289,7 +290,7 @@ def test_output_ext_grid__bad_input(converter):
     converter = PandaPowerConverter()
     converter.pp_output_data["res_ext_grid"] = pd.DataFrame()
 
-    with pytest.raises(ValueError, match=r"res_ext_grid already exists in pp_output_data."):
+    with pytest.raises(ComponentAlreadyExistsError, match="res_ext_grid component already exists in pp_output_data"):
         converter._pp_ext_grids_output()
 
 
@@ -330,7 +331,7 @@ def test_output_shunt__bad_input(converter):
     converter = PandaPowerConverter()
     converter.pp_output_data["res_shunt"] = pd.DataFrame()
 
-    with pytest.raises(ValueError, match=r"res_shunt already exists in pp_output_data."):
+    with pytest.raises(ComponentAlreadyExistsError, match="res_shunt component already exists in pp_output_data"):
         converter._pp_shunts_output()
 
 
@@ -366,7 +367,7 @@ def test_output_sgen__bad_input(converter):
     converter = PandaPowerConverter()
     converter.pp_output_data["res_sgen"] = pd.DataFrame()
 
-    with pytest.raises(ValueError, match=r"res_sgen already exists in pp_output_data."):
+    with pytest.raises(ComponentAlreadyExistsError, match="res_sgen component already exists in pp_output_data"):
         converter._pp_sgens_output()
 
 
@@ -463,7 +464,7 @@ def test_output_trafo__bad_input(converter):
     converter = PandaPowerConverter()
     converter.pp_output_data["res_trafo"] = pd.DataFrame()
 
-    with pytest.raises(ValueError, match=r"res_trafo already exists in pp_output_data."):
+    with pytest.raises(ComponentAlreadyExistsError, match="res_trafo component already exists in pp_output_data"):
         converter._pp_trafos_output()
 
 
@@ -533,7 +534,7 @@ def test_output_trafo3w__bad_input(converter):
     converter = PandaPowerConverter()
     converter.pp_output_data["res_trafo3w"] = pd.DataFrame()
 
-    with pytest.raises(ValueError, match=r"res_trafo3w already exists in pp_output_data."):
+    with pytest.raises(ComponentAlreadyExistsError, match="res_trafo3w component already exists in pp_output_data"):
         converter._pp_trafos3w_output()
 
 
@@ -675,7 +676,7 @@ def test_output_load_ward__bad_input(converter):
     converter = PandaPowerConverter()
     converter.pp_output_data["res_ward"] = pd.DataFrame()
 
-    with pytest.raises(ValueError, match=r"res_ward already exists in pp_output_data."):
+    with pytest.raises(ComponentAlreadyExistsError, match="res_ward component already exists in pp_output_data"):
         converter._pp_load_elements_output(element="ward", symmetric=True)
 
 
@@ -711,7 +712,9 @@ def test_output_asymmetric_load__bad_input(converter):
     converter = PandaPowerConverter()
     converter.pp_output_data["res_asymmetric_load"] = pd.DataFrame()
 
-    with pytest.raises(ValueError, match=r"res_asymmetric_load already exists in pp_output_data."):
+    with pytest.raises(
+        ComponentAlreadyExistsError, match="res_asymmetric_load component already exists in pp_output_data"
+    ):
         converter._pp_asym_loads_output()
 
 
@@ -747,7 +750,9 @@ def test_output_asymmetric_sgen__bad_input(converter):
     converter = PandaPowerConverter()
     converter.pp_output_data["res_asymmetric_sgen"] = pd.DataFrame()
 
-    with pytest.raises(ValueError, match=r"res_asymmetric_sgen already exists in pp_output_data."):
+    with pytest.raises(
+        ComponentAlreadyExistsError, match="res_asymmetric_sgen component already exists in pp_output_data"
+    ):
         converter._pp_asym_gens_output()
 
 
@@ -965,7 +970,7 @@ def test_output_bus_3ph__bad_input(converter):
     converter = PandaPowerConverter()
     converter.pp_output_data["res_bus_3ph"] = pd.DataFrame()
 
-    with pytest.raises(ValueError, match=r"res_bus_3ph already exists in pp_output_data."):
+    with pytest.raises(ComponentAlreadyExistsError, match="res_bus_3ph component already exists in pp_output_data"):
         converter._pp_buses_output_3ph()
 
 
@@ -1041,7 +1046,7 @@ def test_output_line_3ph__bad_input(converter):
     converter = PandaPowerConverter()
     converter.pp_output_data["res_line_3ph"] = pd.DataFrame()
 
-    with pytest.raises(ValueError, match=r"res_line_3ph already exists in pp_output_data."):
+    with pytest.raises(ComponentAlreadyExistsError, match="res_line_3ph component already exists in pp_output_data"):
         converter._pp_lines_output_3ph()
 
 
@@ -1081,7 +1086,9 @@ def test_output_ext_grids_3ph__bad_input(converter):
     converter = PandaPowerConverter()
     converter.pp_output_data["res_ext_grid_3ph"] = pd.DataFrame()
 
-    with pytest.raises(ValueError, match=r"res_ext_grid_3ph already exists in pp_output_data."):
+    with pytest.raises(
+        ComponentAlreadyExistsError, match="res_ext_grid_3ph component already exists in pp_output_data"
+    ):
         converter._pp_ext_grids_output_3ph()
 
 
@@ -1115,7 +1122,7 @@ def test_output_sgen_3ph__bad_input(converter):
     converter = PandaPowerConverter()
     converter.pp_output_data["res_sgen_3ph"] = pd.DataFrame()
 
-    with pytest.raises(ValueError, match=r"res_sgen_3ph already exists in pp_output_data."):
+    with pytest.raises(ComponentAlreadyExistsError, match="res_sgen_3ph component already exists in pp_output_data"):
         converter._pp_sgens_output_3ph()
 
 
@@ -1219,7 +1226,7 @@ def test_output_trafo_3ph__bad_input(converter):
     converter = PandaPowerConverter()
     converter.pp_output_data["res_trafo_3ph"] = pd.DataFrame()
 
-    with pytest.raises(ValueError, match=r"res_trafo_3ph already exists in pp_output_data."):
+    with pytest.raises(ComponentAlreadyExistsError, match="res_trafo_3ph component already exists in pp_output_data"):
         converter._pp_trafos_output_3ph()
 
 
@@ -1260,7 +1267,7 @@ def test_output_shunt_3ph__bad_input(converter):
     converter = PandaPowerConverter()
     converter.pp_output_data["res_shunt_3ph"] = pd.DataFrame()
 
-    with pytest.raises(ValueError, match=r"res_shunt_3ph already exists in pp_output_data."):
+    with pytest.raises(ComponentAlreadyExistsError, match="res_shunt_3ph component already exists in pp_output_data"):
         converter._pp_shunts_output_3ph()
 
 
@@ -1300,7 +1307,9 @@ def test_output_asymmetric_load_3ph__bad_input(converter):
     converter = PandaPowerConverter()
     converter.pp_output_data["res_asymmetric_load_3ph"] = pd.DataFrame()
 
-    with pytest.raises(ValueError, match=r"res_asymmetric_load_3ph already exists in pp_output_data."):
+    with pytest.raises(
+        ComponentAlreadyExistsError, match="res_asymmetric_load_3ph component already exists in pp_output_data"
+    ):
         converter._pp_asym_loads_output_3ph()
 
 
@@ -1340,7 +1349,9 @@ def test_output_asymmetric_sgen_3ph__bad_input(converter):
     converter = PandaPowerConverter()
     converter.pp_output_data["res_asymmetric_sgen_3ph"] = pd.DataFrame()
 
-    with pytest.raises(ValueError, match=r"res_asymmetric_sgen_3ph already exists in pp_output_data."):
+    with pytest.raises(
+        ComponentAlreadyExistsError, match="res_asymmetric_sgen_3ph component already exists in pp_output_data"
+    ):
         converter._pp_asym_gens_output_3ph()
 
 

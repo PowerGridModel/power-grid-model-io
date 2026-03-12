@@ -21,6 +21,13 @@ from power_grid_model.data_types import Dataset
 from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_stores.base_data_store import BaseDataStore
 from power_grid_model_io.data_types import ExtraInfo, TabularData
+from power_grid_model_io.errors import (
+    AttributeNotFoundError,
+    InvalidComponentTypeError,
+    InvalidDataFormatError,
+    InvalidDatasetTypeError,
+    MappingNotFoundError,
+)
 from power_grid_model_io.mappings.multiplier_mapping import MultiplierMapping, Multipliers
 from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes, Tables, TabularMapping
 from power_grid_model_io.mappings.unit_mapping import UnitMapping, Units
@@ -60,14 +67,14 @@ class TabularConverter(BaseConverter[TabularData]):
         """
         # Read mapping
         if mapping_file.suffix.lower() != ".yaml":
-            raise ValueError(f"Mapping file should be a .yaml file, {mapping_file.suffix} provided.")
+            raise InvalidDataFormatError(f"Mapping file should be a .yaml file, {mapping_file.suffix} provided.")
         self._log.debug("Read mapping file", mapping_file=mapping_file)
 
         with mapping_file.open("r", encoding="utf-8") as mapping_stream:
             mapping = yaml.safe_load(mapping_stream)
 
         if "grid" not in mapping:
-            raise KeyError("Missing 'grid' mapping in mapping_file")
+            raise MappingNotFoundError("Missing 'grid' mapping in mapping_file")
 
         self.set_mapping(mapping=mapping)
 
@@ -195,10 +202,12 @@ class TabularConverter(BaseConverter[TabularData]):
         try:
             pgm_data = initialize_array(data_type=data_type_str, component_type=component_str, shape=n_records)
         except KeyError as ex:
-            raise KeyError(f"Invalid component type '{component_str}' or data type '{data_type_str}'") from ex
+            if component_str in [c.value for c in ComponentType]:
+                raise InvalidDatasetTypeError(f"Invalid data type '{data_type_str}'") from ex
+            raise InvalidComponentTypeError(f"Invalid component type '{component_str}'") from ex
 
         if "id" not in attributes:
-            raise KeyError(f"No mapping for the attribute 'id' for '{component_str}s'!")
+            raise MappingNotFoundError(f"No mapping for the attribute 'id' for '{component_str}s'!")
 
         # Make sure that the "id" column is always parsed first (at least before "extra" is parsed)
         attributes_without_filter = {k: v for k, v in attributes.items() if k != "filters"}
@@ -275,11 +284,15 @@ class TabularConverter(BaseConverter[TabularData]):
         component_str = component.value if isinstance(component, Enum) else component
 
         if pgm_data.dtype.names is None:
-            raise ValueError(f"pgm_data for '{component_str}s' has no attributes defined. (dtype.names is None)")
+            raise InvalidDataFormatError(
+                f"pgm_data for '{component_str}s' has no attributes defined. (dtype.names is None)"
+            )
 
         if attr not in pgm_data.dtype.names and attr not in ["extra", "filters"]:
             attrs = ", ".join(pgm_data.dtype.names)
-            raise KeyError(f"Could not find attribute '{attr}' for '{component_str}s'. (choose from: {attrs})")
+            raise AttributeNotFoundError(
+                f"Could not find attribute '{attr}' for '{component_str}s'. (choose from: {attrs})"
+            )
 
         if attr == "extra":
             # Extra info must be linked to the object IDs, therefore the uuids should be known before extra info can
@@ -304,7 +317,9 @@ class TabularConverter(BaseConverter[TabularData]):
         )
 
         if len(attr_data.columns) != 1:
-            raise ValueError(f"DataFrame for {component}.{attr} should contain a single column ({attr_data.columns})")
+            raise InvalidDataFormatError(
+                f"DataFrame for {component}.{attr} should contain a single column ({attr_data.columns})"
+            )
 
         pgm_data[attr] = attr_data.iloc[:, 0]
 
@@ -574,7 +589,7 @@ class TabularConverter(BaseConverter[TabularData]):
                 return pd.DataFrame(index=index)
             # pylint: disable=raise-missing-from
             columns_str = " and ".join(f"'{col_name}'" for col_name in columns)
-            raise KeyError(f"Could not find column {columns_str} on table '{table}'") from e
+            raise MappingNotFoundError(f"Could not find column {columns_str} on table '{table}'") from e
 
         return self._parse_col_def_const(data=data, table=table, col_def=const_value, table_mask=table_mask)
 
@@ -642,7 +657,7 @@ class TabularConverter(BaseConverter[TabularData]):
                     or "key" not in sub_def
                     or len(set(sub_def.keys()) & {"table", "name"}) > 2
                 ):
-                    raise ValueError(f"Invalid {name} definition: {sub_def}")
+                    raise InvalidDataFormatError(f"Invalid {name} definition: {sub_def}")
                 col_data = self._parse_auto_id(
                     data=data,
                     table=table,
@@ -660,7 +675,7 @@ class TabularConverter(BaseConverter[TabularData]):
                     "key_column",
                     "value_column",
                 } != set(sub_def.keys()):
-                    raise ValueError(f"Invalid {name} definition: {sub_def}")
+                    raise InvalidDataFormatError(f"Invalid {name} definition: {sub_def}")
                 return self._parse_reference(
                     data=data,
                     table=table,
@@ -809,7 +824,7 @@ class TabularConverter(BaseConverter[TabularData]):
         try:
             fn_ptr = getattr(col_data, fn_name)
         except AttributeError as ex:
-            raise ValueError(f"Pandas DataFrame has no function '{fn_name}'") from ex
+            raise InvalidDataFormatError(f"Pandas DataFrame has no function '{fn_name}'") from ex
 
         # If the function expects an 'other' argument, apply the function per column (e.g. divide)
         empty = inspect.Parameter.empty
@@ -823,7 +838,7 @@ class TabularConverter(BaseConverter[TabularData]):
 
         # If the function expects any argument
         if any(param.default == empty for name, param in fn_sig.parameters.items() if name != "kwargs"):
-            raise ValueError(f"Invalid pandas function DataFrame.{fn_name}")
+            raise InvalidDataFormatError(f"Invalid pandas function DataFrame.{fn_name}")
 
         return pd.DataFrame(fn_ptr(axis=1))
 
@@ -862,7 +877,7 @@ class TabularConverter(BaseConverter[TabularData]):
         )
 
         if col_data.empty:
-            raise ValueError(f"Cannot apply function {function} to an empty DataFrame")
+            raise InvalidDataFormatError(f"Cannot apply function {function} to an empty DataFrame")
 
         col_data = col_data.apply(lambda row, fn=fn_ptr: fn(**dict(zip(key_words, row))), axis=1, raw=True)
         return pd.DataFrame(col_data)
