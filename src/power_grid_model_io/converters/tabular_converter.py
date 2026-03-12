@@ -23,7 +23,6 @@ from power_grid_model_io.data_stores.base_data_store import BaseDataStore
 from power_grid_model_io.data_types import ExtraInfo, TabularData
 from power_grid_model_io.errors import (
     AttributeNotFoundError,
-    ComponentNotFoundError,
     InvalidComponentTypeError,
     InvalidDataFormatError,
     InvalidDatasetTypeError,
@@ -75,7 +74,7 @@ class TabularConverter(BaseConverter[TabularData]):
             mapping = yaml.safe_load(mapping_stream)
 
         if "grid" not in mapping:
-            raise ComponentNotFoundError("Missing 'grid' mapping in mapping_file")
+            raise MappingNotFoundError("Missing 'grid' mapping in mapping_file")
 
         self.set_mapping(mapping=mapping)
 
@@ -877,7 +876,7 @@ class TabularConverter(BaseConverter[TabularData]):
             extra_info=None,
         )
 
-        if len(col_data) == 0:
+        if col_data.empty:
             raise InvalidDataFormatError(f"Cannot apply function {function} to an empty DataFrame")
 
         col_data = col_data.apply(lambda row, fn=fn_ptr: fn(**dict(zip(key_words, row))), axis=1, raw=True)
