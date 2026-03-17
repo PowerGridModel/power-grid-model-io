@@ -176,7 +176,7 @@ class NetworkDiagramRenderer:
 
     def _identify_source_nodes(self) -> set[int]:
         """Identify nodes with source components attached."""
-        source_nodes = set()
+        source_nodes: set[int] = set()
         if "source" not in self.network:
             return source_nodes
         for source in self.network["source"]:
