@@ -51,6 +51,63 @@ class NetworkDiagramRenderer:
         self.bus_connection_offsets: dict[int, list[float]] = {}  # node_id -> list of x offsets used
         self.connection_spacing = 0.08  # Spacing between connection points on bus
 
+    def _add_nodes_to_graph(self) -> None:
+        """Add nodes to the graph."""
+        if "node" not in self.network:
+            return
+        for node in self.network["node"]:
+            node_id = int(node["id"])
+            u_rated = float(node["u_rated"]) if "u_rated" in node.dtype.names else 10500.0
+            self.graph.add_node(node_id, type="node", u_rated=u_rated)
+
+    def _add_lines_to_graph(self) -> None:
+        """Add lines (branches) to the graph."""
+        if "line" not in self.network:
+            return
+        for line in self.network["line"]:
+            line_id = int(line["id"])
+            from_node = int(line["from_node"])
+            to_node = int(line["to_node"])
+            self.graph.add_edge(from_node, to_node, type="line", id=line_id)
+
+    def _add_transformers_to_graph(self) -> None:
+        """Add two-winding transformers to the graph."""
+        if "transformer" not in self.network:
+            return
+        for trafo in self.network["transformer"]:
+            trafo_id = int(trafo["id"])
+            from_node = int(trafo["from_node"])
+            to_node = int(trafo["to_node"])
+            self.graph.add_edge(from_node, to_node, type="transformer", id=trafo_id)
+
+    def _add_three_winding_transformers_to_graph(self) -> None:
+        """Add three-winding transformers to the graph (with auxiliary nodes)."""
+        if "three_winding_transformer" not in self.network:
+            return
+        for trafo3w in self.network["three_winding_transformer"]:
+            trafo_id = int(trafo3w["id"])
+            node_1 = int(trafo3w["node_1"])
+            node_2 = int(trafo3w["node_2"])
+            node_3 = int(trafo3w["node_3"])
+
+            # Create auxiliary node for the center of the three-winding transformer
+            aux_node_id = trafo_id * 10000  # Use large ID to avoid conflicts
+            self.graph.add_node(aux_node_id, type="aux_trafo3w", trafo_id=trafo_id)
+
+            self.graph.add_edge(node_1, aux_node_id, type="trafo3w_branch", id=trafo_id, winding=1)
+            self.graph.add_edge(node_2, aux_node_id, type="trafo3w_branch", id=trafo_id, winding=2)
+            self.graph.add_edge(node_3, aux_node_id, type="trafo3w_branch", id=trafo_id, winding=3)
+
+    def _add_links_to_graph(self) -> None:
+        """Add links (bus-to-bus connections) to the graph."""
+        if "link" not in self.network:
+            return
+        for link in self.network["link"]:
+            link_id = int(link["id"])
+            from_node = int(link["from_node"])
+            to_node = int(link["to_node"])
+            self.graph.add_edge(from_node, to_node, type="link", id=link_id)
+
     def _parse_network_data(self) -> None:
         """
         Parse the network data and build a graph structure.
@@ -58,52 +115,11 @@ class NetworkDiagramRenderer:
         Extracts nodes and edges from the PGM network data to create
         a NetworkX graph for layout calculations.
         """
-        # Add nodes
-        if "node" in self.network:
-            for node in self.network["node"]:
-                node_id = int(node["id"])
-                u_rated = float(node["u_rated"]) if "u_rated" in node.dtype.names else 10500.0
-                self.graph.add_node(node_id, type="node", u_rated=u_rated)
-
-        # Add lines (branches)
-        if "line" in self.network:
-            for line in self.network["line"]:
-                line_id = int(line["id"])
-                from_node = int(line["from_node"])
-                to_node = int(line["to_node"])
-                self.graph.add_edge(from_node, to_node, type="line", id=line_id)
-
-        # Add transformers
-        if "transformer" in self.network:
-            for trafo in self.network["transformer"]:
-                trafo_id = int(trafo["id"])
-                from_node = int(trafo["from_node"])
-                to_node = int(trafo["to_node"])
-                self.graph.add_edge(from_node, to_node, type="transformer", id=trafo_id)
-
-        # Add three-winding transformers (create auxiliary nodes)
-        if "three_winding_transformer" in self.network:
-            for trafo3w in self.network["three_winding_transformer"]:
-                trafo_id = int(trafo3w["id"])
-                node_1 = int(trafo3w["node_1"])
-                node_2 = int(trafo3w["node_2"])
-                node_3 = int(trafo3w["node_3"])
-
-                # Create auxiliary node for the center of the three-winding transformer
-                aux_node_id = trafo_id * 10000  # Use large ID to avoid conflicts
-                self.graph.add_node(aux_node_id, type="aux_trafo3w", trafo_id=trafo_id)
-
-                self.graph.add_edge(node_1, aux_node_id, type="trafo3w_branch", id=trafo_id, winding=1)
-                self.graph.add_edge(node_2, aux_node_id, type="trafo3w_branch", id=trafo_id, winding=2)
-                self.graph.add_edge(node_3, aux_node_id, type="trafo3w_branch", id=trafo_id, winding=3)
-
-        # Add links (bus-to-bus connections)
-        if "link" in self.network:
-            for link in self.network["link"]:
-                link_id = int(link["id"])
-                from_node = int(link["from_node"])
-                to_node = int(link["to_node"])
-                self.graph.add_edge(from_node, to_node, type="link", id=link_id)
+        self._add_nodes_to_graph()
+        self._add_lines_to_graph()
+        self._add_transformers_to_graph()
+        self._add_three_winding_transformers_to_graph()
+        self._add_links_to_graph()
 
     def _snap_to_grid(self, x: float, y: float) -> tuple[float, float]:
         """
@@ -158,6 +174,69 @@ class NetworkDiagramRenderer:
         used_offsets.append(offset)
         return offset
 
+    def _identify_source_nodes(self) -> set[int]:
+        """Identify nodes with source components attached."""
+        source_nodes = set()
+        if "source" not in self.network:
+            return source_nodes
+        for source in self.network["source"]:
+            source_nodes.add(int(source["node"]))
+        return source_nodes
+
+    def _calculate_layers_from_source(self, source_node: int) -> dict[int, int]:
+        """Calculate layer assignments using BFS from a source node."""
+        layers: dict[int, int] = {}
+        if source_node not in self.graph:
+            return layers
+
+        visited = {source_node}
+        queue = [(source_node, 0)]
+        while queue:
+            node, layer = queue.pop(0)
+            if node not in layers or layer < layers[node]:
+                layers[node] = layer
+            for neighbor in self.graph.successors(node):
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    queue.append((neighbor, layer + 1))
+        return layers
+
+    def _calculate_all_layers(self, source_nodes: set[int]) -> dict[int, int]:
+        """Calculate layers for all nodes based on distance from sources."""
+        layers: dict[int, int] = {}
+        for source_node in source_nodes:
+            node_layers = self._calculate_layers_from_source(source_node)
+            for node, layer in node_layers.items():
+                if node not in layers or layer < layers[node]:
+                    layers[node] = layer
+        return layers
+
+    def _apply_multipartite_layout(self, layers: dict[int, int]) -> dict[int, tuple[float, float]]:
+        """Apply multipartite layout based on layer assignments."""
+        try:
+            for node in self.graph.nodes:
+                self.graph.nodes[node]["subset"] = layers.get(node, 0)
+            return nx.multipartite_layout(self.graph, subset_key="subset")
+        except (ValueError, KeyError, TypeError):
+            return self._apply_spring_layout()
+
+    def _apply_spring_layout(self) -> dict[int, tuple[float, float]]:
+        """Apply spring layout for graph positioning."""
+        return nx.spring_layout(self.graph, k=2, iterations=50, seed=42)
+
+    def _calculate_hierarchical_layout(self, source_nodes: set[int]) -> dict[int, tuple[float, float]]:
+        """Calculate hierarchical layout using sources as top layer."""
+        layers = self._calculate_all_layers(source_nodes)
+        if layers:
+            return self._apply_multipartite_layout(layers)
+        return self._apply_spring_layout()
+
+    def _scale_and_snap_positions(self) -> None:
+        """Scale positions for visibility and snap to grid."""
+        scale_factor = max(3.0, len(self.graph.nodes) * 0.5)
+        self.positions = {node: (x * scale_factor, y * scale_factor) for node, (x, y) in self.positions.items()}
+        self.positions = {node: self._snap_to_grid(x, y) for node, (x, y) in self.positions.items()}
+
     def _calculate_layout(self) -> None:
         """
         Calculate positions for all nodes and components.
@@ -168,52 +247,13 @@ class NetworkDiagramRenderer:
         if len(self.graph.nodes) == 0:
             return
 
-        # Identify sources (nodes with source components attached)
-        source_nodes = set()
-        if "source" in self.network:
-            for source in self.network["source"]:
-                source_nodes.add(int(source["node"]))
-
-        # Try hierarchical layout if we have source nodes
+        source_nodes = self._identify_source_nodes()
         if source_nodes:
-            # Create layers based on distance from source
-            layers: dict[int, int] = {}
-            for source_node in source_nodes:
-                if source_node in self.graph:
-                    # BFS from each source to assign layers
-                    visited = {source_node}
-                    queue = [(source_node, 0)]
-                    while queue:
-                        node, layer = queue.pop(0)
-                        if node not in layers or layer < layers[node]:
-                            layers[node] = layer
-                        for neighbor in self.graph.successors(node):
-                            if neighbor not in visited:
-                                visited.add(neighbor)
-                                queue.append((neighbor, layer + 1))
-
-            # Use multipartite layout if we have layers
-            if layers:
-                try:
-                    # Set subset attribute on each node for multipartite_layout
-                    for node in self.graph.nodes:
-                        self.graph.nodes[node]["subset"] = layers.get(node, 0)
-                    self.positions = nx.multipartite_layout(self.graph, subset_key="subset")
-                except (ValueError, KeyError, TypeError):
-                    # Fall back to spring layout
-                    self.positions = nx.spring_layout(self.graph, k=2, iterations=50, seed=42)
-            else:
-                self.positions = nx.spring_layout(self.graph, k=2, iterations=50, seed=42)
+            self.positions = self._calculate_hierarchical_layout(source_nodes)
         else:
-            # Use spring layout for networks without clear hierarchy
-            self.positions = nx.spring_layout(self.graph, k=2, iterations=50, seed=42)
+            self.positions = self._apply_spring_layout()
 
-        # Scale positions for better visibility
-        scale_factor = max(3.0, len(self.graph.nodes) * 0.5)
-        self.positions = {node: (x * scale_factor, y * scale_factor) for node, (x, y) in self.positions.items()}
-
-        # Snap all positions to grid for orthogonal routing
-        self.positions = {node: self._snap_to_grid(x, y) for node, (x, y) in self.positions.items()}
+        self._scale_and_snap_positions()
 
     def _draw_node(self, node_id: int, x: float, y: float) -> None:
         """
@@ -320,7 +360,7 @@ class NetworkDiagramRenderer:
             f"L{line_id}",
             fontsize=7,
             ha="center",
-            bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor="none"),
+            bbox={"boxstyle": "round,pad=0.3", "facecolor": "white", "edgecolor": "none"},
         )
 
     def _draw_transformer(self, from_node: int, to_node: int, trafo_id: int) -> None:
@@ -578,72 +618,80 @@ class NetworkDiagramRenderer:
         # Add label
         self.ax.text(shunt_x, ground_y - 0.1, f"Shunt {shunt_id}", fontsize=7, ha="center", va="top")
 
-    def _draw_components(self) -> None:
-        """Draw all network components with their IEEE standard symbols."""
-        if self.ax is None:
-            return
-
-        # Draw edges first (lines, transformers)
+    def _draw_edges(self) -> None:
+        """Draw all edges (lines, transformers, links)."""
         for from_node, to_node, data in self.graph.edges(data=True):
             edge_type = data.get("type", "line")
             edge_id = data.get("id", 0)
 
-            if edge_type == "line" or edge_type == "link":
+            if edge_type in ("line", "link"):
                 self._draw_line(from_node, to_node, edge_id)
-            elif edge_type == "transformer":
-                self._draw_transformer(from_node, to_node, edge_id)
-            elif edge_type == "trafo3w_branch":
-                # For three-winding transformers, use transformer symbol
+            elif edge_type in ("transformer", "trafo3w_branch"):
                 self._draw_transformer(from_node, to_node, edge_id)
 
-        # Draw nodes
+    def _draw_nodes(self) -> None:
+        """Draw all node symbols (bus bars)."""
         for node_id, data in self.graph.nodes(data=True):
-            if node_id in self.positions:
-                node_type = data.get("type", "node")
-                if node_type == "node":
-                    x, y = self.positions[node_id]
-                    self._draw_node(node_id, x, y)
+            if node_id in self.positions and data.get("type", "node") == "node":
+                x, y = self.positions[node_id]
+                self._draw_node(node_id, x, y)
 
-        # Draw sources
-        if "source" in self.network:
-            for source in self.network["source"]:
-                node_id = int(source["node"])
-                self._draw_source(node_id)
+    def _draw_sources(self) -> None:
+        """Draw all voltage sources."""
+        if "source" not in self.network:
+            return
+        for source in self.network["source"]:
+            node_id = int(source["node"])
+            self._draw_source(node_id)
 
-        # Draw symmetric loads
+    def _draw_loads(self) -> None:
+        """Draw all loads (symmetric and asymmetric)."""
         if "sym_load" in self.network:
-            for i, load in enumerate(self.network["sym_load"]):
+            for load in self.network["sym_load"]:
                 node_id = int(load["node"])
                 load_id = int(load["id"])
                 self._draw_load(node_id, load_id)
 
-        # Draw asymmetric loads
         if "asym_load" in self.network:
             for load in self.network["asym_load"]:
                 node_id = int(load["node"])
                 load_id = int(load["id"])
                 self._draw_load(node_id, load_id)
 
-        # Draw symmetric generators
+    def _draw_generators(self) -> None:
+        """Draw all generators (symmetric and asymmetric)."""
         if "sym_gen" in self.network:
             for gen in self.network["sym_gen"]:
                 node_id = int(gen["node"])
                 gen_id = int(gen["id"])
                 self._draw_generator(node_id, gen_id)
 
-        # Draw asymmetric generators
         if "asym_gen" in self.network:
             for gen in self.network["asym_gen"]:
                 node_id = int(gen["node"])
                 gen_id = int(gen["id"])
                 self._draw_generator(node_id, gen_id)
 
-        # Draw shunts
-        if "shunt" in self.network:
-            for shunt in self.network["shunt"]:
-                node_id = int(shunt["node"])
-                shunt_id = int(shunt["id"])
-                self._draw_shunt(node_id, shunt_id)
+    def _draw_shunts(self) -> None:
+        """Draw all shunts."""
+        if "shunt" not in self.network:
+            return
+        for shunt in self.network["shunt"]:
+            node_id = int(shunt["node"])
+            shunt_id = int(shunt["id"])
+            self._draw_shunt(node_id, shunt_id)
+
+    def _draw_components(self) -> None:
+        """Draw all network components with their IEEE standard symbols."""
+        if self.ax is None:
+            return
+
+        self._draw_edges()
+        self._draw_nodes()
+        self._draw_sources()
+        self._draw_loads()
+        self._draw_generators()
+        self._draw_shunts()
 
     def render(self) -> tuple[plt.Figure, plt.Axes]:
         """
@@ -705,7 +753,7 @@ class NetworkDiagramRenderer:
         plt.close(self.fig)
 
 
-def print_network(network: SingleDataset, PDF_file_name: str) -> None:
+def print_network(network: SingleDataset, pdf_file_name: str) -> None:
     """
     Print a Power Grid Model network to a PDF file with an electrical diagram.
 
@@ -723,7 +771,7 @@ def print_network(network: SingleDataset, PDF_file_name: str) -> None:
     Args:
         network: Power Grid Model network data (dictionary with component types as keys,
                  each containing arrays of component data)
-        PDF_file_name: Output PDF file path (extension will be set to .pdf if not provided)
+        pdf_file_name: Output PDF file path (extension will be set to .pdf if not provided)
 
     Example:
         >>> from power_grid_model import PowerGridModel
@@ -751,4 +799,4 @@ def print_network(network: SingleDataset, PDF_file_name: str) -> None:
     # Create renderer and generate diagram
     renderer = NetworkDiagramRenderer(network)
     renderer.render()
-    renderer.save_to_pdf(PDF_file_name)
+    renderer.save_to_pdf(pdf_file_name)
