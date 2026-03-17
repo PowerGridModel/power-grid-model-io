@@ -10,7 +10,6 @@ electrical diagrams exported to PDF format.
 """
 
 from pathlib import Path
-from typing import Any
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
@@ -47,7 +46,7 @@ class NetworkDiagramRenderer:
         # Grid parameters for orthogonal routing
         self.grid_spacing = 1.0  # Grid spacing for snapping positions
         self.routing_clearance = 0.3  # Minimum clearance for routing paths
-        
+
         # Connection point tracking for avoiding overlaps on bus bars
         self.bus_connection_offsets: dict[int, list[float]] = {}  # node_id -> list of x offsets used
         self.connection_spacing = 0.08  # Spacing between connection points on bus
@@ -124,19 +123,19 @@ class NetworkDiagramRenderer:
     def _allocate_bus_connection_point(self, node_id: int, preferred_side: str = "auto") -> float:
         """
         Allocate a unique connection point offset on a bus bar.
-        
+
         Args:
             node_id: The node/bus ID
             preferred_side: "left", "right", or "auto" for automatic allocation
-            
+
         Returns:
             X offset from bus center for the connection point
         """
         if node_id not in self.bus_connection_offsets:
             self.bus_connection_offsets[node_id] = []
-        
+
         used_offsets = self.bus_connection_offsets[node_id]
-        
+
         # Try to allocate on preferred side or find available spot
         if preferred_side == "left":
             # Try negative offsets first
@@ -149,13 +148,13 @@ class NetworkDiagramRenderer:
             count = len(used_offsets)
             side = -1 if count % 2 == 0 else 1
             offset = side * self.connection_spacing * ((count + 1) // 2 + 1)
-        
+
         # Ensure we don't exceed bus width
         max_offset = self.node_width / 2 - 0.02
         if abs(offset) > max_offset:
             # If we run out of space, stack vertically (future enhancement)
             offset = max_offset * (1 if offset > 0 else -1)
-        
+
         used_offsets.append(offset)
         return offset
 
@@ -197,7 +196,7 @@ class NetworkDiagramRenderer:
             if layers:
                 try:
                     self.positions = nx.multipartite_layout(self.graph, subset_key=lambda n: layers.get(n, 0))
-                except Exception:
+                except (ValueError, KeyError, TypeError):
                     # Fall back to spring layout
                     self.positions = nx.spring_layout(self.graph, k=2, iterations=50, seed=42)
             else:
@@ -297,7 +296,7 @@ class NetworkDiagramRenderer:
         # Allocate unique connection points on each bus
         offset1 = self._allocate_bus_connection_point(from_node, "auto")
         offset2 = self._allocate_bus_connection_point(to_node, "auto")
-        
+
         # Adjust starting and ending points to be at the allocated connection points
         x1_conn = x1 + offset1
         x2_conn = x2 + offset2
@@ -312,7 +311,14 @@ class NetworkDiagramRenderer:
         mid_idx = len(x_coords) // 2
         mid_x = (x_coords[mid_idx - 1] + x_coords[mid_idx]) / 2
         mid_y = (y_coords[mid_idx - 1] + y_coords[mid_idx]) / 2
-        self.ax.text(mid_x, mid_y, f"L{line_id}", fontsize=7, ha="center", bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor="none"))
+        self.ax.text(
+            mid_x,
+            mid_y,
+            f"L{line_id}",
+            fontsize=7,
+            ha="center",
+            bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor="none"),
+        )
 
     def _draw_transformer(self, from_node: int, to_node: int, trafo_id: int) -> None:
         """
@@ -332,7 +338,7 @@ class NetworkDiagramRenderer:
         # Allocate unique connection points on each bus
         offset1 = self._allocate_bus_connection_point(from_node, "auto")
         offset2 = self._allocate_bus_connection_point(to_node, "auto")
-        
+
         # Adjust starting and ending points
         x1_conn = x1 + offset1
         x2_conn = x2 + offset2
@@ -384,7 +390,7 @@ class NetworkDiagramRenderer:
         # Draw two 40% overlapping circles (IEEE standard for transformer)
         # Calculate overlap: circles should overlap by 40% of diameter
         overlap_distance = self.transformer_radius * 2 * 0.6  # 60% of diameter = centers distance
-        
+
         # Recalculate circle positions with overlap
         mid_x = (cx1 + cx2) / 2
         mid_y = (cy1 + cy2) / 2
@@ -395,22 +401,30 @@ class NetworkDiagramRenderer:
             ux, uy = dx / dist, dy / dist
         else:
             ux, uy = 1, 0
-        
+
         # Position circles with 40% overlap
         cx1 = mid_x - ux * overlap_distance / 2
         cy1 = mid_y - uy * overlap_distance / 2
         cx2 = mid_x + ux * overlap_distance / 2
         cy2 = mid_y + uy * overlap_distance / 2
-        
+
         # First draw white-filled circles with white outline to clear the area
-        circle1_bg = mpatches.Circle((cx1, cy1), self.transformer_radius, edgecolor="white", facecolor="white", linewidth=2, zorder=2)
-        circle2_bg = mpatches.Circle((cx2, cy2), self.transformer_radius, edgecolor="white", facecolor="white", linewidth=2, zorder=2)
+        circle1_bg = mpatches.Circle(
+            (cx1, cy1), self.transformer_radius, edgecolor="white", facecolor="white", linewidth=2, zorder=2
+        )
+        circle2_bg = mpatches.Circle(
+            (cx2, cy2), self.transformer_radius, edgecolor="white", facecolor="white", linewidth=2, zorder=2
+        )
         self.ax.add_patch(circle1_bg)
         self.ax.add_patch(circle2_bg)
-        
+
         # Then draw black outlines without fill so both circles are fully visible
-        circle1_outline = mpatches.Circle((cx1, cy1), self.transformer_radius, edgecolor="black", facecolor="none", linewidth=2, zorder=3)
-        circle2_outline = mpatches.Circle((cx2, cy2), self.transformer_radius, edgecolor="black", facecolor="none", linewidth=2, zorder=3)
+        circle1_outline = mpatches.Circle(
+            (cx1, cy1), self.transformer_radius, edgecolor="black", facecolor="none", linewidth=2, zorder=3
+        )
+        circle2_outline = mpatches.Circle(
+            (cx2, cy2), self.transformer_radius, edgecolor="black", facecolor="none", linewidth=2, zorder=3
+        )
         self.ax.add_patch(circle1_outline)
         self.ax.add_patch(circle2_outline)
 
@@ -433,7 +447,9 @@ class NetworkDiagramRenderer:
         source_y = y + self.node_height / 2 + self.source_radius + 0.15
 
         # Draw circle for source
-        circle = mpatches.Circle((x, source_y), self.source_radius, edgecolor="black", facecolor="white", linewidth=2, zorder=2)
+        circle = mpatches.Circle(
+            (x, source_y), self.source_radius, edgecolor="black", facecolor="white", linewidth=2, zorder=2
+        )
         self.ax.add_patch(circle)
 
         # Draw sine wave inside (simplified as ~)
@@ -494,7 +510,9 @@ class NetworkDiagramRenderer:
         gen_y = y - self.node_height / 2 - self.gen_radius - 0.3
 
         # Draw circle
-        circle = mpatches.Circle((gen_x, gen_y), self.gen_radius, edgecolor="black", facecolor="white", linewidth=2, zorder=2)
+        circle = mpatches.Circle(
+            (gen_x, gen_y), self.gen_radius, edgecolor="black", facecolor="white", linewidth=2, zorder=2
+        )
         self.ax.add_patch(circle)
 
         # Draw 'G' inside with smaller font
@@ -530,8 +548,20 @@ class NetworkDiagramRenderer:
 
         # Draw capacitor symbol (two parallel lines)
         cap_height = 0.15
-        self.ax.plot([shunt_x - 0.05, shunt_x - 0.05], [shunt_y - cap_height / 2, shunt_y + cap_height / 2], "k-", linewidth=2, zorder=2)
-        self.ax.plot([shunt_x + 0.05, shunt_x + 0.05], [shunt_y - cap_height / 2, shunt_y + cap_height / 2], "k-", linewidth=2, zorder=2)
+        self.ax.plot(
+            [shunt_x - 0.05, shunt_x - 0.05],
+            [shunt_y - cap_height / 2, shunt_y + cap_height / 2],
+            "k-",
+            linewidth=2,
+            zorder=2,
+        )
+        self.ax.plot(
+            [shunt_x + 0.05, shunt_x + 0.05],
+            [shunt_y - cap_height / 2, shunt_y + cap_height / 2],
+            "k-",
+            linewidth=2,
+            zorder=2,
+        )
 
         # Draw ground symbol below capacitor
         ground_y = shunt_y - cap_height / 2 - 0.1

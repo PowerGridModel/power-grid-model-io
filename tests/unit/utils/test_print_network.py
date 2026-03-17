@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -52,7 +51,39 @@ def network_with_transformer():
             dtype=[("id", "i4"), ("u_rated", "f8")],
         ),
         "transformer": np.array(
-            [(3, 1, 2, 1, 1, 110000.0, 10500.0, 40e6, 0.0, 0.1, 0.0, 5e-6, 0, 1, 1, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)],
+            [
+                (
+                    3,
+                    1,
+                    2,
+                    1,
+                    1,
+                    110000.0,
+                    10500.0,
+                    40e6,
+                    0.0,
+                    0.1,
+                    0.0,
+                    5e-6,
+                    0,
+                    1,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                )
+            ],
             dtype=[
                 ("id", "i4"),
                 ("from_node", "i4"),
@@ -95,9 +126,11 @@ def network_with_transformer():
 @pytest.fixture
 def mock_matplotlib():
     """Mock matplotlib to avoid GUI/display dependencies in tests."""
-    with patch("power_grid_model_io.utils.print_network.plt") as mock_plt, patch(
-        "power_grid_model_io.utils.print_network.mpatches"
-    ) as mock_patches, patch("power_grid_model_io.utils.print_network.PdfPages") as mock_pdf:
+    with (
+        patch("power_grid_model_io.utils.print_network.plt") as mock_plt,
+        patch("power_grid_model_io.utils.print_network.mpatches") as mock_patches,
+        patch("power_grid_model_io.utils.print_network.PdfPages") as mock_pdf,
+    ):
         # Create mock figure and axes
         mock_fig = MagicMock()
         mock_ax = MagicMock()
@@ -126,7 +159,8 @@ def test_import_from_submodule():
     assert NetworkDiagramRenderer is not None
 
 
-def test_print_network_empty_data_raises_error(mock_matplotlib):
+@pytest.mark.usefixtures("mock_matplotlib")
+def test_print_network_empty_data_raises_error():
     """Test that empty network data raises ValueError."""
     from power_grid_model_io.utils.print_network import print_network
 
@@ -134,7 +168,8 @@ def test_print_network_empty_data_raises_error(mock_matplotlib):
         print_network({}, "output.pdf")
 
 
-def test_print_network_no_nodes_raises_error(mock_matplotlib):
+@pytest.mark.usefixtures("mock_matplotlib")
+def test_print_network_no_nodes_raises_error():
     """Test that network without nodes raises ValueError."""
     from power_grid_model_io.utils.print_network import print_network
 
@@ -305,8 +340,7 @@ def test_network_diagram_renderer_empty_network():
 
 
 @patch("power_grid_model_io.utils.print_network.plt")
-@patch("power_grid_model_io.utils.print_network.PdfPages")
-def test_print_network_closes_figure(mock_pdf, mock_plt, simple_network_data, tmp_path):
+def test_print_network_closes_figure(mock_plt, simple_network_data, tmp_path):
     """Test that matplotlib figure is properly closed after saving."""
     from power_grid_model_io.utils.print_network import print_network
 
@@ -333,7 +367,53 @@ def test_network_with_three_winding_transformer():
             dtype=[("id", "i4"), ("u_rated", "f8")],
         ),
         "three_winding_transformer": np.array(
-            [(100, 1, 2, 3, 1, 1, 1, 110000.0, 10500.0, 10500.0, 40e6, 40e6, 40e6, 0.0, 0.0, 0.0, 0.1, 0.1, 0.1, 0.0, 0.0, 0.0, 5e-6, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)],
+            [
+                (
+                    100,
+                    1,
+                    2,
+                    3,
+                    1,
+                    1,
+                    1,
+                    110000.0,
+                    10500.0,
+                    10500.0,
+                    40e6,
+                    40e6,
+                    40e6,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.0,
+                    0.0,
+                    0.0,
+                    5e-6,
+                    0,
+                    1,
+                    1,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                )
+            ],
             dtype=[
                 ("id", "i4"),
                 ("node_1", "i4"),
