@@ -195,7 +195,10 @@ class NetworkDiagramRenderer:
             # Use multipartite layout if we have layers
             if layers:
                 try:
-                    self.positions = nx.multipartite_layout(self.graph, subset_key=lambda n: layers.get(n, 0))
+                    # Set subset attribute on each node for multipartite_layout
+                    for node in self.graph.nodes:
+                        self.graph.nodes[node]["subset"] = layers.get(node, 0)
+                    self.positions = nx.multipartite_layout(self.graph, subset_key="subset")
                 except (ValueError, KeyError, TypeError):
                     # Fall back to spring layout
                     self.positions = nx.spring_layout(self.graph, k=2, iterations=50, seed=42)
