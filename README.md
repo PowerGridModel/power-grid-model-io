@@ -54,6 +54,14 @@ If you are using `conda`, you can directly install the package from `conda-forge
 conda install -c conda-forge power-grid-model-io
 ```
 
+### Optional Dependencies
+
+For PDF network diagram visualization (using `print_network`), install with the visualization extra:
+
+```sh
+uv pip install power-grid-model-io[visualization]
+```
+
 ## Examples
 
 * [PGM JSON Example](https://github.com/PowerGridModel/power-grid-model-io/tree/main/docs/examples)
