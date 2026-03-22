@@ -21,7 +21,6 @@ from power_grid_model import (
     BranchSide,
     ComponentType,
     DatasetType,
-    DatasetTypeLike,
     LoadGenType,
     WindingType,
     initialize_array,
@@ -159,7 +158,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             self._extra_info_to_pgm_input_data(extra_info)
 
         # Convert
-        def pgm_output_dtype_checker(check_type: DatasetTypeLike) -> bool:
+        def pgm_output_dtype_checker(check_type: DatasetType | str) -> bool:
             return all(
                 (
                     comp_array.dtype == power_grid_meta_data[DatasetType[check_type]][component]
@@ -1277,11 +1276,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         pp_output_buses = pd.DataFrame(
             columns=["vm_pu", "va_degree", "p_mw", "q_mvar"],
-            index=self._get_pp_ids("bus", pgm_nodes["id"]),
+            index=self._get_pp_ids("bus", pgm_nodes[AttributeType.id]),
         )
 
-        pp_output_buses["vm_pu"] = pgm_nodes["u_pu"]
-        pp_output_buses["va_degree"] = pgm_nodes["u_angle"] * (180.0 / np.pi)
+        pp_output_buses["vm_pu"] = pgm_nodes[AttributeType.u_pu]
+        pp_output_buses["va_degree"] = pgm_nodes[AttributeType.u_angle] * (180.0 / np.pi)
 
         # p_to, p_from, q_to and q_from connected to the bus have to be summed up
         self._pp_buses_output__accumulate_power(pp_output_buses)
@@ -1301,16 +1300,22 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         # Let's define all the components and sides where nodes can be connected
         component_sides = {
-            "line": [("from_node", "p_from", "q_from"), ("to_node", "p_to", "q_to")],
-            "link": [("from_node", "p_from", "q_from"), ("to_node", "p_to", "q_to")],
-            "transformer": [
-                ("from_node", "p_from", "q_from"),
-                ("to_node", "p_to", "q_to"),
+            ComponentType.line: [
+                (AttributeType.from_node, AttributeType.p_from, AttributeType.q_from),
+                (AttributeType.to_node, AttributeType.p_to, AttributeType.q_to),
             ],
-            "three_winding_transformer": [
-                ("node_1", "p_1", "q_1"),
-                ("node_2", "p_2", "q_2"),
-                ("node_3", "p_3", "q_3"),
+            ComponentType.link: [
+                (AttributeType.from_node, AttributeType.p_from, AttributeType.q_from),
+                (AttributeType.to_node, AttributeType.p_to, AttributeType.q_to),
+            ],
+            ComponentType.transformer: [
+                (AttributeType.from_node, AttributeType.p_from, AttributeType.q_from),
+                (AttributeType.to_node, AttributeType.p_to, AttributeType.q_to),
+            ],
+            ComponentType.three_winding_transformer: [
+                (AttributeType.node_1, AttributeType.p_1, AttributeType.q_1),
+                (AttributeType.node_2, AttributeType.p_2, AttributeType.q_2),
+                (AttributeType.node_3, AttributeType.p_3, AttributeType.q_3),
             ],
         }
 
@@ -1369,7 +1374,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_input_lines = self.pgm_input_data[ComponentType.line]
         pgm_output_lines = self.pgm_output_data[ComponentType.line]
 
-        if not np.array_equal(pgm_input_lines["id"], pgm_output_lines["id"]):
+        if not np.array_equal(pgm_input_lines[AttributeType.id], pgm_output_lines[AttributeType.id]):
             raise ValueError("The output line ids should correspond to the input line ids")
 
         pp_output_lines = pd.DataFrame(
@@ -1389,26 +1394,32 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 "va_to_degree",
                 "loading_percent",
             ],
-            index=self._get_pp_ids(ComponentType.line, pgm_output_lines["id"]),
+            index=self._get_pp_ids(ComponentType.line, pgm_output_lines[AttributeType.id]),
         )
 
-        from_nodes = self.pgm_nodes_lookup.loc[pgm_input_lines["from_node"]]
-        to_nodes = self.pgm_nodes_lookup.loc[pgm_input_lines["to_node"]]
+        from_nodes = self.pgm_nodes_lookup.loc[pgm_input_lines[AttributeType.from_node]]
+        to_nodes = self.pgm_nodes_lookup.loc[pgm_input_lines[AttributeType.to_node]]
 
-        pp_output_lines["p_from_mw"] = pgm_output_lines["p_from"] * 1e-6
-        pp_output_lines["q_from_mvar"] = pgm_output_lines["q_from"] * 1e-6
-        pp_output_lines["p_to_mw"] = pgm_output_lines["p_to"] * 1e-6
-        pp_output_lines["q_to_mvar"] = pgm_output_lines["q_to"] * 1e-6
-        pp_output_lines["pl_mw"] = (pgm_output_lines["p_from"] + pgm_output_lines["p_to"]) * 1e-6
-        pp_output_lines["ql_mvar"] = (pgm_output_lines["q_from"] + pgm_output_lines["q_to"]) * 1e-6
-        pp_output_lines["i_from_ka"] = pgm_output_lines["i_from"] * 1e-3
-        pp_output_lines["i_to_ka"] = pgm_output_lines["i_to"] * 1e-3
-        pp_output_lines["i_ka"] = np.maximum(pgm_output_lines["i_from"], pgm_output_lines["i_to"]) * 1e-3
+        pp_output_lines["p_from_mw"] = pgm_output_lines[AttributeType.p_from] * 1e-6
+        pp_output_lines["q_from_mvar"] = pgm_output_lines[AttributeType.q_from] * 1e-6
+        pp_output_lines["p_to_mw"] = pgm_output_lines[AttributeType.p_to] * 1e-6
+        pp_output_lines["q_to_mvar"] = pgm_output_lines[AttributeType.q_to] * 1e-6
+        pp_output_lines["pl_mw"] = (
+            pgm_output_lines[AttributeType.p_from] + pgm_output_lines[AttributeType.p_to]
+        ) * 1e-6
+        pp_output_lines["ql_mvar"] = (
+            pgm_output_lines[AttributeType.q_from] + pgm_output_lines[AttributeType.q_to]
+        ) * 1e-6
+        pp_output_lines["i_from_ka"] = pgm_output_lines[AttributeType.i_from] * 1e-3
+        pp_output_lines["i_to_ka"] = pgm_output_lines[AttributeType.i_to] * 1e-3
+        pp_output_lines["i_ka"] = (
+            np.maximum(pgm_output_lines[AttributeType.i_from], pgm_output_lines[AttributeType.i_to]) * 1e-3
+        )
         pp_output_lines["vm_from_pu"] = from_nodes["u_pu"].values
         pp_output_lines["vm_to_pu"] = to_nodes["u_pu"].values
         pp_output_lines["va_from_degree"] = from_nodes["u_degree"].values
         pp_output_lines["va_to_degree"] = to_nodes["u_degree"].values
-        pp_output_lines["loading_percent"] = pgm_output_lines["loading"] * 1e2
+        pp_output_lines["loading_percent"] = pgm_output_lines[AttributeType.loading] * 1e2
 
         self.pp_output_data["res_line"] = pp_output_lines
 
@@ -1429,10 +1440,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         pp_output_ext_grids = pd.DataFrame(
             columns=["p_mw", "q_mvar"],
-            index=self._get_pp_ids("ext_grid", pgm_output_sources["id"]),
+            index=self._get_pp_ids("ext_grid", pgm_output_sources[AttributeType.id]),
         )
-        pp_output_ext_grids["p_mw"] = pgm_output_sources["p"] * 1e-6
-        pp_output_ext_grids["q_mvar"] = pgm_output_sources["q"] * 1e-6
+        pp_output_ext_grids["p_mw"] = pgm_output_sources[AttributeType.p] * 1e-6
+        pp_output_ext_grids["q_mvar"] = pgm_output_sources[AttributeType.q] * 1e-6
 
         self.pp_output_data["res_ext_grid"] = pp_output_ext_grids
 
@@ -1453,15 +1464,15 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         pgm_output_shunts = self.pgm_output_data[ComponentType.shunt]
 
-        at_nodes = self.pgm_nodes_lookup.loc[pgm_input_shunts["node"]]
+        at_nodes = self.pgm_nodes_lookup.loc[pgm_input_shunts[AttributeType.node]]
 
         pp_output_shunts = pd.DataFrame(
             columns=["p_mw", "q_mvar", "vm_pu"],
-            index=self._get_pp_ids("shunt", pgm_output_shunts["id"]),
+            index=self._get_pp_ids("shunt", pgm_output_shunts[AttributeType.id]),
         )
-        pp_output_shunts["p_mw"] = pgm_output_shunts["p"] * 1e-6
-        pp_output_shunts["q_mvar"] = pgm_output_shunts["q"] * 1e-6
-        pp_output_shunts["vm_pu"] = at_nodes["u_pu"].values
+        pp_output_shunts["p_mw"] = pgm_output_shunts[AttributeType.p] * 1e-6
+        pp_output_shunts["q_mvar"] = pgm_output_shunts[AttributeType.q] * 1e-6
+        pp_output_shunts["vm_pu"] = at_nodes[AttributeType.u_pu].values
 
         self.pp_output_data["res_shunt"] = pp_output_shunts
 
@@ -1483,10 +1494,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         pp_output_sgens = pd.DataFrame(
             columns=["p_mw", "q_mvar"],
-            index=self._get_pp_ids("sgen", pgm_output_sym_gens["id"]),
+            index=self._get_pp_ids("sgen", pgm_output_sym_gens[AttributeType.id]),
         )
-        pp_output_sgens["p_mw"] = pgm_output_sym_gens["p"] * 1e-6
-        pp_output_sgens["q_mvar"] = pgm_output_sym_gens["q"] * 1e-6
+        pp_output_sgens["p_mw"] = pgm_output_sym_gens[AttributeType.p] * 1e-6
+        pp_output_sgens["q_mvar"] = pgm_output_sym_gens[AttributeType.q] * 1e-6
 
         self.pp_output_data["res_sgen"] = pp_output_sgens
 
@@ -1511,19 +1522,21 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_input_transformers = self.pp_input_data["trafo"]
         pgm_output_transformers = self.pgm_output_data[ComponentType.transformer]
 
-        from_nodes = self.pgm_nodes_lookup.loc[pgm_input_transformers["from_node"]]
-        to_nodes = self.pgm_nodes_lookup.loc[pgm_input_transformers["to_node"]]
+        from_nodes = self.pgm_nodes_lookup.loc[pgm_input_transformers[AttributeType.from_node]]
+        to_nodes = self.pgm_nodes_lookup.loc[pgm_input_transformers[AttributeType.to_node]]
 
         # Only derating factor used here. Sn is already being multiplied by parallel
         loading_multiplier = pp_input_transformers["df"]
         if self.trafo_loading == "current":
-            ui_from = pgm_output_transformers["i_from"] * pgm_input_transformers["u1"]
-            ui_to = pgm_output_transformers["i_to"] * pgm_input_transformers["u2"]
+            ui_from = pgm_output_transformers[AttributeType.i_from] * pgm_input_transformers[AttributeType.u1]
+            ui_to = pgm_output_transformers[AttributeType.i_to] * pgm_input_transformers[AttributeType.u2]
             loading = (
-                (np.sqrt(3) * np.maximum(ui_from, ui_to) / pgm_input_transformers["sn"]) * loading_multiplier * 1e2
+                (np.sqrt(3) * np.maximum(ui_from, ui_to) / pgm_input_transformers[AttributeType.sn])
+                * loading_multiplier
+                * 1e2
             )
         elif self.trafo_loading == "power":
-            loading = pgm_output_transformers["loading"] * loading_multiplier * 1e2
+            loading = pgm_output_transformers[AttributeType.loading] * loading_multiplier * 1e2
         else:
             raise ValueError(f"Invalid transformer loading type: {self.trafo_loading!s}")
 
@@ -1543,16 +1556,20 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 "va_lv_degree",
                 "loading_percent",
             ],
-            index=self._get_pp_ids("trafo", pgm_output_transformers["id"]),
+            index=self._get_pp_ids("trafo", pgm_output_transformers[AttributeType.id]),
         )
-        pp_output_trafos["p_hv_mw"] = pgm_output_transformers["p_from"] * 1e-6
-        pp_output_trafos["q_hv_mvar"] = pgm_output_transformers["q_from"] * 1e-6
-        pp_output_trafos["p_lv_mw"] = pgm_output_transformers["p_to"] * 1e-6
-        pp_output_trafos["q_lv_mvar"] = pgm_output_transformers["q_to"] * 1e-6
-        pp_output_trafos["pl_mw"] = (pgm_output_transformers["p_from"] + pgm_output_transformers["p_to"]) * 1e-6
-        pp_output_trafos["ql_mvar"] = (pgm_output_transformers["q_from"] + pgm_output_transformers["q_to"]) * 1e-6
-        pp_output_trafos["i_hv_ka"] = pgm_output_transformers["i_from"] * 1e-3
-        pp_output_trafos["i_lv_ka"] = pgm_output_transformers["i_to"] * 1e-3
+        pp_output_trafos["p_hv_mw"] = pgm_output_transformers[AttributeType.p_from] * 1e-6
+        pp_output_trafos["q_hv_mvar"] = pgm_output_transformers[AttributeType.q_from] * 1e-6
+        pp_output_trafos["p_lv_mw"] = pgm_output_transformers[AttributeType.p_to] * 1e-6
+        pp_output_trafos["q_lv_mvar"] = pgm_output_transformers[AttributeType.q_to] * 1e-6
+        pp_output_trafos["pl_mw"] = (
+            pgm_output_transformers[AttributeType.p_from] + pgm_output_transformers[AttributeType.p_to]
+        ) * 1e-6
+        pp_output_trafos["ql_mvar"] = (
+            pgm_output_transformers[AttributeType.q_from] + pgm_output_transformers[AttributeType.q_to]
+        ) * 1e-6
+        pp_output_trafos["i_hv_ka"] = pgm_output_transformers[AttributeType.i_from] * 1e-3
+        pp_output_trafos["i_lv_ka"] = pgm_output_transformers[AttributeType.i_to] * 1e-3
         pp_output_trafos["vm_hv_pu"] = from_nodes["u_pu"].values
         pp_output_trafos["vm_lv_pu"] = to_nodes["u_pu"].values
         pp_output_trafos["va_hv_degree"] = from_nodes["u_degree"].values
@@ -1582,9 +1599,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         pgm_output_transformers3w = self.pgm_output_data[ComponentType.three_winding_transformer]
 
-        nodes_1 = self.pgm_nodes_lookup.loc[pgm_input_transformers3w["node_1"]]
-        nodes_2 = self.pgm_nodes_lookup.loc[pgm_input_transformers3w["node_2"]]
-        nodes_3 = self.pgm_nodes_lookup.loc[pgm_input_transformers3w["node_3"]]
+        nodes_1 = self.pgm_nodes_lookup.loc[pgm_input_transformers3w[AttributeType.node_1]]
+        nodes_2 = self.pgm_nodes_lookup.loc[pgm_input_transformers3w[AttributeType.node_2]]
+        nodes_3 = self.pgm_nodes_lookup.loc[pgm_input_transformers3w[AttributeType.node_3]]
 
         pp_output_trafos3w = pd.DataFrame(
             columns=[
@@ -1607,31 +1624,35 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 "va_lv_degree",
                 "loading_percent",
             ],
-            index=self._get_pp_ids("trafo3w", pgm_output_transformers3w["id"]),
+            index=self._get_pp_ids("trafo3w", pgm_output_transformers3w[AttributeType.id]),
         )
 
-        pp_output_trafos3w["p_hv_mw"] = pgm_output_transformers3w["p_1"] * 1e-6
-        pp_output_trafos3w["q_hv_mvar"] = pgm_output_transformers3w["q_1"] * 1e-6
-        pp_output_trafos3w["p_mv_mw"] = pgm_output_transformers3w["p_2"] * 1e-6
-        pp_output_trafos3w["q_mv_mvar"] = pgm_output_transformers3w["q_2"] * 1e-6
-        pp_output_trafos3w["p_lv_mw"] = pgm_output_transformers3w["p_3"] * 1e-6
-        pp_output_trafos3w["q_lv_mvar"] = pgm_output_transformers3w["q_3"] * 1e-6
+        pp_output_trafos3w["p_hv_mw"] = pgm_output_transformers3w[AttributeType.p_1] * 1e-6
+        pp_output_trafos3w["q_hv_mvar"] = pgm_output_transformers3w[AttributeType.q_1] * 1e-6
+        pp_output_trafos3w["p_mv_mw"] = pgm_output_transformers3w[AttributeType.p_2] * 1e-6
+        pp_output_trafos3w["q_mv_mvar"] = pgm_output_transformers3w[AttributeType.q_2] * 1e-6
+        pp_output_trafos3w["p_lv_mw"] = pgm_output_transformers3w[AttributeType.p_3] * 1e-6
+        pp_output_trafos3w["q_lv_mvar"] = pgm_output_transformers3w[AttributeType.q_3] * 1e-6
         pp_output_trafos3w["pl_mw"] = (
-            pgm_output_transformers3w["p_1"] + pgm_output_transformers3w["p_2"] + pgm_output_transformers3w["p_3"]
+            pgm_output_transformers3w[AttributeType.p_1]
+            + pgm_output_transformers3w[AttributeType.p_2]
+            + pgm_output_transformers3w[AttributeType.p_3]
         ) * 1e-6
         pp_output_trafos3w["ql_mvar"] = (
-            pgm_output_transformers3w["q_1"] + pgm_output_transformers3w["q_2"] + pgm_output_transformers3w["q_3"]
+            pgm_output_transformers3w[AttributeType.q_1]
+            + pgm_output_transformers3w[AttributeType.q_2]
+            + pgm_output_transformers3w[AttributeType.q_3]
         ) * 1e-6
-        pp_output_trafos3w["i_hv_ka"] = pgm_output_transformers3w["i_1"] * 1e-3
-        pp_output_trafos3w["i_mv_ka"] = pgm_output_transformers3w["i_2"] * 1e-3
-        pp_output_trafos3w["i_lv_ka"] = pgm_output_transformers3w["i_3"] * 1e-3
+        pp_output_trafos3w["i_hv_ka"] = pgm_output_transformers3w[AttributeType.i_1] * 1e-3
+        pp_output_trafos3w["i_mv_ka"] = pgm_output_transformers3w[AttributeType.i_2] * 1e-3
+        pp_output_trafos3w["i_lv_ka"] = pgm_output_transformers3w[AttributeType.i_3] * 1e-3
         pp_output_trafos3w["vm_hv_pu"] = nodes_1["u_pu"].values
         pp_output_trafos3w["vm_mv_pu"] = nodes_2["u_pu"].values
         pp_output_trafos3w["vm_lv_pu"] = nodes_3["u_pu"].values
         pp_output_trafos3w["va_hv_degree"] = nodes_1["u_degree"].values
         pp_output_trafos3w["va_mv_degree"] = nodes_2["u_degree"].values
         pp_output_trafos3w["va_lv_degree"] = nodes_3["u_degree"].values
-        pp_output_trafos3w["loading_percent"] = pgm_output_transformers3w["loading"] * 1e2
+        pp_output_trafos3w["loading_percent"] = pgm_output_transformers3w[AttributeType.loading] * 1e2
 
         self.pp_output_data["res_trafo3w"] = pp_output_trafos3w
 
@@ -1656,11 +1677,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         pp_asym_output_loads = pd.DataFrame(
             columns=["p_mw", "q_mvar"],
-            index=self._get_pp_ids("asymmetric_load", pgm_output_asym_loads["id"]),
+            index=self._get_pp_ids("asymmetric_load", pgm_output_asym_loads[AttributeType.id]),
         )
 
-        pp_asym_output_loads["p_mw"] = pgm_output_asym_loads["p"] * 1e-6
-        pp_asym_output_loads["q_mvar"] = pgm_output_asym_loads["q"] * 1e-6
+        pp_asym_output_loads["p_mw"] = pgm_output_asym_loads[AttributeType.p] * 1e-6
+        pp_asym_output_loads["q_mvar"] = pgm_output_asym_loads[AttributeType.q] * 1e-6
 
         self.pp_output_data["res_asymmetric_load"] = pp_asym_output_loads
 
@@ -1682,11 +1703,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         pp_output_asym_gens = pd.DataFrame(
             columns=["p_mw", "q_mvar"],
-            index=self._get_pp_ids("asymmetric_sgen", pgm_output_asym_gens["id"]),
+            index=self._get_pp_ids("asymmetric_sgen", pgm_output_asym_gens[AttributeType.id]),
         )
 
-        pp_output_asym_gens["p_mw"] = pgm_output_asym_gens["p"] * 1e-6
-        pp_output_asym_gens["q_mvar"] = pgm_output_asym_gens["q"] * 1e-6
+        pp_output_asym_gens["p_mw"] = pgm_output_asym_gens[AttributeType.p] * 1e-6
+        pp_output_asym_gens["q_mvar"] = pgm_output_asym_gens[AttributeType.q] * 1e-6
 
         self.pp_output_data["res_asymmetric_sgen"] = pp_output_asym_gens
 
@@ -1730,9 +1751,17 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # Create a DataFrame wih all the pgm output loads and index it in the pgm id
         pgm_output_loads = self.pgm_output_data[ComponentType.sym_load]
         # Sum along rows for asym output
-        active_power = pgm_output_loads["p"].sum(axis=1) if pgm_output_loads["p"].ndim == 2 else pgm_output_loads["p"]
-        reactive_power = pgm_output_loads["q"].sum(axis=1) if pgm_output_loads["q"].ndim == 2 else pgm_output_loads["q"]
-        all_loads = pd.DataFrame({"p": active_power, "q": reactive_power}, index=pgm_output_loads["id"])
+        active_power = (
+            pgm_output_loads[AttributeType.p].sum(axis=1)
+            if pgm_output_loads[AttributeType.p].ndim == 2
+            else pgm_output_loads[AttributeType.p]
+        )
+        reactive_power = (
+            pgm_output_loads[AttributeType.q].sum(axis=1)
+            if pgm_output_loads[AttributeType.q].ndim == 2
+            else pgm_output_loads[AttributeType.q]
+        )
+        all_loads = pd.DataFrame({"p": active_power, "q": reactive_power}, index=pgm_output_loads[AttributeType.id])
 
         # Create an empty DataFrame with two columns p and q to accumulate all the loads per pp id
         accumulated_loads = pd.DataFrame(columns=["p", "q"], dtype=np.float64)
@@ -1858,11 +1887,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 "q_c_mvar",
                 "unbalance_percent",
             ],
-            index=self._get_pp_ids("bus", pgm_nodes["id"]),
+            index=self._get_pp_ids("bus", pgm_nodes[AttributeType.id]),
         )
 
-        node_u_pu = pgm_nodes["u_pu"]
-        node_u_angle = pgm_nodes["u_angle"]
+        node_u_pu = pgm_nodes[AttributeType.u_pu]
+        node_u_angle = pgm_nodes[AttributeType.u_angle]
         u_pu_and_angle = node_u_pu * np.exp(1j * node_u_angle)
         # Phase to sequence transformation U_012.T = 1/3 . Transformation_matrix x U_abc.T
         alpha = np.exp(1j * np.pi * 120 / 180)
