@@ -1402,7 +1402,7 @@ doc = [
 ]
 examples = [
     { name = "pandapower", specifier = ">2.11.1" },
-    { name = "power-grid-model", specifier = ">1.9.80" },
+    { name = "power-grid-model", specifier = ">=1.13.27" },
     { name = "pyarrow" },
 ]
 lint = [
