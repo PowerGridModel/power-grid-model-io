@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from power_grid_model import ComponentType, DatasetType, initialize_array
+from power_grid_model import AttributeType, ComponentType, DatasetType, initialize_array
 from power_grid_model.data_types import ComponentList, Dataset, SingleDataset, SinglePythonDataset
 from power_grid_model.utils import json_deserialize, json_serialize
 
@@ -133,8 +133,8 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
           extra_info: an optional dictionary where extra component info (that can't be specified in
         power-grid-model data) can be specified
           objects: ComponentList:
-          component: str:
-          data_type: str:
+          component: ComponentType:
+          data_type: DatasetType:
           extra_info: ExtraInfo | None:  (Default value = None)
 
         Returns:
@@ -162,7 +162,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
 
                 # If an attribute doesn't exist, it is added to the extra_info lookup table
                 elif extra_info is not None:
-                    obj_id = obj["id"]
+                    obj_id = obj[AttributeType.id]
                     if not isinstance(obj_id, int):
                         raise ValueError(f"Invalid 'id' value for {component.value} {data_type.value} data")
                     if obj_id not in extra_info:
@@ -195,7 +195,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
             else:
                 for component_data in result.values():
                     for component in component_data:
-                        component.update(extra_info.get(component["id"], {}))
+                        component.update(extra_info.get(component[AttributeType.id], {}))
 
         return result
 
@@ -261,7 +261,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
                         for attribute in objects.dtype.names
                         if not self._is_nan(obj[attribute])
                     },
-                    extra_info.get(obj["id"], {}),
+                    extra_info.get(obj[AttributeType.id], {}),
                 )
                 for obj in objects
             ]
@@ -287,8 +287,8 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
     def _extract_extra_component_info(
         self, component: str, attributes: dict[str, Any], reserialized_data: SinglePythonDataset, extra_info: ExtraInfo
     ):
-        entry_id = attributes["id"]
-        reserialized_entry = self._get_first_by(reserialized_data[component], "id", entry_id)
+        entry_id = attributes[AttributeType.id]
+        reserialized_entry = self._get_first_by(reserialized_data[component], AttributeType.id, entry_id)
         if reserialized_entry is None:
             warnings.warn(f"The extra info cannot be determined for component '{component}' with ID {entry_id}")
             return
