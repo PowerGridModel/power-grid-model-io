@@ -28,7 +28,6 @@ classifiers=[
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "defusedxml>=0.7",
     "numpy>=2.0",
     "openpyxl",
     "packaging>=25.0",
@@ -167,7 +166,7 @@ select = [
     # pytest-style
     "PT",
 ]
-ignore = []
+ignore = ["S314"]  # S314: xml parsing is no longer considered unsafe python >= 3.11 (https://github.com/python/cpython/pull/135294)
 
 [tool.ruff.lint.isort]
 # Imports that are imported using keyword "as" and are from the same source - are combined.
