@@ -287,7 +287,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
     def _extract_extra_component_info(
         self,
         component: str,
-        attributes: dict[AttributeType, Any],
+        attributes: dict[AttributeType | str, Any],
         reserialized_data: SinglePythonDataset,
         extra_info: ExtraInfo,
     ):

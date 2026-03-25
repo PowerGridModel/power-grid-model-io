@@ -194,14 +194,14 @@ class TabularConverter(BaseConverter[TabularData]):
         except KeyError as ex:
             raise KeyError(f"Invalid component type '{component}' or data type '{data_type}'") from ex
 
-        if "id" not in attributes or AttributeType.id not in attributes:
+        if AttributeType.id not in attributes:
             raise KeyError(f"No mapping for the attribute 'id' for '{component}s'!")
 
         # Make sure that the "id" column is always parsed first (at least before "extra" is parsed)
         attributes_without_filter = {k: v for k, v in attributes.items() if k != "filters"}
         sorted_attributes = sorted(
             attributes_without_filter.items(),
-            key=lambda x: "" if (x[0] == AttributeType.id) or x == "id" else x[0],
+            key=lambda x: "" if x[0] == AttributeType.id else x[0],
         )
 
         for attr, col_def in sorted_attributes:
