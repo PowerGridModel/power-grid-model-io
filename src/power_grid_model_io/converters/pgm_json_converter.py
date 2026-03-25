@@ -285,7 +285,11 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
                 self._extract_extra_component_info(component, entry, reserialized_data, extra_info)
 
     def _extract_extra_component_info(
-        self, component: str, attributes: dict[str, Any], reserialized_data: SinglePythonDataset, extra_info: ExtraInfo
+        self,
+        component: str,
+        attributes: dict[AttributeType, Any],
+        reserialized_data: SinglePythonDataset,
+        extra_info: ExtraInfo,
     ):
         entry_id = attributes[AttributeType.id]
         reserialized_entry = self._get_first_by(reserialized_data[component], AttributeType.id, entry_id)

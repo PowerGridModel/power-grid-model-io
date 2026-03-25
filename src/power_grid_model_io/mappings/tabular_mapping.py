@@ -8,9 +8,10 @@ Tabular data mapping helper class
 from collections.abc import Generator
 
 import structlog
+from power_grid_model import AttributeType
 
 AttributeValue = int | float | str | dict | list
-InstanceAttributes = dict[str, AttributeValue]
+InstanceAttributes = dict[AttributeType | str, AttributeValue]
 Components = dict[str, InstanceAttributes | list[InstanceAttributes]]
 Tables = dict[str, Components]
 
