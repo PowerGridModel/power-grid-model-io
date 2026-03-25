@@ -15,7 +15,7 @@ from typing import Any, cast
 import numpy as np
 import pandas as pd
 import yaml
-from power_grid_model import ComponentType, DatasetType, initialize_array
+from power_grid_model import AttributeType, ComponentType, DatasetType, initialize_array
 from power_grid_model.data_types import Dataset
 
 from power_grid_model_io.converters.base_converter import BaseConverter
@@ -288,7 +288,7 @@ class TabularConverter(BaseConverter[TabularData]):
                 data=data,
                 table=table,
                 col_def=col_def,
-                uuids=pgm_data["id"],
+                uuids=pgm_data[AttributeType.id],
                 table_mask=table_mask,
                 extra_info=extra_info,
             )
