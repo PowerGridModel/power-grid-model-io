@@ -154,8 +154,8 @@ def extract_extra_info(data: SinglePythonDataset, data_type: DatasetType) -> Ext
         for obj in objects:
             obj_extra_info = {attr: val for attr, val in obj.items() if attr not in pgm_attr}
             if obj_extra_info:
-                assert isinstance(obj[AT.id], int)
-                extra_info[obj[AT.id]] = obj_extra_info
+                assert isinstance(obj["id"], int)
+                extra_info[obj["id"]] = obj_extra_info
     return extra_info
 
 
