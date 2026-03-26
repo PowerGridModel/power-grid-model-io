@@ -11,7 +11,7 @@ import pandapower.networks as pp_networks
 import pandas as pd
 import pytest
 from pandapower.results import reset_results
-from power_grid_model import PowerGridModel
+from power_grid_model import AttributeType as AT, ComponentType as CT, PowerGridModel
 from power_grid_model.utils import json_deserialize_from_file
 from power_grid_model.validation import assert_valid_input_data
 
@@ -296,7 +296,7 @@ def test_output_data_3ph(output_data_3ph: tuple[PandaPowerData, PandaPowerData])
 
 
 @pytest.mark.parametrize(("component", "attribute"), component_attributes_df(load_and_convert_pgm_data()))
-def test_attributes(output_data: tuple[PandaPowerData, PandaPowerData], component: str, attribute: str):
+def test_attributes(output_data: tuple[PandaPowerData, PandaPowerData], component: CT, attribute: AT):
     """
     For each attribute, check if the actual values are consistent with the expected values
     """
@@ -314,8 +314,8 @@ def test_attributes(output_data: tuple[PandaPowerData, PandaPowerData], componen
 @pytest.mark.parametrize(("component", "attribute"), component_attributes_df(load_and_convert_pgm_data_3ph()))
 def test_attributes_3ph(
     output_data_3ph: tuple[PandaPowerData, PandaPowerData],
-    component: str,
-    attribute: str,
+    component: CT,
+    attribute: AT,
 ):
     """
     For each attribute, check if the actual values are consistent with the expected values for asym
