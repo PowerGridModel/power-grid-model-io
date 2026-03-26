@@ -7,7 +7,7 @@ from unittest.mock import mock_open, patch
 
 import numpy as np
 import pandas as pd
-from power_grid_model import ComponentType, DatasetType, power_grid_meta_data
+from power_grid_model import AttributeType as AT, ComponentType, DatasetType, power_grid_meta_data
 
 from .utils import component_attributes, extract_extra_info, select_values
 
@@ -30,10 +30,10 @@ def test_component_attributes():
 
     # Assert
     assert list(generator) == [
-        (ComponentType.line, "i_n"),
-        (ComponentType.line, "id"),
-        (ComponentType.node, "id"),
-        (ComponentType.node, "u_rated"),
+        (ComponentType.line, AT.i_n),
+        (ComponentType.line, AT.id),
+        (ComponentType.node, AT.id),
+        (ComponentType.node, AT.u_rated),
     ]
 
 
@@ -56,8 +56,8 @@ def test_select_values():
 def test_extract_extra_info():
     # Arrange
     data = {
-        ComponentType.node: [{"id": 3, "name": "foo"}, {"id": 1, "u_rated": 400.0, "name": "bar"}],
-        ComponentType.line: [{"id": 2, "name": "baz", "color": "red"}, {"id": 4, "r1": 0.0, "c1": 0.0, "x1": 0.0}],
+        ComponentType.node: [{AT.id: 3, "name": "foo"}, {AT.id: 1, AT.u_rated: 400.0, "name": "bar"}],
+        ComponentType.line: [{AT.id: 2, "name": "baz", "color": "red"}, {AT.id: 4, AT.r1: 0.0, AT.c1: 0.0, AT.x1: 0.0}],
     }
 
     # Act

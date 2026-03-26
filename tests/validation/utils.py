@@ -9,7 +9,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from power_grid_model import ComponentType, DatasetType, power_grid_meta_data
+from power_grid_model import AttributeType as AT, ComponentType, DatasetType, power_grid_meta_data
 from power_grid_model.data_types import SingleDataset, SinglePythonDataset
 from power_grid_model.enum import ComponentAttributeFilterOptions
 from power_grid_model.errors import PowerGridSerializationError
@@ -30,13 +30,13 @@ def component_objects(json_path: Path) -> Generator[tuple[ComponentType, list[in
     """
     data = json_deserialize_from_file(
         json_path,
-        data_filter={key: ["id"] for key in ComponentType},
+        data_filter={key: [AT.id] for key in ComponentType},
     )
     assert isinstance(data, dict)
 
     # Loop over all components in the validation file (in alphabetical order)
     for component, objects in sorted(data.items(), key=lambda x: x[0]):
-        obj_ids = list(objects["id"])
+        obj_ids = list(objects[AT.id])
         if obj_ids:
             yield component, obj_ids
 
@@ -87,7 +87,7 @@ def component_attributes_df(
             yield component, attribute
 
 
-def select_values(actual: SingleDataset, expected: SingleDataset, component: ComponentType, attribute: str):
+def select_values(actual: SingleDataset, expected: SingleDataset, component: ComponentType, attribute: AT):
     """
 
     Creates two aligned series, for a single component attribute, containing the actual values and the (non-NaN
@@ -103,8 +103,8 @@ def select_values(actual: SingleDataset, expected: SingleDataset, component: Com
     """
     assert component in actual
     assert component in expected
-    assert "id" in actual[component].dtype.names
-    assert "id" in expected[component].dtype.names
+    assert AT.id in actual[component].dtype.names
+    assert AT.id in expected[component].dtype.names
     assert attribute in actual[component].dtype.names
     assert attribute in expected[component].dtype.names
 
@@ -113,8 +113,8 @@ def select_values(actual: SingleDataset, expected: SingleDataset, component: Com
     expected_attr = expected[component][attribute]
     assert actual_attr.ndim == expected_attr.ndim in [1, 2]
     pd_data_fn = pd.DataFrame if actual_attr.ndim == 2 else pd.Series
-    actual_values = pd_data_fn(actual_attr, index=actual[component]["id"]).sort_index()
-    expected_values = pd_data_fn(expected_attr, index=expected[component]["id"]).sort_index()
+    actual_values = pd_data_fn(actual_attr, index=actual[component][AT.id]).sort_index()
+    expected_values = pd_data_fn(expected_attr, index=expected[component][AT.id]).sort_index()
 
     # Create a selection mask, to select only non-NaN values in the validation file
     if np.issubdtype(expected_values.values.dtype, np.integer):
@@ -154,8 +154,8 @@ def extract_extra_info(data: SinglePythonDataset, data_type: DatasetType) -> Ext
         for obj in objects:
             obj_extra_info = {attr: val for attr, val in obj.items() if attr not in pgm_attr}
             if obj_extra_info:
-                assert isinstance(obj["id"], int)
-                extra_info[obj["id"]] = obj_extra_info
+                assert isinstance(obj[AT.id], int)
+                extra_info[obj[AT.id]] = obj_extra_info
     return extra_info
 
 
