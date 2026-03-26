@@ -344,7 +344,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if ComponentType.transformer not in self.pgm_output_data:
             return
 
-        pgm_ids = self.pgm_output_data[ComponentType.transformer]["id"]
+        pgm_ids = self.pgm_output_data[ComponentType.transformer][AttributeType.id]
         pp_ids = self._get_pp_ids(pp_table="trafo", pgm_idx=pgm_ids)
         derating_factor = (extra_info.get(pgm_id, {}).get("pp_input", {}).get("df", np.nan) for pgm_id in pgm_ids)
         self.pp_input_data = {"trafo": pd.DataFrame(derating_factor, columns=["df"], index=pp_ids)}
