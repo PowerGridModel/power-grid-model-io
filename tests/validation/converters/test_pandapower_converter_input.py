@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from pandapower import runpp_3ph
-from power_grid_model import ComponentType, DatasetType, PowerGridModel
+from power_grid_model import AttributeType as AT, ComponentType as CT, DatasetType, PowerGridModel
 from power_grid_model.data_types import SingleDataset
 from power_grid_model.validation import assert_valid_input_data
 
@@ -96,7 +96,7 @@ def test_input_data(input_data: tuple[SingleDataset, SingleDataset]):
 
 
 @pytest.mark.parametrize(("component", "attribute"), component_attributes(VALIDATION_FILE, data_type=DatasetType.input))
-def test_attributes(input_data: tuple[SingleDataset, SingleDataset], component: ComponentType, attribute: str):
+def test_attributes(input_data: tuple[SingleDataset, SingleDataset], component: CT, attribute: AT):
     """
     For each attribute, check if the actual values are consistent with the expected values
     """
@@ -120,7 +120,7 @@ def test_attributes(input_data: tuple[SingleDataset, SingleDataset], component: 
     ("component", "obj_ids"),
     (pytest.param(component, objects, id=component) for component, objects in component_objects(VALIDATION_FILE)),
 )
-def test_extra_info(extra_info: tuple[ExtraInfo, ExtraInfo], component: ComponentType, obj_ids: list[int]):
+def test_extra_info(extra_info: tuple[ExtraInfo, ExtraInfo], component: CT, obj_ids: list[int]):
     """
     For each object, check if the actual extra info is consistent with the expected extra info
     """
@@ -157,12 +157,12 @@ def test_pgm_input_lines__cnf_zero():
         pp_converter = PandaPowerConverter()
         pp_network.line.c_nf_per_km = 0
         data, _ = pp_converter.load_input_data(pp_network)
-        np.testing.assert_array_equal(data[ComponentType.line]["tan1"], 0)
+        np.testing.assert_array_equal(data[CT.line][AT.tan1], 0)
 
         pp_network.line.c_nf_per_km = 0.001
         pp_network.line.c0_nf_per_km = 0
         data, _ = pp_converter.load_input_data(pp_network)
-        np.testing.assert_array_equal(data[ComponentType.line]["tan0"], 0)
+        np.testing.assert_array_equal(data[CT.line][AT.tan0], 0)
 
 
 @pytest.mark.filterwarnings("error")
