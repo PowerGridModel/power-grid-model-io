@@ -9,7 +9,13 @@ import numpy as np
 import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
-from power_grid_model import ComponentType, DatasetType, initialize_array, power_grid_meta_data
+from power_grid_model import (
+    AttributeType as AT,
+    ComponentType as CT,
+    DatasetType,
+    initialize_array,
+    power_grid_meta_data,
+)
 from power_grid_model.data_types import SingleDataset
 
 from power_grid_model_io.converters.tabular_converter import TabularConverter
@@ -27,20 +33,20 @@ def converter():
 
 @pytest.fixture
 def pgm_node_empty():
-    node = initialize_array(DatasetType.input, ComponentType.node, 2)
-    return {ComponentType.node: node}
+    node = initialize_array(DatasetType.input, CT.node, 2)
+    return {CT.node: node}
 
 
 @pytest.fixture
 def pgm_line_empty():
-    line = initialize_array(DatasetType.input, ComponentType.line, 2)
-    return {ComponentType.line: line}
+    line = initialize_array(DatasetType.input, CT.line, 2)
+    return {CT.line: line}
 
 
 @pytest.fixture
 def pgm_power_sensor_empty():
-    power_sensor = initialize_array(DatasetType.input, ComponentType.sym_power_sensor, 1)
-    return {ComponentType.sym_power_sensor: power_sensor}
+    power_sensor = initialize_array(DatasetType.input, CT.sym_power_sensor, 1)
+    return {CT.sym_power_sensor: power_sensor}
 
 
 @pytest.fixture
@@ -84,23 +90,20 @@ def test_parse_data(converter: TabularConverter, tabular_data: TabularData):
     data.set_substitutions.assert_called_once()
 
     pgm_input_data = converter._parse_data(data=tabular_data, data_type=DatasetType.input, extra_info=None)
-    assert list(pgm_input_data.keys()) == [ComponentType.node, ComponentType.line, ComponentType.sym_load]
-    assert len(pgm_input_data[ComponentType.node]) == 2
-    assert (pgm_input_data[ComponentType.node]["id"] == [0, 1]).all()
-    assert (pgm_input_data[ComponentType.node]["u_rated"] == [10.5e3, 400]).all()
+    assert list(pgm_input_data.keys()) == [CT.node, CT.line, CT.sym_load]
+    assert len(pgm_input_data[CT.node]) == 2
+    assert (pgm_input_data[CT.node][AT.id] == [0, 1]).all()
+    assert (pgm_input_data[CT.node][AT.u_rated] == [10.5e3, 400]).all()
 
-    assert len(pgm_input_data[ComponentType.line]) == 2
-    assert (pgm_input_data[ComponentType.line]["id"] == [2, 3]).all()
-    assert (pgm_input_data[ComponentType.line]["from_node"] == [0, 1]).all()
+    assert len(pgm_input_data[CT.line]) == 2
+    assert (pgm_input_data[CT.line][AT.id] == [2, 3]).all()
+    assert (pgm_input_data[CT.line][AT.from_node] == [0, 1]).all()
 
-    assert len(pgm_input_data[ComponentType.sym_load]) == 4
-    assert (pgm_input_data[ComponentType.sym_load]["id"] == [4, 5, 6, 7]).all()
-    assert (pgm_input_data[ComponentType.sym_load]["node"] == [0, 1, 0, 1]).all()
-    assert (pgm_input_data[ComponentType.sym_load]["status"] == [1, 0, 1, 0]).all()
-    assert (
-        pgm_input_data[ComponentType.sym_load].dtype
-        == power_grid_meta_data[DatasetType.input][ComponentType.sym_load].dtype
-    )
+    assert len(pgm_input_data[CT.sym_load]) == 4
+    assert (pgm_input_data[CT.sym_load][AT.id] == [4, 5, 6, 7]).all()
+    assert (pgm_input_data[CT.sym_load][AT.node] == [0, 1, 0, 1]).all()
+    assert (pgm_input_data[CT.sym_load][AT.status] == [1, 0, 1, 0]).all()
+    assert pgm_input_data[CT.sym_load].dtype == power_grid_meta_data[DatasetType.input][CT.sym_load].dtype
 
 
 def test_convert_table_to_component(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
@@ -109,7 +112,7 @@ def test_convert_table_to_component(converter: TabularConverter, tabular_data_no
         data=tabular_data_no_units_no_substitutions,
         data_type=DatasetType.input,
         table="some_random_table",
-        component=ComponentType.node,
+        component=CT.node,
         attributes={"key": "value"},
         extra_info=None,
     )
@@ -130,7 +133,7 @@ def test_convert_table_to_component(converter: TabularConverter, tabular_data_no
             data=tabular_data_no_units_no_substitutions,
             data_type="some_type",
             table="nodes",
-            component=ComponentType.node,
+            component=CT.node,
             attributes={"key": "value"},
             extra_info=None,
         )
@@ -140,24 +143,24 @@ def test_convert_table_to_component(converter: TabularConverter, tabular_data_no
             data=tabular_data_no_units_no_substitutions,
             data_type=DatasetType.input,
             table="nodes",
-            component=ComponentType.node,
+            component=CT.node,
             attributes={"key": "value"},
             extra_info=None,
         )
 
-    node_attributes: InstanceAttributes = {"id": "id_number", "u_rated": "u_nom"}
+    node_attributes: InstanceAttributes = {AT.id: "id_number", AT.u_rated: "u_nom"}
     pgm_node_data = converter._convert_table_to_component(
         data=tabular_data_no_units_no_substitutions,
         data_type=DatasetType.input,
         table="nodes",
-        component=ComponentType.node,
+        component=CT.node,
         attributes=node_attributes,
         extra_info=None,
     )
     assert pgm_node_data is not None
     assert len(pgm_node_data) == 2
-    assert (pgm_node_data["id"] == [1, 2]).all()
-    assert (pgm_node_data["u_rated"] == [10.5e3, 400]).all()
+    assert (pgm_node_data[AT.id] == [1, 2]).all()
+    assert (pgm_node_data[AT.u_rated] == [10.5e3, 400]).all()
 
 
 @patch(
@@ -172,16 +175,16 @@ def test_convert_table_to_component__filters(
     converter: TabularConverter,
     tabular_data_no_units_no_substitutions: TabularData,
 ):
-    node_attributes_with_filter: dict[str, int | float | str | dict | list] = {
-        "id": "id_number",
-        "u_rated": "u_nom",
+    node_attributes_with_filter: dict[AT | str, int | float | str | dict | list] = {
+        AT.id: "id_number",
+        AT.u_rated: "u_nom",
         "filters": [{"test_fn": {}}],
     }
     converter._convert_table_to_component(
         data=tabular_data_no_units_no_substitutions,
         data_type=DatasetType.input,
         table="nodes",
-        component=ComponentType.node,
+        component=CT.node,
         attributes=node_attributes_with_filter,
         extra_info=None,
     )
@@ -205,16 +208,16 @@ def test_convert_table_to_component__filters_all_false(
     converter: TabularConverter,
     tabular_data_no_units_no_substitutions: TabularData,
 ):
-    node_attributes_with_filter: dict[str, int | float | str | dict | list] = {
-        "id": "id_number",
-        "u_rated": "u_nom",
+    node_attributes_with_filter: dict[AT | str, int | float | str | dict | list] = {
+        AT.id: "id_number",
+        AT.u_rated: "u_nom",
         "filters": [{"test_fn": {}}],
     }
     actual = converter._convert_table_to_component(
         data=tabular_data_no_units_no_substitutions,
         data_type=DatasetType.input,
         table="nodes",
-        component=ComponentType.node,
+        component=CT.node,
         attributes=node_attributes_with_filter,
         extra_info=None,
     )
@@ -239,9 +242,9 @@ def test_convert_col_def_to_attribute(
     ):
         converter._convert_col_def_to_attribute(
             data=tabular_data_no_units_no_substitutions,
-            pgm_data=pgm_node_empty[ComponentType.node],
+            pgm_data=pgm_node_empty[CT.node],
             table="nodes",
-            component=ComponentType.node,
+            component=CT.node,
             attr="incorrect_attribute",
             col_def="id_number",
             table_mask=None,
@@ -251,9 +254,9 @@ def test_convert_col_def_to_attribute(
     # test extra info
     converter._convert_col_def_to_attribute(
         data=tabular_data_no_units_no_substitutions,
-        pgm_data=pgm_node_empty[ComponentType.node],
+        pgm_data=pgm_node_empty[CT.node],
         table="nodes",
-        component=ComponentType.node,
+        component=CT.node,
         attr="extra",
         col_def="u_nom",
         table_mask=None,
@@ -263,16 +266,16 @@ def test_convert_col_def_to_attribute(
     # test other attr
     converter._convert_col_def_to_attribute(
         data=tabular_data_no_units_no_substitutions,
-        pgm_data=pgm_node_empty[ComponentType.node],
+        pgm_data=pgm_node_empty[CT.node],
         table="nodes",
-        component=ComponentType.node,
+        component=CT.node,
         attr="u_rated",
         col_def="u_nom",
         table_mask=None,
         extra_info=None,
     )
     assert len(pgm_node_empty) == 1
-    assert (pgm_node_empty[ComponentType.node]["u_rated"] == [10500.0, 400.0]).all()
+    assert (pgm_node_empty[CT.node][AT.u_rated] == [10500.0, 400.0]).all()
 
     with pytest.raises(
         ValueError,
@@ -281,10 +284,10 @@ def test_convert_col_def_to_attribute(
     ):
         converter._convert_col_def_to_attribute(
             data=tabular_data_no_units_no_substitutions,
-            pgm_data=pgm_node_empty[ComponentType.node],
+            pgm_data=pgm_node_empty[CT.node],
             table="nodes",
-            component=ComponentType.node,
-            attr="u_rated",
+            component=CT.node,
+            attr=AT.u_rated,
             col_def=["id_number", "u_nom"],
             table_mask=None,
             extra_info=None,
@@ -339,16 +342,16 @@ def test_handle_extra_info__units(converter: TabularConverter, tabular_data: Tab
 
 
 def test_merge_pgm_data(converter: TabularConverter):
-    nodes_1 = initialize_array(DatasetType.input, ComponentType.node, 2)
-    nodes_1["id"] = [0, 1]
+    nodes_1 = initialize_array(DatasetType.input, CT.node, 2)
+    nodes_1[AT.id] = [0, 1]
 
-    nodes_2 = initialize_array(DatasetType.input, ComponentType.node, 3)
-    nodes_2["id"] = [2, 3, 4]
-    data = {ComponentType.node: [nodes_1, nodes_2]}
+    nodes_2 = initialize_array(DatasetType.input, CT.node, 3)
+    nodes_2[AT.id] = [2, 3, 4]
+    data = {CT.node: [nodes_1, nodes_2]}
 
     merged = converter._merge_pgm_data(data)
     assert len(merged) == 1
-    assert (merged[ComponentType.node]["id"] == np.array([0, 1, 2, 3, 4])).all()
+    assert (merged[CT.node][AT.id] == np.array([0, 1, 2, 3, 4])).all()
 
 
 def test_serialize_data(converter: TabularConverter, pgm_node_empty: SingleDataset):
@@ -363,12 +366,12 @@ def test_serialize_data(converter: TabularConverter, pgm_node_empty: SingleDatas
     ):
         converter._serialize_data(data=[], extra_info=None)  # type: ignore
 
-    pgm_node_empty[ComponentType.node]["id"] = [1, 2]
-    pgm_node_empty[ComponentType.node]["u_rated"] = [3.0, 4.0]
+    pgm_node_empty[CT.node][AT.id] = [1, 2]
+    pgm_node_empty[CT.node][AT.u_rated] = [3.0, 4.0]
     tabular_data = converter._serialize_data(data=pgm_node_empty, extra_info=None)
     assert len(tabular_data) == 1
-    assert (tabular_data[ComponentType.node]["id"] == np.array([1, 2])).all()
-    assert (tabular_data[ComponentType.node]["u_rated"] == np.array([3.0, 4.0])).all()
+    assert (tabular_data[CT.node][AT.id] == np.array([1, 2])).all()
+    assert (tabular_data[CT.node][AT.u_rated] == np.array([3.0, 4.0])).all()
 
 
 def test_parse_col_def(converter: TabularConverter, tabular_data_no_units_no_substitutions: TabularData):
@@ -1530,11 +1533,11 @@ def test_optional_extra__integration() -> None:
     result = converter._parse_data(data=data, data_type=DatasetType.input, extra_info=extra_info)
 
     # Assert
-    assert ComponentType.node in result
-    assert len(result[ComponentType.node]) == 3
+    assert CT.node in result
+    assert len(result[CT.node]) == 3
 
     # Check that extra_info contains the required and present optional fields
-    for node_id in result[ComponentType.node]["id"]:
+    for node_id in result[CT.node][AT.id]:
         assert node_id in extra_info
         assert "ID" in extra_info[node_id]
         assert "Name" in extra_info[node_id]
@@ -1542,7 +1545,7 @@ def test_optional_extra__integration() -> None:
         assert "StationID" not in extra_info[node_id]  # Optional and missing
 
     # Verify values
-    node_0_id = result[ComponentType.node]["id"][0]
+    node_0_id = result[CT.node][AT.id][0]
     assert extra_info[node_0_id]["ID"] == "N1"
     assert extra_info[node_0_id]["Name"] == "Node 1"
     assert extra_info[node_0_id]["GUID"] == "guid-1"
@@ -2082,11 +2085,11 @@ def test_optional_extra_ordering_invariance_integration() -> None:
     result = converter._parse_data(data=data, data_type=DatasetType.input, extra_info=extra_info)
 
     # Assert
-    assert ComponentType.node in result
-    assert len(result[ComponentType.node]) == 3
+    assert CT.node in result
+    assert len(result[CT.node]) == 3
 
     # Verify that extra_info contains the expected fields
-    for node_id in result[ComponentType.node]["id"]:
+    for node_id in result[CT.node][AT.id]:
         assert node_id in extra_info
         # Should have ID, Name, GUID (regular columns) and StationID (optional column)
         assert "ID" in extra_info[node_id]
@@ -2099,7 +2102,7 @@ def test_optional_extra_ordering_invariance_integration() -> None:
         assert keys.count("GUID") == 1, f"GUID should appear only once, but got: {keys}"
 
     # Verify values for first node
-    first_node_id = result[ComponentType.node]["id"][0]
+    first_node_id = result[CT.node][AT.id][0]
     assert extra_info[first_node_id]["ID"] == "N001"
     assert extra_info[first_node_id]["Name"] == "Node1"
     assert extra_info[first_node_id]["GUID"] == "guid-1"

@@ -9,7 +9,7 @@ from unittest.mock import ANY, MagicMock, call, patch
 import numpy as np
 import pandas as pd
 import pytest
-from power_grid_model import ComponentType, DatasetType, initialize_array
+from power_grid_model import AttributeType as AT, ComponentType as CT, DatasetType, initialize_array
 
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter, get_loss_params_3ph
 from tests.utils import MockDf
@@ -123,7 +123,7 @@ def test_create_pp_output_object__empty(create_fn: Callable[..., None], table: s
 def test_output_bus(converter):
     # Arrange
     mock_pgm_array = MagicMock()
-    converter.pgm_output_data[ComponentType.node] = mock_pgm_array
+    converter.pgm_output_data[CT.node] = mock_pgm_array
 
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
         # Act
@@ -135,9 +135,9 @@ def test_output_bus(converter):
         converter._get_pp_ids.assert_called_once_with("bus", mock_pgm_array["X"])
 
         # retrieval
-        mock_pgm_array.__getitem__.assert_any_call("id")
-        mock_pgm_array.__getitem__.assert_any_call("u_pu")
-        mock_pgm_array.__getitem__.assert_any_call("u_angle")
+        mock_pgm_array.__getitem__.assert_any_call(AT.id)
+        mock_pgm_array.__getitem__.assert_any_call(AT.u_pu)
+        mock_pgm_array.__getitem__.assert_any_call(AT.u_angle)
 
         # assignment
         mock_pp_df.return_value.__setitem__.assert_any_call("vm_pu", ANY)
@@ -162,8 +162,8 @@ def test_output_line(converter):
     # Arrange
     mock_pgm_array = MagicMock()
     converter.pgm_nodes_lookup = MagicMock()
-    converter.pgm_output_data[ComponentType.line] = mock_pgm_array
-    converter.pgm_input_data[ComponentType.line] = MagicMock()
+    converter.pgm_output_data[CT.line] = mock_pgm_array
+    converter.pgm_input_data[CT.line] = MagicMock()
 
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
         # Act
@@ -172,17 +172,17 @@ def test_output_line(converter):
         # Assert
 
         # initialization
-        converter._get_pp_ids.assert_called_once_with(ComponentType.line, mock_pgm_array["id"])
+        converter._get_pp_ids.assert_called_once_with(CT.line, mock_pgm_array["id"])
 
         # retrieval
-        mock_pgm_array.__getitem__.assert_any_call("id")
-        mock_pgm_array.__getitem__.assert_any_call("p_from")
-        mock_pgm_array.__getitem__.assert_any_call("q_from")
-        mock_pgm_array.__getitem__.assert_any_call("p_to")
-        mock_pgm_array.__getitem__.assert_any_call("q_to")
-        mock_pgm_array.__getitem__.assert_any_call("i_from")
-        mock_pgm_array.__getitem__.assert_any_call("i_to")
-        mock_pgm_array.__getitem__.assert_any_call("loading")
+        mock_pgm_array.__getitem__.assert_any_call(AT.id)
+        mock_pgm_array.__getitem__.assert_any_call(AT.p_from)
+        mock_pgm_array.__getitem__.assert_any_call(AT.q_from)
+        mock_pgm_array.__getitem__.assert_any_call(AT.p_to)
+        mock_pgm_array.__getitem__.assert_any_call(AT.q_to)
+        mock_pgm_array.__getitem__.assert_any_call(AT.i_from)
+        mock_pgm_array.__getitem__.assert_any_call(AT.i_to)
+        mock_pgm_array.__getitem__.assert_any_call(AT.loading)
 
         # assignment
         mock_pp_df.return_value.__setitem__.assert_any_call("p_from_mw", ANY)
@@ -212,13 +212,13 @@ def test_output_line__bad_input():
 def test_output_line__node_lookup():
     # Arrange
     converter = PandaPowerConverter()
-    converter.idx_lookup[(ComponentType.line, None)] = pd.Series([132, 121], index=[32, 21])
-    converter.pgm_input_data[ComponentType.line] = initialize_array(DatasetType.input, ComponentType.line, 2)
-    converter.pgm_input_data[ComponentType.line]["id"] = [21, 32]
-    converter.pgm_input_data[ComponentType.line]["from_node"] = [2, 3]
-    converter.pgm_input_data[ComponentType.line]["to_node"] = [1, 2]
-    converter.pgm_output_data[ComponentType.line] = initialize_array(DatasetType.sym_output, ComponentType.line, 2)
-    converter.pgm_output_data[ComponentType.line]["id"] = [21, 32]
+    converter.idx_lookup[(CT.line, None)] = pd.Series([132, 121], index=[32, 21])
+    converter.pgm_input_data[CT.line] = initialize_array(DatasetType.input, CT.line, 2)
+    converter.pgm_input_data[CT.line][AT.id] = [21, 32]
+    converter.pgm_input_data[CT.line][AT.from_node] = [2, 3]
+    converter.pgm_input_data[CT.line][AT.to_node] = [1, 2]
+    converter.pgm_output_data[CT.line] = initialize_array(DatasetType.sym_output, CT.line, 2)
+    converter.pgm_output_data[CT.line][AT.id] = [21, 32]
     converter.pgm_nodes_lookup = pd.DataFrame({"u_pu": [1.1, 1.2, 1.3], "u_degree": [0.1, 0.2, 0.3]}, index=[1, 2, 3])
 
     # Act
@@ -247,10 +247,10 @@ def test_output_line__node_lookup():
 def test_output_line__node_lookup__exception(converter):
     # Arrange
     converter.pgm_nodes_lookup = MagicMock()
-    converter.pgm_output_data[ComponentType.line] = initialize_array(DatasetType.input, ComponentType.line, 3)
-    converter.pgm_input_data[ComponentType.line] = initialize_array(DatasetType.sym_output, ComponentType.line, 3)
-    converter.pgm_output_data[ComponentType.line]["id"] = [1, 2, 3]
-    converter.pgm_input_data[ComponentType.line]["id"] = [1, 3, 2]
+    converter.pgm_output_data[CT.line] = initialize_array(DatasetType.input, CT.line, 3)
+    converter.pgm_input_data[CT.line] = initialize_array(DatasetType.sym_output, CT.line, 3)
+    converter.pgm_output_data[CT.line][AT.id] = [1, 2, 3]
+    converter.pgm_input_data[CT.line][AT.id] = [1, 3, 2]
 
     # Act / Assert
     with pytest.raises(ValueError, match="The output line ids should correspond to the input line ids"):
@@ -260,7 +260,7 @@ def test_output_line__node_lookup__exception(converter):
 def test_output_ext_grids(converter):
     # Arrange
     mock_pgm_array = MagicMock()
-    converter.pgm_output_data[ComponentType.source] = mock_pgm_array
+    converter.pgm_output_data[CT.source] = mock_pgm_array
 
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
         # Act
@@ -272,9 +272,9 @@ def test_output_ext_grids(converter):
         converter._get_pp_ids.assert_called_once_with("ext_grid", mock_pgm_array["X"])
 
         # retrieval
-        mock_pgm_array.__getitem__.assert_any_call("id")
-        mock_pgm_array.__getitem__.assert_any_call("p")
-        mock_pgm_array.__getitem__.assert_any_call("q")
+        mock_pgm_array.__getitem__.assert_any_call(AT.id)
+        mock_pgm_array.__getitem__.assert_any_call(AT.p)
+        mock_pgm_array.__getitem__.assert_any_call(AT.q)
 
         # assignment
         mock_pp_df.return_value.__setitem__.assert_any_call("p_mw", ANY)
@@ -296,8 +296,8 @@ def test_output_ext_grid__bad_input(converter):
 def test_output_shunts(converter):
     # Arrange
     mock_pgm_array = MagicMock()
-    converter.pgm_input_data[ComponentType.shunt] = mock_pgm_array
-    converter.pgm_output_data[ComponentType.shunt] = mock_pgm_array
+    converter.pgm_input_data[CT.shunt] = mock_pgm_array
+    converter.pgm_output_data[CT.shunt] = mock_pgm_array
     converter.pgm_nodes_lookup = pd.DataFrame({"u_pu": mock_pgm_array}, index=mock_pgm_array)
 
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
@@ -307,13 +307,13 @@ def test_output_shunts(converter):
         # Assert
 
         # initialization
-        converter._get_pp_ids.assert_called_once_with(ComponentType.shunt, mock_pgm_array["X"])
+        converter._get_pp_ids.assert_called_once_with(CT.shunt, mock_pgm_array["X"])
 
         # retrieval
-        mock_pgm_array.__getitem__.assert_any_call("id")
-        mock_pgm_array.__getitem__.assert_any_call("node")
-        mock_pgm_array.__getitem__.assert_any_call("p")
-        mock_pgm_array.__getitem__.assert_any_call("q")
+        mock_pgm_array.__getitem__.assert_any_call(AT.id)
+        mock_pgm_array.__getitem__.assert_any_call(AT.node)
+        mock_pgm_array.__getitem__.assert_any_call(AT.p)
+        mock_pgm_array.__getitem__.assert_any_call(AT.q)
         # mock_pgm_array.__getitem__.assert_any_call("u_pu")
 
         # assignment
@@ -337,7 +337,7 @@ def test_output_shunt__bad_input(converter):
 def test_output_sgen(converter):
     # Arrange
     mock_pgm_array = MagicMock()
-    converter.pgm_output_data[ComponentType.sym_gen] = mock_pgm_array
+    converter.pgm_output_data[CT.sym_gen] = mock_pgm_array
 
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
         # Act
@@ -349,9 +349,9 @@ def test_output_sgen(converter):
         converter._get_pp_ids.assert_called_once_with("sgen", mock_pgm_array["X"])
 
         # retrieval
-        mock_pgm_array.__getitem__.assert_any_call("id")
-        mock_pgm_array.__getitem__.assert_any_call("p")
-        mock_pgm_array.__getitem__.assert_any_call("q")
+        mock_pgm_array.__getitem__.assert_any_call(AT.id)
+        mock_pgm_array.__getitem__.assert_any_call(AT.p)
+        mock_pgm_array.__getitem__.assert_any_call(AT.q)
 
         # assignment
         mock_pp_df.return_value.__setitem__.assert_any_call("p_mw", ANY)
@@ -375,8 +375,8 @@ def test_output_trafos__current(converter):
     mock_pgm_array = MagicMock()
     converter.trafo_loading = "current"
     converter.pp_input_data["trafo"] = MockDf(2)
-    converter.pgm_input_data[ComponentType.transformer] = mock_pgm_array
-    converter.pgm_output_data[ComponentType.transformer] = mock_pgm_array
+    converter.pgm_input_data[CT.transformer] = mock_pgm_array
+    converter.pgm_output_data[CT.transformer] = mock_pgm_array
     converter.pgm_nodes_lookup = pd.DataFrame(
         {"u_pu": mock_pgm_array, "u_degree": mock_pgm_array}, index=mock_pgm_array
     )
@@ -391,17 +391,17 @@ def test_output_trafos__current(converter):
         converter._get_pp_ids.assert_called_once_with("trafo", mock_pgm_array["X"])
 
         # retrieval
-        mock_pgm_array.__getitem__.assert_any_call("id")
-        mock_pgm_array.__getitem__.assert_any_call("from_node")
-        mock_pgm_array.__getitem__.assert_any_call("to_node")
-        mock_pgm_array.__getitem__.assert_any_call("p_from")
-        mock_pgm_array.__getitem__.assert_any_call("q_from")
-        mock_pgm_array.__getitem__.assert_any_call("p_to")
-        mock_pgm_array.__getitem__.assert_any_call("q_to")
-        mock_pgm_array.__getitem__.assert_any_call("i_from")
-        mock_pgm_array.__getitem__.assert_any_call("i_to")
+        mock_pgm_array.__getitem__.assert_any_call(AT.id)
+        mock_pgm_array.__getitem__.assert_any_call(AT.from_node)
+        mock_pgm_array.__getitem__.assert_any_call(AT.to_node)
+        mock_pgm_array.__getitem__.assert_any_call(AT.p_from)
+        mock_pgm_array.__getitem__.assert_any_call(AT.q_from)
+        mock_pgm_array.__getitem__.assert_any_call(AT.p_to)
+        mock_pgm_array.__getitem__.assert_any_call(AT.q_to)
+        mock_pgm_array.__getitem__.assert_any_call(AT.i_from)
+        mock_pgm_array.__getitem__.assert_any_call(AT.i_to)
         # current loading retrieval
-        mock_pgm_array.__getitem__.assert_any_call("sn")
+        mock_pgm_array.__getitem__.assert_any_call(AT.sn)
 
         # assignment
         mock_pp_df.return_value.__setitem__.assert_any_call("p_hv_mw", ANY)
@@ -427,8 +427,8 @@ def test_output_trafos__power(converter):
     mock_pgm_array = MagicMock()
     converter.trafo_loading = "power"
     converter.pp_input_data["trafo"] = MockDf(2)
-    converter.pgm_input_data[ComponentType.transformer] = mock_pgm_array
-    converter.pgm_output_data[ComponentType.transformer] = mock_pgm_array
+    converter.pgm_input_data[CT.transformer] = mock_pgm_array
+    converter.pgm_output_data[CT.transformer] = mock_pgm_array
     converter.pgm_nodes_lookup = pd.DataFrame(
         {"u_pu": mock_pgm_array, "u_degree": mock_pgm_array}, index=mock_pgm_array
     )
@@ -448,8 +448,8 @@ def test_output_trafos__invalid_trafo_loading(converter):
     mock_pgm_array = MagicMock()
     converter.trafo_loading = "abcd"
     converter.pp_input_data["trafo"] = MockDf(2)
-    converter.pgm_input_data[ComponentType.transformer] = mock_pgm_array
-    converter.pgm_output_data[ComponentType.transformer] = mock_pgm_array
+    converter.pgm_input_data[CT.transformer] = mock_pgm_array
+    converter.pgm_output_data[CT.transformer] = mock_pgm_array
     converter.pgm_nodes_lookup = pd.DataFrame(
         {"u_pu": mock_pgm_array, "u_degree": mock_pgm_array}, index=mock_pgm_array
     )
@@ -470,8 +470,8 @@ def test_output_trafo__bad_input(converter):
 def test_output_trafo3w(converter):
     # Arrange
     mock_pgm_array = MagicMock()
-    converter.pgm_input_data[ComponentType.three_winding_transformer] = mock_pgm_array
-    converter.pgm_output_data[ComponentType.three_winding_transformer] = mock_pgm_array
+    converter.pgm_input_data[CT.three_winding_transformer] = mock_pgm_array
+    converter.pgm_output_data[CT.three_winding_transformer] = mock_pgm_array
     converter.pgm_nodes_lookup = pd.DataFrame(
         {"u_pu": mock_pgm_array, "u_degree": mock_pgm_array}, index=mock_pgm_array
     )
@@ -486,23 +486,23 @@ def test_output_trafo3w(converter):
         converter._get_pp_ids.assert_called_once_with("trafo3w", mock_pgm_array["X"])
 
         # retrieval
-        mock_pgm_array.__getitem__.assert_any_call("id")
-        mock_pgm_array.__getitem__.assert_any_call("node_1")
-        mock_pgm_array.__getitem__.assert_any_call("node_2")
-        mock_pgm_array.__getitem__.assert_any_call("node_3")
-        mock_pgm_array.__getitem__.assert_any_call("p_1")
-        mock_pgm_array.__getitem__.assert_any_call("q_1")
-        mock_pgm_array.__getitem__.assert_any_call("p_2")
-        mock_pgm_array.__getitem__.assert_any_call("q_2")
-        mock_pgm_array.__getitem__.assert_any_call("p_3")
-        mock_pgm_array.__getitem__.assert_any_call("q_3")
-        mock_pgm_array.__getitem__.assert_any_call("i_1")
-        mock_pgm_array.__getitem__.assert_any_call("i_2")
-        mock_pgm_array.__getitem__.assert_any_call("i_3")
+        mock_pgm_array.__getitem__.assert_any_call(AT.id)
+        mock_pgm_array.__getitem__.assert_any_call(AT.node_1)
+        mock_pgm_array.__getitem__.assert_any_call(AT.node_2)
+        mock_pgm_array.__getitem__.assert_any_call(AT.node_3)
+        mock_pgm_array.__getitem__.assert_any_call(AT.p_1)
+        mock_pgm_array.__getitem__.assert_any_call(AT.q_1)
+        mock_pgm_array.__getitem__.assert_any_call(AT.p_2)
+        mock_pgm_array.__getitem__.assert_any_call(AT.q_2)
+        mock_pgm_array.__getitem__.assert_any_call(AT.p_3)
+        mock_pgm_array.__getitem__.assert_any_call(AT.q_3)
+        mock_pgm_array.__getitem__.assert_any_call(AT.i_1)
+        mock_pgm_array.__getitem__.assert_any_call(AT.i_2)
+        mock_pgm_array.__getitem__.assert_any_call(AT.i_3)
         # TODO find a better way for getting voltages at node
         # mock_pgm_array.__getitem__.assert_any_call("u_pu")
         # mock_pgm_array.__getitem__.assert_any_call("u_degree")
-        mock_pgm_array.__getitem__.assert_any_call("loading")
+        mock_pgm_array.__getitem__.assert_any_call(AT.loading)
 
         # assignment
         mock_pp_df.return_value.__setitem__.assert_any_call("p_hv_mw", ANY)
@@ -540,12 +540,10 @@ def test_output_trafo3w__bad_input(converter):
 def test_pp_load_result_accumulate__sym():
     # Arrange
     converter = PandaPowerConverter()
-    converter.pgm_output_data[ComponentType.sym_load] = initialize_array(
-        DatasetType.sym_output, ComponentType.sym_load, 6
-    )
-    converter.pgm_output_data[ComponentType.sym_load]["id"] = [0, 1, 2, 3, 4, 5]
-    converter.pgm_output_data[ComponentType.sym_load]["p"] = [1e6, 2e6, 4e6, 8e6, 16e6, 32e6]
-    converter.pgm_output_data[ComponentType.sym_load]["q"] = [1e4, 2e4, 4e4, 8e4, 16e4, 32e4]
+    converter.pgm_output_data[CT.sym_load] = initialize_array(DatasetType.sym_output, CT.sym_load, 6)
+    converter.pgm_output_data[CT.sym_load][AT.id] = [0, 1, 2, 3, 4, 5]
+    converter.pgm_output_data[CT.sym_load][AT.p] = [1e6, 2e6, 4e6, 8e6, 16e6, 32e6]
+    converter.pgm_output_data[CT.sym_load][AT.q] = [1e4, 2e4, 4e4, 8e4, 16e4, 32e4]
     converter.idx[("load", "const_power")] = pd.Series([2, 4], index=[101, 100])
     converter.idx[("load", "const_current")] = pd.Series([1, 3], index=[102, 100])
     converter.idx[("load", "const_impedance")] = pd.Series([0, 5], index=[101, 102])
@@ -567,11 +565,9 @@ def test_pp_load_result_accumulate__sym():
 def test_pp_load_result_accumulate__asym():
     # Arrange
     converter = PandaPowerConverter()
-    converter.pgm_output_data[ComponentType.sym_load] = initialize_array(
-        DatasetType.asym_output, ComponentType.sym_load, 6
-    )
-    converter.pgm_output_data[ComponentType.sym_load]["id"] = [0, 1, 2, 3, 4, 5]
-    converter.pgm_output_data[ComponentType.sym_load]["p"] = [
+    converter.pgm_output_data[CT.sym_load] = initialize_array(DatasetType.asym_output, CT.sym_load, 6)
+    converter.pgm_output_data[CT.sym_load][AT.id] = [0, 1, 2, 3, 4, 5]
+    converter.pgm_output_data[CT.sym_load][AT.p] = [
         [0.5e6, 0.4e6, 0.1e6],
         [1.1e6, 0.8e6, 0.1e6],
         [2.1e6, 1e6, 0.9e6],
@@ -579,7 +575,7 @@ def test_pp_load_result_accumulate__asym():
         [6e6, 5e6, 5e6],
         [12e6, 12e6, 8e6],
     ]
-    converter.pgm_output_data[ComponentType.sym_load]["q"] = [
+    converter.pgm_output_data[CT.sym_load][AT.q] = [
         [0.3e4, 0.2e4, 0.5e4],
         [0.7e4, 0.7e4, 0.6e4],
         [1.1e4, 1.4e4, 1.5e4],
@@ -637,9 +633,7 @@ def test_output_load_types(
 ):
     # Arrange
     converter = PandaPowerConverter()
-    converter.pgm_output_data[ComponentType.sym_load] = initialize_array(
-        DatasetType.sym_output, ComponentType.sym_load, 6
-    )
+    converter.pgm_output_data[CT.sym_load] = initialize_array(DatasetType.sym_output, CT.sym_load, 6)
     converter.idx[(table, load_id_names[0])] = pd.Series([0], index=[1])
     converter._pp_load_result_accumulate = MagicMock()  # type: ignore
 
@@ -656,9 +650,7 @@ def test_output_load_ward():
     converter = PandaPowerConverter()
     load_id_names = ["ward_const_power_load", "ward_const_impedance_load"]
 
-    converter.pgm_output_data[ComponentType.sym_load] = initialize_array(
-        DatasetType.sym_output, ComponentType.sym_load, 6
-    )
+    converter.pgm_output_data[CT.sym_load] = initialize_array(DatasetType.sym_output, CT.sym_load, 6)
     converter.idx[("ward", load_id_names[0])] = pd.Series([0], index=[1])
     converter._pp_load_result_accumulate = MagicMock()
 
@@ -682,7 +674,7 @@ def test_output_load_ward__bad_input(converter):
 def test_output_asymmetric_load(converter):
     # Arrange
     mock_pgm_array = MagicMock()
-    converter.pgm_output_data[ComponentType.asym_load] = mock_pgm_array
+    converter.pgm_output_data[CT.asym_load] = mock_pgm_array
 
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
         # Act
@@ -694,9 +686,9 @@ def test_output_asymmetric_load(converter):
         converter._get_pp_ids.assert_called_once_with("asymmetric_load", mock_pgm_array["X"])
 
         # retrieval
-        mock_pgm_array.__getitem__.assert_any_call("id")
-        mock_pgm_array.__getitem__.assert_any_call("p")
-        mock_pgm_array.__getitem__.assert_any_call("q")
+        mock_pgm_array.__getitem__.assert_any_call(AT.id)
+        mock_pgm_array.__getitem__.assert_any_call(AT.p)
+        mock_pgm_array.__getitem__.assert_any_call(AT.q)
 
         # assignment
         mock_pp_df.return_value.__setitem__.assert_any_call("p_mw", ANY)
@@ -718,7 +710,7 @@ def test_output_asymmetric_load__bad_input(converter):
 def test_output_asymmetric_sgen(converter):
     # Arrange
     mock_pgm_array = MagicMock()
-    converter.pgm_output_data[ComponentType.asym_gen] = mock_pgm_array
+    converter.pgm_output_data[CT.asym_gen] = mock_pgm_array
 
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
         # Act
@@ -730,9 +722,9 @@ def test_output_asymmetric_sgen(converter):
         converter._get_pp_ids.assert_called_once_with("asymmetric_sgen", mock_pgm_array["X"])
 
         # retrieval
-        mock_pgm_array.__getitem__.assert_any_call("id")
-        mock_pgm_array.__getitem__.assert_any_call("p")
-        mock_pgm_array.__getitem__.assert_any_call("q")
+        mock_pgm_array.__getitem__.assert_any_call(AT.id)
+        mock_pgm_array.__getitem__.assert_any_call(AT.p)
+        mock_pgm_array.__getitem__.assert_any_call(AT.q)
 
         # assignment
         mock_pp_df.return_value.__setitem__.assert_any_call("p_mw", ANY)
@@ -777,10 +769,10 @@ def test_pp_buses_output__accumulate_power__component_absent():
     converter.idx_lookup = {("bus", None): pd.Series([101, 102, 103, 104], index=[0, 1, 2, 3], dtype=np.int32)}
     pp_buses = pd.DataFrame(np.empty((4, 2), np.float64), columns=["p_mw", "q_mvar"], index=[101, 102, 103, 104])
     converter.pgm_input_data = {
-        ComponentType.link: initialize_array(DatasetType.input, ComponentType.link, 2),
+        CT.link: initialize_array(DatasetType.input, CT.link, 2),
     }
     converter.pgm_output_data = {
-        ComponentType.line: initialize_array(DatasetType.sym_output, ComponentType.line, 3),
+        CT.line: initialize_array(DatasetType.sym_output, CT.line, 3),
     }
     with pytest.raises(KeyError, match="PGM input_data is needed to accumulate output for lines"):
         converter._pp_buses_output__accumulate_power(pp_buses)
@@ -793,48 +785,44 @@ def test_pp_buses_output__accumulate_power():
     pp_buses = pd.DataFrame(np.empty((4, 2), np.float64), columns=["p_mw", "q_mvar"], index=[101, 102, 103, 104])
 
     converter.pgm_input_data = {
-        ComponentType.line: initialize_array(DatasetType.input, ComponentType.line, 3),
-        ComponentType.link: initialize_array(DatasetType.input, ComponentType.link, 2),
-        ComponentType.transformer: initialize_array(DatasetType.input, ComponentType.transformer, 2),
-        ComponentType.three_winding_transformer: initialize_array(
-            DatasetType.input, ComponentType.three_winding_transformer, 2
-        ),
+        CT.line: initialize_array(DatasetType.input, CT.line, 3),
+        CT.link: initialize_array(DatasetType.input, CT.link, 2),
+        CT.transformer: initialize_array(DatasetType.input, CT.transformer, 2),
+        CT.three_winding_transformer: initialize_array(DatasetType.input, CT.three_winding_transformer, 2),
     }
     converter.pgm_output_data = {
-        ComponentType.line: initialize_array(DatasetType.sym_output, ComponentType.line, 3),
-        ComponentType.link: initialize_array(DatasetType.sym_output, ComponentType.link, 2),
-        ComponentType.transformer: initialize_array(DatasetType.sym_output, ComponentType.transformer, 2),
-        ComponentType.three_winding_transformer: initialize_array(
-            DatasetType.sym_output, ComponentType.three_winding_transformer, 2
-        ),
+        CT.line: initialize_array(DatasetType.sym_output, CT.line, 3),
+        CT.link: initialize_array(DatasetType.sym_output, CT.link, 2),
+        CT.transformer: initialize_array(DatasetType.sym_output, CT.transformer, 2),
+        CT.three_winding_transformer: initialize_array(DatasetType.sym_output, CT.three_winding_transformer, 2),
     }
-    converter.pgm_input_data[ComponentType.line]["from_node"] = [0, 1, 1]
-    converter.pgm_input_data[ComponentType.line]["to_node"] = [1, 2, 3]
-    converter.pgm_input_data[ComponentType.link]["from_node"] = [0, 1]
-    converter.pgm_input_data[ComponentType.link]["to_node"] = [1, 2]
-    converter.pgm_input_data[ComponentType.transformer]["from_node"] = [0, 1]
-    converter.pgm_input_data[ComponentType.transformer]["to_node"] = [1, 2]
-    converter.pgm_input_data[ComponentType.three_winding_transformer]["node_1"] = [0, 1]
-    converter.pgm_input_data[ComponentType.three_winding_transformer]["node_2"] = [1, 2]
-    converter.pgm_input_data[ComponentType.three_winding_transformer]["node_3"] = [2, 3]
-    converter.pgm_output_data[ComponentType.line]["p_from"] = [1.0, 2.0, 4.0]
-    converter.pgm_output_data[ComponentType.line]["q_from"] = [0.1, 0.2, 0.4]
-    converter.pgm_output_data[ComponentType.line]["p_to"] = [-1.0, -2.0, -4.0]
-    converter.pgm_output_data[ComponentType.line]["q_to"] = [-0.1, -0.2, -0.4]
-    converter.pgm_output_data[ComponentType.link]["p_from"] = [10.0, 20.0]
-    converter.pgm_output_data[ComponentType.link]["q_from"] = [0.01, 0.02]
-    converter.pgm_output_data[ComponentType.link]["p_to"] = [-10.0, -20.0]
-    converter.pgm_output_data[ComponentType.link]["q_to"] = [-0.01, -0.02]
-    converter.pgm_output_data[ComponentType.transformer]["p_from"] = [100.0, 200.0]
-    converter.pgm_output_data[ComponentType.transformer]["q_from"] = [0.001, 0.002]
-    converter.pgm_output_data[ComponentType.transformer]["p_to"] = [-100.0, -200.0]
-    converter.pgm_output_data[ComponentType.transformer]["q_to"] = [-0.001, -0.002]
-    converter.pgm_output_data[ComponentType.three_winding_transformer]["p_1"] = [1000.0, 10000.0]
-    converter.pgm_output_data[ComponentType.three_winding_transformer]["q_1"] = [0.0001, 0.00001]
-    converter.pgm_output_data[ComponentType.three_winding_transformer]["p_2"] = [2000.0, 20000.0]
-    converter.pgm_output_data[ComponentType.three_winding_transformer]["q_2"] = [0.0002, 0.00002]
-    converter.pgm_output_data[ComponentType.three_winding_transformer]["p_3"] = [4000.0, 40000.0]
-    converter.pgm_output_data[ComponentType.three_winding_transformer]["q_3"] = [0.0004, 0.00004]
+    converter.pgm_input_data[CT.line][AT.from_node] = [0, 1, 1]
+    converter.pgm_input_data[CT.line][AT.to_node] = [1, 2, 3]
+    converter.pgm_input_data[CT.link][AT.from_node] = [0, 1]
+    converter.pgm_input_data[CT.link][AT.to_node] = [1, 2]
+    converter.pgm_input_data[CT.transformer][AT.from_node] = [0, 1]
+    converter.pgm_input_data[CT.transformer][AT.to_node] = [1, 2]
+    converter.pgm_input_data[CT.three_winding_transformer][AT.node_1] = [0, 1]
+    converter.pgm_input_data[CT.three_winding_transformer][AT.node_2] = [1, 2]
+    converter.pgm_input_data[CT.three_winding_transformer][AT.node_3] = [2, 3]
+    converter.pgm_output_data[CT.line][AT.p_from] = [1.0, 2.0, 4.0]
+    converter.pgm_output_data[CT.line][AT.q_from] = [0.1, 0.2, 0.4]
+    converter.pgm_output_data[CT.line][AT.p_to] = [-1.0, -2.0, -4.0]
+    converter.pgm_output_data[CT.line][AT.q_to] = [-0.1, -0.2, -0.4]
+    converter.pgm_output_data[CT.link][AT.p_from] = [10.0, 20.0]
+    converter.pgm_output_data[CT.link][AT.q_from] = [0.01, 0.02]
+    converter.pgm_output_data[CT.link][AT.p_to] = [-10.0, -20.0]
+    converter.pgm_output_data[CT.link][AT.q_to] = [-0.01, -0.02]
+    converter.pgm_output_data[CT.transformer][AT.p_from] = [100.0, 200.0]
+    converter.pgm_output_data[CT.transformer][AT.q_from] = [0.001, 0.002]
+    converter.pgm_output_data[CT.transformer][AT.p_to] = [-100.0, -200.0]
+    converter.pgm_output_data[CT.transformer][AT.q_to] = [-0.001, -0.002]
+    converter.pgm_output_data[CT.three_winding_transformer][AT.p_1] = [1000.0, 10000.0]
+    converter.pgm_output_data[CT.three_winding_transformer][AT.q_1] = [0.0001, 0.00001]
+    converter.pgm_output_data[CT.three_winding_transformer][AT.p_2] = [2000.0, 20000.0]
+    converter.pgm_output_data[CT.three_winding_transformer][AT.q_2] = [0.0002, 0.00002]
+    converter.pgm_output_data[CT.three_winding_transformer][AT.p_3] = [4000.0, 40000.0]
+    converter.pgm_output_data[CT.three_winding_transformer][AT.q_3] = [0.0004, 0.00004]
 
     # Act
     converter._pp_buses_output__accumulate_power(pp_buses)
@@ -857,13 +845,13 @@ def test_pp_buses_output__accumulate_power__output_empty():
     pp_buses = pd.DataFrame(np.empty((3, 2), np.float64), columns=["p_mw", "q_mvar"], index=[101, 102, 103])
 
     converter.pgm_input_data = {
-        ComponentType.link: initialize_array(DatasetType.input, ComponentType.link, 2),
+        CT.link: initialize_array(DatasetType.input, CT.link, 2),
     }
     converter.pgm_output_data = {
-        ComponentType.link: initialize_array(DatasetType.sym_output, ComponentType.link, 0),
+        CT.link: initialize_array(DatasetType.sym_output, CT.link, 0),
     }
-    converter.pgm_input_data[ComponentType.link]["from_node"] = [0, 1]
-    converter.pgm_input_data[ComponentType.link]["to_node"] = [1, 2]
+    converter.pgm_input_data[CT.link][AT.from_node] = [0, 1]
+    converter.pgm_input_data[CT.link][AT.to_node] = [1, 2]
 
     # Act
     converter._pp_buses_output__accumulate_power(pp_buses)
@@ -900,10 +888,10 @@ def test_pp_switch_output():
         "res_trafo3w": pd.DataFrame({"i_hv_ka": [12.1], "i_mv_ka": [12.2], "i_lv_ka": [12.3]}, index=[10]),
         "res_line": pd.DataFrame({"i_from_ka": [13.1], "i_to_ka": [13.2]}, index=[11]),
     }
-    converter.pgm_output_data = {ComponentType.link: initialize_array(DatasetType.sym_output, ComponentType.link, 2)}
-    converter.pgm_output_data[ComponentType.link]["id"] = [101, 102]
-    converter.pgm_output_data[ComponentType.link]["i_from"] = [14100, 14200]
-    converter.pgm_output_data[ComponentType.link]["i_to"] = [15.1, 15.2]
+    converter.pgm_output_data = {CT.link: initialize_array(DatasetType.sym_output, CT.link, 2)}
+    converter.pgm_output_data[CT.link][AT.id] = [101, 102]
+    converter.pgm_output_data[CT.link][AT.i_from] = [14100, 14200]
+    converter.pgm_output_data[CT.link][AT.i_to] = [15.1, 15.2]
 
     converter.idx_lookup = {("switch", "b2b_switches"): pd.Series([47, 48], index=[101, 102], dtype=np.int32)}
 
@@ -927,7 +915,7 @@ def test_pp_switch_output():
 def test_output_bus_3ph(mock_np_array: MagicMock, converter):
     # Arrange
     mock_pgm_array = MagicMock()
-    converter.pgm_output_data[ComponentType.node] = mock_pgm_array
+    converter.pgm_output_data[CT.node] = mock_pgm_array
     converter._pp_buses_output_3ph__accumulate_power = MagicMock()
 
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
@@ -940,9 +928,9 @@ def test_output_bus_3ph(mock_np_array: MagicMock, converter):
         converter._get_pp_ids.assert_called_once_with("bus", mock_pgm_array["X"])
 
         # retrieval
-        mock_pgm_array.__getitem__.assert_any_call("id")
-        mock_pgm_array.__getitem__.assert_any_call("u_pu")
-        mock_pgm_array.__getitem__.assert_any_call("u_angle")
+        mock_pgm_array.__getitem__.assert_any_call(AT.id)
+        mock_pgm_array.__getitem__.assert_any_call(AT.u_pu)
+        mock_pgm_array.__getitem__.assert_any_call(AT.u_angle)
 
         # assignment
         mock_pp_df.return_value.__setitem__.assert_any_call("vm_a_pu", ANY)
@@ -973,9 +961,9 @@ def test_output_line_3ph(converter):
     # Arrange
     mock_pgm_array = MagicMock()
     converter.pgm_nodes_lookup = MagicMock()
-    converter.pgm_output_data[ComponentType.line] = mock_pgm_array
-    converter.pgm_output_data[ComponentType.node] = mock_pgm_array
-    converter.pgm_input_data[ComponentType.line] = MagicMock()
+    converter.pgm_output_data[CT.line] = mock_pgm_array
+    converter.pgm_output_data[CT.node] = mock_pgm_array
+    converter.pgm_input_data[CT.line] = MagicMock()
 
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
         # Act
@@ -984,16 +972,16 @@ def test_output_line_3ph(converter):
         # Assert
 
         # initialization
-        converter._get_pp_ids.assert_called_once_with(ComponentType.line, mock_pgm_array["X"])
+        converter._get_pp_ids.assert_called_once_with(CT.line, mock_pgm_array["X"])
 
         # retrieval
-        mock_pgm_array.__getitem__.assert_any_call("id")
-        mock_pgm_array.__getitem__.assert_any_call("p_from")
-        mock_pgm_array.__getitem__.assert_any_call("q_from")
-        mock_pgm_array.__getitem__.assert_any_call("p_to")
-        mock_pgm_array.__getitem__.assert_any_call("q_to")
-        mock_pgm_array.__getitem__.assert_any_call("i_from")
-        mock_pgm_array.__getitem__.assert_any_call("i_to")
+        mock_pgm_array.__getitem__.assert_any_call(AT.id)
+        mock_pgm_array.__getitem__.assert_any_call(AT.p_from)
+        mock_pgm_array.__getitem__.assert_any_call(AT.q_from)
+        mock_pgm_array.__getitem__.assert_any_call(AT.p_to)
+        mock_pgm_array.__getitem__.assert_any_call(AT.q_to)
+        mock_pgm_array.__getitem__.assert_any_call(AT.i_from)
+        mock_pgm_array.__getitem__.assert_any_call(AT.i_to)
 
         # assignment
         loss_params = get_loss_params_3ph()
@@ -1048,7 +1036,7 @@ def test_output_line_3ph__bad_input(converter):
 def test_output_ext_grids_3ph(converter):
     # Arrange
     mock_pgm_array = MagicMock()
-    converter.pgm_output_data[ComponentType.source] = mock_pgm_array
+    converter.pgm_output_data[CT.source] = mock_pgm_array
 
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
         # Act
@@ -1060,9 +1048,9 @@ def test_output_ext_grids_3ph(converter):
         converter._get_pp_ids.assert_called_once_with("ext_grid", mock_pgm_array["X"])
 
         # retrieval
-        mock_pgm_array.__getitem__.assert_any_call("id")
-        mock_pgm_array.__getitem__.assert_any_call("p")
-        mock_pgm_array.__getitem__.assert_any_call("q")
+        mock_pgm_array.__getitem__.assert_any_call(AT.id)
+        mock_pgm_array.__getitem__.assert_any_call(AT.p)
+        mock_pgm_array.__getitem__.assert_any_call(AT.q)
 
         # assignment
         mock_pp_df.return_value.__setitem__.assert_any_call("p_a_mw", ANY)
@@ -1088,7 +1076,7 @@ def test_output_ext_grids_3ph__bad_input(converter):
 def test_output_sgen_3ph(converter):
     # Arrange
     mock_pgm_array = MagicMock()
-    converter.pgm_output_data[ComponentType.sym_gen] = mock_pgm_array
+    converter.pgm_output_data[CT.sym_gen] = mock_pgm_array
 
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
         # Act
@@ -1098,9 +1086,9 @@ def test_output_sgen_3ph(converter):
         converter._get_pp_ids.assert_called_once_with("sgen", mock_pgm_array["X"])
 
         # retrieval
-        mock_pgm_array.__getitem__.assert_any_call("id")
-        mock_pgm_array.__getitem__.assert_any_call("p")
-        mock_pgm_array.__getitem__.assert_any_call("q")
+        mock_pgm_array.__getitem__.assert_any_call(AT.id)
+        mock_pgm_array.__getitem__.assert_any_call(AT.p)
+        mock_pgm_array.__getitem__.assert_any_call(AT.q)
 
         # assignment
         mock_pp_df.return_value.__setitem__.assert_any_call("p_mw", ANY)
@@ -1124,8 +1112,8 @@ def test_output_trafos_3ph__current(converter):
     mock_pgm_array = MagicMock()
     converter.trafo_loading = "current"
     converter.pp_input_data["trafo"] = MockDf(2)
-    converter.pgm_input_data[ComponentType.transformer] = mock_pgm_array
-    converter.pgm_output_data[ComponentType.transformer] = mock_pgm_array
+    converter.pgm_input_data[CT.transformer] = mock_pgm_array
+    converter.pgm_output_data[CT.transformer] = mock_pgm_array
 
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
         # Act
@@ -1137,13 +1125,13 @@ def test_output_trafos_3ph__current(converter):
         converter._get_pp_ids.assert_called_once_with("trafo", mock_pgm_array["X"])
 
         # retrieval
-        mock_pgm_array.__getitem__.assert_any_call("id")
-        mock_pgm_array.__getitem__.assert_any_call("p_from")
-        mock_pgm_array.__getitem__.assert_any_call("q_from")
-        mock_pgm_array.__getitem__.assert_any_call("p_to")
-        mock_pgm_array.__getitem__.assert_any_call("q_to")
-        mock_pgm_array.__getitem__.assert_any_call("i_from")
-        mock_pgm_array.__getitem__.assert_any_call("i_to")
+        mock_pgm_array.__getitem__.assert_any_call(AT.id)
+        mock_pgm_array.__getitem__.assert_any_call(AT.p_from)
+        mock_pgm_array.__getitem__.assert_any_call(AT.q_from)
+        mock_pgm_array.__getitem__.assert_any_call(AT.p_to)
+        mock_pgm_array.__getitem__.assert_any_call(AT.q_to)
+        mock_pgm_array.__getitem__.assert_any_call(AT.i_from)
+        mock_pgm_array.__getitem__.assert_any_call(AT.i_to)
 
         # assignment
         loss_params = get_loss_params_3ph()
@@ -1185,8 +1173,8 @@ def test_output_trafos_3ph__power(converter):
     mock_pgm_array = MagicMock()
     converter.trafo_loading = "power"
     converter.pp_input_data["trafo"] = MockDf(2)
-    converter.pgm_input_data[ComponentType.transformer] = mock_pgm_array
-    converter.pgm_output_data[ComponentType.transformer] = mock_pgm_array
+    converter.pgm_input_data[CT.transformer] = mock_pgm_array
+    converter.pgm_output_data[CT.transformer] = mock_pgm_array
 
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
         # Act
@@ -1207,8 +1195,8 @@ def test_output_trafos_3ph__invalid_trafo_loading(converter):
     mock_pgm_array = MagicMock()
     converter.trafo_loading = "abcd"
     converter.pp_input_data["trafo"] = MockDf(2)
-    converter.pgm_input_data[ComponentType.transformer] = mock_pgm_array
-    converter.pgm_output_data[ComponentType.transformer] = mock_pgm_array
+    converter.pgm_input_data[CT.transformer] = mock_pgm_array
+    converter.pgm_output_data[CT.transformer] = mock_pgm_array
 
     with pytest.raises(ValueError, match="Invalid transformer loading type: abcd"):
         converter._pp_trafos_output_3ph()
@@ -1226,8 +1214,8 @@ def test_output_trafo_3ph__bad_input(converter):
 def test_output_shunts_3ph(converter):
     # Arrange
     mock_pgm_array = MagicMock()
-    converter.pgm_input_data[ComponentType.shunt] = mock_pgm_array
-    converter.pgm_output_data[ComponentType.shunt] = mock_pgm_array
+    converter.pgm_input_data[CT.shunt] = mock_pgm_array
+    converter.pgm_output_data[CT.shunt] = mock_pgm_array
     converter.pgm_nodes_lookup = pd.DataFrame({"u_pu": mock_pgm_array}, index=mock_pgm_array)
 
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
@@ -1237,13 +1225,13 @@ def test_output_shunts_3ph(converter):
         # Assert
 
         # initialization
-        converter._get_pp_ids.assert_called_once_with(ComponentType.shunt, mock_pgm_array["X"])
+        converter._get_pp_ids.assert_called_once_with(CT.shunt, mock_pgm_array["X"])
 
         # retrieval
-        mock_pgm_array.__getitem__.assert_any_call("id")
+        mock_pgm_array.__getitem__.assert_any_call(AT.id)
         # mock_pgm_array.__getitem__.assert_any_call("node")
-        mock_pgm_array.__getitem__.assert_any_call("p")
-        mock_pgm_array.__getitem__.assert_any_call("q")
+        mock_pgm_array.__getitem__.assert_any_call(AT.p)
+        mock_pgm_array.__getitem__.assert_any_call(AT.q)
         # mock_pgm_array.__getitem__.assert_any_call("u_pu")
 
         # assignment
@@ -1267,7 +1255,7 @@ def test_output_shunt_3ph__bad_input(converter):
 def test_output_asymmetric_load_3ph(converter):
     # Arrange
     mock_pgm_array = MagicMock()
-    converter.pgm_output_data[ComponentType.asym_load] = mock_pgm_array
+    converter.pgm_output_data[CT.asym_load] = mock_pgm_array
 
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
         # Act
@@ -1279,9 +1267,9 @@ def test_output_asymmetric_load_3ph(converter):
         converter._get_pp_ids.assert_called_once_with("asymmetric_load", mock_pgm_array["X"])
 
         # retrieval
-        mock_pgm_array.__getitem__.assert_any_call("id")
-        mock_pgm_array.__getitem__.assert_any_call("p")
-        mock_pgm_array.__getitem__.assert_any_call("q")
+        mock_pgm_array.__getitem__.assert_any_call(AT.id)
+        mock_pgm_array.__getitem__.assert_any_call(AT.p)
+        mock_pgm_array.__getitem__.assert_any_call(AT.q)
 
         # assignment
         mock_pp_df.return_value.__setitem__.assert_any_call("p_a_mw", ANY)
@@ -1307,7 +1295,7 @@ def test_output_asymmetric_load_3ph__bad_input(converter):
 def test_output_asymmetric_sgen_3ph(converter):
     # Arrange
     mock_pgm_array = MagicMock()
-    converter.pgm_output_data[ComponentType.asym_gen] = mock_pgm_array
+    converter.pgm_output_data[CT.asym_gen] = mock_pgm_array
 
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
         # Act
@@ -1319,9 +1307,9 @@ def test_output_asymmetric_sgen_3ph(converter):
         converter._get_pp_ids.assert_called_once_with("asymmetric_sgen", mock_pgm_array["X"])
 
         # retrieval
-        mock_pgm_array.__getitem__.assert_any_call("id")
-        mock_pgm_array.__getitem__.assert_any_call("p")
-        mock_pgm_array.__getitem__.assert_any_call("q")
+        mock_pgm_array.__getitem__.assert_any_call(AT.id)
+        mock_pgm_array.__getitem__.assert_any_call(AT.p)
+        mock_pgm_array.__getitem__.assert_any_call(AT.q)
 
         # assignment
         mock_pp_df.return_value.__setitem__.assert_any_call("p_a_mw", ANY)
@@ -1369,10 +1357,10 @@ def test_pp_buses_output_3ph__accumulate_power__component_absent():
     converter.idx_lookup = {("bus", None): pd.Series([101, 102, 103, 104], index=[0, 1, 2, 3], dtype=np.int32)}
     pp_buses_3ph = pd.DataFrame(np.empty((4, 6), np.float64), columns=power_columns, index=[101, 102, 103, 104])
     converter.pgm_input_data = {
-        ComponentType.link: initialize_array(DatasetType.input, ComponentType.link, 2),
+        CT.link: initialize_array(DatasetType.input, CT.link, 2),
     }
     converter.pgm_output_data = {
-        ComponentType.line: initialize_array(DatasetType.asym_output, ComponentType.line, 3),
+        CT.line: initialize_array(DatasetType.asym_output, CT.line, 3),
     }
     with pytest.raises(KeyError, match="PGM input_data is needed to accumulate output for lines"):
         converter._pp_buses_output_3ph__accumulate_power(pp_buses_3ph)
@@ -1388,41 +1376,33 @@ def test_pp_buses_output_3ph__accumulate_power():
     pp_buses_3ph = pd.DataFrame(np.empty((4, 6), np.float64), columns=power_columns, index=[101, 102, 103, 104])
 
     converter.pgm_input_data = {
-        ComponentType.line: initialize_array(DatasetType.input, ComponentType.line, 3),
-        ComponentType.link: initialize_array(DatasetType.input, ComponentType.link, 2),
-        ComponentType.transformer: initialize_array(DatasetType.input, ComponentType.transformer, 2),
+        CT.line: initialize_array(DatasetType.input, CT.line, 3),
+        CT.link: initialize_array(DatasetType.input, CT.link, 2),
+        CT.transformer: initialize_array(DatasetType.input, CT.transformer, 2),
     }
     converter.pgm_output_data = {
-        ComponentType.line: initialize_array(DatasetType.asym_output, ComponentType.line, 3),
-        ComponentType.link: initialize_array(DatasetType.asym_output, ComponentType.link, 2),
-        ComponentType.transformer: initialize_array(DatasetType.asym_output, ComponentType.transformer, 2),
+        CT.line: initialize_array(DatasetType.asym_output, CT.line, 3),
+        CT.link: initialize_array(DatasetType.asym_output, CT.link, 2),
+        CT.transformer: initialize_array(DatasetType.asym_output, CT.transformer, 2),
     }
-    converter.pgm_input_data[ComponentType.line]["from_node"] = [0, 1, 1]
-    converter.pgm_input_data[ComponentType.line]["to_node"] = [1, 2, 3]
-    converter.pgm_input_data[ComponentType.link]["from_node"] = [0, 1]
-    converter.pgm_input_data[ComponentType.link]["to_node"] = [1, 2]
-    converter.pgm_input_data[ComponentType.transformer]["from_node"] = [0, 1]
-    converter.pgm_input_data[ComponentType.transformer]["to_node"] = [1, 2]
-    converter.pgm_output_data[ComponentType.line]["p_from"] = np.outer(np.array([1.0, 2.0, 4.0], ndmin=2), multiplier)
-    converter.pgm_output_data[ComponentType.line]["q_from"] = np.outer(np.array([0.1, 0.2, 0.4], ndmin=2), multiplier)
-    converter.pgm_output_data[ComponentType.line]["p_to"] = np.outer(np.array([-1.0, -2.0, -4.0], ndmin=2), multiplier)
-    converter.pgm_output_data[ComponentType.line]["q_to"] = np.outer(np.array([-0.1, -0.2, -0.4], ndmin=2), multiplier)
-    converter.pgm_output_data[ComponentType.link]["p_from"] = np.outer(np.array([10.0, 20.0], ndmin=2), multiplier)
-    converter.pgm_output_data[ComponentType.link]["q_from"] = np.outer(np.array([0.01, 0.02], ndmin=2), multiplier)
-    converter.pgm_output_data[ComponentType.link]["p_to"] = np.outer(np.array([-10.0, -20.0], ndmin=2), multiplier)
-    converter.pgm_output_data[ComponentType.link]["q_to"] = np.outer(np.array([-0.01, -0.02], ndmin=2), multiplier)
-    converter.pgm_output_data[ComponentType.transformer]["p_from"] = np.outer(
-        np.array([100.0, 200.0], ndmin=2), multiplier
-    )
-    converter.pgm_output_data[ComponentType.transformer]["q_from"] = np.outer(
-        np.array([0.001, 0.002], ndmin=2), multiplier
-    )
-    converter.pgm_output_data[ComponentType.transformer]["p_to"] = np.outer(
-        np.array([-100.0, -200.0], ndmin=2), multiplier
-    )
-    converter.pgm_output_data[ComponentType.transformer]["q_to"] = np.outer(
-        np.array([-0.001, -0.002], ndmin=2), multiplier
-    )
+    converter.pgm_input_data[CT.line][AT.from_node] = [0, 1, 1]
+    converter.pgm_input_data[CT.line][AT.to_node] = [1, 2, 3]
+    converter.pgm_input_data[CT.link][AT.from_node] = [0, 1]
+    converter.pgm_input_data[CT.link][AT.to_node] = [1, 2]
+    converter.pgm_input_data[CT.transformer][AT.from_node] = [0, 1]
+    converter.pgm_input_data[CT.transformer][AT.to_node] = [1, 2]
+    converter.pgm_output_data[CT.line][AT.p_from] = np.outer(np.array([1.0, 2.0, 4.0], ndmin=2), multiplier)
+    converter.pgm_output_data[CT.line][AT.q_from] = np.outer(np.array([0.1, 0.2, 0.4], ndmin=2), multiplier)
+    converter.pgm_output_data[CT.line][AT.p_to] = np.outer(np.array([-1.0, -2.0, -4.0], ndmin=2), multiplier)
+    converter.pgm_output_data[CT.line][AT.q_to] = np.outer(np.array([-0.1, -0.2, -0.4], ndmin=2), multiplier)
+    converter.pgm_output_data[CT.link][AT.p_from] = np.outer(np.array([10.0, 20.0], ndmin=2), multiplier)
+    converter.pgm_output_data[CT.link][AT.q_from] = np.outer(np.array([0.01, 0.02], ndmin=2), multiplier)
+    converter.pgm_output_data[CT.link][AT.p_to] = np.outer(np.array([-10.0, -20.0], ndmin=2), multiplier)
+    converter.pgm_output_data[CT.link][AT.q_to] = np.outer(np.array([-0.01, -0.02], ndmin=2), multiplier)
+    converter.pgm_output_data[CT.transformer][AT.p_from] = np.outer(np.array([100.0, 200.0], ndmin=2), multiplier)
+    converter.pgm_output_data[CT.transformer][AT.q_from] = np.outer(np.array([0.001, 0.002], ndmin=2), multiplier)
+    converter.pgm_output_data[CT.transformer][AT.p_to] = np.outer(np.array([-100.0, -200.0], ndmin=2), multiplier)
+    converter.pgm_output_data[CT.transformer][AT.q_to] = np.outer(np.array([-0.001, -0.002], ndmin=2), multiplier)
 
     p_101 = -1.0 - 10.0 - 100.0
     p_102 = -2.0 - 4.0 + 1.0 - 20.0 + 10.0 - 200.0 + 100.0
@@ -1451,13 +1431,13 @@ def test_pp_buses_output_3ph__accumulate_power__output_empty():
     pp_buses_3ph = pd.DataFrame(np.empty((3, 6), np.float64), columns=power_columns, index=[101, 102, 103])
 
     converter.pgm_input_data = {
-        ComponentType.link: initialize_array(DatasetType.input, ComponentType.link, 2),
+        CT.link: initialize_array(DatasetType.input, CT.link, 2),
     }
     converter.pgm_output_data = {
-        ComponentType.link: initialize_array(DatasetType.asym_output, ComponentType.link, 0),
+        CT.link: initialize_array(DatasetType.asym_output, CT.link, 0),
     }
-    converter.pgm_input_data[ComponentType.link]["from_node"] = [0, 1]
-    converter.pgm_input_data[ComponentType.link]["to_node"] = [1, 2]
+    converter.pgm_input_data[CT.link][AT.from_node] = [0, 1]
+    converter.pgm_input_data[CT.link][AT.to_node] = [1, 2]
 
     expected = pd.DataFrame(
         np.full((3, 6), fill_value=0.0, dtype=np.float64), columns=power_columns, index=[101, 102, 103]
