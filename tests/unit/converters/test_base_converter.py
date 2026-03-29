@@ -165,7 +165,7 @@ def test_load_data(converter: DummyConverter):
     with pytest.raises(ValueError, match="No data supplied!"):
         converter._load_data(data=None)
 
-    input_data = {CT.node: [{AT.id: 1}, {AT.id: 2}]}
+    input_data = {"node": [{"id": 1}, {"id": 2}]}
     output_data = converter._load_data(data=input_data)
     assert output_data == input_data
 
