@@ -948,7 +948,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pgm_input_data[ComponentType.transformer] = pgm_transformers
 
-    def _create_pgm_input_three_winding_transformers(self): # noqa: PLR0915
+    def _create_pgm_input_three_winding_transformers(self):  # noqa: PLR0915
         # pylint: disable=too-many-statements, disable-msg=too-many-locals
         """
         This function converts a Three Winding Transformer Dataframe of PandaPower to a power-grid-model

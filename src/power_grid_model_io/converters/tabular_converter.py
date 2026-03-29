@@ -359,7 +359,7 @@ class TabularConverter(BaseConverter[TabularData]):
                 else:
                     extra_info[i] = xtr_data
 
-    def _normalize_extra_col_def(self, col_def: Any) -> Any: # noqa: PLR0912
+    def _normalize_extra_col_def(self, col_def: Any) -> Any:  # noqa: PLR0912
         """
         Normalize extra column definition to eliminate duplicates between regular columns and optional_extra.
         Regular columns take precedence over optional_extra columns.

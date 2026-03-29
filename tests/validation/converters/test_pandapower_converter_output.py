@@ -321,7 +321,7 @@ def test_attributes_3ph(
     pd.testing.assert_series_equal(actual_values, expected_values, atol=5e-4, rtol=1e-4)
 
 
-def _get_total_powers_3ph(net): # noqa: PLR0912
+def _get_total_powers_3ph(net):  # noqa: PLR0912
     """
     Calculates total complex power for sources, loads and losses
     Input: Pandapower Network
@@ -407,7 +407,7 @@ def test_output_data_3ph__powers():
     assert np.isclose(s_ext_grid, (s_load + s_loss))
 
 
-def _get_total_powers(net): # noqa: PLR0912
+def _get_total_powers(net):  # noqa: PLR0912
     """
     Calculates total complex power for sources, loads and losses
     Input: Pandapower Network
