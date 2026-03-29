@@ -165,8 +165,9 @@ def test_load_data(converter: DummyConverter):
     with pytest.raises(ValueError, match="No data supplied!"):
         converter._load_data(data=None)
 
-    data = converter._load_data(data={CT.node: [{AT.id: 1}, {AT.id: 2}]})
-    assert data == data
+    input_data = {CT.node: [{AT.id: 1}, {AT.id: 2}]}
+    output_data = converter._load_data(data=input_data)
+    assert output_data == input_data
 
     source = MagicMock()
     converter_2 = DummyConverter(source=source)

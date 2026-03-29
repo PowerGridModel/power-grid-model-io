@@ -59,8 +59,8 @@ class ExcelFileStore(BaseDataStore[TabularData]):
 
         for name, path in self._file_paths.items():
             if path.suffix.lower() not in {".xls", ".xlsx"}:
-                name = name.title() if name else "Excel"
-                raise ValueError(f"{name} file should be a .xls or .xlsx file, {path.suffix} provided.")
+                name_title = name.title() if name else "Excel"
+                raise ValueError(f"{name_title} file should be a .xls or .xlsx file, {path.suffix} provided.")
 
         self._header_rows: list[int] = [0]
         self._language = language
@@ -106,11 +106,11 @@ class ExcelFileStore(BaseDataStore[TabularData]):
             excel_file = pd.ExcelFile(path)
             for sheet_name in excel_file.sheet_names:
                 loader = lazy_sheet_loader(excel_file, sheet_name)
-                if name != "":  # If the Excel file is not the main file, prefix the sheet name with the file name
-                    sheet_name = f"{name}.{sheet_name}"
-                if sheet_name in data:
-                    raise ValueError(f"Duplicate sheet name '{sheet_name}'")
-                data[sheet_name] = loader
+                # If the Excel file is not the main file, prefix the sheet name with the file name
+                main_sheet_name = f"{name}.{sheet_name}" if name != "" else sheet_name
+                if main_sheet_name in data:
+                    raise ValueError(f"Duplicate sheet name '{main_sheet_name}'")
+                data[main_sheet_name] = loader
         return TabularData(**data)
 
     def save(self, data: TabularData) -> None:
@@ -140,9 +140,8 @@ class ExcelFileStore(BaseDataStore[TabularData]):
                 continue
             with pd.ExcelWriter(path=file_path) as excel_writer:  # pylint: disable=abstract-class-instantiated
                 for sheet_name, sheet_data in sheets[file_name].items():
-                    if not isinstance(sheet_data, pd.DataFrame):
-                        sheet_data = pd.DataFrame(sheet_data)
-                    sheet_data.to_excel(
+                    sheet_data_df = sheet_data if isinstance(sheet_data, pd.DataFrame) else pd.DataFrame(sheet_data)
+                    sheet_data_df.to_excel(
                         excel_writer=excel_writer,
                         sheet_name=sheet_name,
                     )
@@ -171,8 +170,8 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         if to_rename:
             columns = data.columns.values.copy()
             for col_idx, new_name in to_rename.items():
-                new_name = new_name[0] if isinstance(new_name, tuple) else new_name
-                full_new_name = (new_name, columns[col_idx][1])
+                updated_new_name = new_name[0] if isinstance(new_name, tuple) else new_name
+                full_new_name = (updated_new_name, columns[col_idx][1])
                 self._log.warning(
                     "Column is renamed",
                     sheet_name=sheet_name,

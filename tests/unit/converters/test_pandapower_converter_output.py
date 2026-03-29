@@ -623,7 +623,7 @@ def test_pp_load_result_accumulate__asym():
         ),
     ],
 )
-def test_output_load_types(
+def test_output_load_types(                         # noqa: PLR0913
     output_fn: Callable[[PandaPowerConverter, str, bool], None],
     element: str,
     symmetric: bool,
@@ -957,7 +957,7 @@ def test_output_bus_3ph__bad_input(converter):
         converter._pp_buses_output_3ph()
 
 
-def test_output_line_3ph(converter):
+def test_output_line_3ph(converter):        # noqa: PLR0915
     # Arrange
     mock_pgm_array = MagicMock()
     converter.pgm_nodes_lookup = MagicMock()

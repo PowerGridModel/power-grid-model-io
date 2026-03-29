@@ -985,7 +985,7 @@ def test_create_pgm_input_shunts__bad_input():
 @patch("power_grid_model_io.converters.pandapower_converter.np.logical_and", new=lambda x, _: x)
 @patch("power_grid_model_io.converters.pandapower_converter.np.allclose", new=lambda x, _: x)
 @patch("power_grid_model_io.converters.pandapower_converter.np.isnan", new=lambda x: x)
-def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, converter):
+def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, converter): # noqa: PLR0915
     # Arrange
     converter.pp_input_data["trafo"] = two_pp_objs
 
@@ -1309,7 +1309,7 @@ def test_create_pgm_input_asym_gens__bad_input():
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 @patch("power_grid_model_io.converters.pandapower_converter.np.round", new=lambda x: x)
-def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock, two_pp_objs, converter):
+def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock, two_pp_objs, converter): # noqa: PLR0915
     # Arrange
     converter.pp_input_data["trafo3w"] = two_pp_objs
 

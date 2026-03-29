@@ -15,7 +15,7 @@ from power_grid_model import AttributeType as AT, ComponentType as CT, PowerGrid
 from power_grid_model.utils import json_deserialize_from_file
 from power_grid_model.validation import assert_valid_input_data
 
-from power_grid_model_io.converters import PandaPowerConverter
+from power_grid_model_io.converters import PandaPowerConverter, PgmJsonConverter
 from power_grid_model_io.converters.pandapower_converter import (
     PP_COMPATIBILITY_VERSION_3_2_0,
     PP_CONVERSION_VERSION,
@@ -119,10 +119,6 @@ def output_data_3ph(request) -> tuple[PandaPowerData, PandaPowerData]:
 
 
 def test_generate_output():  # TODO: REMOVE THIS FUNCTION
-    from power_grid_model import PowerGridModel
-
-    from power_grid_model_io.converters import PgmJsonConverter
-
     net = pp_net()
     converter = PandaPowerConverter()
     input_data, extra_info = converter.load_input_data(net)
@@ -136,10 +132,6 @@ def test_generate_output():  # TODO: REMOVE THIS FUNCTION
 
 
 def test_generate_output_3ph():  # TODO: REMOVE THIS FUNCTION
-    from power_grid_model import PowerGridModel
-
-    from power_grid_model_io.converters import PgmJsonConverter
-
     net = pp_net_3ph()
     converter = PandaPowerConverter()
     input_data, extra_info = converter.load_input_data(net)
@@ -153,8 +145,6 @@ def test_generate_output_3ph():  # TODO: REMOVE THIS FUNCTION
 
 
 def test_output_trafos_3ph__power__with_comparison():
-    import numpy as np
-
     def check_result(net):
         v_hv = net.trafo.vn_hv_kv
         v_lv = net.trafo.vn_lv_kv
@@ -331,7 +321,7 @@ def test_attributes_3ph(
     pd.testing.assert_series_equal(actual_values, expected_values, atol=5e-4, rtol=1e-4)
 
 
-def _get_total_powers_3ph(net):
+def _get_total_powers_3ph(net): # noqa: PLR0912
     """
     Calculates total complex power for sources, loads and losses
     Input: Pandapower Network
@@ -417,7 +407,7 @@ def test_output_data_3ph__powers():
     assert np.isclose(s_ext_grid, (s_load + s_loss))
 
 
-def _get_total_powers(net):
+def _get_total_powers(net): # noqa: PLR0912
     """
     Calculates total complex power for sources, loads and losses
     Input: Pandapower Network
