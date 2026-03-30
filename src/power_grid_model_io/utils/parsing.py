@@ -79,6 +79,9 @@ def parse_trafo3_connection(string: str) -> dict[str, str]:
     }
 
 
+PREFIX_SUFFIX_AVAILABLE = 2
+
+
 def parse_node_ref(string: str) -> dict[str, str]:
     """Parse a node reference string.
 
@@ -105,7 +108,7 @@ def parse_node_ref(string: str) -> dict[str, str]:
         _raise()
 
     prefix_and_suffix = string.split("node")
-    if len(prefix_and_suffix) != 2:
+    if len(prefix_and_suffix) != PREFIX_SUFFIX_AVAILABLE:
         _raise()
 
     prefix, suffix = prefix_and_suffix

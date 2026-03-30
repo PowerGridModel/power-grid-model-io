@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from power_grid_model import ComponentType
 
 from power_grid_model_io.converters.vision_excel_converter import DEFAULT_MAPPING_FILE, VisionExcelConverter
 from power_grid_model_io.utils.excel_ambiguity_checker import ExcelAmbiguityChecker
@@ -155,8 +156,6 @@ def test_optional_extra_all_columns_present():
     test_file = Path(__file__).parents[2] / "data" / "vision" / "vision_optional_extra_full.xlsx"
     mapping_file = Path(__file__).parents[2] / "data" / "vision" / "vision_optional_extra_mapping.yaml"
 
-    from power_grid_model import ComponentType
-
     converter = VisionExcelConverter(source_file=test_file, mapping_file=mapping_file)
 
     # Act
@@ -189,8 +188,6 @@ def test_optional_extra_some_columns_missing():
     test_file = Path(__file__).parents[2] / "data" / "vision" / "vision_optional_extra_partial.xlsx"
     mapping_file = Path(__file__).parents[2] / "data" / "vision" / "vision_optional_extra_mapping.yaml"
 
-    from power_grid_model import ComponentType
-
     converter = VisionExcelConverter(source_file=test_file, mapping_file=mapping_file)
 
     # Act
@@ -221,8 +218,6 @@ def test_optional_extra_all_optional_missing():
     # Arrange
     test_file = Path(__file__).parents[2] / "data" / "vision" / "vision_optional_extra_minimal.xlsx"
     mapping_file = Path(__file__).parents[2] / "data" / "vision" / "vision_optional_extra_mapping.yaml"
-
-    from power_grid_model import ComponentType
 
     converter = VisionExcelConverter(source_file=test_file, mapping_file=mapping_file)
 

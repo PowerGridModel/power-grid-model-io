@@ -342,7 +342,7 @@ def test_deprecated_download_and_extract__overwrite(mock_download: MagicMock, te
 @patch("power_grid_model_io.utils.download.tqdm")
 @patch("power_grid_model_io.utils.download.get_download_path")
 @patch("power_grid_model_io.utils.download.get_response_info")
-def test_deprecated_download(
+def test_deprecated_download(  # noqa: PLR0913
     mock_info: MagicMock,
     mock_download_path: MagicMock,
     mock_tqdm: MagicMock,
@@ -389,7 +389,7 @@ def test_deprecated_download(
 @patch("power_grid_model_io.utils.download.tqdm")
 @patch("power_grid_model_io.utils.download.get_download_path")
 @patch("power_grid_model_io.utils.download.get_response_info")
-def test_safe_download(
+def test_safe_download(  # noqa: PLR0913
     mock_info: MagicMock,
     mock_download_path: MagicMock,
     mock_tqdm: MagicMock,

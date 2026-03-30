@@ -27,6 +27,8 @@ from power_grid_model_io.mappings.unit_mapping import UnitMapping, Units
 from power_grid_model_io.mappings.value_mapping import ValueMapping, Values
 from power_grid_model_io.utils.modules import get_function
 
+TWO_KEYS = 2
+
 
 class TabularConverter(BaseConverter[TabularData]):
     """Tabular Data Converter: Load data from multiple tables and use a mapping file to convert the data to PGM"""
@@ -144,7 +146,7 @@ class TabularConverter(BaseConverter[TabularData]):
         )
         return input_data
 
-    def _convert_table_to_component(  # pylint: disable = too-many-arguments,too-many-positional-arguments
+    def _convert_table_to_component(  # noqa: PLR0913  # pylint: disable = too-many-arguments,too-many-positional-arguments
         self,
         data: TabularData,
         data_type: str | DatasetType,
@@ -229,7 +231,7 @@ class TabularConverter(BaseConverter[TabularData]):
                 table_mask &= cast(pd.DataFrame, data[table]).apply(fn_ptr, axis=1, **kwargs).values
         return table_mask
 
-    def _convert_col_def_to_attribute(  # pylint: disable = too-many-arguments,too-many-positional-arguments
+    def _convert_col_def_to_attribute(  # noqa: PLR0913  # pylint: disable = too-many-arguments,too-many-positional-arguments
         self,
         data: TabularData,
         pgm_data: np.ndarray,
@@ -303,7 +305,7 @@ class TabularConverter(BaseConverter[TabularData]):
 
         pgm_data[attr] = attr_data.iloc[:, 0]
 
-    def _handle_extra_info(  # pylint: disable = too-many-arguments,too-many-positional-arguments
+    def _handle_extra_info(  # noqa: PLR0913  # pylint: disable = too-many-arguments,too-many-positional-arguments
         self,
         data: TabularData,
         table: str,
@@ -346,18 +348,18 @@ class TabularConverter(BaseConverter[TabularData]):
             extra_info=None,
         ).to_dict(orient="records")
         for i, xtr in zip(uuids, extra):
-            xtr = {
+            xtr_data = {
                 k[0] if isinstance(k, tuple) else k: v
                 for k, v in xtr.items()
                 if not isinstance(v, float) or not np.isnan(v)
             }
-            if xtr:
+            if xtr_data:
                 if i in extra_info:
-                    extra_info[i].update(xtr)
+                    extra_info[i].update(xtr_data)
                 else:
-                    extra_info[i] = xtr
+                    extra_info[i] = xtr_data
 
-    def _normalize_extra_col_def(self, col_def: Any) -> Any:
+    def _normalize_extra_col_def(self, col_def: Any) -> Any:  # noqa: PLR0912
         """
         Normalize extra column definition to eliminate duplicates between regular columns and optional_extra.
         Regular columns take precedence over optional_extra columns.
@@ -379,10 +381,9 @@ class TabularConverter(BaseConverter[TabularData]):
             if isinstance(item, dict) and len(item) == 1 and "optional_extra" in item:
                 # This is an optional_extra section - we'll process it later
                 pass
-            else:
-                # This is a regular column
-                if isinstance(item, str):
-                    regular_columns.add(item)
+            # This is a regular column
+            elif isinstance(item, str):
+                regular_columns.add(item)
 
         # Now process optional_extra sections and remove duplicates
         final_list = []
@@ -439,7 +440,7 @@ class TabularConverter(BaseConverter[TabularData]):
             raise NotImplementedError("Batch data can not (yet) be stored for tabular data")
         return TabularData(logger=self._log, **data)
 
-    def _parse_col_def(  # pylint: disable = too-many-arguments,too-many-positional-arguments
+    def _parse_col_def(  # noqa: PLR0913  # pylint: disable = too-many-arguments,too-many-positional-arguments
         self,
         data: TabularData,
         table: str,
@@ -583,7 +584,7 @@ class TabularConverter(BaseConverter[TabularData]):
         except KeyError:
             return data
 
-    def _parse_reference(  # pylint: disable = too-many-arguments,too-many-positional-arguments
+    def _parse_reference(  # noqa: PLR0913  # pylint: disable = too-many-arguments,too-many-positional-arguments
         self,
         data: TabularData,
         table: str,
@@ -635,7 +636,7 @@ class TabularConverter(BaseConverter[TabularData]):
                 if (
                     not isinstance(sub_def, dict)
                     or "key" not in sub_def
-                    or len(set(sub_def.keys()) & {"table", "name"}) > 2
+                    or len(set(sub_def.keys()) & {"table", "name"}) > TWO_KEYS
                 ):
                     raise ValueError(f"Invalid {name} definition: {sub_def}")
                 col_data = self._parse_auto_id(
@@ -686,7 +687,7 @@ class TabularConverter(BaseConverter[TabularData]):
             data_frames.append(col_data)
         return pd.concat(data_frames, axis=1)
 
-    def _parse_auto_id(  # pylint: disable = too-many-arguments,too-many-positional-arguments
+    def _parse_auto_id(  # noqa: PLR0913  # pylint: disable = too-many-arguments,too-many-positional-arguments
         self,
         data: TabularData,
         table: str,

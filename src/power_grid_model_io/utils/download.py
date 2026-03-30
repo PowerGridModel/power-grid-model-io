@@ -39,6 +39,8 @@ from power_grid_model_io.utils.zip import extract
 
 _log = structlog.get_logger(__name__)
 
+HTTP_STATUS_OK = 200
+
 
 @dataclass
 class ResponseInfo:
@@ -191,7 +193,7 @@ def safe_download(
 
     # get the response info, if the status is not 200
     info = get_response_info(url=url)
-    if info.status != 200:
+    if info.status != HTTP_STATUS_OK:
         raise OSError(f"Could not download from URL, status={info.status}")
 
     if file_name is None and info.file_name:

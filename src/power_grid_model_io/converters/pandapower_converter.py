@@ -37,6 +37,7 @@ PandaPowerData = MutableMapping[str, pd.DataFrame]
 
 logger = structlog.get_logger(__file__)
 
+ARRAY_2D = 2
 PP_COMPATIBILITY_VERSION_3_2_0 = Version("3.2.0")
 PP_COMPATIBILITY_VERSION_3_4_0 = Version("3.4.0")
 try:
@@ -801,7 +802,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pgm_input_data[ComponentType.asym_load] = pgm_asym_loads
 
-    def _create_pgm_input_transformers(self):  # pylint: disable=too-many-statements, disable-msg=too-many-locals
+    def _create_pgm_input_transformers(self):  # noqa: PLR0915  # pylint: disable=too-many-statements, disable-msg=too-many-locals
         """
         This function converts a Transformer Dataframe of PandaPower to a power-grid-model
         Transformer input array.
@@ -947,7 +948,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pgm_input_data[ComponentType.transformer] = pgm_transformers
 
-    def _create_pgm_input_three_winding_transformers(self):
+    def _create_pgm_input_three_winding_transformers(self):  # noqa: PLR0915
         # pylint: disable=too-many-statements, disable-msg=too-many-locals
         """
         This function converts a Three Winding Transformer Dataframe of PandaPower to a power-grid-model
@@ -1753,12 +1754,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # Sum along rows for asym output
         active_power = (
             pgm_output_loads[AttributeType.p].sum(axis=1)
-            if pgm_output_loads[AttributeType.p].ndim == 2
+            if pgm_output_loads[AttributeType.p].ndim == ARRAY_2D
             else pgm_output_loads[AttributeType.p]
         )
         reactive_power = (
             pgm_output_loads[AttributeType.q].sum(axis=1)
-            if pgm_output_loads[AttributeType.q].ndim == 2
+            if pgm_output_loads[AttributeType.q].ndim == ARRAY_2D
             else pgm_output_loads[AttributeType.q]
         )
         all_loads = pd.DataFrame({"p": active_power, "q": reactive_power}, index=pgm_output_loads[AttributeType.id])
@@ -2170,7 +2171,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data["res_sgen_3ph"] = pp_output_sgens
 
-    def _pp_trafos_output_3ph(self):  # pylint: disable=too-many-statements
+    def _pp_trafos_output_3ph(self):  # noqa: PLR0915  # pylint: disable=too-many-statements
         """
         This function converts a power-grid-model Transformer output array to a Transformer Dataframe of
         PandaPower.
