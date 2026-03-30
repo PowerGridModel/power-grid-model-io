@@ -57,7 +57,9 @@ The same ones as positive sequence admittance is used in power-grid-model.
 However, `mag0_percent` and `mag0_rx` are fetched from `pandapower`. In case `vk0_percent` is different from
 `vk_percent` all zero sequence parameters are ignored.
 
-**`mag0_percent` is treated as a ratio not as a percent in line with definition of `pandapower`**
+**For `pandapower<3.4.0` if installed, `mag0_percent` is treated as a ratio not as a percent in line with definition
+of `pandapower<3.4.0`. While for `pandapower>=3.4.0` or where `pandapower` is not installed, `mag0_percent` is treated
+as a percent.**
 
 The changing of impedance by the means of characteristics in `net.characteristic` is not directly supported.
 The phase shift in angle by transforermers by the `shift_degree` attribute only supports clock values in PGM.
