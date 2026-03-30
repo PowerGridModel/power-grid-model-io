@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from pandapower import runpp_3ph
+from pandapower.networks import example_simple
 from power_grid_model import AttributeType as AT, ComponentType as CT, DatasetType, PowerGridModel
 from power_grid_model.data_types import SingleDataset
 from power_grid_model.validation import assert_valid_input_data
@@ -167,8 +168,6 @@ def test_pgm_input_lines__cnf_zero():
 
 @pytest.mark.filterwarnings("error")
 def test_simple_example():
-    from pandapower.networks import example_simple
-
     pp_net = example_simple()
     pp_net["gen"] = pp_net["gen"].iloc[:0]
     pp_converter = PandaPowerConverter()

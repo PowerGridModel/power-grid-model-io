@@ -4,6 +4,7 @@
 
 import pytest
 
+from power_grid_model_io.functions import complex_inverse_real_part
 from power_grid_model_io.utils.modules import get_function
 
 
@@ -16,8 +17,6 @@ def test_get_function__native():
 
 
 def test_get_function__custom():
-    from power_grid_model_io.functions import complex_inverse_real_part
-
     assert get_function("power_grid_model_io.functions.complex_inverse_real_part") == complex_inverse_real_part
 
 

@@ -28,6 +28,8 @@ _NAN_FUNC = {
     np.dtype("i1"): lambda x: np.all(x == np.iinfo(np.dtype("i1")).min),
 }
 
+ARRAY_2D = 2
+
 
 class PgmJsonConverter(BaseConverter[StructuredData]):
     """
@@ -217,7 +219,7 @@ class PgmJsonConverter(BaseConverter[StructuredData]):
         """
         is_batch: bool | None = None
         for component, array in data.items():
-            is_dense_batch = isinstance(array, np.ndarray) and array.ndim == 2
+            is_dense_batch = isinstance(array, np.ndarray) and array.ndim == ARRAY_2D
             is_sparse_batch = isinstance(array, dict) and "indptr" in array and "data" in array
             if is_batch is not None and is_batch != (is_dense_batch or is_sparse_batch):
                 raise ValueError(
