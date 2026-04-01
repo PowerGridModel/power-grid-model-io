@@ -23,6 +23,7 @@ from power_grid_model import (
     initialize_array,
 )
 
+from power_grid_model_io._enum import _PandapowerTable as PpTable
 from power_grid_model_io.converters.pandapower_converter import (
     PP_COMPATIBILITY_VERSION_3_2_0,
     PandaPowerConverter,
@@ -120,14 +121,14 @@ def test_parse_data(
     create_input_data_mock.side_effect = create_input_data
 
     # Act
-    result = converter._parse_data(data={"bus": pd.DataFrame()}, data_type=DatasetType.input, extra_info=None)
+    result = converter._parse_data(data={PpTable.bus: pd.DataFrame()}, data_type=DatasetType.input, extra_info=None)
 
     # Assert
     create_input_data_mock.assert_called_once_with()
     fill_pgm_extra_info_mock.assert_not_called()
     fill_pp_extra_info_mock.assert_not_called()
     assert len(converter.pp_input_data) == 1
-    assert "bus" in converter.pp_input_data
+    assert PpTable.bus in converter.pp_input_data
     assert len(converter.pgm_input_data) == 1
     assert CT.node in converter.pgm_input_data
     assert len(result) == 1
@@ -166,7 +167,7 @@ def test_parse_data__update_data():
 def test_fill_pgm_extra_info():
     # Arrange
     converter = PandaPowerConverter()
-    converter.idx_lookup[("bus", None)] = pd.Series([101, 102, 103], index=[0, 1, 2])
+    converter.idx_lookup[(PpTable.bus, None)] = pd.Series([101, 102, 103], index=[0, 1, 2])
     converter.idx_lookup[("load", "const_current")] = pd.Series([201, 202, 203], index=[3, 4, 5])
     converter.pgm_input_data[CT.sym_load] = initialize_array(DatasetType.input, CT.sym_load, 3)
     converter.pgm_input_data[CT.sym_load][AT.id] = [3, 4, 5]
@@ -183,9 +184,9 @@ def test_fill_pgm_extra_info():
 
     # Assert
     assert len(extra_info) == 8
-    assert extra_info[0] == {"id_reference": {"table": "bus", "index": 101}}
-    assert extra_info[1] == {"id_reference": {"table": "bus", "index": 102}}
-    assert extra_info[2] == {"id_reference": {"table": "bus", "index": 103}}
+    assert extra_info[0] == {"id_reference": {"table": PpTable.bus, "index": 101}}
+    assert extra_info[1] == {"id_reference": {"table": PpTable.bus, "index": 102}}
+    assert extra_info[2] == {"id_reference": {"table": PpTable.bus, "index": 103}}
     assert extra_info[3] == {
         "id_reference": {"table": "load", "name": "const_current", "index": 201},
         "pgm_input": {CT.node: 0},
@@ -205,15 +206,15 @@ def test_fill_pgm_extra_info():
 def test_fill_pp_extra_info():
     # Arrange
     converter = PandaPowerConverter()
-    converter.idx_lookup[("line", None)] = pd.Series([102, 103], index=[1, 2])
-    converter.idx_lookup[("trafo", None)] = pd.Series([201, 202, 203], index=[3, 4, 5])
-    converter.idx[("line", None)] = pd.Series([1, 2], index=[102, 103])
-    converter.idx[("trafo", None)] = pd.Series([3, 4, 5], index=[201, 202, 203])
+    converter.idx_lookup[(PpTable.line, None)] = pd.Series([102, 103], index=[1, 2])
+    converter.idx_lookup[(PpTable.trafo, None)] = pd.Series([201, 202, 203], index=[3, 4, 5])
+    converter.idx[(PpTable.line, None)] = pd.Series([1, 2], index=[102, 103])
+    converter.idx[(PpTable.trafo, None)] = pd.Series([3, 4, 5], index=[201, 202, 203])
 
-    converter.pp_input_data["trafo"] = pd.DataFrame(
+    converter.pp_input_data[PpTable.trafo] = pd.DataFrame(
         {"df": [0.1, 0.2, 0.3], "other": [0.1, 0.2, 0.3]}, index=[201, 202, 203]
     )
-    converter.pp_input_data["line"] = pd.DataFrame([10, 11, 12], columns=["df"], index=[201, 202, 203])
+    converter.pp_input_data[PpTable.line] = pd.DataFrame([10, 11, 12], columns=["df"], index=[201, 202, 203])
 
     # Act
     extra_info = {}
@@ -229,10 +230,10 @@ def test_fill_pp_extra_info():
 def test_fill_pp_extra_info__no_info():
     # Arrange
     converter = PandaPowerConverter()
-    converter.idx_lookup[("trafo", None)] = pd.Series([201, 202, 203], index=[3, 4, 5])
-    converter.idx[("trafo", None)] = pd.Series([3, 4, 5], index=[201, 202, 203])
+    converter.idx_lookup[(PpTable.trafo, None)] = pd.Series([201, 202, 203], index=[3, 4, 5])
+    converter.idx[(PpTable.trafo, None)] = pd.Series([3, 4, 5], index=[201, 202, 203])
 
-    converter.pp_input_data["trafo"] = pd.DataFrame(
+    converter.pp_input_data[PpTable.trafo] = pd.DataFrame(
         {"col1": [0.1, 0.2, 0.3], "col2": [0.1, 0.2, 0.3]}, index=[201, 202, 203]
     )
     converter.pgm_input_data[CT.transformer] = initialize_array(DatasetType.input, CT.transformer, 3)
@@ -343,9 +344,9 @@ def test_extra_info_to_idx_lookup():
     # Arrange
     converter = PandaPowerConverter()
     extra_info = {
-        0: {"id_reference": {"table": "bus", "index": 101}},
-        1: {"id_reference": {"table": "bus", "index": 102}},
-        2: {"id_reference": {"table": "bus", "index": 103}},
+        0: {"id_reference": {"table": PpTable.bus, "index": 101}},
+        1: {"id_reference": {"table": PpTable.bus, "index": 102}},
+        2: {"id_reference": {"table": PpTable.bus, "index": 103}},
         3: {"id_reference": {"table": "load", "name": "const_current", "index": 201}, "node": 0},
         4: {"id_reference": {"table": "load", "name": "const_current", "index": 202}, "node": 1},
         5: {"id_reference": {"table": "load", "name": "const_current", "index": 203}, "node": 2},
@@ -357,8 +358,10 @@ def test_extra_info_to_idx_lookup():
     converter._extra_info_to_idx_lookup(extra_info=extra_info)
 
     # Assert
-    pd.testing.assert_series_equal(converter.idx[("bus", None)], pd.Series([0, 1, 2], index=[101, 102, 103]))
-    pd.testing.assert_series_equal(converter.idx_lookup[("bus", None)], pd.Series([101, 102, 103], index=[0, 1, 2]))
+    pd.testing.assert_series_equal(converter.idx[(PpTable.bus, None)], pd.Series([0, 1, 2], index=[101, 102, 103]))
+    pd.testing.assert_series_equal(
+        converter.idx_lookup[(PpTable.bus, None)], pd.Series([101, 102, 103], index=[0, 1, 2])
+    )
 
     pd.testing.assert_series_equal(
         converter.idx[("load", "const_current")], pd.Series([3, 4, 5], index=[201, 202, 203])
@@ -370,7 +373,7 @@ def test_extra_info_to_idx_lookup():
 
 def test_extra_info_to_idx_lookup__invalid_input():
     converter = PandaPowerConverter()
-    extra_info = {0: {"id_reference": ["bus", 101]}}
+    extra_info = {0: {"id_reference": [PpTable.bus, 101]}}
 
     with pytest.raises(TypeError, match="Expected 'id_reference' to be a dict for pgm_id 0, got list"):
         converter._extra_info_to_idx_lookup(extra_info=extra_info)
@@ -425,8 +428,8 @@ def test__extra_info_to_pp_input_data():
     converter.pgm_output_data[CT.transformer] = initialize_array(DatasetType.sym_output, CT.transformer, 3)
     converter.pgm_output_data[CT.transformer][AT.id] = [3, 4, 5]
 
-    converter.idx_lookup[("trafo", None)] = pd.Series([201, 202, 203], index=[3, 4, 5])
-    converter.idx[("trafo", None)] = pd.Series([3, 4, 5], index=[201, 202, 203])
+    converter.idx_lookup[(PpTable.trafo, None)] = pd.Series([201, 202, 203], index=[3, 4, 5])
+    converter.idx[(PpTable.trafo, None)] = pd.Series([3, 4, 5], index=[201, 202, 203])
     extra_info = {
         3: {"pp_input": {"df": 0.1}},
         4: {"pp_input": {"df": 0.2}},
@@ -437,7 +440,7 @@ def test__extra_info_to_pp_input_data():
 
     converter._extra_info_to_pp_input_data(extra_info)
 
-    pd.testing.assert_frame_equal(converter.pp_input_data["trafo"], expected_trafo)
+    pd.testing.assert_frame_equal(converter.pp_input_data[PpTable.trafo], expected_trafo)
 
 
 def test__extra_info_to_pp_input_data__empty():
@@ -450,7 +453,7 @@ def test__extra_info_to_pp_input_data__empty():
 
 def test__extra_info_to_pp_input_data__non_empty_input_data():
     converter = PandaPowerConverter()
-    converter.pp_input_data["bus"] = pd.DataFrame(data={"vn_kv": [11.0]}, index=[101])
+    converter.pp_input_data[PpTable.bus] = pd.DataFrame(data={"vn_kv": [11.0]}, index=[101])
     converter.pgm_output_data[CT.line] = initialize_array(DatasetType.sym_output, CT.line, 3)
 
     with pytest.raises(ValueError, match="pp_input_data should be empty"):
@@ -496,15 +499,15 @@ def test_create_input_data():
 @pytest.mark.parametrize(
     ("create_fn", "table"),
     [
-        (PandaPowerConverter._create_pgm_input_nodes, "bus"),
-        (PandaPowerConverter._create_pgm_input_lines, "line"),
-        (PandaPowerConverter._create_pgm_input_sources, "ext_grid"),
-        (PandaPowerConverter._create_pgm_input_shunts, "shunt"),
-        (PandaPowerConverter._create_pgm_input_sym_gens, "sgen"),
+        (PandaPowerConverter._create_pgm_input_nodes, PpTable.bus),
+        (PandaPowerConverter._create_pgm_input_lines, PpTable.line),
+        (PandaPowerConverter._create_pgm_input_sources, PpTable.ext_grid),
+        (PandaPowerConverter._create_pgm_input_shunts, PpTable.shunt),
+        (PandaPowerConverter._create_pgm_input_sym_gens, PpTable.sgen),
         (PandaPowerConverter._create_pgm_input_sym_loads, "load"),
-        (PandaPowerConverter._create_pgm_input_transformers, "trafo"),
-        (PandaPowerConverter._create_pgm_input_three_winding_transformers, "trafo3w"),
-        (PandaPowerConverter._create_pgm_input_links, "switch"),
+        (PandaPowerConverter._create_pgm_input_transformers, PpTable.trafo),
+        (PandaPowerConverter._create_pgm_input_three_winding_transformers, PpTable.trafo3w),
+        (PandaPowerConverter._create_pgm_input_links, PpTable.switch),
     ],
 )
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
@@ -525,7 +528,7 @@ def test_create_pgm_input_object__empty(
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_nodes(mock_init_array: MagicMock, two_pp_objs: MockDf, converter):
     # Arrange
-    converter.pp_input_data["bus"] = two_pp_objs
+    converter.pp_input_data[PpTable.bus] = two_pp_objs
 
     # Act
     converter._create_pgm_input_nodes()
@@ -533,19 +536,19 @@ def test_create_pgm_input_nodes(mock_init_array: MagicMock, two_pp_objs: MockDf,
     # Assert
 
     # administration
-    converter._generate_ids.assert_called_once_with("bus", two_pp_objs.index)
+    converter._generate_ids.assert_called_once_with(PpTable.bus, two_pp_objs.index)
 
     # initialization
     mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=CT.node, shape=2)
 
     # retrieval
-    converter._get_pp_attr.assert_any_call("bus", "vn_kv", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.bus, "vn_kv", expected_type="f8")
     assert len(converter._get_pp_attr.call_args_list) == 1
 
     # assignment
     pgm: MagicMock = mock_init_array.return_value.__setitem__
-    pgm.assert_any_call("id", _generate_ids("bus", two_pp_objs.index))
-    pgm.assert_any_call("u_rated", _get_pp_attr("bus", "vn_kv", expected_type="f8") * 1e3)
+    pgm.assert_any_call("id", _generate_ids(PpTable.bus, two_pp_objs.index))
+    pgm.assert_any_call("u_rated", _get_pp_attr(PpTable.bus, "vn_kv", expected_type="f8") * 1e3)
     assert len(pgm.call_args_list) == 2
 
     # result
@@ -554,7 +557,7 @@ def test_create_pgm_input_nodes(mock_init_array: MagicMock, two_pp_objs: MockDf,
 
 def test_create_pgm_input_nodes__bad_input():
     converter = PandaPowerConverter()
-    converter.pp_input_data["bus"] = pd.DataFrame(data={"vn_kv": [11.0]}, index=[101])
+    converter.pp_input_data[PpTable.bus] = pd.DataFrame(data={"vn_kv": [11.0]}, index=[101])
     converter.pgm_input_data[CT.node] = initialize_array(DatasetType.input, CT.node, 1)
 
     with pytest.raises(ValueError, match="Node component already exists in pgm_input_data"):
@@ -564,7 +567,7 @@ def test_create_pgm_input_nodes__bad_input():
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
-    converter.pp_input_data["line"] = two_pp_objs
+    converter.pp_input_data[PpTable.line] = two_pp_objs
 
     # Act
     converter._create_pgm_input_lines()
@@ -572,89 +575,101 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
     # Assert
 
     # administration
-    converter.get_switch_states.assert_called_once_with("line")
-    converter._generate_ids.assert_called_once_with("line", two_pp_objs.index)
-    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("line", "from_bus", expected_type="u4"))
-    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("line", "to_bus", expected_type="u4"))
+    converter.get_switch_states.assert_called_once_with(PpTable.line)
+    converter._generate_ids.assert_called_once_with(PpTable.line, two_pp_objs.index)
+    converter._get_pgm_ids.assert_any_call(PpTable.bus, _get_pp_attr(PpTable.line, "from_bus", expected_type="u4"))
+    converter._get_pgm_ids.assert_any_call(PpTable.bus, _get_pp_attr(PpTable.line, "to_bus", expected_type="u4"))
 
     # initialization
     mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=CT.line, shape=2)
 
     # retrieval
-    converter._get_pp_attr.assert_any_call("line", "from_bus", expected_type="u4")
-    converter._get_pp_attr.assert_any_call("line", "to_bus", expected_type="u4")
-    converter._get_pp_attr.assert_any_call("line", "in_service", expected_type="bool", default=True)
-    converter._get_pp_attr.assert_any_call("line", "length_km", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("line", "parallel", expected_type="u4", default=1)
-    converter._get_pp_attr.assert_any_call("line", "r_ohm_per_km", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("line", "x_ohm_per_km", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("line", "c_nf_per_km", expected_type="f8", default=0)
-    converter._get_pp_attr.assert_any_call("line", "g_us_per_km", expected_type="f8", default=0)
-    converter._get_pp_attr.assert_any_call("line", "max_i_ka", expected_type="f8", default=np.nan)
-    converter._get_pp_attr.assert_any_call("line", "df", expected_type="f8", default=1)
-    converter._get_pp_attr.assert_any_call("line", "r0_ohm_per_km", expected_type="f8", default=np.nan)
-    converter._get_pp_attr.assert_any_call("line", "x0_ohm_per_km", expected_type="f8", default=np.nan)
-    converter._get_pp_attr.assert_any_call("line", "c0_nf_per_km", expected_type="f8", default=0)
-    converter._get_pp_attr.assert_any_call("line", "g0_us_per_km", expected_type="f8", default=0)
+    converter._get_pp_attr.assert_any_call(PpTable.line, "from_bus", expected_type="u4")
+    converter._get_pp_attr.assert_any_call(PpTable.line, "to_bus", expected_type="u4")
+    converter._get_pp_attr.assert_any_call(PpTable.line, "in_service", expected_type="bool", default=True)
+    converter._get_pp_attr.assert_any_call(PpTable.line, "length_km", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.line, "parallel", expected_type="u4", default=1)
+    converter._get_pp_attr.assert_any_call(PpTable.line, "r_ohm_per_km", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.line, "x_ohm_per_km", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.line, "c_nf_per_km", expected_type="f8", default=0)
+    converter._get_pp_attr.assert_any_call(PpTable.line, "g_us_per_km", expected_type="f8", default=0)
+    converter._get_pp_attr.assert_any_call(PpTable.line, "max_i_ka", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call(PpTable.line, "df", expected_type="f8", default=1)
+    converter._get_pp_attr.assert_any_call(PpTable.line, "r0_ohm_per_km", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call(PpTable.line, "x0_ohm_per_km", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call(PpTable.line, "c0_nf_per_km", expected_type="f8", default=0)
+    converter._get_pp_attr.assert_any_call(PpTable.line, "g0_us_per_km", expected_type="f8", default=0)
     assert len(converter._get_pp_attr.call_args_list) == 15
 
     # assignment
     pgm: MagicMock = mock_init_array.return_value.__setitem__
-    pgm.assert_any_call(AT.id, _generate_ids("line", two_pp_objs.index))
-    pgm.assert_any_call(AT.from_node, _get_pgm_ids("bus", _get_pp_attr("line", "from_bus", expected_type="u4")))
+    pgm.assert_any_call(AT.id, _generate_ids(PpTable.line, two_pp_objs.index))
+    pgm.assert_any_call(
+        AT.from_node,
+        _get_pgm_ids(PpTable.bus, _get_pp_attr(PpTable.line, "from_bus", expected_type="u4")),
+    )
     pgm.assert_any_call(
         AT.from_status,
-        _get_pp_attr("line", "in_service", expected_type="bool", default=True) & get_switch_states("line")["from"],
+        _get_pp_attr(PpTable.line, "in_service", expected_type="bool", default=True)
+        & get_switch_states(PpTable.line)["from"],
     )
-    pgm.assert_any_call(AT.to_node, _get_pgm_ids("bus", _get_pp_attr("line", "to_bus", expected_type="u4")))
+    pgm.assert_any_call(
+        AT.to_node,
+        _get_pgm_ids(PpTable.bus, _get_pp_attr(PpTable.line, "to_bus", expected_type="u4")),
+    )
     pgm.assert_any_call(
         AT.to_status,
-        _get_pp_attr("line", "in_service", expected_type="bool", default=True) & get_switch_states("line")["to"],
+        _get_pp_attr(PpTable.line, "in_service", expected_type="bool", default=True)
+        & get_switch_states(PpTable.line)["to"],
     )
     pgm.assert_any_call(
         AT.r1,
-        _get_pp_attr("line", "r_ohm_per_km", expected_type="f8")
+        _get_pp_attr(PpTable.line, "r_ohm_per_km", expected_type="f8")
         * (
-            _get_pp_attr("line", "length_km", expected_type="f8")
-            / _get_pp_attr("line", "parallel", expected_type="u4", default=1)
+            _get_pp_attr(PpTable.line, "length_km", expected_type="f8")
+            / _get_pp_attr(PpTable.line, "parallel", expected_type="u4", default=1)
         ),
     )
     pgm.assert_any_call(
         AT.x1,
-        _get_pp_attr("line", "x_ohm_per_km", expected_type="f8")
+        _get_pp_attr(PpTable.line, "x_ohm_per_km", expected_type="f8")
         * (
-            _get_pp_attr("line", "length_km", expected_type="f8")
-            / _get_pp_attr("line", "parallel", expected_type="u4", default=1)
+            _get_pp_attr(PpTable.line, "length_km", expected_type="f8")
+            / _get_pp_attr(PpTable.line, "parallel", expected_type="u4", default=1)
         ),
     )
     pgm.assert_any_call(
         AT.c1,
-        _get_pp_attr("line", "c_nf_per_km", expected_type="f8", default=0)
-        * _get_pp_attr("line", "length_km", expected_type="f8")
-        * _get_pp_attr("line", "parallel", expected_type="u4", default=1)
+        _get_pp_attr(PpTable.line, "c_nf_per_km", expected_type="f8", default=0)
+        * _get_pp_attr(PpTable.line, "length_km", expected_type="f8")
+        * _get_pp_attr(PpTable.line, "parallel", expected_type="u4", default=1)
         * 1e-9,
     )
     pgm.assert_any_call(
         AT.tan1,
         np.divide(
-            _get_pp_attr("line", "g_us_per_km", expected_type="f8", default=0),
-            _get_pp_attr("line", "c_nf_per_km", expected_type="f8", default=0) * (np.pi / 10),
-            where=np.logical_not(np.isclose(_get_pp_attr("line", "c_nf_per_km", expected_type="f8", default=0), 0.0)),
+            _get_pp_attr(PpTable.line, "g_us_per_km", expected_type="f8", default=0),
+            _get_pp_attr(PpTable.line, "c_nf_per_km", expected_type="f8", default=0) * (np.pi / 10),
+            where=np.logical_not(
+                np.isclose(_get_pp_attr(PpTable.line, "c_nf_per_km", expected_type="f8", default=0), 0.0)
+            ),
             out=None,
         ),
     )
     pgm.assert_any_call(
         AT.i_n,
-        (_get_pp_attr("line", "max_i_ka", expected_type="f8", default=np.nan) * 1e3)
-        * _get_pp_attr("line", "df", expected_type="f8", default=1)
-        * _get_pp_attr("line", "parallel", expected_type="u4", default=1),
+        (_get_pp_attr(PpTable.line, "max_i_ka", expected_type="f8", default=np.nan) * 1e3)
+        * _get_pp_attr(PpTable.line, "df", expected_type="f8", default=1)
+        * _get_pp_attr(PpTable.line, "parallel", expected_type="u4", default=1),
     )
     pgm.assert_any_call(
         AT.tan0,
         np.divide(
-            _get_pp_attr("line", "g0_us_per_km", expected_type="f8", default=0),
-            _get_pp_attr("line", "c0_nf_per_km", expected_type="f8", default=0) * (np.pi / 10),
-            where=np.logical_not(np.isclose(_get_pp_attr("line", "c0_nf_per_km", expected_type="f8", default=0), 0.0)),
+            _get_pp_attr(PpTable.line, "g0_us_per_km", expected_type="f8", default=0),
+            _get_pp_attr(PpTable.line, "c0_nf_per_km", expected_type="f8", default=0) * (np.pi / 10),
+            where=np.logical_not(
+                np.isclose(_get_pp_attr(PpTable.line, "c0_nf_per_km", expected_type="f8", default=0), 0.0)
+            ),
             out=None,
         ),
     )
@@ -669,7 +684,7 @@ def test_create_pgm_input_lines(mock_init_array: MagicMock, two_pp_objs, convert
 
 def test_create_pgm_input_lines__bad_input():
     converter = PandaPowerConverter()
-    converter.pp_input_data["line"] = pd.DataFrame(data={"from_bus": [101], "to_bus": [102]}, index=[101])
+    converter.pp_input_data[PpTable.line] = pd.DataFrame(data={"from_bus": [101], "to_bus": [102]}, index=[101])
     converter.pgm_input_data[CT.line] = initialize_array(DatasetType.input, CT.line, 1)
 
     with pytest.raises(ValueError, match="Line component already exists in pgm_input_data"):
@@ -679,7 +694,7 @@ def test_create_pgm_input_lines__bad_input():
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_sources(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
-    converter.pp_input_data["ext_grid"] = two_pp_objs
+    converter.pp_input_data[PpTable.ext_grid] = two_pp_objs
 
     # Act
     converter._create_pgm_input_sources()
@@ -687,33 +702,35 @@ def test_create_pgm_input_sources(mock_init_array: MagicMock, two_pp_objs, conve
     # Assert
 
     # administration:
-    converter._generate_ids.assert_called_once_with("ext_grid", two_pp_objs.index)
+    converter._generate_ids.assert_called_once_with(PpTable.ext_grid, two_pp_objs.index)
 
     # initialization
     mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=CT.source, shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call("ext_grid", "bus", expected_type="u4")
-    converter._get_pp_attr.assert_any_call("ext_grid", "vm_pu", expected_type="f8", default=1.0)
-    converter._get_pp_attr.assert_any_call("ext_grid", "va_degree", expected_type="f8", default=0.0)
-    converter._get_pp_attr.assert_any_call("ext_grid", "s_sc_max_mva", expected_type="f8", default=np.nan)
-    converter._get_pp_attr.assert_any_call("ext_grid", "rx_max", expected_type="f8", default=np.nan)
-    converter._get_pp_attr.assert_any_call("ext_grid", "in_service", expected_type="bool", default=True)
-    converter._get_pp_attr.assert_any_call("ext_grid", "r0x0_max", expected_type="f8", default=np.nan)
-    converter._get_pp_attr.assert_any_call("ext_grid", "x0x_max", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call(PpTable.ext_grid, PpTable.bus, expected_type="u4")
+    converter._get_pp_attr.assert_any_call(PpTable.ext_grid, "vm_pu", expected_type="f8", default=1.0)
+    converter._get_pp_attr.assert_any_call(PpTable.ext_grid, "va_degree", expected_type="f8", default=0.0)
+    converter._get_pp_attr.assert_any_call(PpTable.ext_grid, "s_sc_max_mva", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call(PpTable.ext_grid, "rx_max", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call(PpTable.ext_grid, "in_service", expected_type="bool", default=True)
+    converter._get_pp_attr.assert_any_call(PpTable.ext_grid, "r0x0_max", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call(PpTable.ext_grid, "x0x_max", expected_type="f8", default=np.nan)
     assert len(converter._get_pp_attr.call_args_list) == 8
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
-    pgm.assert_any_call(AT.id, _generate_ids("ext_grid", two_pp_objs.index))
-    pgm.assert_any_call(AT.node, _get_pgm_ids("bus", _get_pp_attr("ext_grid", "bus", expected_type="u4")))
-    pgm.assert_any_call(AT.status, _get_pp_attr("ext_grid", "in_service", expected_type="bool", default=True))
-    pgm.assert_any_call(AT.u_ref, _get_pp_attr("ext_grid", "vm_pu", expected_type="f8", default=1.0))
+    pgm.assert_any_call(AT.id, _generate_ids(PpTable.ext_grid, two_pp_objs.index))
     pgm.assert_any_call(
-        AT.u_ref_angle, _get_pp_attr("ext_grid", "va_degree", expected_type="f8", default=0.0) * (np.pi / 180)
+        AT.node, _get_pgm_ids(PpTable.bus, _get_pp_attr(PpTable.ext_grid, PpTable.bus, expected_type="u4"))
     )
-    pgm.assert_any_call(AT.sk, _get_pp_attr("ext_grid", "s_sc_max_mva", expected_type="f8", default=np.nan) * 1e6)
-    pgm.assert_any_call(AT.rx_ratio, _get_pp_attr("ext_grid", "rx_max", expected_type="f8", default=np.nan))
+    pgm.assert_any_call(AT.status, _get_pp_attr(PpTable.ext_grid, "in_service", expected_type="bool", default=True))
+    pgm.assert_any_call(AT.u_ref, _get_pp_attr(PpTable.ext_grid, "vm_pu", expected_type="f8", default=1.0))
+    pgm.assert_any_call(
+        AT.u_ref_angle, _get_pp_attr(PpTable.ext_grid, "va_degree", expected_type="f8", default=0.0) * (np.pi / 180)
+    )
+    pgm.assert_any_call(AT.sk, _get_pp_attr(PpTable.ext_grid, "s_sc_max_mva", expected_type="f8", default=np.nan) * 1e6)
+    pgm.assert_any_call(AT.rx_ratio, _get_pp_attr(PpTable.ext_grid, "rx_max", expected_type="f8", default=np.nan))
     assert len(pgm.call_args_list) == 7
 
     # result
@@ -722,7 +739,7 @@ def test_create_pgm_input_sources(mock_init_array: MagicMock, two_pp_objs, conve
 
 def test_create_pgm_input_sources__bad_input():
     converter = PandaPowerConverter()
-    converter.pp_input_data["ext_grid"] = pd.DataFrame(data={"bus": [101]}, index=[201])
+    converter.pp_input_data[PpTable.ext_grid] = pd.DataFrame(data={PpTable.bus: [101]}, index=[201])
     converter.pgm_input_data[CT.source] = initialize_array(DatasetType.input, CT.source, 1)
 
     with pytest.raises(ValueError, match="Source component already exists in pgm_input_data"):
@@ -737,7 +754,7 @@ def test_create_pgm_input_sources__zero_sequence(kwargs) -> None:
 
     converter = PandaPowerConverter()
     converter.pp_input_data = {k: v for k, v in pp_net.items() if isinstance(v, pd.DataFrame)}
-    converter.idx = {("bus", None): pd.Series([0], index=[0])}
+    converter.idx = {(PpTable.bus, None): pd.Series([0], index=[0])}
 
     with patch("power_grid_model_io.converters.pandapower_converter.logger") as mock_logger:
         converter._create_pgm_input_sources()
@@ -775,7 +792,7 @@ def test_create_pgm_input_sym_loads(mock_init_array: MagicMock, two_pp_objs, con
     mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=CT.sym_load, shape=3 * 2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call("load", "bus", expected_type="u4")
+    converter._get_pp_attr.assert_any_call("load", PpTable.bus, expected_type="u4")
     converter._get_pp_attr.assert_any_call("load", "p_mw", expected_type="f8", default=0.0)
     converter._get_pp_attr.assert_any_call("load", "q_mvar", expected_type="f8", default=0.0)
     converter._get_pp_attr.assert_any_call("load", "scaling", expected_type="f8", default=1)
@@ -804,7 +821,7 @@ def test_create_pgm_input_sym_loads(mock_init_array: MagicMock, two_pp_objs, con
 
 def test_create_pgm_input_sym_loads__bad_input():
     converter = PandaPowerConverter()
-    converter.pp_input_data["load"] = pd.DataFrame(data={"bus": [101]}, index=[201])
+    converter.pp_input_data["load"] = pd.DataFrame(data={PpTable.bus: [101]}, index=[201])
     converter.pgm_input_data[CT.sym_load] = initialize_array(DatasetType.input, CT.sym_load, 1)
 
     with pytest.raises(ValueError, match="Symmetrical Load component already exists in pgm_input_data"):
@@ -814,7 +831,7 @@ def test_create_pgm_input_sym_loads__bad_input():
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_asym_loads(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
-    converter.pp_input_data["asymmetric_load"] = two_pp_objs
+    converter.pp_input_data[PpTable.asymmetric_load] = two_pp_objs
 
     # Act
     converter._create_pgm_input_asym_loads()
@@ -822,29 +839,37 @@ def test_create_pgm_input_asym_loads(mock_init_array: MagicMock, two_pp_objs, co
     # Assert
 
     # administration:
-    converter._generate_ids.assert_called_once_with("asymmetric_load", two_pp_objs.index)
+    converter._generate_ids.assert_called_once_with(PpTable.asymmetric_load, two_pp_objs.index)
 
     # initialization
     mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=CT.asym_load, shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call("asymmetric_load", "bus", expected_type="u4")
-    converter._get_pp_attr.assert_any_call("asymmetric_load", "p_a_mw", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("asymmetric_load", "p_b_mw", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("asymmetric_load", "p_c_mw", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("asymmetric_load", "q_a_mvar", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("asymmetric_load", "q_b_mvar", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("asymmetric_load", "q_c_mvar", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("asymmetric_load", "scaling", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("asymmetric_load", "in_service", expected_type="bool", default=True)
-    converter._get_pp_attr.assert_any_call("asymmetric_load", "type", expected_type="O", default=None)
+    converter._get_pp_attr.assert_any_call(PpTable.asymmetric_load, PpTable.bus, expected_type="u4")
+    converter._get_pp_attr.assert_any_call(PpTable.asymmetric_load, "p_a_mw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.asymmetric_load, "p_b_mw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.asymmetric_load, "p_c_mw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.asymmetric_load, "q_a_mvar", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.asymmetric_load, "q_b_mvar", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.asymmetric_load, "q_c_mvar", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.asymmetric_load, "scaling", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.asymmetric_load, "in_service", expected_type="bool", default=True)
+    converter._get_pp_attr.assert_any_call(PpTable.asymmetric_load, "type", expected_type="O", default=None)
     assert len(converter._get_pp_attr.call_args_list) == 10
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
-    pgm.assert_any_call(AT.id, _generate_ids("asymmetric_load", two_pp_objs.index))
-    pgm.assert_any_call(AT.node, _get_pgm_ids("bus", _get_pp_attr("asymmetric_load", "bus", expected_type="u4")))
-    pgm.assert_any_call(AT.status, _get_pp_attr("asymmetric_load", "in_service", expected_type="bool", default=True))
+    pgm.assert_any_call(AT.id, _generate_ids(PpTable.asymmetric_load, two_pp_objs.index))
+    pgm.assert_any_call(
+        AT.node,
+        _get_pgm_ids(
+            PpTable.bus,
+            _get_pp_attr(PpTable.asymmetric_load, PpTable.bus, expected_type="u4"),
+        ),
+    )
+    pgm.assert_any_call(
+        AT.status, _get_pp_attr(PpTable.asymmetric_load, "in_service", expected_type="bool", default=True)
+    )
     pgm.assert_any_call(AT.p_specified, ANY)
     pgm.assert_any_call(AT.q_specified, ANY)
     assert len(pgm.call_args_list) == 6
@@ -854,7 +879,7 @@ def test_create_pgm_input_asym_loads(mock_init_array: MagicMock, two_pp_objs, co
 
 def test_create_pgm_input_asym_loads__bad_input():
     converter = PandaPowerConverter()
-    converter.pp_input_data["asymmetric_load"] = pd.DataFrame(data={"bus": [101]}, index=[201])
+    converter.pp_input_data[PpTable.asymmetric_load] = pd.DataFrame(data={PpTable.bus: [101]}, index=[201])
     converter.pgm_input_data[CT.asym_load] = initialize_array(DatasetType.input, CT.asym_load, 1)
 
     with pytest.raises(ValueError, match="Asymmetric Load component already exists in pgm_input_data"):
@@ -916,7 +941,7 @@ def test_create_pgm_input_transformers__tap_dependent_impedance() -> None:
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_shunts(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
-    converter.pp_input_data["shunt"] = two_pp_objs
+    converter.pp_input_data[PpTable.shunt] = two_pp_objs
 
     # Act
     converter._create_pgm_input_shunts()
@@ -930,33 +955,35 @@ def test_create_pgm_input_shunts(mock_init_array: MagicMock, two_pp_objs, conver
     mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=CT.shunt, shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call("shunt", "bus", expected_type="u4")
-    converter._get_pp_attr.assert_any_call("shunt", "p_mw", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("shunt", "q_mvar", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("shunt", "vn_kv", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("shunt", "step", expected_type="u4", default=1)
-    converter._get_pp_attr.assert_any_call("shunt", "in_service", expected_type="bool", default=True)
+    converter._get_pp_attr.assert_any_call(PpTable.shunt, PpTable.bus, expected_type="u4")
+    converter._get_pp_attr.assert_any_call(PpTable.shunt, "p_mw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.shunt, "q_mvar", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.shunt, "vn_kv", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.shunt, "step", expected_type="u4", default=1)
+    converter._get_pp_attr.assert_any_call(PpTable.shunt, "in_service", expected_type="bool", default=True)
 
     assert len(converter._get_pp_attr.call_args_list) == 6
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
-    pgm.assert_any_call(AT.id, _generate_ids("shunt", two_pp_objs.index))
-    pgm.assert_any_call(AT.node, _get_pgm_ids("bus", _get_pp_attr("shunt", "bus", expected_type="u4")))
-    pgm.assert_any_call(AT.status, _get_pp_attr("shunt", "in_service", expected_type="bool", default=True))
+    pgm.assert_any_call(AT.id, _generate_ids(PpTable.shunt, two_pp_objs.index))
+    pgm.assert_any_call(
+        AT.node, _get_pgm_ids(PpTable.bus, _get_pp_attr(PpTable.shunt, PpTable.bus, expected_type="u4"))
+    )
+    pgm.assert_any_call(AT.status, _get_pp_attr(PpTable.shunt, "in_service", expected_type="bool", default=True))
     pgm.assert_any_call(
         AT.g1,
-        _get_pp_attr("shunt", "p_mw", expected_type="f8")
-        * _get_pp_attr("shunt", "step", expected_type="u4", default=1)
-        / _get_pp_attr("shunt", "vn_kv", expected_type="f8")
-        / _get_pp_attr("shunt", "vn_kv", expected_type="f8"),
+        _get_pp_attr(PpTable.shunt, "p_mw", expected_type="f8")
+        * _get_pp_attr(PpTable.shunt, "step", expected_type="u4", default=1)
+        / _get_pp_attr(PpTable.shunt, "vn_kv", expected_type="f8")
+        / _get_pp_attr(PpTable.shunt, "vn_kv", expected_type="f8"),
     )
     pgm.assert_any_call(
         AT.b1,
-        -_get_pp_attr("shunt", "q_mvar", expected_type="f8")
-        * _get_pp_attr("shunt", "step", expected_type="u4", default=1)
-        / _get_pp_attr("shunt", "vn_kv", expected_type="f8")
-        / _get_pp_attr("shunt", "vn_kv", expected_type="f8"),
+        -_get_pp_attr(PpTable.shunt, "q_mvar", expected_type="f8")
+        * _get_pp_attr(PpTable.shunt, "step", expected_type="u4", default=1)
+        / _get_pp_attr(PpTable.shunt, "vn_kv", expected_type="f8")
+        / _get_pp_attr(PpTable.shunt, "vn_kv", expected_type="f8"),
     )
     pgm.assert_any_call(AT.g0, ANY)
     pgm.assert_any_call(AT.b0, ANY)
@@ -969,7 +996,7 @@ def test_create_pgm_input_shunts(mock_init_array: MagicMock, two_pp_objs, conver
 
 def test_create_pgm_input_shunts__bad_input():
     converter = PandaPowerConverter()
-    converter.pp_input_data["shunt"] = pd.DataFrame(data={"bus": [101]}, index=[201])
+    converter.pp_input_data[PpTable.shunt] = pd.DataFrame(data={PpTable.bus: [101]}, index=[201])
     converter.pgm_input_data[CT.shunt] = initialize_array(DatasetType.input, CT.shunt, 1)
 
     with pytest.raises(ValueError, match="Shunt component already exists in pgm_input_data"):
@@ -987,56 +1014,62 @@ def test_create_pgm_input_shunts__bad_input():
 @patch("power_grid_model_io.converters.pandapower_converter.np.isnan", new=lambda x: x)
 def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, converter):  # noqa: PLR0915
     # Arrange
-    converter.pp_input_data["trafo"] = two_pp_objs
+    converter.pp_input_data[PpTable.trafo] = two_pp_objs
 
     # Act
     converter._create_pgm_input_transformers()
     # Assert
 
     # administration:
-    converter.get_switch_states.assert_called_once_with("trafo")
-    converter._generate_ids.assert_called_once_with("trafo", two_pp_objs.index)
-    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("trafo", "hv_bus", expected_type="u4"))
-    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("trafo", "lv_bus", expected_type="u4"))
+    converter.get_switch_states.assert_called_once_with(PpTable.trafo)
+    converter._generate_ids.assert_called_once_with(PpTable.trafo, two_pp_objs.index)
+    converter._get_pgm_ids.assert_any_call(PpTable.bus, _get_pp_attr(PpTable.trafo, "hv_bus", expected_type="u4"))
+    converter._get_pgm_ids.assert_any_call(PpTable.bus, _get_pp_attr(PpTable.trafo, "lv_bus", expected_type="u4"))
     converter._get_tap_size.assert_called_once_with(two_pp_objs)
     converter._get_transformer_tap_side.assert_called_once_with(
-        _get_pp_attr("trafo", "tap_side", expected_type="O", default=None)
+        _get_pp_attr(PpTable.trafo, "tap_side", expected_type="O", default=None)
     )
 
     # initialization
     mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=CT.transformer, shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call("trafo", "hv_bus", expected_type="u4")
-    converter._get_pp_attr.assert_any_call("trafo", "lv_bus", expected_type="u4")
-    converter._get_pp_attr.assert_any_call("trafo", "sn_mva", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("trafo", "vn_hv_kv", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("trafo", "vn_lv_kv", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("trafo", "vk_percent", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("trafo", "vkr_percent", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("trafo", "pfe_kw", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("trafo", "i0_percent", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("trafo", "shift_degree", expected_type="f8", default=0.0)
-    converter._get_pp_attr.assert_any_call("trafo", "tap_side", expected_type="O", default=None)
-    converter._get_pp_attr.assert_any_call("trafo", "tap_neutral", expected_type="f8", default=np.nan)
-    converter._get_pp_attr.assert_any_call("trafo", "tap_min", expected_type="i4", default=0)
-    converter._get_pp_attr.assert_any_call("trafo", "tap_max", expected_type="i4", default=0)
-    converter._get_pp_attr.assert_any_call("trafo", "tap_pos", expected_type="f8", default=np.nan)
-    converter._get_pp_attr.assert_any_call("trafo", "parallel", expected_type="u4", default=1)
-    converter._get_pp_attr.assert_any_call("trafo", "in_service", expected_type="bool", default=True)
-    converter._get_pp_attr.assert_any_call("trafo", "vk0_percent", expected_type="f8", default=np.nan)
-    converter._get_pp_attr.assert_any_call("trafo", "vkr0_percent", expected_type="f8", default=np.nan)
-    converter._get_pp_attr.assert_any_call("trafo", "mag0_percent", expected_type="f8", default=np.nan)
-    converter._get_pp_attr.assert_any_call("trafo", "mag0_rx", expected_type="f8", default=np.nan)
-    converter._get_pp_attr.assert_any_call("trafo", "si0_hv_partial", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo, "hv_bus", expected_type="u4")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo, "lv_bus", expected_type="u4")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo, "sn_mva", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo, "vn_hv_kv", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo, "vn_lv_kv", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo, "vk_percent", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo, "vkr_percent", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo, "pfe_kw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo, "i0_percent", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo, "shift_degree", expected_type="f8", default=0.0)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo, "tap_side", expected_type="O", default=None)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo, "tap_neutral", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo, "tap_min", expected_type="i4", default=0)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo, "tap_max", expected_type="i4", default=0)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo, "tap_pos", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo, "parallel", expected_type="u4", default=1)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo, "in_service", expected_type="bool", default=True)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo, "vk0_percent", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo, "vkr0_percent", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo, "mag0_percent", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo, "mag0_rx", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo, "si0_hv_partial", expected_type="f8", default=np.nan)
     # converter._get_pp_attr.assert_any_call('trafo', 'df', expected_type='f8')  #TODO add df in output conversions
     assert len(converter._get_pp_attr.call_args_list) == 22
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
-    pgm.assert_any_call(AT.id, _generate_ids("trafo", two_pp_objs.index))
-    pgm.assert_any_call(AT.from_node, _get_pgm_ids("bus", _get_pp_attr("trafo", "hv_bus", expected_type="u4")))
-    pgm.assert_any_call(AT.to_node, _get_pgm_ids("bus", _get_pp_attr("trafo", "lv_bus", expected_type="u4")))
+    pgm.assert_any_call(AT.id, _generate_ids(PpTable.trafo, two_pp_objs.index))
+    pgm.assert_any_call(
+        AT.from_node,
+        _get_pgm_ids(PpTable.bus, _get_pp_attr(PpTable.trafo, "hv_bus", expected_type="u4")),
+    )
+    pgm.assert_any_call(
+        AT.to_node,
+        _get_pgm_ids(PpTable.bus, _get_pp_attr(PpTable.trafo, "lv_bus", expected_type="u4")),
+    )
     pgm.assert_any_call(AT.from_status, ANY)
     pgm.assert_any_call(AT.to_status, ANY)
     pgm.assert_any_call(AT.u1, ANY)
@@ -1064,7 +1097,7 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
 
 def test_create_pgm_input_transformers__bad_input():
     converter = PandaPowerConverter()
-    converter.pp_input_data["trafo"] = pd.DataFrame(data={"hv_bus": [101], "lv_bus": [102]}, index=[201])
+    converter.pp_input_data[PpTable.trafo] = pd.DataFrame(data={"hv_bus": [101], "lv_bus": [102]}, index=[201])
     converter.pgm_input_data[CT.transformer] = initialize_array(DatasetType.input, CT.transformer, 1)
 
     with pytest.raises(ValueError, match="Transformer component already exists in pgm_input_data"):
@@ -1114,7 +1147,7 @@ def test_create_pgm_input_transformers__default() -> None:
         tap_pos_trafo = pp.create_transformer_from_parameters(
             pp_net, *args, tap_neutral=12.0, tap_size=1, tap_side="hv"
         )
-        pp_net["trafo"].loc[tap_pos_trafo, "tap_pos"] = np.nan
+        pp_net[PpTable.trafo].loc[tap_pos_trafo, "tap_pos"] = np.nan
         pp.create_transformer_from_parameters(pp_net, *args, tap_neutral=np.nan, tap_pos=34.0, tap_side="hv")
         pp.create_transformer_from_parameters(
             pp_net, *args, tap_neutral=12, tap_step_percent=np.nan, tap_pos=34.0, tap_side="hv"
@@ -1156,7 +1189,7 @@ def test_create_pgm_input_transformers__default() -> None:
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_sym_gens(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
-    converter.pp_input_data["sgen"] = two_pp_objs
+    converter.pp_input_data[PpTable.sgen] = two_pp_objs
 
     # Act
     converter._create_pgm_input_sym_gens()
@@ -1164,35 +1197,38 @@ def test_create_pgm_input_sym_gens(mock_init_array: MagicMock, two_pp_objs, conv
     # Assert
 
     # administration:
-    converter._generate_ids.assert_called_once_with("sgen", two_pp_objs.index)
+    converter._generate_ids.assert_called_once_with(PpTable.sgen, two_pp_objs.index)
 
     # initialization
     mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=CT.sym_gen, shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call("sgen", "bus", expected_type="i8")
-    converter._get_pp_attr.assert_any_call("sgen", "p_mw", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("sgen", "q_mvar", expected_type="f8", default=0.0)
-    converter._get_pp_attr.assert_any_call("sgen", "scaling", expected_type="f8", default=1.0)
-    converter._get_pp_attr.assert_any_call("sgen", "in_service", expected_type="bool", default=True)
+    converter._get_pp_attr.assert_any_call(PpTable.sgen, PpTable.bus, expected_type="i8")
+    converter._get_pp_attr.assert_any_call(PpTable.sgen, "p_mw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.sgen, "q_mvar", expected_type="f8", default=0.0)
+    converter._get_pp_attr.assert_any_call(PpTable.sgen, "scaling", expected_type="f8", default=1.0)
+    converter._get_pp_attr.assert_any_call(PpTable.sgen, "in_service", expected_type="bool", default=True)
     assert len(converter._get_pp_attr.call_args_list) == 5
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
-    pgm.assert_any_call(AT.id, _generate_ids("sgen", two_pp_objs.index))
-    pgm.assert_any_call(AT.node, _get_pgm_ids("bus", _get_pp_attr("sgen", "bus", expected_type="i8")))
-    pgm.assert_any_call(AT.status, _get_pp_attr("sgen", "in_service", expected_type="bool", default=True))
+    pgm.assert_any_call(AT.id, _generate_ids(PpTable.sgen, two_pp_objs.index))
+    pgm.assert_any_call(
+        AT.node,
+        _get_pgm_ids(PpTable.bus, _get_pp_attr(PpTable.sgen, PpTable.bus, expected_type="i8")),
+    )
+    pgm.assert_any_call(AT.status, _get_pp_attr(PpTable.sgen, "in_service", expected_type="bool", default=True))
     pgm.assert_any_call(AT.type, LoadGenType.const_power)
     pgm.assert_any_call(
         AT.p_specified,
-        _get_pp_attr("sgen", "p_mw", expected_type="f8")
-        * _get_pp_attr("sgen", "scaling", expected_type="f8", default=1.0)
+        _get_pp_attr(PpTable.sgen, "p_mw", expected_type="f8")
+        * _get_pp_attr(PpTable.sgen, "scaling", expected_type="f8", default=1.0)
         * 1e6,
     )
     pgm.assert_any_call(
         AT.q_specified,
-        _get_pp_attr("sgen", "q_mvar", expected_type="f8", default=0.0)
-        * _get_pp_attr("sgen", "scaling", expected_type="f8", default=1.0)
+        _get_pp_attr(PpTable.sgen, "q_mvar", expected_type="f8", default=0.0)
+        * _get_pp_attr(PpTable.sgen, "scaling", expected_type="f8", default=1.0)
         * 1e6,
     )
     assert len(pgm.call_args_list) == 6
@@ -1203,7 +1239,7 @@ def test_create_pgm_input_sym_gens(mock_init_array: MagicMock, two_pp_objs, conv
 
 def test_create_pgm_input_sym_gens__bad_input():
     converter = PandaPowerConverter()
-    converter.pp_input_data["sgen"] = pd.DataFrame(data={"bus": [101]}, index=[201])
+    converter.pp_input_data[PpTable.sgen] = pd.DataFrame(data={PpTable.bus: [101]}, index=[201])
     converter.pgm_input_data[CT.sym_gen] = initialize_array(DatasetType.input, CT.sym_gen, 1)
 
     with pytest.raises(ValueError, match="Symmetric generator component already exists in pgm_input_data"):
@@ -1259,7 +1295,7 @@ def test_create_pgm_input_transformers__warnings(kwargs) -> None:
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_asym_gens(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
-    converter.pp_input_data["asymmetric_sgen"] = two_pp_objs
+    converter.pp_input_data[PpTable.asymmetric_sgen] = two_pp_objs
 
     # Act
     converter._create_pgm_input_asym_gens()
@@ -1267,28 +1303,36 @@ def test_create_pgm_input_asym_gens(mock_init_array: MagicMock, two_pp_objs, con
     # Assert
 
     # administration:
-    converter._generate_ids.assert_called_once_with("asymmetric_sgen", two_pp_objs.index)
+    converter._generate_ids.assert_called_once_with(PpTable.asymmetric_sgen, two_pp_objs.index)
 
     # initialization
     mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=CT.asym_gen, shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call("asymmetric_sgen", "bus", expected_type="i8")
-    converter._get_pp_attr.assert_any_call("asymmetric_sgen", "p_a_mw", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("asymmetric_sgen", "p_b_mw", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("asymmetric_sgen", "p_c_mw", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("asymmetric_sgen", "q_a_mvar", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("asymmetric_sgen", "q_b_mvar", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("asymmetric_sgen", "q_c_mvar", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("asymmetric_sgen", "scaling", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("asymmetric_sgen", "in_service", expected_type="bool", default=True)
+    converter._get_pp_attr.assert_any_call(PpTable.asymmetric_sgen, PpTable.bus, expected_type="i8")
+    converter._get_pp_attr.assert_any_call(PpTable.asymmetric_sgen, "p_a_mw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.asymmetric_sgen, "p_b_mw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.asymmetric_sgen, "p_c_mw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.asymmetric_sgen, "q_a_mvar", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.asymmetric_sgen, "q_b_mvar", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.asymmetric_sgen, "q_c_mvar", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.asymmetric_sgen, "scaling", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.asymmetric_sgen, "in_service", expected_type="bool", default=True)
     assert len(converter._get_pp_attr.call_args_list) == 9
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
-    pgm.assert_any_call(AT.id, _generate_ids("asymmetric_sgen", two_pp_objs.index))
-    pgm.assert_any_call(AT.node, _get_pgm_ids("bus", _get_pp_attr("asymmetric_sgen", "bus", expected_type="i8")))
-    pgm.assert_any_call(AT.status, _get_pp_attr("asymmetric_sgen", "in_service", expected_type="bool", default=True))
+    pgm.assert_any_call(AT.id, _generate_ids(PpTable.asymmetric_sgen, two_pp_objs.index))
+    pgm.assert_any_call(
+        AT.node,
+        _get_pgm_ids(
+            PpTable.bus,
+            _get_pp_attr(PpTable.asymmetric_sgen, PpTable.bus, expected_type="i8"),
+        ),
+    )
+    pgm.assert_any_call(
+        AT.status, _get_pp_attr(PpTable.asymmetric_sgen, "in_service", expected_type="bool", default=True)
+    )
     pgm.assert_any_call(AT.p_specified, ANY)
     pgm.assert_any_call(AT.q_specified, ANY)
     pgm.assert_any_call(AT.type, LoadGenType.const_power)
@@ -1300,7 +1344,7 @@ def test_create_pgm_input_asym_gens(mock_init_array: MagicMock, two_pp_objs, con
 
 def test_create_pgm_input_asym_gens__bad_input():
     converter = PandaPowerConverter()
-    converter.pp_input_data["asymmetric_sgen"] = pd.DataFrame(data={"bus": [101]}, index=[201])
+    converter.pp_input_data[PpTable.asymmetric_sgen] = pd.DataFrame(data={PpTable.bus: [101]}, index=[201])
     converter.pgm_input_data[CT.asym_gen] = initialize_array(DatasetType.input, CT.asym_gen, 1)
 
     with pytest.raises(ValueError, match="Asymmetric generator component already exists in pgm_input_data"):
@@ -1311,7 +1355,7 @@ def test_create_pgm_input_asym_gens__bad_input():
 @patch("power_grid_model_io.converters.pandapower_converter.np.round", new=lambda x: x)
 def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock, two_pp_objs, converter):  # noqa: PLR0915
     # Arrange
-    converter.pp_input_data["trafo3w"] = two_pp_objs
+    converter.pp_input_data[PpTable.trafo3w] = two_pp_objs
 
     # Act
     converter._create_pgm_input_three_winding_transformers()
@@ -1320,13 +1364,13 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
 
     # administration:
     converter.get_trafo3w_switch_states.assert_called_once_with(two_pp_objs)
-    converter._generate_ids.assert_called_once_with("trafo3w", two_pp_objs.index)
-    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("trafo3w", "hv_bus", expected_type="u4"))
-    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("trafo3w", "mv_bus", expected_type="u4"))
-    converter._get_pgm_ids.assert_any_call("bus", _get_pp_attr("trafo3w", "lv_bus", expected_type="u4"))
+    converter._generate_ids.assert_called_once_with(PpTable.trafo3w, two_pp_objs.index)
+    converter._get_pgm_ids.assert_any_call(PpTable.bus, _get_pp_attr(PpTable.trafo3w, "hv_bus", expected_type="u4"))
+    converter._get_pgm_ids.assert_any_call(PpTable.bus, _get_pp_attr(PpTable.trafo3w, "mv_bus", expected_type="u4"))
+    converter._get_pgm_ids.assert_any_call(PpTable.bus, _get_pp_attr(PpTable.trafo3w, "lv_bus", expected_type="u4"))
     converter._get_3wtransformer_tap_size.assert_called_once_with(two_pp_objs)
     converter._get_3wtransformer_tap_side.assert_called_once_with(
-        _get_pp_attr("trafo3w", "tap_side", expected_type="O", default=None)
+        _get_pp_attr(PpTable.trafo3w, "tap_side", expected_type="O", default=None)
     )
 
     # initialization
@@ -1335,45 +1379,54 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
     )
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call("trafo3w", "hv_bus", expected_type="u4")
-    converter._get_pp_attr.assert_any_call("trafo3w", "mv_bus", expected_type="u4")
-    converter._get_pp_attr.assert_any_call("trafo3w", "lv_bus", expected_type="u4")
-    converter._get_pp_attr.assert_any_call("trafo3w", "vn_hv_kv", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("trafo3w", "vn_mv_kv", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("trafo3w", "vn_lv_kv", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("trafo3w", "sn_hv_mva", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("trafo3w", "sn_mv_mva", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("trafo3w", "sn_lv_mva", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("trafo3w", "vk_hv_percent", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("trafo3w", "vk_mv_percent", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("trafo3w", "vk_lv_percent", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("trafo3w", "vkr_hv_percent", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("trafo3w", "vkr_mv_percent", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("trafo3w", "vkr_lv_percent", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("trafo3w", "pfe_kw", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("trafo3w", "i0_percent", expected_type="f8")
-    converter._get_pp_attr.assert_any_call("trafo3w", "shift_mv_degree", expected_type="f8", default=0.0)
-    converter._get_pp_attr.assert_any_call("trafo3w", "shift_lv_degree", expected_type="f8", default=0.0)
-    converter._get_pp_attr.assert_any_call("trafo3w", "tap_side", expected_type="O", default=None)
-    converter._get_pp_attr.assert_any_call("trafo3w", "tap_neutral", expected_type="f8", default=np.nan)
-    converter._get_pp_attr.assert_any_call("trafo3w", "tap_min", expected_type="i4", default=0)
-    converter._get_pp_attr.assert_any_call("trafo3w", "tap_max", expected_type="i4", default=0)
-    converter._get_pp_attr.assert_any_call("trafo3w", "tap_pos", expected_type="f8", default=np.nan)
-    converter._get_pp_attr.assert_any_call("trafo3w", "in_service", expected_type="bool", default=True)
-    converter._get_pp_attr.assert_any_call("trafo3w", "vk0_hv_percent", expected_type="f8", default=np.nan)
-    converter._get_pp_attr.assert_any_call("trafo3w", "vkr0_hv_percent", expected_type="f8", default=np.nan)
-    converter._get_pp_attr.assert_any_call("trafo3w", "vk0_mv_percent", expected_type="f8", default=np.nan)
-    converter._get_pp_attr.assert_any_call("trafo3w", "vkr0_mv_percent", expected_type="f8", default=np.nan)
-    converter._get_pp_attr.assert_any_call("trafo3w", "vk0_lv_percent", expected_type="f8", default=np.nan)
-    converter._get_pp_attr.assert_any_call("trafo3w", "vkr0_lv_percent", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "hv_bus", expected_type="u4")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "mv_bus", expected_type="u4")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "lv_bus", expected_type="u4")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "vn_hv_kv", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "vn_mv_kv", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "vn_lv_kv", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "sn_hv_mva", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "sn_mv_mva", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "sn_lv_mva", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "vk_hv_percent", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "vk_mv_percent", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "vk_lv_percent", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "vkr_hv_percent", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "vkr_mv_percent", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "vkr_lv_percent", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "pfe_kw", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "i0_percent", expected_type="f8")
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "shift_mv_degree", expected_type="f8", default=0.0)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "shift_lv_degree", expected_type="f8", default=0.0)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "tap_side", expected_type="O", default=None)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "tap_neutral", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "tap_min", expected_type="i4", default=0)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "tap_max", expected_type="i4", default=0)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "tap_pos", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "in_service", expected_type="bool", default=True)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "vk0_hv_percent", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "vkr0_hv_percent", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "vk0_mv_percent", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "vkr0_mv_percent", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "vk0_lv_percent", expected_type="f8", default=np.nan)
+    converter._get_pp_attr.assert_any_call(PpTable.trafo3w, "vkr0_lv_percent", expected_type="f8", default=np.nan)
     assert len(converter._get_pp_attr.call_args_list) == 31
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
-    pgm.assert_any_call(AT.id, _generate_ids("trafo3w", two_pp_objs.index))
-    pgm.assert_any_call(AT.node_1, _get_pgm_ids("bus", _get_pp_attr("trafo3w", "hv_bus", expected_type="u4")))
-    pgm.assert_any_call(AT.node_2, _get_pgm_ids("bus", _get_pp_attr("trafo3w", "mv_bus", expected_type="u4")))
-    pgm.assert_any_call(AT.node_3, _get_pgm_ids("bus", _get_pp_attr("trafo3w", "lv_bus", expected_type="u4")))
+    pgm.assert_any_call(AT.id, _generate_ids(PpTable.trafo3w, two_pp_objs.index))
+    pgm.assert_any_call(
+        AT.node_1,
+        _get_pgm_ids(PpTable.bus, _get_pp_attr(PpTable.trafo3w, "hv_bus", expected_type="u4")),
+    )
+    pgm.assert_any_call(
+        AT.node_2,
+        _get_pgm_ids(PpTable.bus, _get_pp_attr(PpTable.trafo3w, "mv_bus", expected_type="u4")),
+    )
+    pgm.assert_any_call(
+        AT.node_3,
+        _get_pgm_ids(PpTable.bus, _get_pp_attr(PpTable.trafo3w, "lv_bus", expected_type="u4")),
+    )
     pgm.assert_any_call(AT.status_1, ANY)
     pgm.assert_any_call(AT.status_2, ANY)
     pgm.assert_any_call(AT.status_3, ANY)
@@ -1410,7 +1463,7 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
 
 def test_create_pgm_input_three_winding_transformers__bad_input():
     converter = PandaPowerConverter()
-    converter.pp_input_data["trafo3w"] = pd.DataFrame(
+    converter.pp_input_data[PpTable.trafo3w] = pd.DataFrame(
         data={"hv_bus": [101], "mv_bus": [102], "lv_bus": [103]}, index=[201]
     )
     converter.pgm_input_data[CT.three_winding_transformer] = initialize_array(
@@ -1513,7 +1566,7 @@ def test_create_pgm_input_transformers3w__default() -> None:
         nan_trafo = pp.create_transformer3w_from_parameters(
             pp_net, *args, tap_neutral=12.0, tap_step_percent=1, tap_pos=np.nan, tap_side="hv"
         )
-        pp_net["trafo3w"].loc[nan_trafo, "tap_pos"] = np.nan
+        pp_net[PpTable.trafo3w].loc[nan_trafo, "tap_pos"] = np.nan
         pp.create_transformer3w_from_parameters(
             pp_net, *args, tap_neutral=12.0, tap_pos=34.0, tap_step_percent=np.nan, tap_side="hv"
         )
@@ -1695,9 +1748,9 @@ def test_create_pgm_input_links(mock_init_array: MagicMock, converter):
     pp_switches = pd.DataFrame(
         [[0, 0, "b", False], [0, 0, "l", False], [0, 0, "b", False]],
         index=[1, 2, 3],
-        columns=["bus", "element", "et", "closed"],
+        columns=[PpTable.bus, "element", "et", "closed"],
     )
-    converter.pp_input_data["switch"] = pp_switches
+    converter.pp_input_data[PpTable.switch] = pp_switches
 
     # Act
     converter._create_pgm_input_links()
@@ -1705,7 +1758,7 @@ def test_create_pgm_input_links(mock_init_array: MagicMock, converter):
     # Assert
 
     # administration:
-    converter._generate_ids.assert_called_once_with("switch", ANY, name="b2b_switches")
+    converter._generate_ids.assert_called_once_with(PpTable.switch, ANY, name="b2b_switches")
     pd.testing.assert_index_equal(converter._generate_ids.call_args_list[0].args[1], pd.Index([1, 3]))
 
     # initialization
@@ -1726,10 +1779,10 @@ def test_create_pgm_input_links(mock_init_array: MagicMock, converter):
 
 def test_create_pgm_input_links__bad_input():
     converter = PandaPowerConverter()
-    converter.pp_input_data["switch"] = pd.DataFrame(
+    converter.pp_input_data[PpTable.switch] = pd.DataFrame(
         [[0, 0, "b", False], [0, 0, "l", False], [0, 0, "b", False]],
         index=[1, 2, 3],
-        columns=["bus", "element", "et", "closed"],
+        columns=[PpTable.bus, "element", "et", "closed"],
     )
     converter.pgm_input_data[CT.link] = initialize_array(DatasetType.input, CT.link, 1)
 
@@ -1740,7 +1793,7 @@ def test_create_pgm_input_links__bad_input():
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_storage(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
-    converter.pp_input_data["storage"] = two_pp_objs
+    converter.pp_input_data[PpTable.storage] = two_pp_objs
 
     # Act / Assert
     with pytest.raises(NotImplementedError, match=r"Storage.*not implemented"):
@@ -1785,7 +1838,7 @@ def test_create_pgm_input_wards(mock_init_array: MagicMock, two_pp_objs, convert
     mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=CT.sym_load, shape=2 * 2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call("ward", "bus", expected_type="u4")
+    converter._get_pp_attr.assert_any_call("ward", PpTable.bus, expected_type="u4")
     converter._get_pp_attr.assert_any_call("ward", "ps_mw", expected_type="f8")
     converter._get_pp_attr.assert_any_call("ward", "qs_mvar", expected_type="f8")
     converter._get_pp_attr.assert_any_call("ward", "pz_mw", expected_type="f8")
@@ -1826,7 +1879,7 @@ def test_create_pgm_input_wards__existing_loads() -> None:
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_xward(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
-    converter.pp_input_data["xward"] = two_pp_objs
+    converter.pp_input_data[PpTable.xward] = two_pp_objs
 
     # Act / Assert
     with pytest.raises(NotImplementedError, match=r"Extended Ward.*not implemented"):
@@ -1852,7 +1905,7 @@ def test_create_pgm_input_generators(mock_init_array: MagicMock, two_pp_objs, co
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_dclines(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
-    converter.pp_input_data["dcline"] = two_pp_objs
+    converter.pp_input_data[PpTable.dcline] = two_pp_objs
 
     # Act / Assert
     with pytest.raises(NotImplementedError, match=r"DC line .*not implemented"):
@@ -1882,7 +1935,7 @@ def test_create_pgm_input_motors(mock_init_array: MagicMock, two_pp_objs, conver
     mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=CT.sym_load, shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call("motor", "bus", expected_type="i8")
+    converter._get_pp_attr.assert_any_call("motor", PpTable.bus, expected_type="i8")
     converter._get_pp_attr.assert_any_call("motor", "pn_mech_mw", expected_type="f8")
     converter._get_pp_attr.assert_any_call("motor", "cos_phi", expected_type="f8")
     converter._get_pp_attr.assert_any_call("motor", "efficiency_percent", expected_type="f8")
@@ -1985,14 +2038,14 @@ def test_get_pgm_ids():
     # Arrange
     converter = PandaPowerConverter()
     converter.idx = {
-        ("bus", None): pd.Series([10, 11, 12], index=[0, 1, 2]),
+        (PpTable.bus, None): pd.Series([10, 11, 12], index=[0, 1, 2]),
         ("load", "const_current"): pd.Series([13, 14], index=[3, 4]),
     }
 
     # Act
-    bus_ids = converter._get_pgm_ids(pp_table="bus", pp_idx=pd.Series([2, 1]))
+    bus_ids = converter._get_pgm_ids(pp_table=PpTable.bus, pp_idx=pd.Series([2, 1]))
     load_ids = converter._get_pgm_ids(pp_table="load", name="const_current", pp_idx=pd.Series([3]))
-    all_bus_ids = converter._get_pgm_ids(pp_table="bus")
+    all_bus_ids = converter._get_pgm_ids(pp_table=PpTable.bus)
 
     # Assert
     pd.testing.assert_series_equal(bus_ids, pd.Series([12, 11], index=[2, 1]))
@@ -2006,21 +2059,21 @@ def test_get_pgm_ids__key_error():
 
     # Act / Assert
     with pytest.raises(KeyError, match=r"index.*bus"):
-        converter._get_pgm_ids(pp_table="bus")
+        converter._get_pgm_ids(pp_table=PpTable.bus)
 
 
 def test_get_pp_ids():
     # Arrange
     converter = PandaPowerConverter()
     converter.idx_lookup = {
-        ("bus", None): pd.Series([0, 1, 2], index=[10, 11, 12]),
+        (PpTable.bus, None): pd.Series([0, 1, 2], index=[10, 11, 12]),
         ("load", "const_current"): pd.Series([3, 4], index=[13, 14]),
     }
 
     # Act
-    bus_ids = converter._get_pp_ids(pp_table="bus", pgm_idx=pd.Series([12, 11]))
+    bus_ids = converter._get_pp_ids(pp_table=PpTable.bus, pgm_idx=pd.Series([12, 11]))
     load_ids = converter._get_pp_ids(pp_table="load", name="const_current", pgm_idx=pd.Series([13]))
-    all_bus_ids = converter._get_pp_ids(pp_table="bus")
+    all_bus_ids = converter._get_pp_ids(pp_table=PpTable.bus)
 
     # Assert
     pd.testing.assert_series_equal(bus_ids, pd.Series([2, 1], index=[12, 11]))
@@ -2034,7 +2087,7 @@ def test_get_pp_ids__key_error():
 
     # Act / Assert
     with pytest.raises(KeyError, match=r"index.*bus"):
-        converter._get_pp_ids(pp_table="bus")
+        converter._get_pp_ids(pp_table=PpTable.bus)
 
 
 def test_get_tap_size():
@@ -2096,7 +2149,7 @@ def test_get_trafo_winding_types__vector_group(mock_get_winding: MagicMock):
     # Arrange
     converter = PandaPowerConverter()
     converter.pp_input_data = {
-        "trafo": pd.DataFrame([(1, "Dyn"), (2, "YNd"), (3, "Dyn")], columns=["id", "vector_group"])
+        PpTable.trafo: pd.DataFrame([(1, "Dyn"), (2, "YNd"), (3, "Dyn")], columns=["id", "vector_group"])
     }
     mock_get_winding.side_effect = [WindingType.delta, WindingType.wye_n, WindingType.wye_n, WindingType.delta]
     expected = pd.DataFrame([(2, 1), (1, 2), (2, 1)], columns=["winding_from", "winding_to"])
@@ -2116,7 +2169,7 @@ def test_get_trafo_winding_types__vector_group(mock_get_winding: MagicMock):
 def test_get_trafo_winding_types__vector_group_missing():
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_input_data = {"trafo": pd.DataFrame([1, 2, 3], columns=["id"])}
+    converter.pp_input_data = {PpTable.trafo: pd.DataFrame([1, 2, 3], columns=["id"])}
     expected = pd.DataFrame(np.full((3, 2), np.nan), columns=["winding_from", "winding_to"])
 
     # Act
@@ -2131,7 +2184,7 @@ def test_get_trafo3w_winding_types__vector_group(mock_get_winding: MagicMock):
     # Arrange
     converter = PandaPowerConverter()
     converter.pp_input_data = {
-        "trafo3w": pd.DataFrame([(1, "Dynz"), (2, "YNdy"), (3, "Dyny")], columns=["id", "vector_group"])
+        PpTable.trafo3w: pd.DataFrame([(1, "Dynz"), (2, "YNdy"), (3, "Dyny")], columns=["id", "vector_group"])
     }
     mock_get_winding.side_effect = [
         WindingType.delta,
@@ -2167,7 +2220,7 @@ def test_get_trafo3w_winding_types__vector_group(mock_get_winding: MagicMock):
 def test_get_trafo3w_winding_types__vector_group_missing():
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_input_data = {"trafo3w": pd.DataFrame([1, 2, 3], columns=["id"])}
+    converter.pp_input_data = {PpTable.trafo3w: pd.DataFrame([1, 2, 3], columns=["id"])}
     expected = pd.DataFrame(np.full((3, 3), np.nan), columns=["winding_1", "winding_2", "winding_3"])
 
     # Act
@@ -2180,7 +2233,7 @@ def test_get_trafo3w_winding_types__vector_group_missing():
 def test_get_winding_types__value_error():
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_input_data = {"trafo": pd.DataFrame([(1, "ADyn")], columns=["id", "vector_group"])}
+    converter.pp_input_data = {PpTable.trafo: pd.DataFrame([(1, "ADyn")], columns=["id", "vector_group"])}
 
     # Act / Assert
     with pytest.raises(ValueError, match=r"Invalid transformer connection string: 'ADyn'"):
@@ -2190,7 +2243,7 @@ def test_get_winding_types__value_error():
 def test_get_trafo3w_winding_types__value_error():
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_input_data = {"trafo3w": pd.DataFrame([(1, "ADyndrr")], columns=["id", "vector_group"])}
+    converter.pp_input_data = {PpTable.trafo3w: pd.DataFrame([(1, "ADyndrr")], columns=["id", "vector_group"])}
 
     # Act / Assert
     with pytest.raises(ValueError, match=r"Invalid three winding transformer connection string: 'ADyndrr'"):
@@ -2204,7 +2257,7 @@ def test_get_individual_switch_states():
         data=[[1, 101], [2, 102], [3, 103]],
     )
     pp_switches = pd.DataFrame(
-        columns=["element", "bus", "closed"],
+        columns=["element", PpTable.bus, "closed"],
         data=[[1, 101, False], [2, 202, False], [3, 103, True]],
     )
 
@@ -2234,9 +2287,9 @@ def test_get_switch_states_lines(mock_get_individual_switch_states: MagicMock):
     # Arrange
     converter = PandaPowerConverter()
     converter.pp_input_data = {
-        "line": pd.DataFrame(columns=["from_bus", "to_bus"], data=[[101, 102]], index=[1]),
-        "switch": pd.DataFrame(
-            columns=["bus", "et", "element", "closed"],
+        PpTable.line: pd.DataFrame(columns=["from_bus", "to_bus"], data=[[101, 102]], index=[1]),
+        PpTable.switch: pd.DataFrame(
+            columns=[PpTable.bus, "et", "element", "closed"],
             data=[[101, "l", 1, False], [102, "x", 1, False]],
             index=[1001, 1002],
         ),
@@ -2262,7 +2315,7 @@ def test_get_switch_states_lines(mock_get_individual_switch_states: MagicMock):
     )
     pd.testing.assert_frame_equal(
         mock_get_individual_switch_states.call_args_list[0].args[1],
-        pd.DataFrame(columns=["element", "bus", "closed"], data=[[1, 101, False]], index=[1001]),
+        pd.DataFrame(columns=["element", PpTable.bus, "closed"], data=[[1, 101, False]], index=[1001]),
     )
 
     assert mock_get_individual_switch_states.call_args_list[1] == call(ANY, ANY, "to_bus")
@@ -2272,7 +2325,7 @@ def test_get_switch_states_lines(mock_get_individual_switch_states: MagicMock):
     )
     pd.testing.assert_frame_equal(
         mock_get_individual_switch_states.call_args_list[1].args[1],
-        pd.DataFrame(columns=["element", "bus", "closed"], data=[[1, 101, False]], index=[1001]),
+        pd.DataFrame(columns=["element", PpTable.bus, "closed"], data=[[1, 101, False]], index=[1001]),
     )
 
 
@@ -2281,10 +2334,10 @@ def test_get_switch_states_trafos(mock_get_individual_switch_states: MagicMock):
     # Arrange
     converter = PandaPowerConverter()
     converter.pp_input_data = {
-        "trafo": pd.DataFrame([[2, 32, 31]], columns=["index", "hv_bus", "lv_bus"]),
-        "switch": pd.DataFrame(
+        PpTable.trafo: pd.DataFrame([[2, 32, 31]], columns=["index", "hv_bus", "lv_bus"]),
+        PpTable.switch: pd.DataFrame(
             [[101, 32, "t", 2, True], [321, 31, "t", 2, False]],
-            columns=["index", "bus", "et", "element", "closed"],
+            columns=["index", PpTable.bus, "et", "element", "closed"],
         ),
     }
     mock_get_individual_switch_states.side_effect = [
@@ -2295,7 +2348,7 @@ def test_get_switch_states_trafos(mock_get_individual_switch_states: MagicMock):
     expected = pd.DataFrame(columns=["from", "to"], index=[2], data=[[False, True]])
 
     # Act
-    actual = converter.get_switch_states("trafo")
+    actual = converter.get_switch_states(PpTable.trafo)
 
     # Assert
     pd.testing.assert_frame_equal(actual, expected)
@@ -2316,10 +2369,10 @@ def test_get_trafo3w_switch_states(mock_get_individual_switch_states: MagicMock)
     # Arrange
     converter = PandaPowerConverter()
     converter.pp_input_data = {
-        "trafo3w": pd.DataFrame([[2, 32, 31, 315]], columns=["index", "hv_bus", "mv_bus", "lv_bus"]),
-        "switch": pd.DataFrame(
+        PpTable.trafo3w: pd.DataFrame([[2, 32, 31, 315]], columns=["index", "hv_bus", "mv_bus", "lv_bus"]),
+        PpTable.switch: pd.DataFrame(
             [[101, 315, "t3", 2, False], [321, 32, "t3", 2, False]],
-            columns=["index", "bus", "et", "element", "closed"],
+            columns=["index", PpTable.bus, "et", "element", "closed"],
         ),
     }
     mock_get_individual_switch_states.side_effect = [False, True, False]
@@ -2327,7 +2380,7 @@ def test_get_trafo3w_switch_states(mock_get_individual_switch_states: MagicMock)
     expected = pd.DataFrame(columns=["side_1", "side_2", "side_3"], data=[[False, True, False]])
 
     # Act
-    actual = converter.get_trafo3w_switch_states(converter.pp_input_data["trafo3w"])
+    actual = converter.get_trafo3w_switch_states(converter.pp_input_data[PpTable.trafo3w])
 
     # Assert
     pd.testing.assert_frame_equal(actual, expected)
@@ -2338,11 +2391,11 @@ def test_lookup_id():
     # Arrange
     converter = PandaPowerConverter()
     converter.idx_lookup = {
-        ("line", None): pd.Series([0, 1, 2, 3, 4], index=[21, 345, 0, 3, 15]),
+        (PpTable.line, None): pd.Series([0, 1, 2, 3, 4], index=[21, 345, 0, 3, 15]),
         ("load", "const_current"): pd.Series([5, 6, 7, 8, 9], index=[543, 14, 34, 48, 4]),
     }
 
-    expected_line = {"table": "line", "index": 4}
+    expected_line = {"table": PpTable.line, "index": 4}
     expected_load = {"table": "load", "name": "const_current", "index": 8}
 
     # Act
@@ -2357,7 +2410,7 @@ def test_lookup_id():
 def test_lookup_id__value_error():
     # Arrange
     converter = PandaPowerConverter()
-    converter.idx_lookup = {("line", None): pd.Series([0, 1, 2, 3, 4], index=[21, 345, 0, 3, 15])}
+    converter.idx_lookup = {(PpTable.line, None): pd.Series([0, 1, 2, 3, 4], index=[21, 345, 0, 3, 15])}
 
     # Act / Assert
     with pytest.raises(KeyError):
@@ -2368,12 +2421,12 @@ def test_get_pp_attr_attribute_exists():
     # Arrange
     converter = PandaPowerConverter()
     converter.pp_input_data = {
-        "trafo3w": pd.DataFrame([[2, 32, 31, 315]], columns=["index", "hv_bus", "mv_bus", "lv_bus"])
+        PpTable.trafo3w: pd.DataFrame([[2, 32, 31, 315]], columns=["index", "hv_bus", "mv_bus", "lv_bus"])
     }
     expected = np.array(32)
 
     # Act
-    actual = converter._get_pp_attr("trafo3w", "hv_bus", expected_type="u4")
+    actual = converter._get_pp_attr(PpTable.trafo3w, "hv_bus", expected_type="u4")
 
     # Assert
     np.testing.assert_array_equal(actual, expected)
@@ -2382,21 +2435,21 @@ def test_get_pp_attr_attribute_exists():
 def test_get_pp_attr_attribute_doesnt_exist():
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_input_data = {"trafo3w": pd.DataFrame([[2, 31, 315]], columns=["index", "mv_bus", "lv_bus"])}
+    converter.pp_input_data = {PpTable.trafo3w: pd.DataFrame([[2, 31, 315]], columns=["index", "mv_bus", "lv_bus"])}
 
     # Act / Assert
     with pytest.raises(KeyError):
-        converter._get_pp_attr("trafo3w", "hv_bus", expected_type="u4")
+        converter._get_pp_attr(PpTable.trafo3w, "hv_bus", expected_type="u4")
 
 
 def test_get_pp_attr_use_default():
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_input_data = {"trafo3w": pd.DataFrame([[2, 31, 315]], columns=["index", "mv_bus", "lv_bus"])}
+    converter.pp_input_data = {PpTable.trafo3w: pd.DataFrame([[2, 31, 315]], columns=["index", "mv_bus", "lv_bus"])}
     expected = np.array(625)
 
     # Act
-    actual = converter._get_pp_attr("trafo3w", "hv_bus", expected_type="u4", default=625)
+    actual = converter._get_pp_attr(PpTable.trafo3w, "hv_bus", expected_type="u4", default=625)
 
     # Assert
     np.testing.assert_array_equal(actual, expected)
