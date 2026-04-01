@@ -949,14 +949,14 @@ def test_output_bus_3ph(mock_np_array: MagicMock, converter):
         converter._pp_buses_output_3ph__accumulate_power.assert_called_once()
 
         # result
-        converter.pp_output_data.__setitem__.assert_called_once_with("res_bus_3ph", mock_pp_df.return_value)
+        converter.pp_output_data.__setitem__.assert_called_once_with(PpTable.res_bus_3ph, mock_pp_df.return_value)
     mock_np_array.assert_called_once()
 
 
 def test_output_bus_3ph__bad_input(converter):
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_output_data["res_bus_3ph"] = pd.DataFrame()
+    converter.pp_output_data[PpTable.res_bus_3ph] = pd.DataFrame()
 
     with pytest.raises(ValueError, match=r"res_bus_3ph already exists in pp_output_data."):
         converter._pp_buses_output_3ph()
@@ -1026,13 +1026,13 @@ def test_output_line_3ph(converter):  # noqa: PLR0915
         mock_pp_df.return_value.__setitem__.assert_any_call("loading_c_percent", ANY)
 
         # result
-        converter.pp_output_data.__setitem__.assert_called_once_with("res_line_3ph", mock_pp_df.return_value)
+        converter.pp_output_data.__setitem__.assert_called_once_with(PpTable.res_line_3ph, mock_pp_df.return_value)
 
 
 def test_output_line_3ph__bad_input(converter):
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_output_data["res_line_3ph"] = pd.DataFrame()
+    converter.pp_output_data[PpTable.res_line_3ph] = pd.DataFrame()
 
     with pytest.raises(ValueError, match=r"res_line_3ph already exists in pp_output_data."):
         converter._pp_lines_output_3ph()
@@ -1066,13 +1066,13 @@ def test_output_ext_grids_3ph(converter):
         mock_pp_df.return_value.__setitem__.assert_any_call("q_c_mvar", ANY)
 
         # result
-        converter.pp_output_data.__setitem__.assert_called_once_with("res_ext_grid_3ph", mock_pp_df.return_value)
+        converter.pp_output_data.__setitem__.assert_called_once_with(PpTable.res_ext_grid_3ph, mock_pp_df.return_value)
 
 
 def test_output_ext_grids_3ph__bad_input(converter):
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_output_data["res_ext_grid_3ph"] = pd.DataFrame()
+    converter.pp_output_data[PpTable.res_ext_grid_3ph] = pd.DataFrame()
 
     with pytest.raises(ValueError, match=r"res_ext_grid_3ph already exists in pp_output_data."):
         converter._pp_ext_grids_output_3ph()
@@ -1100,13 +1100,13 @@ def test_output_sgen_3ph(converter):
         mock_pp_df.return_value.__setitem__.assert_any_call("q_mvar", ANY)
 
         # result
-        converter.pp_output_data.__setitem__.assert_called_once_with("res_sgen_3ph", mock_pp_df.return_value)
+        converter.pp_output_data.__setitem__.assert_called_once_with(PpTable.res_sgen_3ph, mock_pp_df.return_value)
 
 
 def test_output_sgen_3ph__bad_input(converter):
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_output_data["res_sgen_3ph"] = pd.DataFrame()
+    converter.pp_output_data[PpTable.res_sgen_3ph] = pd.DataFrame()
 
     with pytest.raises(ValueError, match=r"res_sgen_3ph already exists in pp_output_data."):
         converter._pp_sgens_output_3ph()
@@ -1285,13 +1285,15 @@ def test_output_asymmetric_load_3ph(converter):
         mock_pp_df.return_value.__setitem__.assert_any_call("q_c_mvar", ANY)
 
         # result
-        converter.pp_output_data.__setitem__.assert_called_once_with("res_asymmetric_load_3ph", mock_pp_df.return_value)
+        converter.pp_output_data.__setitem__.assert_called_once_with(
+            PpTable.res_asymmetric_load_3ph, mock_pp_df.return_value
+        )
 
 
 def test_output_asymmetric_load_3ph__bad_input(converter):
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_output_data["res_asymmetric_load_3ph"] = pd.DataFrame()
+    converter.pp_output_data[PpTable.res_asymmetric_load_3ph] = pd.DataFrame()
 
     with pytest.raises(ValueError, match=r"res_asymmetric_load_3ph already exists in pp_output_data."):
         converter._pp_asym_loads_output_3ph()
@@ -1325,13 +1327,15 @@ def test_output_asymmetric_sgen_3ph(converter):
         mock_pp_df.return_value.__setitem__.assert_any_call("q_c_mvar", ANY)
 
         # result
-        converter.pp_output_data.__setitem__.assert_called_once_with("res_asymmetric_sgen_3ph", mock_pp_df.return_value)
+        converter.pp_output_data.__setitem__.assert_called_once_with(
+            PpTable.res_asymmetric_sgen_3ph, mock_pp_df.return_value
+        )
 
 
 def test_output_asymmetric_sgen_3ph__bad_input(converter):
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_output_data["res_asymmetric_sgen_3ph"] = pd.DataFrame()
+    converter.pp_output_data[PpTable.res_asymmetric_sgen_3ph] = pd.DataFrame()
 
     with pytest.raises(ValueError, match=r"res_asymmetric_sgen_3ph already exists in pp_output_data."):
         converter._pp_asym_gens_output_3ph()

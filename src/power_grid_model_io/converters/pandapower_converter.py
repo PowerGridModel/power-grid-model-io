@@ -1896,7 +1896,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the Bus component
         """
-        if "res_bus_3ph" in self.pp_output_data:
+        if PpTable.res_bus_3ph in self.pp_output_data:
             raise ValueError("res_bus_3ph already exists in pp_output_data.")
 
         if ComponentType.node not in self.pgm_output_data or self.pgm_output_data[ComponentType.node].size == 0:
@@ -1942,7 +1942,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # p_to, p_from, q_to and q_from connected to the bus have to be summed up
         self._pp_buses_output_3ph__accumulate_power(pp_output_buses_3ph)
 
-        self.pp_output_data["res_bus_3ph"] = pp_output_buses_3ph
+        self.pp_output_data[PpTable.res_bus_3ph] = pp_output_buses_3ph
 
     def _pp_buses_output_3ph__accumulate_power(self, pp_output_buses_3ph: pd.DataFrame):
         """
@@ -2025,7 +2025,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the Line component
         """
-        if "res_line_3ph" in self.pp_output_data:
+        if PpTable.res_line_3ph in self.pp_output_data:
             raise ValueError("res_line_3ph already exists in pp_output_data.")
 
         if any(
@@ -2148,7 +2148,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             pp_output_lines_3ph["loading_c_percent"],
         )
 
-        self.pp_output_data["res_line_3ph"] = pp_output_lines_3ph
+        self.pp_output_data[PpTable.res_line_3ph] = pp_output_lines_3ph
 
     def _pp_ext_grids_output_3ph(self):
         """
@@ -2157,7 +2157,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the External Grid component
         """
-        if "res_ext_grid_3ph" in self.pp_output_data:
+        if PpTable.res_ext_grid_3ph in self.pp_output_data:
             raise ValueError("res_ext_grid_3ph already exists in pp_output_data.")
 
         if ComponentType.source not in self.pgm_output_data or self.pgm_output_data[ComponentType.source].size == 0:
@@ -2176,7 +2176,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_ext_grids_3ph["p_c_mw"] = pgm_output_sources[AttributeType.p][:, 2] * 1e-6
         pp_output_ext_grids_3ph["q_c_mvar"] = pgm_output_sources[AttributeType.q][:, 2] * 1e-6
 
-        self.pp_output_data["res_ext_grid_3ph"] = pp_output_ext_grids_3ph
+        self.pp_output_data[PpTable.res_ext_grid_3ph] = pp_output_ext_grids_3ph
 
     def _pp_sgens_output_3ph(self):
         """
@@ -2186,7 +2186,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the Static Generator component
         """
-        if "res_sgen_3ph" in self.pp_output_data:
+        if PpTable.res_sgen_3ph in self.pp_output_data:
             raise ValueError("res_sgen_3ph already exists in pp_output_data.")
 
         if ComponentType.sym_gen not in self.pgm_output_data or self.pgm_output_data[ComponentType.sym_gen].size == 0:
@@ -2201,7 +2201,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_sgens["p_mw"] = np.sum(pgm_output_sym_gens[AttributeType.p], axis=1) * 1e-6
         pp_output_sgens["q_mvar"] = np.sum(pgm_output_sym_gens[AttributeType.q], axis=1) * 1e-6
 
-        self.pp_output_data["res_sgen_3ph"] = pp_output_sgens
+        self.pp_output_data[PpTable.res_sgen_3ph] = pp_output_sgens
 
     def _pp_trafos_output_3ph(self):  # noqa: PLR0915  # pylint: disable=too-many-statements
         """
@@ -2211,7 +2211,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the Transformer component
         """
-        if "res_trafo_3ph" in self.pp_output_data:
+        if PpTable.res_trafo_3ph in self.pp_output_data:
             raise ValueError("res_trafo_3ph already exists in pp_output_data.")
 
         if (
@@ -2331,7 +2331,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_trafos_3ph["loading_c_percent"] = loading_c_percent * loading_multiplier
         pp_output_trafos_3ph["loading_percent"] = loading * loading_multiplier
 
-        self.pp_output_data["res_trafo_3ph"] = pp_output_trafos_3ph
+        self.pp_output_data[PpTable.res_trafo_3ph] = pp_output_trafos_3ph
 
     def _pp_shunts_output_3ph(self):
         """
@@ -2340,7 +2340,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the Shunt component
         """
-        if "res_shunt_3ph" in self.pp_output_data:
+        if PpTable.res_shunt_3ph in self.pp_output_data:
             raise ValueError("res_shunt_3ph already exists in pp_output_data.")
 
         if ComponentType.shunt not in self.pgm_output_data or self.pgm_output_data[ComponentType.shunt].size == 0:
@@ -2356,7 +2356,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_shunts["q_mvar"] = pgm_output_shunts[AttributeType.q].sum() * 1e-6
         # TODO Find a better way for mapping vm_pu from bus
         # pp_output_shunts["vm_pu"] = np.nan
-        self.pp_output_data["res_shunt_3ph"] = pp_output_shunts
+        self.pp_output_data[PpTable.res_shunt_3ph] = pp_output_shunts
 
     def _pp_asym_loads_output_3ph(self):
         """
@@ -2366,7 +2366,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the Asymmetrical Load component
         """
-        if "res_asymmetric_load_3ph" in self.pp_output_data:
+        if PpTable.res_asymmetric_load_3ph in self.pp_output_data:
             raise ValueError("res_asymmetric_load_3ph already exists in pp_output_data.")
 
         if (
@@ -2392,7 +2392,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_asym_output_loads_3ph["p_c_mw"] = pp_asym_load_p[:, 2]
         pp_asym_output_loads_3ph["q_c_mvar"] = pp_asym_load_q[:, 2]
 
-        self.pp_output_data["res_asymmetric_load_3ph"] = pp_asym_output_loads_3ph
+        self.pp_output_data[PpTable.res_asymmetric_load_3ph] = pp_asym_output_loads_3ph
 
     def _pp_asym_gens_output_3ph(self):
         """
@@ -2402,7 +2402,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the Asymmetric Static Generator component
         """
-        if "res_asymmetric_sgen_3ph" in self.pp_output_data:
+        if PpTable.res_asymmetric_sgen_3ph in self.pp_output_data:
             raise ValueError("res_asymmetric_sgen_3ph already exists in pp_output_data.")
 
         if "asym_gen" not in self.pgm_output_data or self.pgm_output_data[ComponentType.asym_gen].size == 0:
@@ -2425,7 +2425,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_asym_gens_3ph["p_c_mw"] = pp_asym_gen_p[:, 2]
         pp_output_asym_gens_3ph["q_c_mvar"] = pp_asym_gen_q[:, 2]
 
-        self.pp_output_data["res_asymmetric_sgen_3ph"] = pp_output_asym_gens_3ph
+        self.pp_output_data[PpTable.res_asymmetric_sgen_3ph] = pp_output_asym_gens_3ph
 
     def _generate_ids(self, pp_table: str, pp_idx: pd.Index, name: str | None = None) -> np.ndarray:
         """
