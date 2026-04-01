@@ -28,9 +28,9 @@ from power_grid_model import (
 )
 from power_grid_model.data_types import Dataset, SingleDataset
 
-from power_grid_model_io._enum import _PandapowerTable as PpTable
 from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_types import ExtraInfo
+from power_grid_model_io.enum import _PandapowerTable as PpTable
 from power_grid_model_io.functions import get_winding
 from power_grid_model_io.utils.parsing import is_node_ref, parse_trafo3_connection, parse_trafo_connection
 

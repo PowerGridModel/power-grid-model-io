@@ -11,8 +11,8 @@ import pandas as pd
 import pytest
 from power_grid_model import AttributeType as AT, ComponentType as CT, DatasetType, initialize_array
 
-from power_grid_model_io._enum import _PandapowerTable as PpTable
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter, get_loss_params_3ph
+from power_grid_model_io.enum import _PandapowerTable as PpTable
 from tests.utils import MockDf
 
 
