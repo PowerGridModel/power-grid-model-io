@@ -5,7 +5,7 @@
 from enum import StrEnum
 
 
-class _PandapowerTable(StrEnum):
+class PandapowerTable(StrEnum):
     # Components
     bus = "bus"
     line = "line"
