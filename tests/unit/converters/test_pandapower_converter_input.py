@@ -708,7 +708,7 @@ def test_create_pgm_input_sources(mock_init_array: MagicMock, two_pp_objs, conve
     mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=CT.source, shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call(_PpTable.ext_grid, _PpTable.bus, expected_type="u4")
+    converter._get_pp_attr.assert_any_call(_PpTable.ext_grid, "bus", expected_type="u4")
     converter._get_pp_attr.assert_any_call(_PpTable.ext_grid, "vm_pu", expected_type="f8", default=1.0)
     converter._get_pp_attr.assert_any_call(_PpTable.ext_grid, "va_degree", expected_type="f8", default=0.0)
     converter._get_pp_attr.assert_any_call(_PpTable.ext_grid, "s_sc_max_mva", expected_type="f8", default=np.nan)
@@ -721,9 +721,7 @@ def test_create_pgm_input_sources(mock_init_array: MagicMock, two_pp_objs, conve
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call(AT.id, _generate_ids(_PpTable.ext_grid, two_pp_objs.index))
-    pgm.assert_any_call(
-        AT.node, _get_pgm_ids(_PpTable.bus, _get_pp_attr(_PpTable.ext_grid, _PpTable.bus, expected_type="u4"))
-    )
+    pgm.assert_any_call(AT.node, _get_pgm_ids(_PpTable.bus, _get_pp_attr(_PpTable.ext_grid, "bus", expected_type="u4")))
     pgm.assert_any_call(AT.status, _get_pp_attr(_PpTable.ext_grid, "in_service", expected_type="bool", default=True))
     pgm.assert_any_call(AT.u_ref, _get_pp_attr(_PpTable.ext_grid, "vm_pu", expected_type="f8", default=1.0))
     pgm.assert_any_call(
@@ -794,7 +792,7 @@ def test_create_pgm_input_sym_loads(mock_init_array: MagicMock, two_pp_objs, con
     mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=CT.sym_load, shape=3 * 2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call("load", _PpTable.bus, expected_type="u4")
+    converter._get_pp_attr.assert_any_call("load", "bus", expected_type="u4")
     converter._get_pp_attr.assert_any_call("load", "p_mw", expected_type="f8", default=0.0)
     converter._get_pp_attr.assert_any_call("load", "q_mvar", expected_type="f8", default=0.0)
     converter._get_pp_attr.assert_any_call("load", "scaling", expected_type="f8", default=1)
@@ -847,7 +845,7 @@ def test_create_pgm_input_asym_loads(mock_init_array: MagicMock, two_pp_objs, co
     mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=CT.asym_load, shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call(_PpTable.asymmetric_load, _PpTable.bus, expected_type="u4")
+    converter._get_pp_attr.assert_any_call(_PpTable.asymmetric_load, "bus", expected_type="u4")
     converter._get_pp_attr.assert_any_call(_PpTable.asymmetric_load, "p_a_mw", expected_type="f8")
     converter._get_pp_attr.assert_any_call(_PpTable.asymmetric_load, "p_b_mw", expected_type="f8")
     converter._get_pp_attr.assert_any_call(_PpTable.asymmetric_load, "p_c_mw", expected_type="f8")
@@ -866,7 +864,7 @@ def test_create_pgm_input_asym_loads(mock_init_array: MagicMock, two_pp_objs, co
         AT.node,
         _get_pgm_ids(
             _PpTable.bus,
-            _get_pp_attr(_PpTable.asymmetric_load, _PpTable.bus, expected_type="u4"),
+            _get_pp_attr(_PpTable.asymmetric_load, "bus", expected_type="u4"),
         ),
     )
     pgm.assert_any_call(
@@ -957,7 +955,7 @@ def test_create_pgm_input_shunts(mock_init_array: MagicMock, two_pp_objs, conver
     mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=CT.shunt, shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call(_PpTable.shunt, _PpTable.bus, expected_type="u4")
+    converter._get_pp_attr.assert_any_call(_PpTable.shunt, "bus", expected_type="u4")
     converter._get_pp_attr.assert_any_call(_PpTable.shunt, "p_mw", expected_type="f8")
     converter._get_pp_attr.assert_any_call(_PpTable.shunt, "q_mvar", expected_type="f8")
     converter._get_pp_attr.assert_any_call(_PpTable.shunt, "vn_kv", expected_type="f8")
@@ -969,9 +967,7 @@ def test_create_pgm_input_shunts(mock_init_array: MagicMock, two_pp_objs, conver
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
     pgm.assert_any_call(AT.id, _generate_ids(_PpTable.shunt, two_pp_objs.index))
-    pgm.assert_any_call(
-        AT.node, _get_pgm_ids(_PpTable.bus, _get_pp_attr(_PpTable.shunt, _PpTable.bus, expected_type="u4"))
-    )
+    pgm.assert_any_call(AT.node, _get_pgm_ids(_PpTable.bus, _get_pp_attr(_PpTable.shunt, "bus", expected_type="u4")))
     pgm.assert_any_call(AT.status, _get_pp_attr(_PpTable.shunt, "in_service", expected_type="bool", default=True))
     pgm.assert_any_call(
         AT.g1,
@@ -1205,7 +1201,7 @@ def test_create_pgm_input_sym_gens(mock_init_array: MagicMock, two_pp_objs, conv
     mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=CT.sym_gen, shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call(_PpTable.sgen, _PpTable.bus, expected_type="i8")
+    converter._get_pp_attr.assert_any_call(_PpTable.sgen, "bus", expected_type="i8")
     converter._get_pp_attr.assert_any_call(_PpTable.sgen, "p_mw", expected_type="f8")
     converter._get_pp_attr.assert_any_call(_PpTable.sgen, "q_mvar", expected_type="f8", default=0.0)
     converter._get_pp_attr.assert_any_call(_PpTable.sgen, "scaling", expected_type="f8", default=1.0)
@@ -1217,7 +1213,7 @@ def test_create_pgm_input_sym_gens(mock_init_array: MagicMock, two_pp_objs, conv
     pgm.assert_any_call(AT.id, _generate_ids(_PpTable.sgen, two_pp_objs.index))
     pgm.assert_any_call(
         AT.node,
-        _get_pgm_ids(_PpTable.bus, _get_pp_attr(_PpTable.sgen, _PpTable.bus, expected_type="i8")),
+        _get_pgm_ids(_PpTable.bus, _get_pp_attr(_PpTable.sgen, "bus", expected_type="i8")),
     )
     pgm.assert_any_call(AT.status, _get_pp_attr(_PpTable.sgen, "in_service", expected_type="bool", default=True))
     pgm.assert_any_call(AT.type, LoadGenType.const_power)
@@ -1311,7 +1307,7 @@ def test_create_pgm_input_asym_gens(mock_init_array: MagicMock, two_pp_objs, con
     mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=CT.asym_gen, shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call(_PpTable.asymmetric_sgen, _PpTable.bus, expected_type="i8")
+    converter._get_pp_attr.assert_any_call(_PpTable.asymmetric_sgen, "bus", expected_type="i8")
     converter._get_pp_attr.assert_any_call(_PpTable.asymmetric_sgen, "p_a_mw", expected_type="f8")
     converter._get_pp_attr.assert_any_call(_PpTable.asymmetric_sgen, "p_b_mw", expected_type="f8")
     converter._get_pp_attr.assert_any_call(_PpTable.asymmetric_sgen, "p_c_mw", expected_type="f8")
@@ -1329,7 +1325,7 @@ def test_create_pgm_input_asym_gens(mock_init_array: MagicMock, two_pp_objs, con
         AT.node,
         _get_pgm_ids(
             _PpTable.bus,
-            _get_pp_attr(_PpTable.asymmetric_sgen, _PpTable.bus, expected_type="i8"),
+            _get_pp_attr(_PpTable.asymmetric_sgen, "bus", expected_type="i8"),
         ),
     )
     pgm.assert_any_call(
@@ -1840,7 +1836,7 @@ def test_create_pgm_input_wards(mock_init_array: MagicMock, two_pp_objs, convert
     mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=CT.sym_load, shape=2 * 2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call("ward", _PpTable.bus, expected_type="u4")
+    converter._get_pp_attr.assert_any_call("ward", "bus", expected_type="u4")
     converter._get_pp_attr.assert_any_call("ward", "ps_mw", expected_type="f8")
     converter._get_pp_attr.assert_any_call("ward", "qs_mvar", expected_type="f8")
     converter._get_pp_attr.assert_any_call("ward", "pz_mw", expected_type="f8")
@@ -1937,7 +1933,7 @@ def test_create_pgm_input_motors(mock_init_array: MagicMock, two_pp_objs, conver
     mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=CT.sym_load, shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call("motor", _PpTable.bus, expected_type="i8")
+    converter._get_pp_attr.assert_any_call("motor", "bus", expected_type="i8")
     converter._get_pp_attr.assert_any_call("motor", "pn_mech_mw", expected_type="f8")
     converter._get_pp_attr.assert_any_call("motor", "cos_phi", expected_type="f8")
     converter._get_pp_attr.assert_any_call("motor", "efficiency_percent", expected_type="f8")
@@ -2259,7 +2255,7 @@ def test_get_individual_switch_states():
         data=[[1, 101], [2, 102], [3, 103]],
     )
     pp_switches = pd.DataFrame(
-        columns=["element", _PpTable.bus, "closed"],
+        columns=["element", "bus", "closed"],
         data=[[1, 101, False], [2, 202, False], [3, 103, True]],
     )
 
@@ -2317,7 +2313,7 @@ def test_get_switch_states_lines(mock_get_individual_switch_states: MagicMock):
     )
     pd.testing.assert_frame_equal(
         mock_get_individual_switch_states.call_args_list[0].args[1],
-        pd.DataFrame(columns=["element", _PpTable.bus, "closed"], data=[[1, 101, False]], index=[1001]),
+        pd.DataFrame(columns=["element", "bus", "closed"], data=[[1, 101, False]], index=[1001]),
     )
 
     assert mock_get_individual_switch_states.call_args_list[1] == call(ANY, ANY, "to_bus")
@@ -2327,7 +2323,7 @@ def test_get_switch_states_lines(mock_get_individual_switch_states: MagicMock):
     )
     pd.testing.assert_frame_equal(
         mock_get_individual_switch_states.call_args_list[1].args[1],
-        pd.DataFrame(columns=["element", _PpTable.bus, "closed"], data=[[1, 101, False]], index=[1001]),
+        pd.DataFrame(columns=["element", "bus", "closed"], data=[[1, 101, False]], index=[1001]),
     )
 
 
@@ -2339,7 +2335,7 @@ def test_get_switch_states_trafos(mock_get_individual_switch_states: MagicMock):
         _PpTable.trafo: pd.DataFrame([[2, 32, 31]], columns=["index", "hv_bus", "lv_bus"]),
         _PpTable.switch: pd.DataFrame(
             [[101, 32, "t", 2, True], [321, 31, "t", 2, False]],
-            columns=["index", _PpTable.bus, "et", "element", "closed"],
+            columns=["index", "bus", "et", "element", "closed"],
         ),
     }
     mock_get_individual_switch_states.side_effect = [
@@ -2374,7 +2370,7 @@ def test_get_trafo3w_switch_states(mock_get_individual_switch_states: MagicMock)
         _PpTable.trafo3w: pd.DataFrame([[2, 32, 31, 315]], columns=["index", "hv_bus", "mv_bus", "lv_bus"]),
         _PpTable.switch: pd.DataFrame(
             [[101, 315, "t3", 2, False], [321, 32, "t3", 2, False]],
-            columns=["index", _PpTable.bus, "et", "element", "closed"],
+            columns=["index", "bus", "et", "element", "closed"],
         ),
     }
     mock_get_individual_switch_states.side_effect = [False, True, False]

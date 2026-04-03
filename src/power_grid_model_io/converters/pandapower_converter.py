@@ -524,7 +524,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         )
         pgm_sources[AttributeType.id] = self._generate_ids(_PpTable.ext_grid, pp_ext_grid.index)
         pgm_sources[AttributeType.node] = self._get_pgm_ids(
-            _PpTable.bus, self._get_pp_attr(_PpTable.ext_grid, _PpTable.bus, expected_type="u4")
+            _PpTable.bus, self._get_pp_attr(_PpTable.ext_grid, "bus", expected_type="u4")
         )
         pgm_sources[AttributeType.status] = self._get_pp_attr(
             _PpTable.ext_grid, "in_service", expected_type="bool", default=True
@@ -569,7 +569,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         )
         pgm_shunts[AttributeType.id] = self._generate_ids(_PpTable.shunt, pp_shunts.index)
         pgm_shunts[AttributeType.node] = self._get_pgm_ids(
-            _PpTable.bus, self._get_pp_attr(_PpTable.shunt, _PpTable.bus, expected_type="u4")
+            _PpTable.bus, self._get_pp_attr(_PpTable.shunt, "bus", expected_type="u4")
         )
         pgm_shunts[AttributeType.status] = self._get_pp_attr(
             _PpTable.shunt, "in_service", expected_type="bool", default=True
@@ -604,7 +604,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         )
         pgm_sym_gens[AttributeType.id] = self._generate_ids(_PpTable.sgen, pp_sgens.index)
         pgm_sym_gens[AttributeType.node] = self._get_pgm_ids(
-            _PpTable.bus, self._get_pp_attr(_PpTable.sgen, _PpTable.bus, expected_type="i8")
+            _PpTable.bus, self._get_pp_attr(_PpTable.sgen, "bus", expected_type="i8")
         )
         pgm_sym_gens[AttributeType.status] = self._get_pp_attr(
             _PpTable.sgen, "in_service", expected_type="bool", default=True
@@ -644,7 +644,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_asym_gens[AttributeType.id] = self._generate_ids(_PpTable.asymmetric_sgen, pp_asym_gens.index)
         pgm_asym_gens[AttributeType.node] = self._get_pgm_ids(
             _PpTable.bus,
-            self._get_pp_attr(_PpTable.asymmetric_sgen, _PpTable.bus, expected_type="i8"),
+            self._get_pp_attr(_PpTable.asymmetric_sgen, "bus", expected_type="i8"),
         )
         pgm_asym_gens[AttributeType.status] = self._get_pp_attr(
             _PpTable.asymmetric_sgen, "in_service", expected_type="bool", default=True
@@ -697,7 +697,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         in_service = self._get_pp_attr(_PpTable.load, "in_service", expected_type="bool", default=True)
         p_mw = self._get_pp_attr(_PpTable.load, "p_mw", expected_type="f8", default=0.0)
         q_mvar = self._get_pp_attr(_PpTable.load, "q_mvar", expected_type="f8", default=0.0)
-        bus = self._get_pp_attr(_PpTable.load, _PpTable.bus, expected_type="u4")
+        bus = self._get_pp_attr(_PpTable.load, "bus", expected_type="u4")
 
         n_loads = len(pp_loads)
 
@@ -800,7 +800,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_asym_loads[AttributeType.id] = self._generate_ids(_PpTable.asymmetric_load, pp_asym_loads.index)
         pgm_asym_loads[AttributeType.node] = self._get_pgm_ids(
             _PpTable.bus,
-            self._get_pp_attr(_PpTable.asymmetric_load, _PpTable.bus, expected_type="u4"),
+            self._get_pp_attr(_PpTable.asymmetric_load, "bus", expected_type="u4"),
         )
         pgm_asym_loads[AttributeType.status] = self._get_pp_attr(
             _PpTable.asymmetric_load, "in_service", expected_type="bool", default=True
@@ -1182,7 +1182,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         n_wards = len(pp_wards)
         in_service = self._get_pp_attr(_PpTable.ward, "in_service", expected_type="bool", default=True)
-        bus = self._get_pp_attr(_PpTable.ward, _PpTable.bus, expected_type="u4")
+        bus = self._get_pp_attr(_PpTable.ward, "bus", expected_type="u4")
 
         pgm_sym_loads_from_ward = initialize_array(
             data_type=DatasetType.input, component_type=ComponentType.sym_load, shape=n_wards * 2
@@ -1245,7 +1245,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             _PpTable.motor, pp_motors.index, name="motor_load"
         )
         pgm_sym_loads_from_motor[AttributeType.node] = self._get_pgm_ids(
-            _PpTable.bus, self._get_pp_attr(_PpTable.motor, _PpTable.bus, expected_type="i8")
+            _PpTable.bus, self._get_pp_attr(_PpTable.motor, "bus", expected_type="i8")
         )
         pgm_sym_loads_from_motor[AttributeType.status] = self._get_pp_attr(
             _PpTable.motor, "in_service", expected_type="bool", default=True
@@ -2596,7 +2596,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             Can be a Line dataframe, Transformer dataframe or Three Winding Transformer dataframe.
 
             switches: PandaPower dataframe with information about the switches, has
-            such attributes as: "element", _PpTable.bus, "closed"
+            such attributes as: "element", "bus", "closed"
 
             bus: name of the bus attribute that the component connects to (e.g "hv_bus", "from_bus", "lv_bus", etc.)
 
@@ -2609,7 +2609,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 switches,
                 how="left",
                 left_on=["index", bus],
-                right_on=["element", _PpTable.bus],
+                right_on=["element", "bus"],
             )
             .set_index(component.index)["closed"]
         )
@@ -2646,7 +2646,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # Select the appropriate switches and columns
         pp_switches = self.pp_input_data[_PpTable.switch]
         pp_switches = pp_switches[pp_switches["et"] == element_type]
-        pp_switches = pp_switches[["element", _PpTable.bus, "closed"]]
+        pp_switches = pp_switches[["element", "bus", "closed"]]
 
         pp_from_switches = self.get_individual_switch_states(component[["index", bus1]], pp_switches, bus1)
         pp_to_switches = self.get_individual_switch_states(component[["index", bus2]], pp_switches, bus2)
@@ -2672,7 +2672,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # Select the appropriate switches and columns
         pp_switches = self.pp_input_data[_PpTable.switch]
         pp_switches = pp_switches[pp_switches["et"] == element_type]
-        pp_switches = pp_switches[["element", _PpTable.bus, "closed"]]
+        pp_switches = pp_switches[["element", "bus", "closed"]]
 
         # Join the switches with the three winding trafo three times, for the hv_bus, mv_bus and once for the lv_bus
         pp_1_switches = self.get_individual_switch_states(trafo3w[["index", bus1]], pp_switches, bus1)
