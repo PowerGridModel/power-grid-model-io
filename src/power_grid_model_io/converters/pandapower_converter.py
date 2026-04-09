@@ -28,7 +28,7 @@ from power_grid_model import (
 )
 from power_grid_model.data_types import Dataset, SingleDataset
 
-from power_grid_model_io._enum import PandapowerTable as _PpTable
+from power_grid_model_io._enum import PandapowerAttribute as _PpAttr, PandapowerTable as _PpTable
 from power_grid_model_io.converters.base_converter import BaseConverter
 from power_grid_model_io.data_types import ExtraInfo
 from power_grid_model_io.functions import get_winding
@@ -49,9 +49,23 @@ except PackageNotFoundError:
 
 def get_loss_params_3ph():
     if PP_CONVERSION_VERSION < PP_COMPATIBILITY_VERSION_3_2_0:
-        loss_params = ["p_a_l_mw", "q_a_l_mvar", "p_b_l_mw", "q_b_l_mvar", "p_c_l_mw", "q_c_l_mvar"]
+        loss_params = [
+            _PpAttr.p_a_l_mw,
+            _PpAttr.q_a_l_mvar,
+            _PpAttr.p_b_l_mw,
+            _PpAttr.q_b_l_mvar,
+            _PpAttr.p_c_l_mw,
+            _PpAttr.q_c_l_mvar,
+        ]
     else:
-        loss_params = ["pl_a_mw", "ql_a_mvar", "pl_b_mw", "ql_b_mvar", "pl_c_mw", "ql_c_mvar"]
+        loss_params = [
+            _PpAttr.pl_a_mw,
+            _PpAttr.ql_a_mvar,
+            _PpAttr.pl_b_mw,
+            _PpAttr.ql_b_mvar,
+            _PpAttr.pl_c_mw,
+            _PpAttr.ql_c_mvar,
+        ]
     return loss_params
 
 
@@ -421,7 +435,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             data_type=DatasetType.input, component_type=ComponentType.node, shape=len(pp_busses)
         )
         pgm_nodes[AttributeType.id] = self._generate_ids(_PpTable.bus, pp_busses.index)
-        pgm_nodes[AttributeType.u_rated] = self._get_pp_attr(_PpTable.bus, "vn_kv", expected_type="f8") * 1e3
+        pgm_nodes[AttributeType.u_rated] = self._get_pp_attr(_PpTable.bus, _PpAttr.vn_kv, expected_type="f8") * 1e3
 
         self.pgm_input_data[ComponentType.node] = pgm_nodes
 
@@ -441,11 +455,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             raise ValueError("Line component already exists in pgm_input_data")
 
         switch_states = self.get_switch_states(_PpTable.line)
-        in_service = self._get_pp_attr(_PpTable.line, "in_service", expected_type="bool", default=True)
-        length_km = self._get_pp_attr(_PpTable.line, "length_km", expected_type="f8")
-        parallel = self._get_pp_attr(_PpTable.line, "parallel", expected_type="u4", default=1)
-        c_nf_per_km = self._get_pp_attr(_PpTable.line, "c_nf_per_km", expected_type="f8", default=0)
-        c0_nf_per_km = self._get_pp_attr(_PpTable.line, "c0_nf_per_km", expected_type="f8", default=0)
+        in_service = self._get_pp_attr(_PpTable.line, _PpAttr.in_service, expected_type="bool", default=True)
+        length_km = self._get_pp_attr(_PpTable.line, _PpAttr.length_km, expected_type="f8")
+        parallel = self._get_pp_attr(_PpTable.line, _PpAttr.parallel, expected_type="u4", default=1)
+        c_nf_per_km = self._get_pp_attr(_PpTable.line, _PpAttr.c_nf_per_km, expected_type="f8", default=0)
+        c0_nf_per_km = self._get_pp_attr(_PpTable.line, _PpAttr.c0_nf_per_km, expected_type="f8", default=0)
         multiplier = length_km / parallel
 
         pgm_lines = initialize_array(
@@ -453,37 +467,41 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         )
         pgm_lines[AttributeType.id] = self._generate_ids(_PpTable.line, pp_lines.index)
         pgm_lines[AttributeType.from_node] = self._get_pgm_ids(
-            _PpTable.bus, self._get_pp_attr(_PpTable.line, "from_bus", expected_type="u4")
+            _PpTable.bus, self._get_pp_attr(_PpTable.line, _PpAttr.from_bus, expected_type="u4")
         )
         pgm_lines[AttributeType.from_status] = in_service & switch_states["from"]
         pgm_lines[AttributeType.to_node] = self._get_pgm_ids(
-            _PpTable.bus, self._get_pp_attr(_PpTable.line, "to_bus", expected_type="u4")
+            _PpTable.bus, self._get_pp_attr(_PpTable.line, _PpAttr.to_bus, expected_type="u4")
         )
         pgm_lines[AttributeType.to_status] = in_service & switch_states["to"]
-        pgm_lines[AttributeType.r1] = self._get_pp_attr(_PpTable.line, "r_ohm_per_km", expected_type="f8") * multiplier
-        pgm_lines[AttributeType.x1] = self._get_pp_attr(_PpTable.line, "x_ohm_per_km", expected_type="f8") * multiplier
+        pgm_lines[AttributeType.r1] = (
+            self._get_pp_attr(_PpTable.line, _PpAttr.r_ohm_per_km, expected_type="f8") * multiplier
+        )
+        pgm_lines[AttributeType.x1] = (
+            self._get_pp_attr(_PpTable.line, _PpAttr.x_ohm_per_km, expected_type="f8") * multiplier
+        )
         pgm_lines[AttributeType.c1] = c_nf_per_km * length_km * parallel * 1e-9
         # The formula for tan1 = R_1 / Xc_1 = (g * 1e-6) / (2 * pi * f * c * 1e-9) = g / (2 * pi * f * c * 1e-3)
         pgm_lines[AttributeType.tan1] = np.divide(
-            self._get_pp_attr(_PpTable.line, "g_us_per_km", expected_type="f8", default=0),
+            self._get_pp_attr(_PpTable.line, _PpAttr.g_us_per_km, expected_type="f8", default=0),
             c_nf_per_km * (2 * np.pi * self.system_frequency * 1e-3),
             where=np.logical_not(np.isclose(c_nf_per_km, 0.0)),
             out=None,
         )
         pgm_lines[AttributeType.i_n] = (
-            (self._get_pp_attr(_PpTable.line, "max_i_ka", expected_type="f8", default=np.nan) * 1e3)
-            * self._get_pp_attr(_PpTable.line, "df", expected_type="f8", default=1)
+            (self._get_pp_attr(_PpTable.line, _PpAttr.max_i_ka, expected_type="f8", default=np.nan) * 1e3)
+            * self._get_pp_attr(_PpTable.line, _PpAttr.df, expected_type="f8", default=1)
             * parallel
         )
         pgm_lines[AttributeType.r0] = (
-            self._get_pp_attr(_PpTable.line, "r0_ohm_per_km", expected_type="f8", default=np.nan) * multiplier
+            self._get_pp_attr(_PpTable.line, _PpAttr.r0_ohm_per_km, expected_type="f8", default=np.nan) * multiplier
         )
         pgm_lines[AttributeType.x0] = (
-            self._get_pp_attr(_PpTable.line, "x0_ohm_per_km", expected_type="f8", default=np.nan) * multiplier
+            self._get_pp_attr(_PpTable.line, _PpAttr.x0_ohm_per_km, expected_type="f8", default=np.nan) * multiplier
         )
         pgm_lines[AttributeType.c0] = c0_nf_per_km * length_km * parallel * 1e-9
         pgm_lines[AttributeType.tan0] = np.divide(
-            self._get_pp_attr(_PpTable.line, "g0_us_per_km", expected_type="f8", default=0),
+            self._get_pp_attr(_PpTable.line, _PpAttr.g0_us_per_km, expected_type="f8", default=0),
             c0_nf_per_km * (2 * np.pi * self.system_frequency * 1e-3),
             where=np.logical_not(np.isclose(c0_nf_per_km, 0.0)),
             out=None,
@@ -506,14 +524,14 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if ComponentType.source in self.pgm_input_data:
             raise ValueError("Source component already exists in pgm_input_data")
 
-        rx_max = self._get_pp_attr(_PpTable.ext_grid, "rx_max", expected_type="f8", default=np.nan)
-        r0x0_max = self._get_pp_attr(_PpTable.ext_grid, "r0x0_max", expected_type="f8", default=np.nan)
-        x0x_max = self._get_pp_attr(_PpTable.ext_grid, "x0x_max", expected_type="f8", default=np.nan)
+        rx_max = self._get_pp_attr(_PpTable.ext_grid, _PpAttr.rx_max, expected_type="f8", default=np.nan)
+        r0x0_max = self._get_pp_attr(_PpTable.ext_grid, _PpAttr.r0x0_max, expected_type="f8", default=np.nan)
+        x0x_max = self._get_pp_attr(_PpTable.ext_grid, _PpAttr.x0x_max, expected_type="f8", default=np.nan)
 
         # Source Asym parameter check
         checks = {
-            "r0x0_max": np.isnan(r0x0_max).all() or np.array_equal(rx_max, r0x0_max),
-            "x0x_max": np.isnan(x0x_max).all() or all(x0x_max == 1),
+            _PpAttr.r0x0_max: np.isnan(r0x0_max).all() or np.array_equal(rx_max, r0x0_max),
+            _PpAttr.x0x_max: np.isnan(x0x_max).all() or all(x0x_max == 1),
         }
         if not all(checks.values()):
             failed_checks = ", ".join([key for key, value in checks.items() if not value])
@@ -524,20 +542,20 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         )
         pgm_sources[AttributeType.id] = self._generate_ids(_PpTable.ext_grid, pp_ext_grid.index)
         pgm_sources[AttributeType.node] = self._get_pgm_ids(
-            _PpTable.bus, self._get_pp_attr(_PpTable.ext_grid, "bus", expected_type="u4")
+            _PpTable.bus, self._get_pp_attr(_PpTable.ext_grid, _PpAttr.bus, expected_type="u4")
         )
         pgm_sources[AttributeType.status] = self._get_pp_attr(
-            _PpTable.ext_grid, "in_service", expected_type="bool", default=True
+            _PpTable.ext_grid, _PpAttr.in_service, expected_type="bool", default=True
         )
         pgm_sources[AttributeType.u_ref] = self._get_pp_attr(
-            _PpTable.ext_grid, "vm_pu", expected_type="f8", default=1.0
+            _PpTable.ext_grid, _PpAttr.vm_pu, expected_type="f8", default=1.0
         )
         pgm_sources[AttributeType.rx_ratio] = rx_max
         pgm_sources[AttributeType.u_ref_angle] = self._get_pp_attr(
-            _PpTable.ext_grid, "va_degree", expected_type="f8", default=0.0
+            _PpTable.ext_grid, _PpAttr.va_degree, expected_type="f8", default=0.0
         ) * (np.pi / 180)
         pgm_sources[AttributeType.sk] = (
-            self._get_pp_attr(_PpTable.ext_grid, "s_sc_max_mva", expected_type="f8", default=np.nan) * 1e6
+            self._get_pp_attr(_PpTable.ext_grid, _PpAttr.s_sc_max_mva, expected_type="f8", default=np.nan) * 1e6
         )
 
         self.pgm_input_data[ComponentType.source] = pgm_sources
@@ -557,22 +575,22 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if ComponentType.shunt in self.pgm_input_data:
             raise ValueError("Shunt component already exists in pgm_input_data")
 
-        vn_kv = self._get_pp_attr(_PpTable.shunt, "vn_kv", expected_type="f8")
+        vn_kv = self._get_pp_attr(_PpTable.shunt, _PpAttr.vn_kv, expected_type="f8")
         vn_kv_2 = vn_kv * vn_kv
 
-        step = self._get_pp_attr(_PpTable.shunt, "step", expected_type="u4", default=1)
-        g1_shunt = self._get_pp_attr(_PpTable.shunt, "p_mw", expected_type="f8") * step / vn_kv_2
-        b1_shunt = -self._get_pp_attr(_PpTable.shunt, "q_mvar", expected_type="f8") * step / vn_kv_2
+        step = self._get_pp_attr(_PpTable.shunt, _PpAttr.step, expected_type="u4", default=1)
+        g1_shunt = self._get_pp_attr(_PpTable.shunt, _PpAttr.p_mw, expected_type="f8") * step / vn_kv_2
+        b1_shunt = -self._get_pp_attr(_PpTable.shunt, _PpAttr.q_mvar, expected_type="f8") * step / vn_kv_2
 
         pgm_shunts = initialize_array(
             data_type=DatasetType.input, component_type=ComponentType.shunt, shape=len(pp_shunts)
         )
         pgm_shunts[AttributeType.id] = self._generate_ids(_PpTable.shunt, pp_shunts.index)
         pgm_shunts[AttributeType.node] = self._get_pgm_ids(
-            _PpTable.bus, self._get_pp_attr(_PpTable.shunt, "bus", expected_type="u4")
+            _PpTable.bus, self._get_pp_attr(_PpTable.shunt, _PpAttr.bus, expected_type="u4")
         )
         pgm_shunts[AttributeType.status] = self._get_pp_attr(
-            _PpTable.shunt, "in_service", expected_type="bool", default=True
+            _PpTable.shunt, _PpAttr.in_service, expected_type="bool", default=True
         )
         pgm_shunts[AttributeType.g1] = g1_shunt
         pgm_shunts[AttributeType.b1] = b1_shunt
@@ -597,23 +615,23 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if ComponentType.sym_gen in self.pgm_input_data:
             raise ValueError("Symmetric generator component already exists in pgm_input_data")
 
-        scaling = self._get_pp_attr(_PpTable.sgen, "scaling", expected_type="f8", default=1.0)
+        scaling = self._get_pp_attr(_PpTable.sgen, _PpAttr.scaling, expected_type="f8", default=1.0)
 
         pgm_sym_gens = initialize_array(
             data_type=DatasetType.input, component_type=ComponentType.sym_gen, shape=len(pp_sgens)
         )
         pgm_sym_gens[AttributeType.id] = self._generate_ids(_PpTable.sgen, pp_sgens.index)
         pgm_sym_gens[AttributeType.node] = self._get_pgm_ids(
-            _PpTable.bus, self._get_pp_attr(_PpTable.sgen, "bus", expected_type="i8")
+            _PpTable.bus, self._get_pp_attr(_PpTable.sgen, _PpAttr.bus, expected_type="i8")
         )
         pgm_sym_gens[AttributeType.status] = self._get_pp_attr(
-            _PpTable.sgen, "in_service", expected_type="bool", default=True
+            _PpTable.sgen, _PpAttr.in_service, expected_type="bool", default=True
         )
-        pgm_sym_gens[AttributeType.p_specified] = self._get_pp_attr(_PpTable.sgen, "p_mw", expected_type="f8") * (
+        pgm_sym_gens[AttributeType.p_specified] = self._get_pp_attr(_PpTable.sgen, _PpAttr.p_mw, expected_type="f8") * (
             1e6 * scaling
         )
         pgm_sym_gens[AttributeType.q_specified] = self._get_pp_attr(
-            _PpTable.sgen, "q_mvar", expected_type="f8", default=0.0
+            _PpTable.sgen, _PpAttr.q_mvar, expected_type="f8", default=0.0
         ) * (1e6 * scaling)
         pgm_sym_gens[AttributeType.type] = LoadGenType.const_power
 
@@ -635,7 +653,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if ComponentType.asym_gen in self.pgm_input_data:
             raise ValueError("Asymmetric generator component already exists in pgm_input_data")
 
-        scaling = self._get_pp_attr(_PpTable.asymmetric_sgen, "scaling", expected_type="f8")
+        scaling = self._get_pp_attr(_PpTable.asymmetric_sgen, _PpAttr.scaling, expected_type="f8")
         multiplier = 1e6 * scaling
 
         pgm_asym_gens = initialize_array(
@@ -644,17 +662,17 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_asym_gens[AttributeType.id] = self._generate_ids(_PpTable.asymmetric_sgen, pp_asym_gens.index)
         pgm_asym_gens[AttributeType.node] = self._get_pgm_ids(
             _PpTable.bus,
-            self._get_pp_attr(_PpTable.asymmetric_sgen, "bus", expected_type="i8"),
+            self._get_pp_attr(_PpTable.asymmetric_sgen, _PpAttr.bus, expected_type="i8"),
         )
         pgm_asym_gens[AttributeType.status] = self._get_pp_attr(
-            _PpTable.asymmetric_sgen, "in_service", expected_type="bool", default=True
+            _PpTable.asymmetric_sgen, _PpAttr.in_service, expected_type="bool", default=True
         )
         pgm_asym_gens[AttributeType.p_specified] = np.transpose(
             np.array(
                 (
-                    self._get_pp_attr(_PpTable.asymmetric_sgen, "p_a_mw", expected_type="f8"),
-                    self._get_pp_attr(_PpTable.asymmetric_sgen, "p_b_mw", expected_type="f8"),
-                    self._get_pp_attr(_PpTable.asymmetric_sgen, "p_c_mw", expected_type="f8"),
+                    self._get_pp_attr(_PpTable.asymmetric_sgen, _PpAttr.p_a_mw, expected_type="f8"),
+                    self._get_pp_attr(_PpTable.asymmetric_sgen, _PpAttr.p_b_mw, expected_type="f8"),
+                    self._get_pp_attr(_PpTable.asymmetric_sgen, _PpAttr.p_c_mw, expected_type="f8"),
                 )
             )
             * multiplier
@@ -662,9 +680,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_asym_gens[AttributeType.q_specified] = np.transpose(
             np.array(
                 (
-                    self._get_pp_attr(_PpTable.asymmetric_sgen, "q_a_mvar", expected_type="f8"),
-                    self._get_pp_attr(_PpTable.asymmetric_sgen, "q_b_mvar", expected_type="f8"),
-                    self._get_pp_attr(_PpTable.asymmetric_sgen, "q_c_mvar", expected_type="f8"),
+                    self._get_pp_attr(_PpTable.asymmetric_sgen, _PpAttr.q_a_mvar, expected_type="f8"),
+                    self._get_pp_attr(_PpTable.asymmetric_sgen, _PpAttr.q_b_mvar, expected_type="f8"),
+                    self._get_pp_attr(_PpTable.asymmetric_sgen, _PpAttr.q_c_mvar, expected_type="f8"),
                 )
             )
             * multiplier
@@ -690,14 +708,14 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if ComponentType.sym_load in self.pgm_input_data:
             raise ValueError("Symmetrical Load component already exists in pgm_input_data")
 
-        if np.any(self._get_pp_attr(_PpTable.load, "type", expected_type="O", default=None) == "delta"):
+        if np.any(self._get_pp_attr(_PpTable.load, _PpAttr.type, expected_type="O", default=None) == "delta"):
             raise NotImplementedError("Delta loads are not implemented, only wye loads are supported in PGM.")
 
-        scaling = self._get_pp_attr(_PpTable.load, "scaling", expected_type="f8", default=1.0)
-        in_service = self._get_pp_attr(_PpTable.load, "in_service", expected_type="bool", default=True)
-        p_mw = self._get_pp_attr(_PpTable.load, "p_mw", expected_type="f8", default=0.0)
-        q_mvar = self._get_pp_attr(_PpTable.load, "q_mvar", expected_type="f8", default=0.0)
-        bus = self._get_pp_attr(_PpTable.load, "bus", expected_type="u4")
+        scaling = self._get_pp_attr(_PpTable.load, _PpAttr.scaling, expected_type="f8", default=1.0)
+        in_service = self._get_pp_attr(_PpTable.load, _PpAttr.in_service, expected_type="bool", default=True)
+        p_mw = self._get_pp_attr(_PpTable.load, _PpAttr.p_mw, expected_type="f8", default=0.0)
+        q_mvar = self._get_pp_attr(_PpTable.load, _PpAttr.q_mvar, expected_type="f8", default=0.0)
+        bus = self._get_pp_attr(_PpTable.load, _PpAttr.bus, expected_type="u4")
 
         n_loads = len(pp_loads)
 
@@ -707,12 +725,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         if PP_CONVERSION_VERSION < PP_COMPATIBILITY_VERSION_3_2_0:
             const_i_p_multiplier = (
-                self._get_pp_attr(_PpTable.load, "const_i_percent", expected_type="f8", default=0)
+                self._get_pp_attr(_PpTable.load, _PpAttr.const_i_percent, expected_type="f8", default=0)
                 * scaling
                 * (1e-2 * 1e6)
             )
             const_z_p_multiplier = (
-                self._get_pp_attr(_PpTable.load, "const_z_percent", expected_type="f8", default=0)
+                self._get_pp_attr(_PpTable.load, _PpAttr.const_z_percent, expected_type="f8", default=0)
                 * scaling
                 * (1e-2 * 1e6)
             )
@@ -722,23 +740,23 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             const_z_q_multiplier = const_z_p_multiplier
         else:
             const_i_p_multiplier = (
-                self._get_pp_attr(_PpTable.load, "const_i_p_percent", expected_type="f8", default=0)
+                self._get_pp_attr(_PpTable.load, _PpAttr.const_i_p_percent, expected_type="f8", default=0)
                 * scaling
                 * (1e-2 * 1e6)
             )
             const_z_p_multiplier = (
-                self._get_pp_attr(_PpTable.load, "const_z_p_percent", expected_type="f8", default=0)
+                self._get_pp_attr(_PpTable.load, _PpAttr.const_z_p_percent, expected_type="f8", default=0)
                 * scaling
                 * (1e-2 * 1e6)
             )
             const_p_multiplier = (1e6 - const_i_p_multiplier - const_z_p_multiplier) * scaling
             const_i_q_multiplier = (
-                self._get_pp_attr(_PpTable.load, "const_i_q_percent", expected_type="f8", default=0)
+                self._get_pp_attr(_PpTable.load, _PpAttr.const_i_q_percent, expected_type="f8", default=0)
                 * scaling
                 * (1e-2 * 1e6)
             )
             const_z_q_multiplier = (
-                self._get_pp_attr(_PpTable.load, "const_z_q_percent", expected_type="f8", default=0)
+                self._get_pp_attr(_PpTable.load, _PpAttr.const_z_q_percent, expected_type="f8", default=0)
                 * scaling
                 * (1e-2 * 1e6)
             )
@@ -788,10 +806,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if ComponentType.asym_load in self.pgm_input_data:
             raise ValueError("Asymmetric Load component already exists in pgm_input_data")
 
-        if np.any(self._get_pp_attr(_PpTable.asymmetric_load, "type", expected_type="O", default=None) == "delta"):
+        if np.any(
+            self._get_pp_attr(_PpTable.asymmetric_load, _PpAttr.type, expected_type="O", default=None) == "delta"
+        ):
             raise NotImplementedError("Delta loads are not implemented, only wye loads are supported in PGM.")
 
-        scaling = self._get_pp_attr(_PpTable.asymmetric_load, "scaling", expected_type="f8")
+        scaling = self._get_pp_attr(_PpTable.asymmetric_load, _PpAttr.scaling, expected_type="f8")
         multiplier = 1e6 * scaling
 
         pgm_asym_loads = initialize_array(
@@ -800,17 +820,17 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_asym_loads[AttributeType.id] = self._generate_ids(_PpTable.asymmetric_load, pp_asym_loads.index)
         pgm_asym_loads[AttributeType.node] = self._get_pgm_ids(
             _PpTable.bus,
-            self._get_pp_attr(_PpTable.asymmetric_load, "bus", expected_type="u4"),
+            self._get_pp_attr(_PpTable.asymmetric_load, _PpAttr.bus, expected_type="u4"),
         )
         pgm_asym_loads[AttributeType.status] = self._get_pp_attr(
-            _PpTable.asymmetric_load, "in_service", expected_type="bool", default=True
+            _PpTable.asymmetric_load, _PpAttr.in_service, expected_type="bool", default=True
         )
         pgm_asym_loads[AttributeType.p_specified] = np.transpose(
             np.array(
                 [
-                    self._get_pp_attr(_PpTable.asymmetric_load, "p_a_mw", expected_type="f8"),
-                    self._get_pp_attr(_PpTable.asymmetric_load, "p_b_mw", expected_type="f8"),
-                    self._get_pp_attr(_PpTable.asymmetric_load, "p_c_mw", expected_type="f8"),
+                    self._get_pp_attr(_PpTable.asymmetric_load, _PpAttr.p_a_mw, expected_type="f8"),
+                    self._get_pp_attr(_PpTable.asymmetric_load, _PpAttr.p_b_mw, expected_type="f8"),
+                    self._get_pp_attr(_PpTable.asymmetric_load, _PpAttr.p_c_mw, expected_type="f8"),
                 ]
             )
             * multiplier
@@ -818,9 +838,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_asym_loads[AttributeType.q_specified] = np.transpose(
             np.array(
                 [
-                    self._get_pp_attr(_PpTable.asymmetric_load, "q_a_mvar", expected_type="f8"),
-                    self._get_pp_attr(_PpTable.asymmetric_load, "q_b_mvar", expected_type="f8"),
-                    self._get_pp_attr(_PpTable.asymmetric_load, "q_c_mvar", expected_type="f8"),
+                    self._get_pp_attr(_PpTable.asymmetric_load, _PpAttr.q_a_mvar, expected_type="f8"),
+                    self._get_pp_attr(_PpTable.asymmetric_load, _PpAttr.q_b_mvar, expected_type="f8"),
+                    self._get_pp_attr(_PpTable.asymmetric_load, _PpAttr.q_c_mvar, expected_type="f8"),
                 ]
             )
             * multiplier
@@ -850,32 +870,34 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             raise RuntimeError("Tap dependent impedance is not supported in Power Grid Model")
 
         # Attribute retrieval
-        i_no_load = self._get_pp_attr(_PpTable.trafo, "i0_percent", expected_type="f8")
-        pfe = self._get_pp_attr(_PpTable.trafo, "pfe_kw", expected_type="f8")
-        vk_percent = self._get_pp_attr(_PpTable.trafo, "vk_percent", expected_type="f8")
-        vkr_percent = self._get_pp_attr(_PpTable.trafo, "vkr_percent", expected_type="f8")
-        in_service = self._get_pp_attr(_PpTable.trafo, "in_service", expected_type="bool", default=True)
-        parallel = self._get_pp_attr(_PpTable.trafo, "parallel", expected_type="u4", default=1)
-        sn_mva = self._get_pp_attr(_PpTable.trafo, "sn_mva", expected_type="f8")
+        i_no_load = self._get_pp_attr(_PpTable.trafo, _PpAttr.i0_percent, expected_type="f8")
+        pfe = self._get_pp_attr(_PpTable.trafo, _PpAttr.pfe_kw, expected_type="f8")
+        vk_percent = self._get_pp_attr(_PpTable.trafo, _PpAttr.vk_percent, expected_type="f8")
+        vkr_percent = self._get_pp_attr(_PpTable.trafo, _PpAttr.vkr_percent, expected_type="f8")
+        in_service = self._get_pp_attr(_PpTable.trafo, _PpAttr.in_service, expected_type="bool", default=True)
+        parallel = self._get_pp_attr(_PpTable.trafo, _PpAttr.parallel, expected_type="u4", default=1)
+        sn_mva = self._get_pp_attr(_PpTable.trafo, _PpAttr.sn_mva, expected_type="f8")
         switch_states = self.get_switch_states(_PpTable.trafo)
 
-        tap_side = self._get_pp_attr(_PpTable.trafo, "tap_side", expected_type="O", default=None)
-        tap_nom = self._get_pp_attr(_PpTable.trafo, "tap_neutral", expected_type="f8", default=np.nan)
-        tap_pos = self._get_pp_attr(_PpTable.trafo, "tap_pos", expected_type="f8", default=np.nan)
+        tap_side = self._get_pp_attr(_PpTable.trafo, _PpAttr.tap_side, expected_type="O", default=None)
+        tap_nom = self._get_pp_attr(_PpTable.trafo, _PpAttr.tap_neutral, expected_type="f8", default=np.nan)
+        tap_pos = self._get_pp_attr(_PpTable.trafo, _PpAttr.tap_pos, expected_type="f8", default=np.nan)
         tap_size = self._get_tap_size(pp_trafo)
         winding_types = self.get_trafo_winding_types()
-        clocks = np.round(self._get_pp_attr(_PpTable.trafo, "shift_degree", expected_type="f8", default=0.0) / 30) % 12
+        clocks = (
+            np.round(self._get_pp_attr(_PpTable.trafo, _PpAttr.shift_degree, expected_type="f8", default=0.0) / 30) % 12
+        )
 
         # Asym parameters retrival and check. For PGM,
         # manual zero sequence vk0_percent and vkr0_percent params are not supported yet.
-        vk0_percent = self._get_pp_attr(_PpTable.trafo, "vk0_percent", expected_type="f8", default=np.nan)
-        vkr0_percent = self._get_pp_attr(_PpTable.trafo, "vkr0_percent", expected_type="f8", default=np.nan)
+        vk0_percent = self._get_pp_attr(_PpTable.trafo, _PpAttr.vk0_percent, expected_type="f8", default=np.nan)
+        vkr0_percent = self._get_pp_attr(_PpTable.trafo, _PpAttr.vkr0_percent, expected_type="f8", default=np.nan)
         # mag0_percent and mag0_rx will be fetched relative to vk_percent
-        mag0_percent = self._get_pp_attr(_PpTable.trafo, "mag0_percent", expected_type="f8", default=np.nan)
+        mag0_percent = self._get_pp_attr(_PpTable.trafo, _PpAttr.mag0_percent, expected_type="f8", default=np.nan)
         if PP_CONVERSION_VERSION < PP_COMPATIBILITY_VERSION_3_4_0:
             # before pandapower 3.4.0, the mag0_percent wasn't a percentage but a relative value between 0 and 1
             mag0_percent *= 100.0
-        mag0_rx = self._get_pp_attr(_PpTable.trafo, "mag0_rx", expected_type="f8", default=np.nan)
+        mag0_rx = self._get_pp_attr(_PpTable.trafo, _PpAttr.mag0_rx, expected_type="f8", default=np.nan)
         # Calculate rx ratio of magnetising branch
         valid = np.logical_and(np.not_equal(sn_mva, 0.0), np.isfinite(sn_mva))
         mag_g = np.divide(pfe, sn_mva * 1000, where=valid, out=None)
@@ -890,7 +912,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             "vk0_percent": np.logical_or(np.allclose(vk_percent, vk0_percent), np.isnan(vk0_percent).all()),
             "vkr0_percent": np.logical_or(np.allclose(vkr_percent, vkr0_percent), np.isnan(vkr0_percent).all()),
             "si0_hv_partial": np.isnan(
-                self._get_pp_attr(_PpTable.trafo, "si0_hv_partial", expected_type="f8", default=np.nan)
+                self._get_pp_attr(_PpTable.trafo, _PpAttr.si0_hv_partial, expected_type="f8", default=np.nan)
             ).all(),
         }
         if not all(checks.values()):
@@ -941,15 +963,19 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         )
         pgm_transformers[AttributeType.id] = self._generate_ids(_PpTable.trafo, pp_trafo.index)
         pgm_transformers[AttributeType.from_node] = self._get_pgm_ids(
-            _PpTable.bus, self._get_pp_attr(_PpTable.trafo, "hv_bus", expected_type="u4")
+            _PpTable.bus, self._get_pp_attr(_PpTable.trafo, _PpAttr.hv_bus, expected_type="u4")
         )
         pgm_transformers[AttributeType.from_status] = in_service & switch_states["from"].values
         pgm_transformers[AttributeType.to_node] = self._get_pgm_ids(
-            _PpTable.bus, self._get_pp_attr(_PpTable.trafo, "lv_bus", expected_type="u4")
+            _PpTable.bus, self._get_pp_attr(_PpTable.trafo, _PpAttr.lv_bus, expected_type="u4")
         )
         pgm_transformers[AttributeType.to_status] = in_service & switch_states["to"].values
-        pgm_transformers[AttributeType.u1] = self._get_pp_attr(_PpTable.trafo, "vn_hv_kv", expected_type="f8") * 1e3
-        pgm_transformers[AttributeType.u2] = self._get_pp_attr(_PpTable.trafo, "vn_lv_kv", expected_type="f8") * 1e3
+        pgm_transformers[AttributeType.u1] = (
+            self._get_pp_attr(_PpTable.trafo, _PpAttr.vn_hv_kv, expected_type="f8") * 1e3
+        )
+        pgm_transformers[AttributeType.u2] = (
+            self._get_pp_attr(_PpTable.trafo, _PpAttr.vn_lv_kv, expected_type="f8") * 1e3
+        )
         pgm_transformers[AttributeType.sn] = sn_mva * parallel * 1e6
         pgm_transformers[AttributeType.uk] = vk_percent * 1e-2
         pgm_transformers[AttributeType.pk] = vkr_percent * sn_mva * parallel * (1e6 * 1e-2)
@@ -970,10 +996,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_transformers[AttributeType.tap_pos] = tap_pos.astype("i4")
         pgm_transformers[AttributeType.tap_side] = self._get_transformer_tap_side(tap_side)
         pgm_transformers[AttributeType.tap_min] = self._get_pp_attr(
-            _PpTable.trafo, "tap_min", expected_type="i4", default=0
+            _PpTable.trafo, _PpAttr.tap_min, expected_type="i4", default=0
         )
         pgm_transformers[AttributeType.tap_max] = self._get_pp_attr(
-            _PpTable.trafo, "tap_max", expected_type="i4", default=0
+            _PpTable.trafo, _PpAttr.tap_max, expected_type="i4", default=0
         )
         pgm_transformers[AttributeType.tap_size] = tap_size
 
@@ -1003,45 +1029,55 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             raise RuntimeError("Tap at star point is not supported in Power Grid Model")
 
         # Attributes retrieval
-        sn_hv_mva = self._get_pp_attr(_PpTable.trafo3w, "sn_hv_mva", expected_type="f8")
-        sn_mv_mva = self._get_pp_attr(_PpTable.trafo3w, "sn_mv_mva", expected_type="f8")
-        sn_lv_mva = self._get_pp_attr(_PpTable.trafo3w, "sn_lv_mva", expected_type="f8")
-        in_service = self._get_pp_attr(_PpTable.trafo3w, "in_service", expected_type="bool", default=True)
+        sn_hv_mva = self._get_pp_attr(_PpTable.trafo3w, _PpAttr.sn_hv_mva, expected_type="f8")
+        sn_mv_mva = self._get_pp_attr(_PpTable.trafo3w, _PpAttr.sn_mv_mva, expected_type="f8")
+        sn_lv_mva = self._get_pp_attr(_PpTable.trafo3w, _PpAttr.sn_lv_mva, expected_type="f8")
+        in_service = self._get_pp_attr(_PpTable.trafo3w, _PpAttr.in_service, expected_type="bool", default=True)
         switch_states = self.get_trafo3w_switch_states(pp_trafo3w)
-        tap_side = self._get_pp_attr(_PpTable.trafo3w, "tap_side", expected_type="O", default=None)
-        tap_nom = self._get_pp_attr(_PpTable.trafo3w, "tap_neutral", expected_type="f8", default=np.nan)
-        tap_pos = self._get_pp_attr(_PpTable.trafo3w, "tap_pos", expected_type="f8", default=np.nan)
+        tap_side = self._get_pp_attr(_PpTable.trafo3w, _PpAttr.tap_side, expected_type="O", default=None)
+        tap_nom = self._get_pp_attr(_PpTable.trafo3w, _PpAttr.tap_neutral, expected_type="f8", default=np.nan)
+        tap_pos = self._get_pp_attr(_PpTable.trafo3w, _PpAttr.tap_pos, expected_type="f8", default=np.nan)
         tap_size = self._get_3wtransformer_tap_size(pp_trafo3w)
-        vk_hv_percent = self._get_pp_attr(_PpTable.trafo3w, "vk_hv_percent", expected_type="f8")
-        vkr_hv_percent = self._get_pp_attr(_PpTable.trafo3w, "vkr_hv_percent", expected_type="f8")
-        vk_mv_percent = self._get_pp_attr(_PpTable.trafo3w, "vk_mv_percent", expected_type="f8")
-        vkr_mv_percent = self._get_pp_attr(_PpTable.trafo3w, "vkr_mv_percent", expected_type="f8")
-        vk_lv_percent = self._get_pp_attr(_PpTable.trafo3w, "vk_lv_percent", expected_type="f8")
-        vkr_lv_percent = self._get_pp_attr(_PpTable.trafo3w, "vkr_lv_percent", expected_type="f8")
+        vk_hv_percent = self._get_pp_attr(_PpTable.trafo3w, _PpAttr.vk_hv_percent, expected_type="f8")
+        vkr_hv_percent = self._get_pp_attr(_PpTable.trafo3w, _PpAttr.vkr_hv_percent, expected_type="f8")
+        vk_mv_percent = self._get_pp_attr(_PpTable.trafo3w, _PpAttr.vk_mv_percent, expected_type="f8")
+        vkr_mv_percent = self._get_pp_attr(_PpTable.trafo3w, _PpAttr.vkr_mv_percent, expected_type="f8")
+        vk_lv_percent = self._get_pp_attr(_PpTable.trafo3w, _PpAttr.vk_lv_percent, expected_type="f8")
+        vkr_lv_percent = self._get_pp_attr(_PpTable.trafo3w, _PpAttr.vkr_lv_percent, expected_type="f8")
         winding_types = self.get_trafo3w_winding_types()
         clocks_12 = (
-            np.round(self._get_pp_attr(_PpTable.trafo3w, "shift_mv_degree", expected_type="f8", default=0.0) / 30.0)
+            np.round(
+                self._get_pp_attr(_PpTable.trafo3w, _PpAttr.shift_mv_degree, expected_type="f8", default=0.0) / 30.0
+            )
             % 12
         )
         clocks_13 = (
-            np.round(self._get_pp_attr(_PpTable.trafo3w, "shift_lv_degree", expected_type="f8", default=0.0) / 30.0)
+            np.round(
+                self._get_pp_attr(_PpTable.trafo3w, _PpAttr.shift_lv_degree, expected_type="f8", default=0.0) / 30.0
+            )
             % 12
         )
-        vk0_hv_percent = self._get_pp_attr(_PpTable.trafo3w, "vk0_hv_percent", expected_type="f8", default=np.nan)
-        vkr0_hv_percent = self._get_pp_attr(_PpTable.trafo3w, "vkr0_hv_percent", expected_type="f8", default=np.nan)
-        vk0_mv_percent = self._get_pp_attr(_PpTable.trafo3w, "vk0_mv_percent", expected_type="f8", default=np.nan)
-        vkr0_mv_percent = self._get_pp_attr(_PpTable.trafo3w, "vkr0_mv_percent", expected_type="f8", default=np.nan)
-        vk0_lv_percent = self._get_pp_attr(_PpTable.trafo3w, "vk0_lv_percent", expected_type="f8", default=np.nan)
-        vkr0_lv_percent = self._get_pp_attr(_PpTable.trafo3w, "vkr0_lv_percent", expected_type="f8", default=np.nan)
+        vk0_hv_percent = self._get_pp_attr(_PpTable.trafo3w, _PpAttr.vk0_hv_percent, expected_type="f8", default=np.nan)
+        vkr0_hv_percent = self._get_pp_attr(
+            _PpTable.trafo3w, _PpAttr.vkr0_hv_percent, expected_type="f8", default=np.nan
+        )
+        vk0_mv_percent = self._get_pp_attr(_PpTable.trafo3w, _PpAttr.vk0_mv_percent, expected_type="f8", default=np.nan)
+        vkr0_mv_percent = self._get_pp_attr(
+            _PpTable.trafo3w, _PpAttr.vkr0_mv_percent, expected_type="f8", default=np.nan
+        )
+        vk0_lv_percent = self._get_pp_attr(_PpTable.trafo3w, _PpAttr.vk0_lv_percent, expected_type="f8", default=np.nan)
+        vkr0_lv_percent = self._get_pp_attr(
+            _PpTable.trafo3w, _PpAttr.vkr0_lv_percent, expected_type="f8", default=np.nan
+        )
 
         # Asym parameters. For PGM, manual zero sequence params are not supported yet.
         checks = {
-            "vk0_hv_percent": np.array_equal(vk_hv_percent, vk0_hv_percent) or np.isnan(vk0_hv_percent).all(),
-            "vkr0_hv_percent": np.array_equal(vkr_hv_percent, vkr0_hv_percent) or np.isnan(vkr0_hv_percent).all(),
-            "vk0_mv_percent": np.array_equal(vk_mv_percent, vk0_mv_percent) or np.isnan(vk0_mv_percent).all(),
-            "vkr0_mv_percent": np.array_equal(vkr_mv_percent, vkr0_mv_percent) or np.isnan(vkr0_mv_percent).all(),
-            "vk0_lv_percent": np.array_equal(vk_lv_percent, vk0_lv_percent) or np.isnan(vk0_lv_percent).all(),
-            "vkr0_lv_percent": np.array_equal(vkr_lv_percent, vkr0_lv_percent) or np.isnan(vkr0_lv_percent).all(),
+            _PpAttr.vk0_hv_percent: np.array_equal(vk_hv_percent, vk0_hv_percent) or np.isnan(vk0_hv_percent).all(),
+            _PpAttr.vkr0_hv_percent: np.array_equal(vkr_hv_percent, vkr0_hv_percent) or np.isnan(vkr0_hv_percent).all(),
+            _PpAttr.vk0_mv_percent: np.array_equal(vk_mv_percent, vk0_mv_percent) or np.isnan(vk0_mv_percent).all(),
+            _PpAttr.vkr0_mv_percent: np.array_equal(vkr_mv_percent, vkr0_mv_percent) or np.isnan(vkr0_mv_percent).all(),
+            _PpAttr.vk0_lv_percent: np.array_equal(vk_lv_percent, vk0_lv_percent) or np.isnan(vk0_lv_percent).all(),
+            _PpAttr.vkr0_lv_percent: np.array_equal(vkr_lv_percent, vkr0_lv_percent) or np.isnan(vkr0_lv_percent).all(),
         }
         if not all(checks.values()):
             failed_checks = ", ".join([key for key, value in checks.items() if not value])
@@ -1074,20 +1110,26 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_3wtransformers[AttributeType.id] = self._generate_ids(_PpTable.trafo3w, pp_trafo3w.index)
 
         pgm_3wtransformers[AttributeType.node_1] = self._get_pgm_ids(
-            _PpTable.bus, self._get_pp_attr(_PpTable.trafo3w, "hv_bus", expected_type="u4")
+            _PpTable.bus, self._get_pp_attr(_PpTable.trafo3w, _PpAttr.hv_bus, expected_type="u4")
         )
         pgm_3wtransformers[AttributeType.node_2] = self._get_pgm_ids(
-            _PpTable.bus, self._get_pp_attr(_PpTable.trafo3w, "mv_bus", expected_type="u4")
+            _PpTable.bus, self._get_pp_attr(_PpTable.trafo3w, _PpAttr.mv_bus, expected_type="u4")
         )
         pgm_3wtransformers[AttributeType.node_3] = self._get_pgm_ids(
-            _PpTable.bus, self._get_pp_attr(_PpTable.trafo3w, "lv_bus", expected_type="u4")
+            _PpTable.bus, self._get_pp_attr(_PpTable.trafo3w, _PpAttr.lv_bus, expected_type="u4")
         )
         pgm_3wtransformers[AttributeType.status_1] = in_service & switch_states["side_1"].values
         pgm_3wtransformers[AttributeType.status_2] = in_service & switch_states["side_2"].values
         pgm_3wtransformers[AttributeType.status_3] = in_service & switch_states["side_3"].values
-        pgm_3wtransformers[AttributeType.u1] = self._get_pp_attr(_PpTable.trafo3w, "vn_hv_kv", expected_type="f8") * 1e3
-        pgm_3wtransformers[AttributeType.u2] = self._get_pp_attr(_PpTable.trafo3w, "vn_mv_kv", expected_type="f8") * 1e3
-        pgm_3wtransformers[AttributeType.u3] = self._get_pp_attr(_PpTable.trafo3w, "vn_lv_kv", expected_type="f8") * 1e3
+        pgm_3wtransformers[AttributeType.u1] = (
+            self._get_pp_attr(_PpTable.trafo3w, _PpAttr.vn_hv_kv, expected_type="f8") * 1e3
+        )
+        pgm_3wtransformers[AttributeType.u2] = (
+            self._get_pp_attr(_PpTable.trafo3w, _PpAttr.vn_mv_kv, expected_type="f8") * 1e3
+        )
+        pgm_3wtransformers[AttributeType.u3] = (
+            self._get_pp_attr(_PpTable.trafo3w, _PpAttr.vn_lv_kv, expected_type="f8") * 1e3
+        )
         pgm_3wtransformers[AttributeType.sn_1] = sn_hv_mva * 1e6
         pgm_3wtransformers[AttributeType.sn_2] = sn_mv_mva * 1e6
         pgm_3wtransformers[AttributeType.sn_3] = sn_lv_mva * 1e6
@@ -1099,9 +1141,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_3wtransformers[AttributeType.pk_13] = vkr_lv_percent * np.minimum(sn_hv_mva, sn_lv_mva) * (1e-2 * 1e6)
         pgm_3wtransformers[AttributeType.pk_23] = vkr_mv_percent * np.minimum(sn_mv_mva, sn_lv_mva) * (1e-2 * 1e6)
 
-        pgm_3wtransformers[AttributeType.p0] = self._get_pp_attr(_PpTable.trafo3w, "pfe_kw", expected_type="f8") * 1e3
+        pgm_3wtransformers[AttributeType.p0] = (
+            self._get_pp_attr(_PpTable.trafo3w, _PpAttr.pfe_kw, expected_type="f8") * 1e3
+        )
         pgm_3wtransformers[AttributeType.i0] = (
-            self._get_pp_attr(_PpTable.trafo3w, "i0_percent", expected_type="f8") * 1e-2
+            self._get_pp_attr(_PpTable.trafo3w, _PpAttr.i0_percent, expected_type="f8") * 1e-2
         )
         i0_min_threshold = pgm_3wtransformers[AttributeType.p0] / pgm_3wtransformers[AttributeType.sn_1]
         if any(np.less(pgm_3wtransformers[AttributeType.i0], i0_min_threshold)):
@@ -1118,10 +1162,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_3wtransformers[AttributeType.tap_pos] = tap_pos.astype("i4")  # TODO(mgovers) shouldn't this be rounded?
         pgm_3wtransformers[AttributeType.tap_side] = self._get_3wtransformer_tap_side(tap_side)
         pgm_3wtransformers[AttributeType.tap_min] = self._get_pp_attr(
-            _PpTable.trafo3w, "tap_min", expected_type="i4", default=0
+            _PpTable.trafo3w, _PpAttr.tap_min, expected_type="i4", default=0
         )
         pgm_3wtransformers[AttributeType.tap_max] = self._get_pp_attr(
-            _PpTable.trafo3w, "tap_max", expected_type="i4", default=0
+            _PpTable.trafo3w, _PpAttr.tap_max, expected_type="i4", default=0
         )
         pgm_3wtransformers[AttributeType.tap_size] = tap_size
 
@@ -1181,8 +1225,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             return
 
         n_wards = len(pp_wards)
-        in_service = self._get_pp_attr(_PpTable.ward, "in_service", expected_type="bool", default=True)
-        bus = self._get_pp_attr(_PpTable.ward, "bus", expected_type="u4")
+        in_service = self._get_pp_attr(_PpTable.ward, _PpAttr.in_service, expected_type="bool", default=True)
+        bus = self._get_pp_attr(_PpTable.ward, _PpAttr.bus, expected_type="u4")
 
         pgm_sym_loads_from_ward = initialize_array(
             data_type=DatasetType.input, component_type=ComponentType.sym_load, shape=n_wards * 2
@@ -1194,10 +1238,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_loads_from_ward[AttributeType.status][:n_wards] = in_service
         pgm_sym_loads_from_ward[AttributeType.type][:n_wards] = LoadGenType.const_power
         pgm_sym_loads_from_ward[AttributeType.p_specified][:n_wards] = (
-            self._get_pp_attr(_PpTable.ward, "ps_mw", expected_type="f8") * 1e6
+            self._get_pp_attr(_PpTable.ward, _PpAttr.ps_mw, expected_type="f8") * 1e6
         )
         pgm_sym_loads_from_ward[AttributeType.q_specified][:n_wards] = (
-            self._get_pp_attr(_PpTable.ward, "qs_mvar", expected_type="f8") * 1e6
+            self._get_pp_attr(_PpTable.ward, _PpAttr.qs_mvar, expected_type="f8") * 1e6
         )
 
         pgm_sym_loads_from_ward[AttributeType.id][-n_wards:] = self._generate_ids(
@@ -1207,10 +1251,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_loads_from_ward[AttributeType.status][-n_wards:] = in_service
         pgm_sym_loads_from_ward[AttributeType.type][-n_wards:] = LoadGenType.const_impedance
         pgm_sym_loads_from_ward[AttributeType.p_specified][-n_wards:] = (
-            self._get_pp_attr(_PpTable.ward, "pz_mw", expected_type="f8") * 1e6
+            self._get_pp_attr(_PpTable.ward, _PpAttr.pz_mw, expected_type="f8") * 1e6
         )
         pgm_sym_loads_from_ward[AttributeType.q_specified][-n_wards:] = (
-            self._get_pp_attr(_PpTable.ward, "qz_mvar", expected_type="f8") * 1e6
+            self._get_pp_attr(_PpTable.ward, _PpAttr.qz_mvar, expected_type="f8") * 1e6
         )
 
         #  If input data of loads has already been filled then extend it with data of wards. If it is empty and there
@@ -1245,22 +1289,22 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             _PpTable.motor, pp_motors.index, name="motor_load"
         )
         pgm_sym_loads_from_motor[AttributeType.node] = self._get_pgm_ids(
-            _PpTable.bus, self._get_pp_attr(_PpTable.motor, "bus", expected_type="i8")
+            _PpTable.bus, self._get_pp_attr(_PpTable.motor, _PpAttr.bus, expected_type="i8")
         )
         pgm_sym_loads_from_motor[AttributeType.status] = self._get_pp_attr(
-            _PpTable.motor, "in_service", expected_type="bool", default=True
+            _PpTable.motor, _PpAttr.in_service, expected_type="bool", default=True
         )
         pgm_sym_loads_from_motor[AttributeType.type] = LoadGenType.const_power
         #  The formula for p_specified is pn_mech_mw /(efficiency_percent/100) * (loading_percent/100) * scaling * 1e6
         pgm_sym_loads_from_motor[AttributeType.p_specified] = (
-            self._get_pp_attr(_PpTable.motor, "pn_mech_mw", expected_type="f8")
-            / self._get_pp_attr(_PpTable.motor, "efficiency_percent", expected_type="f8")
-            * self._get_pp_attr(_PpTable.motor, "loading_percent", expected_type="f8")
-            * self._get_pp_attr(_PpTable.motor, "scaling", expected_type="f8")
+            self._get_pp_attr(_PpTable.motor, _PpAttr.pn_mech_mw, expected_type="f8")
+            / self._get_pp_attr(_PpTable.motor, _PpAttr.efficiency_percent, expected_type="f8")
+            * self._get_pp_attr(_PpTable.motor, _PpAttr.loading_percent, expected_type="f8")
+            * self._get_pp_attr(_PpTable.motor, _PpAttr.scaling, expected_type="f8")
             * 1e6
         )
         p_spec = pgm_sym_loads_from_motor[AttributeType.p_specified]
-        cos_phi = self._get_pp_attr(_PpTable.motor, "cos_phi", expected_type="f8")
+        cos_phi = self._get_pp_attr(_PpTable.motor, _PpAttr.cos_phi, expected_type="f8")
         valid = np.logical_and(np.not_equal(cos_phi, 0.0), np.isfinite(cos_phi))
         q_spec = np.sqrt(
             np.power(np.divide(p_spec, cos_phi, where=valid, out=None), 2, where=valid, out=None) - p_spec**2,
@@ -1313,7 +1357,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_nodes = self.pgm_output_data[ComponentType.node]
 
         pp_output_buses = pd.DataFrame(
-            columns=["vm_pu", "va_degree", "p_mw", "q_mvar"],
+            columns=["vm_pu", "va_degree", _PpAttr.p_mw, _PpAttr.q_mvar],
             index=self._get_pp_ids(_PpTable.bus, pgm_nodes[AttributeType.id]),
         )
 
@@ -1358,8 +1402,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         }
 
         # Set the initial powers to zero
-        pp_output_buses["p_mw"] = 0.0
-        pp_output_buses["q_mvar"] = 0.0
+        pp_output_buses[_PpAttr.p_mw] = 0.0
+        pp_output_buses[_PpAttr.q_mvar] = 0.0
 
         # Now loop over all components, skipping the components that don't exist or don't contain data
         for component, sides in component_sides.items():
@@ -1389,12 +1433,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
                 # Now add the active and reactive powers to the pp busses
                 # Note that the units are incorrect; for efficiency, unit conversions will be applied at the end.
-                pp_output_buses.loc[idx, "p_mw"] -= accumulated_data[p_col]
-                pp_output_buses.loc[idx, "q_mvar"] -= accumulated_data[q_col]
+                pp_output_buses.loc[idx, _PpAttr.p_mw] -= accumulated_data[p_col]
+                pp_output_buses.loc[idx, _PpAttr.q_mvar] -= accumulated_data[q_col]
 
         # Finally apply the unit conversion (W -> MW and VAR -> MVAR)
-        pp_output_buses["p_mw"] /= 1e6
-        pp_output_buses["q_mvar"] /= 1e6
+        pp_output_buses[_PpAttr.p_mw] /= 1e6
+        pp_output_buses[_PpAttr.q_mvar] /= 1e6
 
     def _pp_lines_output(self):
         """
@@ -1477,11 +1521,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_output_sources = self.pgm_output_data[ComponentType.source]
 
         pp_output_ext_grids = pd.DataFrame(
-            columns=["p_mw", "q_mvar"],
+            columns=[_PpAttr.p_mw, _PpAttr.q_mvar],
             index=self._get_pp_ids(_PpTable.ext_grid, pgm_output_sources[AttributeType.id]),
         )
-        pp_output_ext_grids["p_mw"] = pgm_output_sources[AttributeType.p] * 1e-6
-        pp_output_ext_grids["q_mvar"] = pgm_output_sources[AttributeType.q] * 1e-6
+        pp_output_ext_grids[_PpAttr.p_mw] = pgm_output_sources[AttributeType.p] * 1e-6
+        pp_output_ext_grids[_PpAttr.q_mvar] = pgm_output_sources[AttributeType.q] * 1e-6
 
         self.pp_output_data[_PpTable.res_ext_grid] = pp_output_ext_grids
 
@@ -1505,11 +1549,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         at_nodes = self.pgm_nodes_lookup.loc[pgm_input_shunts[AttributeType.node]]
 
         pp_output_shunts = pd.DataFrame(
-            columns=["p_mw", "q_mvar", "vm_pu"],
+            columns=[_PpAttr.p_mw, _PpAttr.q_mvar, "vm_pu"],
             index=self._get_pp_ids(_PpTable.shunt, pgm_output_shunts[AttributeType.id]),
         )
-        pp_output_shunts["p_mw"] = pgm_output_shunts[AttributeType.p] * 1e-6
-        pp_output_shunts["q_mvar"] = pgm_output_shunts[AttributeType.q] * 1e-6
+        pp_output_shunts[_PpAttr.p_mw] = pgm_output_shunts[AttributeType.p] * 1e-6
+        pp_output_shunts[_PpAttr.q_mvar] = pgm_output_shunts[AttributeType.q] * 1e-6
         pp_output_shunts["vm_pu"] = at_nodes[AttributeType.u_pu].values
 
         self.pp_output_data[_PpTable.res_shunt] = pp_output_shunts
@@ -1531,11 +1575,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_output_sym_gens = self.pgm_output_data[ComponentType.sym_gen]
 
         pp_output_sgens = pd.DataFrame(
-            columns=["p_mw", "q_mvar"],
+            columns=[_PpAttr.p_mw, _PpAttr.q_mvar],
             index=self._get_pp_ids(_PpTable.sgen, pgm_output_sym_gens[AttributeType.id]),
         )
-        pp_output_sgens["p_mw"] = pgm_output_sym_gens[AttributeType.p] * 1e-6
-        pp_output_sgens["q_mvar"] = pgm_output_sym_gens[AttributeType.q] * 1e-6
+        pp_output_sgens[_PpAttr.p_mw] = pgm_output_sym_gens[AttributeType.p] * 1e-6
+        pp_output_sgens[_PpAttr.q_mvar] = pgm_output_sym_gens[AttributeType.q] * 1e-6
 
         self.pp_output_data[_PpTable.res_sgen] = pp_output_sgens
 
@@ -1714,12 +1758,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_output_asym_loads = self.pgm_output_data[ComponentType.asym_load]
 
         pp_asym_output_loads = pd.DataFrame(
-            columns=["p_mw", "q_mvar"],
+            columns=[_PpAttr.p_mw, _PpAttr.q_mvar],
             index=self._get_pp_ids(_PpTable.asymmetric_load, pgm_output_asym_loads[AttributeType.id]),
         )
 
-        pp_asym_output_loads["p_mw"] = pgm_output_asym_loads[AttributeType.p] * 1e-6
-        pp_asym_output_loads["q_mvar"] = pgm_output_asym_loads[AttributeType.q] * 1e-6
+        pp_asym_output_loads[_PpAttr.p_mw] = pgm_output_asym_loads[AttributeType.p] * 1e-6
+        pp_asym_output_loads[_PpAttr.q_mvar] = pgm_output_asym_loads[AttributeType.q] * 1e-6
 
         self.pp_output_data[_PpTable.res_asymmetric_load] = pp_asym_output_loads
 
@@ -1740,12 +1784,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_output_asym_gens = self.pgm_output_data[ComponentType.asym_gen]
 
         pp_output_asym_gens = pd.DataFrame(
-            columns=["p_mw", "q_mvar"],
+            columns=[_PpAttr.p_mw, _PpAttr.q_mvar],
             index=self._get_pp_ids(_PpTable.asymmetric_sgen, pgm_output_asym_gens[AttributeType.id]),
         )
 
-        pp_output_asym_gens["p_mw"] = pgm_output_asym_gens[AttributeType.p] * 1e-6
-        pp_output_asym_gens["q_mvar"] = pgm_output_asym_gens[AttributeType.q] * 1e-6
+        pp_output_asym_gens[_PpAttr.p_mw] = pgm_output_asym_gens[AttributeType.p] * 1e-6
+        pp_output_asym_gens[_PpAttr.q_mvar] = pgm_output_asym_gens[AttributeType.q] * 1e-6
 
         self.pp_output_data[_PpTable.res_asymmetric_sgen] = pp_output_asym_gens
 
@@ -1817,7 +1861,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         # Multiply the values and rename the columns to match pandapower
         accumulated_loads *= 1e-6
-        accumulated_loads.columns = ["p_mw", "q_mvar"]
+        accumulated_loads.columns = [_PpAttr.p_mw, _PpAttr.q_mvar]
 
         return accumulated_loads
 
@@ -1851,8 +1895,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             return single_df
 
         switch_attrs = {
-            _PpTable.trafo: {"hv_bus": "i_hv_ka", "lv_bus": "i_lv_ka"},
-            _PpTable.trafo3w: {"hv_bus": "i_hv_ka", "mv_bus": "i_mv_ka", "lv_bus": "i_lv_ka"},
+            _PpTable.trafo: {_PpAttr.hv_bus: "i_hv_ka", _PpAttr.lv_bus: "i_lv_ka"},
+            _PpTable.trafo3w: {_PpAttr.hv_bus: "i_hv_ka", _PpAttr.mv_bus: "i_mv_ka", _PpAttr.lv_bus: "i_lv_ka"},
             _PpTable.line: {"from_bus": "i_from_ka", "to_bus": "i_to_ka"},
         }
         table_to_et = {_PpTable.trafo: "t", _PpTable.trafo3w: "t3", _PpTable.line: "l"}
@@ -1918,12 +1962,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 "va_b_degree",
                 "vm_c_pu",
                 "va_c_degree",
-                "p_a_mw",
-                "q_a_mvar",
-                "p_b_mw",
-                "q_b_mvar",
-                "p_c_mw",
-                "q_c_mvar",
+                _PpAttr.p_a_mw,
+                _PpAttr.q_a_mvar,
+                _PpAttr.p_b_mw,
+                _PpAttr.q_b_mvar,
+                _PpAttr.p_c_mw,
+                _PpAttr.q_c_mvar,
                 "unbalance_percent",
             ],
             index=self._get_pp_ids(_PpTable.bus, pgm_nodes[AttributeType.id]),
@@ -1961,12 +2005,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             accumulated power for each bus
         """
         power_columns = [
-            "p_a_mw",
-            "p_b_mw",
-            "p_c_mw",
-            "q_a_mvar",
-            "q_b_mvar",
-            "q_c_mvar",
+            _PpAttr.p_a_mw,
+            _PpAttr.p_b_mw,
+            _PpAttr.p_c_mw,
+            _PpAttr.q_a_mvar,
+            _PpAttr.q_b_mvar,
+            _PpAttr.q_c_mvar,
         ]
         # Let's define all the components and sides where nodes can be connected
         component_sides = {
@@ -2172,15 +2216,22 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_output_sources = self.pgm_output_data[ComponentType.source]
 
         pp_output_ext_grids_3ph = pd.DataFrame(
-            columns=["p_a_mw", "q_a_mvar", "p_b_mw", "q_b_mvar", "p_c_mw", "q_c_mvar"],
+            columns=[
+                _PpAttr.p_a_mw,
+                _PpAttr.q_a_mvar,
+                _PpAttr.p_b_mw,
+                _PpAttr.q_b_mvar,
+                _PpAttr.p_c_mw,
+                _PpAttr.q_c_mvar,
+            ],
             index=self._get_pp_ids(_PpTable.ext_grid, pgm_output_sources[AttributeType.id]),
         )
-        pp_output_ext_grids_3ph["p_a_mw"] = pgm_output_sources[AttributeType.p][:, 0] * 1e-6
-        pp_output_ext_grids_3ph["q_a_mvar"] = pgm_output_sources[AttributeType.q][:, 0] * 1e-6
-        pp_output_ext_grids_3ph["p_b_mw"] = pgm_output_sources[AttributeType.p][:, 1] * 1e-6
-        pp_output_ext_grids_3ph["q_b_mvar"] = pgm_output_sources[AttributeType.q][:, 1] * 1e-6
-        pp_output_ext_grids_3ph["p_c_mw"] = pgm_output_sources[AttributeType.p][:, 2] * 1e-6
-        pp_output_ext_grids_3ph["q_c_mvar"] = pgm_output_sources[AttributeType.q][:, 2] * 1e-6
+        pp_output_ext_grids_3ph[_PpAttr.p_a_mw] = pgm_output_sources[AttributeType.p][:, 0] * 1e-6
+        pp_output_ext_grids_3ph[_PpAttr.q_a_mvar] = pgm_output_sources[AttributeType.q][:, 0] * 1e-6
+        pp_output_ext_grids_3ph[_PpAttr.p_b_mw] = pgm_output_sources[AttributeType.p][:, 1] * 1e-6
+        pp_output_ext_grids_3ph[_PpAttr.q_b_mvar] = pgm_output_sources[AttributeType.q][:, 1] * 1e-6
+        pp_output_ext_grids_3ph[_PpAttr.p_c_mw] = pgm_output_sources[AttributeType.p][:, 2] * 1e-6
+        pp_output_ext_grids_3ph[_PpAttr.q_c_mvar] = pgm_output_sources[AttributeType.q][:, 2] * 1e-6
 
         self.pp_output_data[_PpTable.res_ext_grid_3ph] = pp_output_ext_grids_3ph
 
@@ -2201,11 +2252,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_output_sym_gens = self.pgm_output_data[ComponentType.sym_gen]
 
         pp_output_sgens = pd.DataFrame(
-            columns=["p_mw", "q_mvar"],
+            columns=[_PpAttr.p_mw, _PpAttr.q_mvar],
             index=self._get_pp_ids(_PpTable.sgen, pgm_output_sym_gens[AttributeType.id]),
         )
-        pp_output_sgens["p_mw"] = np.sum(pgm_output_sym_gens[AttributeType.p], axis=1) * 1e-6
-        pp_output_sgens["q_mvar"] = np.sum(pgm_output_sym_gens[AttributeType.q], axis=1) * 1e-6
+        pp_output_sgens[_PpAttr.p_mw] = np.sum(pgm_output_sym_gens[AttributeType.p], axis=1) * 1e-6
+        pp_output_sgens[_PpAttr.q_mvar] = np.sum(pgm_output_sym_gens[AttributeType.q], axis=1) * 1e-6
 
         self.pp_output_data[_PpTable.res_sgen_3ph] = pp_output_sgens
 
@@ -2355,11 +2406,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_output_shunts = self.pgm_output_data[ComponentType.shunt]
 
         pp_output_shunts = pd.DataFrame(
-            columns=["p_mw", "q_mvar", "vm_pu"],
+            columns=[_PpAttr.p_mw, _PpAttr.q_mvar, "vm_pu"],
             index=self._get_pp_ids(_PpTable.shunt, pgm_output_shunts[AttributeType.id]),
         )
-        pp_output_shunts["p_mw"] = pgm_output_shunts[AttributeType.p].sum() * 1e-6
-        pp_output_shunts["q_mvar"] = pgm_output_shunts[AttributeType.q].sum() * 1e-6
+        pp_output_shunts[_PpAttr.p_mw] = pgm_output_shunts[AttributeType.p].sum() * 1e-6
+        pp_output_shunts[_PpAttr.q_mvar] = pgm_output_shunts[AttributeType.q].sum() * 1e-6
         # TODO Find a better way for mapping vm_pu from bus
         # pp_output_shunts["vm_pu"] = np.nan
         self.pp_output_data[_PpTable.res_shunt_3ph] = pp_output_shunts
@@ -2387,16 +2438,23 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_asym_load_q = pgm_output_asym_loads[AttributeType.q] * 1e-6
 
         pp_asym_output_loads_3ph = pd.DataFrame(
-            columns=["p_a_mw", "q_a_mvar", "p_b_mw", "q_b_mvar", "p_c_mw", "q_c_mvar"],
+            columns=[
+                _PpAttr.p_a_mw,
+                _PpAttr.q_a_mvar,
+                _PpAttr.p_b_mw,
+                _PpAttr.q_b_mvar,
+                _PpAttr.p_c_mw,
+                _PpAttr.q_c_mvar,
+            ],
             index=self._get_pp_ids(_PpTable.asymmetric_load, pgm_output_asym_loads[AttributeType.id]),
         )
 
-        pp_asym_output_loads_3ph["p_a_mw"] = pp_asym_load_p[:, 0]
-        pp_asym_output_loads_3ph["q_a_mvar"] = pp_asym_load_q[:, 0]
-        pp_asym_output_loads_3ph["p_b_mw"] = pp_asym_load_p[:, 1]
-        pp_asym_output_loads_3ph["q_b_mvar"] = pp_asym_load_q[:, 1]
-        pp_asym_output_loads_3ph["p_c_mw"] = pp_asym_load_p[:, 2]
-        pp_asym_output_loads_3ph["q_c_mvar"] = pp_asym_load_q[:, 2]
+        pp_asym_output_loads_3ph[_PpAttr.p_a_mw] = pp_asym_load_p[:, 0]
+        pp_asym_output_loads_3ph[_PpAttr.q_a_mvar] = pp_asym_load_q[:, 0]
+        pp_asym_output_loads_3ph[_PpAttr.p_b_mw] = pp_asym_load_p[:, 1]
+        pp_asym_output_loads_3ph[_PpAttr.q_b_mvar] = pp_asym_load_q[:, 1]
+        pp_asym_output_loads_3ph[_PpAttr.p_c_mw] = pp_asym_load_p[:, 2]
+        pp_asym_output_loads_3ph[_PpAttr.q_c_mvar] = pp_asym_load_q[:, 2]
 
         self.pp_output_data[_PpTable.res_asymmetric_load_3ph] = pp_asym_output_loads_3ph
 
@@ -2420,16 +2478,23 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_asym_gen_q = pgm_output_asym_gens[AttributeType.q] * 1e-6
 
         pp_output_asym_gens_3ph = pd.DataFrame(
-            columns=["p_a_mw", "q_a_mvar", "p_b_mw", "q_b_mvar", "p_c_mw", "q_c_mvar"],
+            columns=[
+                _PpAttr.p_a_mw,
+                _PpAttr.q_a_mvar,
+                _PpAttr.p_b_mw,
+                _PpAttr.q_b_mvar,
+                _PpAttr.p_c_mw,
+                _PpAttr.q_c_mvar,
+            ],
             index=self._get_pp_ids(_PpTable.asymmetric_sgen, pgm_output_asym_gens[AttributeType.id]),
         )
 
-        pp_output_asym_gens_3ph["p_a_mw"] = pp_asym_gen_p[:, 0]
-        pp_output_asym_gens_3ph["q_a_mvar"] = pp_asym_gen_q[:, 0]
-        pp_output_asym_gens_3ph["p_b_mw"] = pp_asym_gen_p[:, 1]
-        pp_output_asym_gens_3ph["q_b_mvar"] = pp_asym_gen_q[:, 1]
-        pp_output_asym_gens_3ph["p_c_mw"] = pp_asym_gen_p[:, 2]
-        pp_output_asym_gens_3ph["q_c_mvar"] = pp_asym_gen_q[:, 2]
+        pp_output_asym_gens_3ph[_PpAttr.p_a_mw] = pp_asym_gen_p[:, 0]
+        pp_output_asym_gens_3ph[_PpAttr.q_a_mvar] = pp_asym_gen_q[:, 0]
+        pp_output_asym_gens_3ph[_PpAttr.p_b_mw] = pp_asym_gen_p[:, 1]
+        pp_output_asym_gens_3ph[_PpAttr.q_b_mvar] = pp_asym_gen_q[:, 1]
+        pp_output_asym_gens_3ph[_PpAttr.p_c_mw] = pp_asym_gen_p[:, 2]
+        pp_output_asym_gens_3ph[_PpAttr.q_c_mvar] = pp_asym_gen_q[:, 2]
 
         self.pp_output_data[_PpTable.res_asymmetric_sgen_3ph] = pp_output_asym_gens_3ph
 
@@ -2510,7 +2575,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         Args:
             pp_trafo: PandaPower dataframe with information about the Transformers in
-            the Network (e.g. "hv_bus", "i0_percent")
+            the Network (e.g. _PpAttr.hv_bus, _PpAttr.i0_percent)
 
         Returns:
             the "tap size" of Transformers
@@ -2520,8 +2585,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         tap_step_multiplier = pp_trafo["tap_step_percent"] * (1e-2 * 1e3)
 
         tap_size = np.empty(shape=len(pp_trafo), dtype=np.float64)
-        tap_size[tap_side_hv] = tap_step_multiplier[tap_side_hv] * pp_trafo["vn_hv_kv"][tap_side_hv]
-        tap_size[tap_side_lv] = tap_step_multiplier[tap_side_lv] * pp_trafo["vn_lv_kv"][tap_side_lv]
+        tap_size[tap_side_hv] = tap_step_multiplier[tap_side_hv] * pp_trafo[_PpAttr.vn_hv_kv][tap_side_hv]
+        tap_size[tap_side_lv] = tap_step_multiplier[tap_side_lv] * pp_trafo[_PpAttr.vn_lv_kv][tap_side_lv]
 
         return tap_size
 
@@ -2568,7 +2633,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         Args:
             pp_3wtrafo: PandaPower dataframe with information about the Three Winding Transformers in
-            the Network (e.g. "hv_bus", "i0_percent")
+            the Network (e.g. _PpAttr.hv_bus, _PpAttr.i0_percent)
 
         Returns:
             the "tap size" of Three Winding Transformers
@@ -2580,9 +2645,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         tap_step_multiplier = pp_3wtrafo["tap_step_percent"] * (1e-2 * 1e3)
 
         tap_size = np.empty(shape=len(pp_3wtrafo), dtype=np.float64)
-        tap_size[tap_side_hv] = tap_step_multiplier[tap_side_hv] * pp_3wtrafo["vn_hv_kv"][tap_side_hv]
-        tap_size[tap_side_mv] = tap_step_multiplier[tap_side_mv] * pp_3wtrafo["vn_mv_kv"][tap_side_mv]
-        tap_size[tap_side_lv] = tap_step_multiplier[tap_side_lv] * pp_3wtrafo["vn_lv_kv"][tap_side_lv]
+        tap_size[tap_side_hv] = tap_step_multiplier[tap_side_hv] * pp_3wtrafo[_PpAttr.vn_hv_kv][tap_side_hv]
+        tap_size[tap_side_mv] = tap_step_multiplier[tap_side_mv] * pp_3wtrafo[_PpAttr.vn_mv_kv][tap_side_mv]
+        tap_size[tap_side_lv] = tap_step_multiplier[tap_side_lv] * pp_3wtrafo[_PpAttr.vn_lv_kv][tap_side_lv]
 
         return tap_size
 
@@ -2609,7 +2674,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 switches,
                 how="left",
                 left_on=["index", bus],
-                right_on=["element", "bus"],
+                right_on=["element", _PpAttr.bus],
             )
             .set_index(component.index)["closed"]
         )
@@ -2635,8 +2700,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             bus2 = "to_bus"
         elif pp_table == _PpTable.trafo:
             element_type = "t"
-            bus1 = "hv_bus"
-            bus2 = "lv_bus"
+            bus1 = _PpAttr.hv_bus
+            bus2 = _PpAttr.lv_bus
         else:
             raise KeyError(f"Can't get switch states for {pp_table}")
 
@@ -2646,7 +2711,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         # Select the appropriate switches and columns
         pp_switches = self.pp_input_data[_PpTable.switch]
         pp_switches = pp_switches[pp_switches["et"] == element_type]
-        pp_switches = pp_switches[["element", "bus", "closed"]]
+        pp_switches = pp_switches[["element", _PpAttr.bus, "closed"]]
 
         pp_from_switches = self.get_individual_switch_states(component[["index", bus1]], pp_switches, bus1)
         pp_to_switches = self.get_individual_switch_states(component[["index", bus2]], pp_switches, bus2)
@@ -2664,15 +2729,15 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             the switch states of Three Winding Transformers
         """
         element_type = "t3"
-        bus1 = "hv_bus"
-        bus2 = "mv_bus"
-        bus3 = "lv_bus"
+        bus1 = _PpAttr.hv_bus
+        bus2 = _PpAttr.mv_bus
+        bus3 = _PpAttr.lv_bus
         trafo3w["index"] = trafo3w.index
 
         # Select the appropriate switches and columns
         pp_switches = self.pp_input_data[_PpTable.switch]
         pp_switches = pp_switches[pp_switches["et"] == element_type]
-        pp_switches = pp_switches[["element", "bus", "closed"]]
+        pp_switches = pp_switches[["element", _PpAttr.bus, "closed"]]
 
         # Join the switches with the three winding trafo three times, for the hv_bus, mv_bus and once for the lv_bus
         pp_1_switches = self.get_individual_switch_states(trafo3w[["index", bus1]], pp_switches, bus1)
