@@ -15,6 +15,7 @@ from power_grid_model import AttributeType as AT, ComponentType as CT, PowerGrid
 from power_grid_model.utils import json_deserialize_from_file
 from power_grid_model.validation import assert_valid_input_data
 
+from power_grid_model_io._enum import PandapowerAttribute as _PpAttr, PandapowerTable as _PpTable
 from power_grid_model_io.converters import PandaPowerConverter, PgmJsonConverter
 from power_grid_model_io.converters.pandapower_converter import (
     PP_COMPATIBILITY_VERSION_3_2_0,
@@ -151,13 +152,13 @@ def test_output_trafos_3ph__power__with_comparison():
         i_max_hv = np.divide(net.trafo.sn_mva, v_hv * np.sqrt(3)) * 1e3
         i_max_lv = np.divide(net.trafo.sn_mva, v_lv * np.sqrt(3)) * 1e3
 
-        i_a_hv = net.res_trafo_3ph.loc[:, "i_a_hv_ka"] * 1000
-        i_b_hv = net.res_trafo_3ph.loc[:, "i_b_hv_ka"] * 1000
-        i_c_hv = net.res_trafo_3ph.loc[:, "i_c_hv_ka"] * 1000
+        i_a_hv = net.res_trafo_3ph.loc[:, _PpAttr.i_a_hv_ka] * 1000
+        i_b_hv = net.res_trafo_3ph.loc[:, _PpAttr.i_b_hv_ka] * 1000
+        i_c_hv = net.res_trafo_3ph.loc[:, _PpAttr.i_c_hv_ka] * 1000
 
-        i_a_lv = net.res_trafo_3ph.loc[:, "i_a_lv_ka"] * 1000
-        i_b_lv = net.res_trafo_3ph.loc[:, "i_b_lv_ka"] * 1000
-        i_c_lv = net.res_trafo_3ph.loc[:, "i_c_lv_ka"] * 1000
+        i_a_lv = net.res_trafo_3ph.loc[:, _PpAttr.i_a_lv_ka] * 1000
+        i_b_lv = net.res_trafo_3ph.loc[:, _PpAttr.i_b_lv_ka] * 1000
+        i_c_lv = net.res_trafo_3ph.loc[:, _PpAttr.i_c_lv_ka] * 1000
 
         np.testing.assert_allclose(
             np.maximum(i_a_hv / i_max_hv, i_a_lv / i_max_lv) * 100,
@@ -197,33 +198,33 @@ def test_output_trafos_3ph__power__with_comparison():
         np.testing.assert_allclose(actual.trafo.vn_lv_kv, expected.trafo.vn_lv_kv, rtol=rtol)
         np.testing.assert_allclose(actual.trafo.sn_mva, expected.trafo.sn_mva, rtol=rtol)
         np.testing.assert_allclose(
-            actual.res_trafo_3ph.loc[:, "i_a_hv_ka"],
-            expected.res_trafo_3ph.loc[:, "i_a_hv_ka"],
+            actual.res_trafo_3ph.loc[:, _PpAttr.i_a_hv_ka],
+            expected.res_trafo_3ph.loc[:, _PpAttr.i_a_hv_ka],
             rtol=rtol,
         )
         np.testing.assert_allclose(
-            actual.res_trafo_3ph.loc[:, "i_b_hv_ka"],
-            expected.res_trafo_3ph.loc[:, "i_b_hv_ka"],
+            actual.res_trafo_3ph.loc[:, _PpAttr.i_b_hv_ka],
+            expected.res_trafo_3ph.loc[:, _PpAttr.i_b_hv_ka],
             rtol=rtol,
         )
         np.testing.assert_allclose(
-            actual.res_trafo_3ph.loc[:, "i_c_hv_ka"],
-            expected.res_trafo_3ph.loc[:, "i_c_hv_ka"],
+            actual.res_trafo_3ph.loc[:, _PpAttr.i_c_hv_ka],
+            expected.res_trafo_3ph.loc[:, _PpAttr.i_c_hv_ka],
             rtol=rtol,
         )
         np.testing.assert_allclose(
-            actual.res_trafo_3ph.loc[:, "i_a_lv_ka"],
-            expected.res_trafo_3ph.loc[:, "i_a_lv_ka"],
+            actual.res_trafo_3ph.loc[:, _PpAttr.i_a_lv_ka],
+            expected.res_trafo_3ph.loc[:, _PpAttr.i_a_lv_ka],
             rtol=rtol,
         )
         np.testing.assert_allclose(
-            actual.res_trafo_3ph.loc[:, "i_b_lv_ka"],
-            expected.res_trafo_3ph.loc[:, "i_b_lv_ka"],
+            actual.res_trafo_3ph.loc[:, _PpAttr.i_b_lv_ka],
+            expected.res_trafo_3ph.loc[:, _PpAttr.i_b_lv_ka],
             rtol=rtol,
         )
         np.testing.assert_allclose(
-            actual.res_trafo_3ph.loc[:, "i_c_lv_ka"],
-            expected.res_trafo_3ph.loc[:, "i_c_lv_ka"],
+            actual.res_trafo_3ph.loc[:, _PpAttr.i_c_lv_ka],
+            expected.res_trafo_3ph.loc[:, _PpAttr.i_c_lv_ka],
             rtol=rtol,
         )
         np.testing.assert_allclose(
@@ -252,10 +253,10 @@ def test_output_trafos_3ph__power__with_comparison():
     compare_result(pgm_net, pp_net, rtol=0.04)
 
     # Symmetric Load
-    pgm_net.asymmetric_load.loc[:, ["p_a_mw", "p_b_mw", "p_c_mw"]] = 0.2
-    pgm_net.asymmetric_load.loc[:, ["q_a_mvar", "q_b_mvar", "q_c_mar"]] = 0.05
-    pp_net.asymmetric_load.loc[:, ["p_a_mw", "p_b_mw", "p_c_mw"]] = 0.2
-    pp_net.asymmetric_load.loc[:, ["q_a_mvar", "q_b_mvar", "q_c_mar"]] = 0.05
+    pgm_net.asymmetric_load.loc[:, [_PpAttr.p_a_mw, _PpAttr.p_b_mw, _PpAttr.p_c_mw]] = 0.2
+    pgm_net.asymmetric_load.loc[:, [_PpAttr.q_a_mvar, _PpAttr.q_b_mvar, _PpAttr.q_c_mvar]] = 0.05
+    pp_net.asymmetric_load.loc[:, [_PpAttr.p_a_mw, _PpAttr.p_b_mw, _PpAttr.p_c_mw]] = 0.2
+    pp_net.asymmetric_load.loc[:, [_PpAttr.q_a_mvar, _PpAttr.q_b_mvar, _PpAttr.q_c_mvar]] = 0.05
     pp.runpp_pgm(pgm_net, symmetric=False)
     pp.runpp_3ph(pp_net)
     check_result(pgm_net)
@@ -328,41 +329,42 @@ def _get_total_powers_3ph(net):  # noqa: PLR0912
     Output: [s_ext_grid, s_load, s_loss]
     """
     s_ext_grid = (
-        net.res_ext_grid_3ph.loc[:, ["p_a_mw", "p_b_mw", "p_c_mw"]].sum().sum()
-        + 1j * net.res_ext_grid_3ph.loc[:, ["q_a_mvar", "q_b_mvar", "q_c_mvar"]].sum().sum()
+        net.res_ext_grid_3ph.loc[:, [_PpAttr.p_a_mw, _PpAttr.p_b_mw, _PpAttr.p_c_mw]].sum().sum()
+        + 1j * net.res_ext_grid_3ph.loc[:, [_PpAttr.q_a_mvar, _PpAttr.q_b_mvar, _PpAttr.q_c_mvar]].sum().sum()
     )
 
-    if "res_asymmetric_load_3ph" in net:
+    if _PpTable.res_asymmetric_load_3ph in net:
         s_load_asym = (
-            net.res_asymmetric_load_3ph.loc[:, ["p_a_mw", "p_b_mw", "p_c_mw"]].sum().sum()
-            + 1j * net.res_asymmetric_load_3ph.loc[:, ["q_a_mvar", "q_b_mvar", "q_c_mvar"]].sum().sum()
+            net.res_asymmetric_load_3ph.loc[:, [_PpAttr.p_a_mw, _PpAttr.p_b_mw, _PpAttr.p_c_mw]].sum().sum()
+            + 1j
+            * net.res_asymmetric_load_3ph.loc[:, [_PpAttr.q_a_mvar, _PpAttr.q_b_mvar, _PpAttr.q_c_mvar]].sum().sum()
         )
     else:
         s_load_asym = np.complex128()
 
-    if "res_load_3ph" in net:
-        s_load_sym = net.res_load_3ph.loc[:, "p_mw"].sum() + 1j * net.res_load_3ph.loc[:, "q_mvar"].sum()
+    if _PpTable.res_load_3ph in net:
+        s_load_sym = net.res_load_3ph.loc[:, _PpAttr.p_mw].sum() + 1j * net.res_load_3ph.loc[:, _PpAttr.q_mvar].sum()
     else:
         s_load_sym = np.complex128()
 
-    if "res_motor_3ph" in net:
-        s_motor = net.res_motor_3ph.loc[:, "p_mw"].sum() + 1j * net.res_motor_3ph.loc[:, "q_mvar"].sum()
+    if _PpTable.res_motor_3ph in net:
+        s_motor = net.res_motor_3ph.loc[:, _PpAttr.p_mw].sum() + 1j * net.res_motor_3ph.loc[:, _PpAttr.q_mvar].sum()
     else:
         s_motor = np.complex128()
 
-    if ("res_ward_3ph" in net) and (not net.res_ward_3ph.empty):
-        s_ward = net.res_ward_3ph.loc[:, "p_mw"].sum() + 1j * net.res_ward_3ph.loc[:, "q_mvar"].sum()
+    if (_PpTable.res_ward_3ph in net) and (not net.res_ward_3ph.empty):
+        s_ward = net.res_ward_3ph.loc[:, _PpAttr.p_mw].sum() + 1j * net.res_ward_3ph.loc[:, _PpAttr.q_mvar].sum()
     else:
         s_ward = np.complex128()
 
-    if ("res_shunt_3ph" in net) and (not net.res_shunt_3ph.empty):
-        s_shunt = net.res_shunt_3ph.loc[:, "p_mw"].sum() + 1j * net.res_shunt_3ph.loc[:, "q_mvar"].sum()
+    if (_PpTable.res_shunt_3ph in net) and (not net.res_shunt_3ph.empty):
+        s_shunt = net.res_shunt_3ph.loc[:, _PpAttr.p_mw].sum() + 1j * net.res_shunt_3ph.loc[:, _PpAttr.q_mvar].sum()
     else:
         s_shunt = np.complex128()
 
     s_load = s_load_sym + s_load_asym + s_motor + s_ward + s_shunt
     loss_params = get_loss_params_3ph()
-    if "res_line_3ph" in net:
+    if _PpTable.res_line_3ph in net:
         s_loss_line = (
             net.res_line_3ph.loc[:, [loss_params[0], loss_params[2], loss_params[4]]].sum().sum()
             + 1j * net.res_line_3ph.loc[:, [loss_params[1], loss_params[3], loss_params[5]]].sum().sum()
@@ -370,7 +372,7 @@ def _get_total_powers_3ph(net):  # noqa: PLR0912
     else:
         s_loss_line = np.complex128()
 
-    if "res_trafo_3ph" in net:
+    if _PpTable.res_trafo_3ph in net:
         s_loss_trafo = (
             net.res_trafo_3ph.loc[:, [loss_params[0], loss_params[2], loss_params[4]]].sum().sum()
             + 1j * net.res_trafo_3ph.loc[:, [loss_params[1], loss_params[3], loss_params[5]]].sum().sum()
@@ -413,41 +415,44 @@ def _get_total_powers(net):  # noqa: PLR0912
     Input: Pandapower Network
     Output: [s_ext_grid, s_load, s_loss]
     """
-    s_ext_grid = net.res_ext_grid.loc[:, "p_mw"].sum() + 1j * net.res_ext_grid.loc[:, "q_mvar"].sum()
+    s_ext_grid = net.res_ext_grid.loc[:, _PpAttr.p_mw].sum() + 1j * net.res_ext_grid.loc[:, _PpAttr.q_mvar].sum()
 
-    if "res_asymmetric_load" in net:
-        s_load_asym = net.res_asymmetric_load.loc[:, "p_mw"].sum() + 1j * net.res_asymmetric_load.loc[:, "q_mvar"].sum()
+    if _PpTable.res_asymmetric_load in net:
+        s_load_asym = (
+            net.res_asymmetric_load.loc[:, _PpAttr.p_mw].sum()
+            + 1j * net.res_asymmetric_load.loc[:, _PpAttr.q_mvar].sum()
+        )
     else:
         s_load_asym = np.complex128()
 
-    if "res_load" in net:
-        s_load_sym = net.res_load.loc[:, "p_mw"].sum() + 1j * net.res_load.loc[:, "q_mvar"].sum()
+    if _PpTable.res_load in net:
+        s_load_sym = net.res_load.loc[:, _PpAttr.p_mw].sum() + 1j * net.res_load.loc[:, _PpAttr.q_mvar].sum()
     else:
         s_load_sym = np.complex128()
 
-    if "res_motor" in net:
-        s_motor = net.res_motor.loc[:, "p_mw"].sum() + 1j * net.res_motor.loc[:, "q_mvar"].sum()
+    if _PpTable.res_motor in net:
+        s_motor = net.res_motor.loc[:, _PpAttr.p_mw].sum() + 1j * net.res_motor.loc[:, _PpAttr.q_mvar].sum()
     else:
         s_motor = np.complex128()
 
-    if "res_ward" in net:
-        s_ward = net.res_ward.loc[:, "p_mw"].sum() + 1j * net.res_ward.loc[:, "q_mvar"].sum()
+    if _PpTable.res_ward in net:
+        s_ward = net.res_ward.loc[:, _PpAttr.p_mw].sum() + 1j * net.res_ward.loc[:, _PpAttr.q_mvar].sum()
     else:
         s_ward = np.complex128()
 
-    if "res_shunt" in net:
-        s_shunt = net.res_shunt.loc[:, "p_mw"].sum() + 1j * net.res_shunt.loc[:, "q_mvar"].sum()
+    if _PpTable.res_shunt in net:
+        s_shunt = net.res_shunt.loc[:, _PpAttr.p_mw].sum() + 1j * net.res_shunt.loc[:, _PpAttr.q_mvar].sum()
     else:
         s_shunt = np.complex128()
 
     s_load = s_load_sym + s_load_asym + s_motor + s_ward + s_shunt
 
-    if "res_line" in net:
+    if _PpTable.res_line in net:
         s_loss_line = net.res_line.loc[:, "pl_mw"].sum() + 1j * net.res_line.loc[:, "ql_mvar"].sum()
     else:
         s_loss_line = np.complex128()
 
-    if "res_trafo" in net:
+    if _PpTable.res_trafo in net:
         s_loss_trafo = net.res_trafo.loc[:, "pl_mw"].sum() + 1j * net.res_trafo.loc[:, "ql_mvar"].sum()
     else:
         s_loss_trafo = np.complex128()
