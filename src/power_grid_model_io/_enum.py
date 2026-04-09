@@ -294,6 +294,7 @@ class PandapowerAttribute(StrEnum):
     trip_melt = "trip_melt"
     trip_melt_time_s = "trip_melt_time_s"
     type = "type"
+    unbalance_percent = "unbalance_percent"
     va_a_degree = "va_a_degree"
     va_b_degree = "va_b_degree"
     va_c_degree = "va_c_degree"
