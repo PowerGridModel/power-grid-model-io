@@ -185,13 +185,13 @@ def test_trafo_zero_seq_params_conversion():
     actual_data, _ = converter.load_input_data(net)
     expected_data, _ = load_json_single_dataset(VALIDATION_FILE_ZERO_SEQ, data_type=DatasetType.input)
     np.testing.assert_allclose(
-        actual_data[_PpTable.transformer][_PpAttr.i0_zero_sequence],
-        expected_data[_PpTable.transformer][_PpAttr.i0_zero_sequence],
+        actual_data[CT.transformer][AT.i0_zero_sequence],
+        expected_data[CT.transformer][AT.i0_zero_sequence],
         rtol=1e-3,
     )
     np.testing.assert_allclose(
-        actual_data[_PpTable.transformer][_PpAttr.p0_zero_sequence],
-        expected_data[_PpTable.transformer][_PpAttr.p0_zero_sequence],
+        actual_data[CT.transformer][AT.p0_zero_sequence],
+        expected_data[CT.transformer][AT.p0_zero_sequence],
         rtol=1e-3,
     )
 
