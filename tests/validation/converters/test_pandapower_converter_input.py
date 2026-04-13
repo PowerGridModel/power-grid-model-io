@@ -16,6 +16,7 @@ from power_grid_model import AttributeType as AT, ComponentType as CT, DatasetTy
 from power_grid_model.data_types import SingleDataset
 from power_grid_model.validation import assert_valid_input_data
 
+from power_grid_model_io._enum import PandapowerAttribute as _PpAttr, PandapowerTable as _PpTable
 from power_grid_model_io.converters import PandaPowerConverter
 from power_grid_model_io.converters.pandapower_converter import (
     PP_COMPATIBILITY_VERSION_3_4_0,
@@ -169,7 +170,7 @@ def test_pgm_input_lines__cnf_zero():
 @pytest.mark.filterwarnings("error")
 def test_simple_example():
     pp_net = example_simple()
-    pp_net["gen"] = pp_net["gen"].iloc[:0]
+    pp_net[_PpTable.gen] = pp_net[_PpTable.gen].iloc[:0]
     pp_converter = PandaPowerConverter()
     _, _ = pp_converter.load_input_data(pp_net)
 
@@ -184,26 +185,30 @@ def test_trafo_zero_seq_params_conversion():
     actual_data, _ = converter.load_input_data(net)
     expected_data, _ = load_json_single_dataset(VALIDATION_FILE_ZERO_SEQ, data_type=DatasetType.input)
     np.testing.assert_allclose(
-        actual_data["transformer"]["i0_zero_sequence"], expected_data["transformer"]["i0_zero_sequence"], rtol=1e-3
+        actual_data[CT.transformer][AT.i0_zero_sequence],
+        expected_data[CT.transformer][AT.i0_zero_sequence],
+        rtol=1e-3,
     )
     np.testing.assert_allclose(
-        actual_data["transformer"]["p0_zero_sequence"], expected_data["transformer"]["p0_zero_sequence"], rtol=1e-3
+        actual_data[CT.transformer][AT.p0_zero_sequence],
+        expected_data[CT.transformer][AT.p0_zero_sequence],
+        rtol=1e-3,
     )
 
 
 @pytest.mark.parametrize(
     "kwargs",
     [
-        {"mag0_percent": 1e2},
-        {"mag0_percent": 1e3},
-        {"mag0_percent": 1e6},
-        {"mag0_percent": 1e20},
+        {_PpAttr.mag0_percent: 1e2},
+        {_PpAttr.mag0_percent: 1e3},
+        {_PpAttr.mag0_percent: 1e6},
+        {_PpAttr.mag0_percent: 1e20},
     ],
 )
 def test_trafo_zero_seq_params_calculation(kwargs):
     net = pp_net_3ph_minimal_trafo()
     net.trafo.vector_group = "YNyn"
-    net.trafo.mag0_percent = kwargs["mag0_percent"] * mag0_multiplier
+    net.trafo.mag0_percent = kwargs[_PpAttr.mag0_percent] * mag0_multiplier
     net.trafo.mag0_rx = 0.1
     net.trafo.shift_degree = 0
     converter = PandaPowerConverter()
@@ -213,7 +218,7 @@ def test_trafo_zero_seq_params_calculation(kwargs):
     output = pgm_net.calculate_power_flow(symmetric=False)
     runpp_3ph(net)
     assert np.allclose(
-        output["transformer"]["p_from"][0] / 1e6,
-        net.res_trafo_3ph.loc[0, ["p_a_hv_mw", "p_b_hv_mw", "p_c_hv_mw"]].values,
+        output[CT.transformer][AT.p_from][0] / 1e6,
+        net.res_trafo_3ph.loc[0, [_PpAttr.p_a_hv_mw, _PpAttr.p_b_hv_mw, _PpAttr.p_c_hv_mw]].values,
         rtol=1e-3,
     )
