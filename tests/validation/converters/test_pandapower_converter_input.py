@@ -222,3 +222,15 @@ def test_trafo_zero_seq_params_calculation(kwargs):
         net.res_trafo_3ph.loc[0, [_PpAttr.p_a_hv_mw, _PpAttr.p_b_hv_mw, _PpAttr.p_c_hv_mw]].values,
         rtol=1e-3,
     )
+
+
+def test_trafo_negative_tap_step():
+    pp_net = example_simple()
+    pp_net[_PpTable.gen] = pp_net[_PpTable.gen].iloc[:0]
+    pp_net[_PpTable.trafo][_PpAttr.tap_step_percent] *= -1
+    pp_converter = PandaPowerConverter()
+    pgm_data, _ = pp_converter.load_input_data(pp_net)
+    assert pgm_data["transformer"][0]["tap_size"] > 0
+    assert pgm_data["transformer"][0]["tap_max"] < pgm_data["transformer"][0]["tap_min"]
+
+    assert_valid_input_data(pgm_data)
