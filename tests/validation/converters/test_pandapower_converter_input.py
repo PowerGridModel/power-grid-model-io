@@ -175,6 +175,15 @@ def test_simple_example():
     _, _ = pp_converter.load_input_data(pp_net)
 
 
+@pytest.mark.filterwarnings("error")
+def test_simple_example_with_strings():
+    pp_net = example_simple()
+    pp_net["load"]["type"] = pp_net["load"]["type"].astype(pd.StringDtype())
+    pp_net[_PpTable.gen] = pp_net[_PpTable.gen].iloc[:0]
+    pp_converter = PandaPowerConverter()
+    _, _ = pp_converter.load_input_data(pp_net)
+
+
 def test_trafo_zero_seq_params_conversion():
     net = pp_net_3ph_minimal_trafo()
     net.trafo.vector_group = "YNyn"
