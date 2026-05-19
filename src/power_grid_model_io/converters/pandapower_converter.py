@@ -46,6 +46,8 @@ try:
 except PackageNotFoundError:
     PP_CONVERSION_VERSION = PP_COMPATIBILITY_VERSION_3_4_0  # assume latest compatible version by default
 
+_NOT_SET_STR = "__PGM_PP_STR_NOT_SET"
+
 
 def get_loss_params_3ph():
     if PP_CONVERSION_VERSION < PP_COMPATIBILITY_VERSION_3_2_0:
@@ -708,7 +710,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         if ComponentType.sym_load in self.pgm_input_data:
             raise ValueError("Symmetrical Load component already exists in pgm_input_data")
 
-        if np.any(self._get_pp_attr(_PpTable.load, _PpAttr.type, expected_type="O", default=None) == "delta"):
+        if np.any(self._get_pp_attr(_PpTable.load, _PpAttr.type, expected_type="O", default=_NOT_SET_STR) == "delta"):
             raise NotImplementedError("Delta loads are not implemented, only wye loads are supported in PGM.")
 
         scaling = self._get_pp_attr(_PpTable.load, _PpAttr.scaling, expected_type="f8", default=1.0)
@@ -807,7 +809,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             raise ValueError("Asymmetric Load component already exists in pgm_input_data")
 
         if np.any(
-            self._get_pp_attr(_PpTable.asymmetric_load, _PpAttr.type, expected_type="O", default=None) == "delta"
+            self._get_pp_attr(_PpTable.asymmetric_load, _PpAttr.type, expected_type="O", default=_NOT_SET_STR)
+            == "delta"
         ):
             raise NotImplementedError("Delta loads are not implemented, only wye loads are supported in PGM.")
 
@@ -879,7 +882,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         sn_mva = self._get_pp_attr(_PpTable.trafo, _PpAttr.sn_mva, expected_type="f8")
         switch_states = self.get_switch_states(_PpTable.trafo)
 
-        tap_side = self._get_pp_attr(_PpTable.trafo, _PpAttr.tap_side, expected_type="O", default=None)
+        tap_side = self._get_pp_attr(_PpTable.trafo, _PpAttr.tap_side, expected_type="O", default=_NOT_SET_STR)
         tap_nom = self._get_pp_attr(_PpTable.trafo, _PpAttr.tap_neutral, expected_type="f8", default=np.nan)
         tap_pos = self._get_pp_attr(_PpTable.trafo, _PpAttr.tap_pos, expected_type="f8", default=np.nan)
         tap_size = self._get_tap_size(pp_trafo)
@@ -945,7 +948,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         p0_zero_sequence[np.logical_not(valid)] = np.nan
 
         # Do not use taps when mandatory tap data is not available
-        no_taps = np.equal(tap_side, None) | np.isnan(tap_pos) | np.isnan(tap_nom) | np.isnan(tap_size)
+        no_taps = np.equal(tap_side, _NOT_SET_STR) | np.isnan(tap_pos) | np.isnan(tap_nom) | np.isnan(tap_size)
         tap_nom[no_taps] = 0
         tap_pos[no_taps] = 0
         tap_size[no_taps] = 0
@@ -1034,7 +1037,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         sn_lv_mva = self._get_pp_attr(_PpTable.trafo3w, _PpAttr.sn_lv_mva, expected_type="f8")
         in_service = self._get_pp_attr(_PpTable.trafo3w, _PpAttr.in_service, expected_type="bool", default=True)
         switch_states = self.get_trafo3w_switch_states(pp_trafo3w)
-        tap_side = self._get_pp_attr(_PpTable.trafo3w, _PpAttr.tap_side, expected_type="O", default=None)
+        tap_side = self._get_pp_attr(_PpTable.trafo3w, _PpAttr.tap_side, expected_type="O", default=_NOT_SET_STR)
         tap_nom = self._get_pp_attr(_PpTable.trafo3w, _PpAttr.tap_neutral, expected_type="f8", default=np.nan)
         tap_pos = self._get_pp_attr(_PpTable.trafo3w, _PpAttr.tap_pos, expected_type="f8", default=np.nan)
         tap_size = self._get_3wtransformer_tap_size(pp_trafo3w)
@@ -1084,7 +1087,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             logger.warning("Zero sequence parameters given in trafo3w are ignored: %s", failed_checks)
 
         # Do not use taps when mandatory tap data is not available
-        no_taps = np.equal(tap_side, None) | np.isnan(tap_pos) | np.isnan(tap_nom) | np.isnan(tap_size)
+        no_taps = np.equal(tap_side, _NOT_SET_STR) | np.isnan(tap_pos) | np.isnan(tap_nom) | np.isnan(tap_size)
         tap_nom[no_taps] = 0
         tap_pos[no_taps] = 0
         tap_size[no_taps] = 0
@@ -2781,7 +2784,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
 
         @lru_cache
-        def vector_group_to_winding_types(vector_group: str) -> pd.Series:
+        def vector_group_to_winding_types(vector_group: str | None | pd.NAType) -> pd.Series:
+            if pd.isna(vector_group) or vector_group is None or vector_group == _NOT_SET_STR:
+                return pd.Series([np.nan, np.nan])
+
             trafo_connection = parse_trafo_connection(vector_group)
             winding_from = get_winding(trafo_connection["winding_from"]).value
             winding_to = get_winding(trafo_connection["winding_to"]).value
@@ -2856,7 +2862,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         attr_data = pp_component_data[attribute]
 
         # If any of the attribute values are missing, and a default is supplied, fill the nans with the default value
-        nan_values = np.equal(attr_data, None) if attr_data.dtype is np.dtype("O") else pd.isna(attr_data)  # type: ignore
+        nan_values = (
+            np.equal(attr_data, None) | pd.isna(attr_data)  # type: ignore
+            if attr_data.dtype is np.dtype("O")
+            else pd.isna(attr_data)
+        )
 
         if any(nan_values):
             attr_data = attr_data.fillna(value=default, inplace=False)

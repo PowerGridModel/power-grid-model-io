@@ -25,6 +25,7 @@ from power_grid_model import (
 
 from power_grid_model_io._enum import PandapowerAttribute as _PpAttr, PandapowerTable as _PpTable
 from power_grid_model_io.converters.pandapower_converter import (
+    _NOT_SET_STR,
     PP_COMPATIBILITY_VERSION_3_2_0,
     PandaPowerConverter,
     get_loss_params_3ph,
@@ -810,7 +811,7 @@ def test_create_pgm_input_sym_loads(mock_init_array: MagicMock, two_pp_objs, con
     converter._get_pp_attr.assert_any_call(_PpTable.load, _PpAttr.q_mvar, expected_type="f8", default=0.0)
     converter._get_pp_attr.assert_any_call(_PpTable.load, _PpAttr.scaling, expected_type="f8", default=1)
     converter._get_pp_attr.assert_any_call(_PpTable.load, _PpAttr.in_service, expected_type="bool", default=True)
-    converter._get_pp_attr.assert_any_call(_PpTable.load, _PpAttr.type, expected_type="O", default=None)
+    converter._get_pp_attr.assert_any_call(_PpTable.load, _PpAttr.type, expected_type="O", default=_NOT_SET_STR)
     if pp_version < PP_COMPATIBILITY_VERSION_3_2_0:
         converter._get_pp_attr.assert_any_call(_PpTable.load, _PpAttr.const_z_percent, expected_type="f8", default=0)
         converter._get_pp_attr.assert_any_call(_PpTable.load, _PpAttr.const_i_percent, expected_type="f8", default=0)
@@ -869,7 +870,9 @@ def test_create_pgm_input_asym_loads(mock_init_array: MagicMock, two_pp_objs, co
     converter._get_pp_attr.assert_any_call(
         _PpTable.asymmetric_load, _PpAttr.in_service, expected_type="bool", default=True
     )
-    converter._get_pp_attr.assert_any_call(_PpTable.asymmetric_load, _PpAttr.type, expected_type="O", default=None)
+    converter._get_pp_attr.assert_any_call(
+        _PpTable.asymmetric_load, _PpAttr.type, expected_type="O", default=_NOT_SET_STR
+    )
     assert len(converter._get_pp_attr.call_args_list) == 10
 
     # assignment:
@@ -1026,6 +1029,7 @@ def test_create_pgm_input_shunts__bad_input():
 @patch("power_grid_model_io.converters.pandapower_converter.np.bitwise_and", new=lambda x, _: x)
 @patch("power_grid_model_io.converters.pandapower_converter.np.logical_and", new=lambda x, _: x)
 @patch("power_grid_model_io.converters.pandapower_converter.np.allclose", new=lambda x, _: x)
+@patch("power_grid_model_io.converters.pandapower_converter.np.equal", new=lambda x, _: x)
 @patch("power_grid_model_io.converters.pandapower_converter.np.isnan", new=lambda x: x)
 def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, converter):  # noqa: PLR0915
     # Arrange
@@ -1046,7 +1050,7 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
     )
     converter._get_tap_size.assert_called_once_with(two_pp_objs)
     converter._get_transformer_tap_side.assert_called_once_with(
-        _get_pp_attr(_PpTable.trafo, _PpAttr.tap_side, expected_type="O", default=None)
+        _get_pp_attr(_PpTable.trafo, _PpAttr.tap_side, expected_type="O", default=_NOT_SET_STR)
     )
 
     # initialization
@@ -1063,7 +1067,7 @@ def test_create_pgm_input_transformers(mock_init_array: MagicMock, two_pp_objs, 
     converter._get_pp_attr.assert_any_call(_PpTable.trafo, _PpAttr.pfe_kw, expected_type="f8")
     converter._get_pp_attr.assert_any_call(_PpTable.trafo, _PpAttr.i0_percent, expected_type="f8")
     converter._get_pp_attr.assert_any_call(_PpTable.trafo, _PpAttr.shift_degree, expected_type="f8", default=0.0)
-    converter._get_pp_attr.assert_any_call(_PpTable.trafo, _PpAttr.tap_side, expected_type="O", default=None)
+    converter._get_pp_attr.assert_any_call(_PpTable.trafo, _PpAttr.tap_side, expected_type="O", default=_NOT_SET_STR)
     converter._get_pp_attr.assert_any_call(_PpTable.trafo, _PpAttr.tap_neutral, expected_type="f8", default=np.nan)
     converter._get_pp_attr.assert_any_call(_PpTable.trafo, _PpAttr.tap_min, expected_type="i4", default=0)
     converter._get_pp_attr.assert_any_call(_PpTable.trafo, _PpAttr.tap_max, expected_type="i4", default=0)
@@ -1376,6 +1380,7 @@ def test_create_pgm_input_asym_gens__bad_input():
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
+@patch("power_grid_model_io.converters.pandapower_converter.np.equal", new=lambda x, _: x)
 @patch("power_grid_model_io.converters.pandapower_converter.np.round", new=lambda x: x)
 def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock, two_pp_objs, converter):  # noqa: PLR0915
     # Arrange
@@ -1400,7 +1405,7 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
     )
     converter._get_3wtransformer_tap_size.assert_called_once_with(two_pp_objs)
     converter._get_3wtransformer_tap_side.assert_called_once_with(
-        _get_pp_attr(_PpTable.trafo3w, _PpAttr.tap_side, expected_type="O", default=None)
+        _get_pp_attr(_PpTable.trafo3w, _PpAttr.tap_side, expected_type="O", default=_NOT_SET_STR)
     )
 
     # initialization
@@ -1428,7 +1433,7 @@ def test_create_pgm_input_three_winding_transformers(mock_init_array: MagicMock,
     converter._get_pp_attr.assert_any_call(_PpTable.trafo3w, _PpAttr.i0_percent, expected_type="f8")
     converter._get_pp_attr.assert_any_call(_PpTable.trafo3w, _PpAttr.shift_mv_degree, expected_type="f8", default=0.0)
     converter._get_pp_attr.assert_any_call(_PpTable.trafo3w, _PpAttr.shift_lv_degree, expected_type="f8", default=0.0)
-    converter._get_pp_attr.assert_any_call(_PpTable.trafo3w, _PpAttr.tap_side, expected_type="O", default=None)
+    converter._get_pp_attr.assert_any_call(_PpTable.trafo3w, _PpAttr.tap_side, expected_type="O", default=_NOT_SET_STR)
     converter._get_pp_attr.assert_any_call(_PpTable.trafo3w, _PpAttr.tap_neutral, expected_type="f8", default=np.nan)
     converter._get_pp_attr.assert_any_call(_PpTable.trafo3w, _PpAttr.tap_min, expected_type="i4", default=0)
     converter._get_pp_attr.assert_any_call(_PpTable.trafo3w, _PpAttr.tap_max, expected_type="i4", default=0)
