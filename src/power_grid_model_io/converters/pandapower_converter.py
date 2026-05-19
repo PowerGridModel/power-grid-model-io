@@ -47,6 +47,7 @@ except PackageNotFoundError:
     PP_CONVERSION_VERSION = PP_COMPATIBILITY_VERSION_3_4_0  # assume latest compatible version by default
 
 _NOT_SET_STR = "__PGM_PP_STR_NOT_SET"
+_PD_NA_TYPE = type(pd.NA)
 
 
 def get_loss_params_3ph():
@@ -2784,7 +2785,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
 
         @lru_cache
-        def vector_group_to_winding_types(vector_group: str | None | pd.missing.NAType) -> pd.Series:
+        def vector_group_to_winding_types(vector_group: str | None | _PD_NA_TYPE) -> pd.Series:  # type: ignore[valid-type]
             if pd.isna(vector_group) or vector_group is None or vector_group == _NOT_SET_STR:
                 return pd.Series([np.nan, np.nan])
 
