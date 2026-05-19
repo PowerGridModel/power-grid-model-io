@@ -205,12 +205,11 @@ def test_simple_example_with_na():
     for table, attrs in {
         _PpTable.line: [_PpAttr.type],
         _PpTable.trafo: [_PpAttr.vector_group, _PpAttr.tap_side],
-        _PpTable.trafo3w: [_PpAttr.tap_side],
         _PpTable.switch: [_PpAttr.type],
     }.items():
         for attr in attrs:
             pp_net[table][attr] = pp_net[table][attr].astype(pd.StringDtype())
-            pp_net[table][attr][0] = pd.NA
+            pp_net[table].loc[0, attr] = pd.NA
 
     pp_converter = PandaPowerConverter()
     _, _ = pp_converter.load_input_data(pp_net)

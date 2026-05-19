@@ -2603,8 +2603,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             the "tap size" of Transformers
         """
-        tap_side_hv = np.array(pp_trafo[_PpAttr.tap_side] == "hv")
-        tap_side_lv = np.array(pp_trafo[_PpAttr.tap_side] == "lv")
+        tap_specified = ~pd.isna(pp_trafo[_PpAttr.tap_side])
+        tap_side_hv = np.array((pp_trafo[_PpAttr.tap_side] == "hv") & tap_specified)
+        tap_side_lv = np.array((pp_trafo[_PpAttr.tap_side] == "lv") & tap_specified)
         tap_step_multiplier = pp_trafo[_PpAttr.tap_step_percent] * (1e-2 * 1e3)
 
         tap_size = np.empty(shape=len(pp_trafo), dtype=np.float64)
