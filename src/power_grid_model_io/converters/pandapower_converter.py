@@ -886,6 +886,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         tap_side = self._get_pp_attr(_PpTable.trafo, _PpAttr.tap_side, expected_type="O", default=_NOT_SET_STR)
         tap_nom = self._get_pp_attr(_PpTable.trafo, _PpAttr.tap_neutral, expected_type="f8", default=np.nan)
         tap_pos = self._get_pp_attr(_PpTable.trafo, _PpAttr.tap_pos, expected_type="f8", default=np.nan)
+        tap_min = self._get_pp_attr(_PpTable.trafo, _PpAttr.tap_min, expected_type="i4", default=0)
+        tap_max = self._get_pp_attr(_PpTable.trafo, _PpAttr.tap_max, expected_type="i4", default=0)
         tap_size = self._get_tap_size(pp_trafo)
         winding_types = self.get_trafo_winding_types()
         clocks = (
@@ -955,6 +957,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         tap_size[no_taps] = 0
         tap_side[no_taps] = "hv"
 
+        negative_tap_step = np.less(tap_size, 0)
+        tap_size[negative_tap_step] *= -1
+        tap_min_copy = tap_min.copy()
+        tap_min[negative_tap_step] = tap_max[negative_tap_step]
+        tap_max[negative_tap_step] = tap_min_copy[negative_tap_step]
+
         # Default vector group for odd clocks = DYn and for even clocks = YNyn
         no_vector_groups = np.isnan(winding_types["winding_from"]) | np.isnan(winding_types["winding_to"])
         no_vector_groups_dyn = no_vector_groups & (clocks % 2)
@@ -999,12 +1007,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_transformers[AttributeType.tap_nom] = tap_nom.astype("i4")
         pgm_transformers[AttributeType.tap_pos] = tap_pos.astype("i4")
         pgm_transformers[AttributeType.tap_side] = self._get_transformer_tap_side(tap_side)
-        pgm_transformers[AttributeType.tap_min] = self._get_pp_attr(
-            _PpTable.trafo, _PpAttr.tap_min, expected_type="i4", default=0
-        )
-        pgm_transformers[AttributeType.tap_max] = self._get_pp_attr(
-            _PpTable.trafo, _PpAttr.tap_max, expected_type="i4", default=0
-        )
+        pgm_transformers[AttributeType.tap_min] = tap_min
+        pgm_transformers[AttributeType.tap_max] = tap_max
         pgm_transformers[AttributeType.tap_size] = tap_size
 
         self.pgm_input_data[ComponentType.transformer] = pgm_transformers
