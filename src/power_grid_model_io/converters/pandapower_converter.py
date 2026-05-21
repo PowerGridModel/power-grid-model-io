@@ -466,6 +466,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         c_nf_per_km = self._get_pp_attr(_PpTable.line, _PpAttr.c_nf_per_km, expected_type="f8", default=0)
         c0_nf_per_km = self._get_pp_attr(_PpTable.line, _PpAttr.c0_nf_per_km, expected_type="f8", default=0)
         multiplier = length_km / parallel
+
         pgm_lines = initialize_array(
             data_type=DatasetType.input, component_type=ComponentType.line, shape=len(pp_lines)
         )
@@ -605,11 +606,11 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
     def _create_pgm_input_sym_gens(self, pp_table: Literal[_PpTable.gen, _PpTable.sgen] = _PpTable.sgen):
         """
-        This function converts a static Generator or Generator Dataframe of PandaPower to a power-grid-model
+        This function converts a Static Generator or Generator Dataframe of PandaPower to a power-grid-model
         Symmetrical Generator input array.
 
         Args:
-            pp_table: panadpower generator table to convert "gen" or "sgen"
+            pp_table: panadpower Generator table to convert "gen" or "sgen"
 
         Returns:
             a power-grid-model structured array for the Symmetrical Generator component
