@@ -322,6 +322,21 @@ def test_attributes_3ph(
     pd.testing.assert_series_equal(actual_values, expected_values, atol=5e-4, rtol=1e-4)
 
 
+def test_pp_gen_output():
+    net = pp.networks.example_simple()
+    pp.add_zero_impedance_parameters(net)
+    net.ext_grid.s_sc_max_mva = 1e20
+    converter = PandaPowerConverter()
+
+    pgm_input, _ = converter.load_input_data(net)
+
+    pgm_model = PowerGridModel(pgm_input)
+    pgm_output = pgm_model.calculate_power_flow()
+    pp_tables = converter.convert(pgm_output)
+
+    assert "res_gen" in pp_tables
+
+
 def _get_total_powers_3ph(net):  # noqa: PLR0912
     """
     Calculates total complex power for sources, loads and losses

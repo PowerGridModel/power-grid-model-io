@@ -5,6 +5,7 @@
 import warnings
 from collections.abc import Callable
 from importlib import metadata
+from typing import Any
 from unittest.mock import ANY, MagicMock, call, patch
 
 import numpy as np
@@ -484,7 +485,12 @@ def test_create_input_data():
     converter._create_pgm_input_asym_loads.assert_called_once_with()
     converter._create_pgm_input_shunts.assert_called_once_with()
     converter._create_pgm_input_transformers.assert_called_once_with()
-    converter._create_pgm_input_sym_gens.assert_called_once_with()
+    converter._create_pgm_input_sym_gens.assert_has_calls(
+        [
+            call(_PpTable.sgen),
+            call(_PpTable.gen),
+        ]
+    )
     converter._create_pgm_input_asym_gens.assert_called_once_with()
     converter._create_pgm_input_three_winding_transformers.assert_called_once_with()
     converter._create_pgm_input_links.assert_called_once_with()
@@ -493,7 +499,6 @@ def test_create_input_data():
     converter._create_pgm_input_wards.assert_called_once_with()
     converter._create_pgm_input_xwards.assert_called_once_with()
     converter._create_pgm_input_motors.assert_called_once_with()
-    converter._create_pgm_input_generators.assert_called_once_with()
     converter._create_pgm_input_dclines.assert_called_once_with()
 
 
@@ -1212,64 +1217,100 @@ def test_create_pgm_input_transformers__default() -> None:
         assert result[9][AT.clock] == 2
 
 
+@pytest.mark.parametrize("pp_table", [_PpTable.sgen, _PpTable.gen])
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
-def test_create_pgm_input_sym_gens(mock_init_array: MagicMock, two_pp_objs, converter):
+def test_create_pgm_input_sym_gens(mock_init_array: MagicMock, two_pp_objs, converter, pp_table: _PpTable):
     # Arrange
-    converter.pp_input_data[_PpTable.sgen] = two_pp_objs
+    converter.pp_input_data[pp_table] = two_pp_objs
 
     # Act
-    converter._create_pgm_input_sym_gens()
+    converter._create_pgm_input_sym_gens(pp_table)
+    gen_type = None if pp_table == _PpTable.sgen else "gen"
 
     # Assert
 
     # administration:
-    converter._generate_ids.assert_called_once_with(_PpTable.sgen, two_pp_objs.index)
+    if pp_table == _PpTable.sgen:
+        converter._generate_ids.assert_called_once_with(pp_table, two_pp_objs.index, name=gen_type)
+    else:
+        converter._generate_ids.assert_has_calls(
+            [call(pp_table, two_pp_objs.index, name="gen"), call(pp_table, two_pp_objs.index, name="regulator")]
+        )
 
     # initialization
-    mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=CT.sym_gen, shape=2)
+    if pp_table == _PpTable.sgen:
+        mock_init_array.assert_called_once_with(data_type=DatasetType.input, component_type=CT.sym_gen, shape=2)
+    else:
+        mock_init_array.assert_any_call(data_type=DatasetType.input, component_type=CT.sym_gen, shape=2)
 
     # retrieval:
-    converter._get_pp_attr.assert_any_call(_PpTable.sgen, _PpAttr.bus, expected_type="i8")
-    converter._get_pp_attr.assert_any_call(_PpTable.sgen, _PpAttr.p_mw, expected_type="f8")
-    converter._get_pp_attr.assert_any_call(_PpTable.sgen, _PpAttr.q_mvar, expected_type="f8", default=0.0)
-    converter._get_pp_attr.assert_any_call(_PpTable.sgen, _PpAttr.scaling, expected_type="f8", default=1.0)
-    converter._get_pp_attr.assert_any_call(_PpTable.sgen, _PpAttr.in_service, expected_type="bool", default=True)
-    assert len(converter._get_pp_attr.call_args_list) == 5
+    converter._get_pp_attr.assert_any_call(pp_table, _PpAttr.bus, expected_type="i8")
+    converter._get_pp_attr.assert_any_call(pp_table, _PpAttr.p_mw, expected_type="f8")
+    converter._get_pp_attr.assert_any_call(pp_table, _PpAttr.q_mvar, expected_type="f8", default=0.0)
+    converter._get_pp_attr.assert_any_call(pp_table, _PpAttr.scaling, expected_type="f8", default=1.0)
+    converter._get_pp_attr.assert_any_call(pp_table, _PpAttr.in_service, expected_type="bool", default=True)
+    PP_ATTR_CALLS = 5 if pp_table == _PpTable.sgen else 6
+    assert len(converter._get_pp_attr.call_args_list) == PP_ATTR_CALLS
 
     # assignment:
     pgm: MagicMock = mock_init_array.return_value.__setitem__
-    pgm.assert_any_call(AT.id, _generate_ids(_PpTable.sgen, two_pp_objs.index))
+    pgm.assert_any_call(AT.id, _generate_ids(pp_table, two_pp_objs.index, name=gen_type))
     pgm.assert_any_call(
         AT.node,
-        _get_pgm_ids(_PpTable.bus, _get_pp_attr(_PpTable.sgen, _PpAttr.bus, expected_type="i8")),
+        _get_pgm_ids(_PpTable.bus, _get_pp_attr(pp_table, _PpAttr.bus, expected_type="i8")),
     )
-    pgm.assert_any_call(AT.status, _get_pp_attr(_PpTable.sgen, _PpAttr.in_service, expected_type="bool", default=True))
+    pgm.assert_any_call(AT.status, _get_pp_attr(pp_table, _PpAttr.in_service, expected_type="bool", default=True))
     pgm.assert_any_call(AT.type, LoadGenType.const_power)
     pgm.assert_any_call(
         AT.p_specified,
-        _get_pp_attr(_PpTable.sgen, _PpAttr.p_mw, expected_type="f8")
-        * _get_pp_attr(_PpTable.sgen, _PpAttr.scaling, expected_type="f8", default=1.0)
+        _get_pp_attr(pp_table, _PpAttr.p_mw, expected_type="f8")
+        * _get_pp_attr(pp_table, _PpAttr.scaling, expected_type="f8", default=1.0)
         * 1e6,
     )
     pgm.assert_any_call(
         AT.q_specified,
-        _get_pp_attr(_PpTable.sgen, _PpAttr.q_mvar, expected_type="f8", default=0.0)
-        * _get_pp_attr(_PpTable.sgen, _PpAttr.scaling, expected_type="f8", default=1.0)
+        _get_pp_attr(pp_table, _PpAttr.q_mvar, expected_type="f8", default=0.0)
+        * _get_pp_attr(pp_table, _PpAttr.scaling, expected_type="f8", default=1.0)
         * 1e6,
     )
-    assert len(pgm.call_args_list) == 6
+    CALL_ARGS_LIST = 6 if pp_table == _PpTable.sgen else 12
+    assert len(pgm.call_args_list) == CALL_ARGS_LIST
 
     # result
     assert converter.pgm_input_data[CT.sym_gen] == mock_init_array.return_value
 
+    if pp_table == _PpTable.gen:
+        # initialization
+        mock_init_array.assert_any_call(data_type=DatasetType.input, component_type=CT.voltage_regulator, shape=2)
 
-def test_create_pgm_input_sym_gens__bad_input():
+        # retrieval:
+        converter._get_pp_attr.assert_any_call(pp_table, _PpAttr.vm_pu, expected_type="f8", default=1.0)
+
+        # assignment:
+        pgm_1: MagicMock = mock_init_array.return_value.__setitem__
+        pgm_1.assert_any_call(AT.regulated_object, mock_init_array.return_value.__getitem__.return_value)
+        pgm_1.assert_any_call(AT.status, mock_init_array.return_value.__getitem__.return_value)
+        pgm_1.assert_any_call(AT.u_ref, _get_pp_attr(pp_table, _PpAttr.vm_pu, expected_type="f8", default=1.0))
+        pgm_1.assert_any_call(AT.q_min, np.nan)
+        pgm_1.assert_any_call(AT.q_max, np.nan)
+
+        # result
+        assert converter.pgm_input_data[CT.voltage_regulator] == mock_init_array.return_value
+
+
+@pytest.mark.parametrize("pp_table", [_PpTable.sgen, _PpTable.gen])
+def test_create_pgm_input_sym_gens__bad_input(pp_table):
     converter = PandaPowerConverter()
-    converter.pp_input_data[_PpTable.sgen] = pd.DataFrame(data={_PpTable.bus: [101]}, index=[201])
+    converter.pp_input_data[pp_table] = pd.DataFrame(data={_PpAttr.bus: [101]}, index=[201])
     converter.pgm_input_data[CT.sym_gen] = initialize_array(DatasetType.input, CT.sym_gen, 1)
+    gen_type = None if pp_table == _PpTable.sgen else "gen"
+    converter.idx[(pp_table, gen_type)] = pd.Series([0], index=[201])
+    converter.idx_lookup[(pp_table, gen_type)] = pd.Series([201], index=[0])
 
-    with pytest.raises(ValueError, match="Symmetric generator component already exists in pgm_input_data"):
-        converter._create_pgm_input_sym_gens()
+    with pytest.raises(
+        ValueError, match=f"Symmetric generator component for {pp_table} already exists in pgm_input_data"
+    ):
+        converter._create_pgm_input_sym_gens(pp_table)
 
 
 @pytest.mark.parametrize(
@@ -1931,19 +1972,6 @@ def test_create_pgm_input_xward(mock_init_array: MagicMock, two_pp_objs, convert
 
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
-def test_create_pgm_input_generators(mock_init_array: MagicMock, two_pp_objs, converter):
-    # Arrange
-    converter.pp_input_data[_PpTable.gen] = two_pp_objs
-
-    # Act / Assert
-    with pytest.raises(NotImplementedError, match=r"Generators.*not implemented"):
-        converter._create_pgm_input_generators()
-
-    # initialization
-    mock_init_array.assert_not_called()
-
-
-@patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_dclines(mock_init_array: MagicMock, two_pp_objs, converter):
     # Arrange
     converter.pp_input_data[_PpTable.dcline] = two_pp_objs
@@ -2020,36 +2048,38 @@ def test_create_pgm_input_motors__existing_loads() -> None:
 
 
 @pytest.mark.parametrize(
-    "create_fn",
+    ("create_fn", "create_fn_kwargs"),
     [
-        PandaPowerConverter._create_pgm_input_sources,
-        PandaPowerConverter._create_pgm_input_shunts,
-        PandaPowerConverter._create_pgm_input_lines,
-        PandaPowerConverter._create_pgm_input_sym_gens,
-        PandaPowerConverter._create_pgm_input_sym_loads,
-        PandaPowerConverter._create_pgm_input_asym_gens,
-        PandaPowerConverter._create_pgm_input_asym_loads,
-        PandaPowerConverter._create_pgm_input_impedances,
-        PandaPowerConverter._create_pgm_input_links,
-        PandaPowerConverter._create_pgm_input_motors,
-        PandaPowerConverter._create_pgm_input_nodes,
-        PandaPowerConverter._create_pgm_input_storages,
-        PandaPowerConverter._create_pgm_input_three_winding_transformers,
-        PandaPowerConverter._create_pgm_input_transformers,
-        PandaPowerConverter._create_pgm_input_wards,
-        PandaPowerConverter._create_pgm_input_xwards,
-        PandaPowerConverter._create_pgm_input_generators,
-        PandaPowerConverter._create_pgm_input_dclines,
+        (PandaPowerConverter._create_pgm_input_sources, {}),
+        (PandaPowerConverter._create_pgm_input_shunts, {}),
+        (PandaPowerConverter._create_pgm_input_lines, {}),
+        (PandaPowerConverter._create_pgm_input_sym_gens, {"pp_table": _PpTable.sgen}),
+        (PandaPowerConverter._create_pgm_input_sym_gens, {"pp_table": _PpTable.gen}),
+        (PandaPowerConverter._create_pgm_input_sym_loads, {}),
+        (PandaPowerConverter._create_pgm_input_asym_gens, {}),
+        (PandaPowerConverter._create_pgm_input_asym_loads, {}),
+        (PandaPowerConverter._create_pgm_input_impedances, {}),
+        (PandaPowerConverter._create_pgm_input_links, {}),
+        (PandaPowerConverter._create_pgm_input_motors, {}),
+        (PandaPowerConverter._create_pgm_input_nodes, {}),
+        (PandaPowerConverter._create_pgm_input_storages, {}),
+        (PandaPowerConverter._create_pgm_input_three_winding_transformers, {}),
+        (PandaPowerConverter._create_pgm_input_transformers, {}),
+        (PandaPowerConverter._create_pgm_input_wards, {}),
+        (PandaPowerConverter._create_pgm_input_xwards, {}),
+        (PandaPowerConverter._create_pgm_input_dclines, {}),
     ],
 )
-def test_create_pp_input_object__empty(create_fn: Callable[[PandaPowerConverter], None]):
+def test_create_pp_input_object__empty(
+    create_fn: Callable[[PandaPowerConverter], None], create_fn_kwargs: dict[str, Any]
+):
     # Arrange: No table
     converter = PandaPowerConverter()
     converter.pp_input_data = pp.create_empty_network()
 
     # Act / Assert
     with patch("power_grid_model_io.converters.pandapower_converter.initialize_array") as mock_init_array:
-        create_fn(converter)
+        create_fn(converter, **create_fn_kwargs)
         mock_init_array.assert_not_called()
 
 
