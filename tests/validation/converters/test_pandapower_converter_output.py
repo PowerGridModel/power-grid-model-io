@@ -376,7 +376,6 @@ def test_pp_gen_output__3_node():
     pp_tables = converter.convert(pgm_output)
 
     assert "res_gen" in pp_tables
-    print(pp_tables["res_gen"])
 
 def _get_total_powers_3ph(net):  # noqa: PLR0912
     """
