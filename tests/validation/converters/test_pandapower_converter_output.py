@@ -10,6 +10,15 @@ import numpy as np
 import pandapower.networks as pp_networks
 import pandas as pd
 import pytest
+from pandapower import add_zero_impedance_parameters
+from pandapower.create import (
+    create_bus,
+    create_empty_network,
+    create_ext_grid,
+    create_gen,
+    create_line_from_parameters,
+    create_load,
+)
 from pandapower.results import reset_results
 from power_grid_model import AttributeType as AT, ComponentType as CT, PowerGridModel
 from power_grid_model.utils import json_deserialize_from_file
@@ -330,12 +339,44 @@ def test_pp_gen_output():
 
     pgm_input, _ = converter.load_input_data(net)
 
+    assert_valid_input_data(pgm_input)
+
     pgm_model = PowerGridModel(pgm_input)
     pgm_output = pgm_model.calculate_power_flow()
     pp_tables = converter.convert(pgm_output)
 
     assert "res_gen" in pp_tables
 
+def test_pp_gen_output__3_node():
+    net = create_empty_network(f_hz=50, add_stdtypes=False)
+    add_zero_impedance_parameters(net)
+
+    create_bus(net, vn_kv=11., index=0)
+    create_bus(net, vn_kv=11., index=1)
+    create_bus(net, vn_kv=11., index=2)
+
+    create_line_from_parameters(net, 0, 1, 25, 0, 10/25, 238.78/25, np.nan)
+    create_line_from_parameters(net, 0, 2, 25, 0, 10/25, 238.78/25, np.nan)
+    create_line_from_parameters(net, 2, 1, 25, 0, 10/25, 238.78/25, np.nan)
+
+    create_ext_grid(net, 2, vm_pu=1.018182, s_sc_max_mva=1e34)
+
+    create_gen(net, bus=1, p_mw=70, q_mvar=0, vm_pu=1.027273)
+
+    create_load(net, bus=0, p_mw=100, q_mvar=30)
+
+    converter = PandaPowerConverter()
+
+    pgm_input, _ = converter.load_input_data(net)
+
+    assert_valid_input_data(pgm_input)
+
+    pgm_model = PowerGridModel(pgm_input)
+    pgm_output = pgm_model.calculate_power_flow()
+    pp_tables = converter.convert(pgm_output)
+
+    assert "res_gen" in pp_tables
+    print(pp_tables["res_gen"])
 
 def _get_total_powers_3ph(net):  # noqa: PLR0912
     """
