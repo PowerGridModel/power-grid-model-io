@@ -351,9 +351,9 @@ def test_pp_gen_output__3_node():
     net = create_empty_network(f_hz=50, add_stdtypes=False)
     add_zero_impedance_parameters(net)
 
-    create_bus(net, vn_kv=11., index=0)
-    create_bus(net, vn_kv=11., index=1)
-    create_bus(net, vn_kv=11., index=2)
+    create_bus(net, vn_kv=110., index=0)
+    create_bus(net, vn_kv=110., index=1)
+    create_bus(net, vn_kv=110., index=2)
 
     create_line_from_parameters(net, 0, 1, 25, 0, 10/25, 238.78/25, np.nan)
     create_line_from_parameters(net, 0, 2, 25, 0, 10/25, 238.78/25, np.nan)
