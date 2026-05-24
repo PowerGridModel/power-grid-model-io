@@ -393,8 +393,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._pp_load_elements_output(element=_PpTable.motor, symmetric=True)
         self._pp_shunts_output()
         self._pp_trafos_output()
-        self._pp_sym_gens_output(_PpTable.res_sgen)
-        self._pp_sym_gens_output(_PpTable.res_gen)
+        self._pp_sgens_output()
+        self._pp_gens_output()
         self._pp_trafos3w_output()
         self._pp_asym_gens_output()
         self._pp_asym_loads_output()
@@ -1605,7 +1605,10 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data[_PpTable.res_shunt] = pp_output_shunts
 
-    def _pp_sym_gens_output(self, pp_output_table: Literal[_PpTable.res_gen, _PpTable.res_sgen] = _PpTable.res_sgen):
+    def _pp_sym_generators_output(
+            self,
+            pp_output_table: Literal[_PpTable.res_gen, _PpTable.res_sgen] = _PpTable.res_sgen
+    ):
         """
         This function converts a power-grid-model Symmetrical Generator output array to a Static Generator or Generator
         Dataframe of PandaPower.
@@ -1643,6 +1646,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pp_output_sgens.index = pd.Index(self._get_pp_ids(idx_table, pp_output_sgens.index, name=gen_type))
 
         self.pp_output_data[pp_output_table] = pp_output_sgens
+
+    def _pp_sgens_output(self):
+        self._pp_sym_generators_output(_PpTable.sgen)
+
+    def _pp_gens_output(self):
+        self._pp_sym_generators_output(_PpTable.gen)
 
     def _pp_trafos_output(self):
         """

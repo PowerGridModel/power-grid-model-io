@@ -37,7 +37,8 @@ def test_create_output_data():
     converter._pp_lines_output.assert_called_once_with()
     converter._pp_ext_grids_output.assert_called_once_with()
     converter._pp_shunts_output.assert_called_once_with()
-    converter._pp_sym_gens_output.assert_has_calls([call(_PpTable.res_sgen), call(_PpTable.res_gen)])
+    converter._pp_sgens_output.assert_called_once_with()
+    converter._pp_gens_output.assert_called_once_with()
     converter._pp_trafos_output.assert_called_once_with()
     converter._pp_trafos3w_output.assert_called_once_with()
     expected_calls = [
@@ -82,8 +83,8 @@ def test_create_output_data_3ph():
         (PandaPowerConverter._pp_lines_output, "line", {}),
         (PandaPowerConverter._pp_ext_grids_output, "source", {}),
         (PandaPowerConverter._pp_shunts_output, "shunt", {}),
-        (PandaPowerConverter._pp_sym_gens_output, "sym_gen", {"pp_output_table": _PpTable.res_sgen}),
-        (PandaPowerConverter._pp_sym_gens_output, "sym_gen", {"pp_output_table": _PpTable.res_gen}),
+        (PandaPowerConverter._pp_sgens_output, "sym_gen", {}),
+        (PandaPowerConverter._pp_gens_output, "sym_gen", {}),
         (PandaPowerConverter._pp_trafos_output, "transformer", {}),
         (PandaPowerConverter._pp_trafos3w_output, "three_winding_transformer", {}),
         (PandaPowerConverter._pp_load_elements_output, "load", {"symmetric": True, "element": "sym_load"}),
@@ -337,7 +338,7 @@ def test_output_shunt__bad_input(converter):
 
 
 @pytest.mark.parametrize("pp_output_table", [_PpTable.res_gen, _PpTable.res_sgen])
-def test_output_sym_gens(converter, pp_output_table):
+def test_output_sym_generators(converter, pp_output_table):
     # Arrange
     mock_pgm_array = MagicMock()
     converter.pgm_output_data[CT.sym_gen] = mock_pgm_array
@@ -348,7 +349,7 @@ def test_output_sym_gens(converter, pp_output_table):
 
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
         # Act
-        converter._pp_sym_gens_output(pp_output_table)
+        converter._pp_sym_generators_output(pp_output_table)
 
         # Assert
 
@@ -369,14 +370,33 @@ def test_output_sym_gens(converter, pp_output_table):
 
 
 @pytest.mark.parametrize("pp_output_table", [_PpTable.res_gen, _PpTable.res_sgen])
-def test_output_sgen__bad_input(converter, pp_output_table):
+def test_output_sym_generators__bad_input(converter, pp_output_table):
     # Arrange
     converter = PandaPowerConverter()
     converter.pp_output_data[pp_output_table] = pd.DataFrame()
 
     with pytest.raises(ValueError, match=f"{pp_output_table} already exists in pp_output_data."):
-        converter._pp_sym_gens_output(pp_output_table)
+        converter._pp_sym_generators_output(pp_output_table)
 
+def test_pp_sgens_output():
+    # Arrange
+    converter = MagicMock()
+
+    # Act
+    PandaPowerConverter._pp_sgens_output(self=converter)  # type: ignore
+
+    # Assert
+    converter._pp_sym_generators_output.assert_called_once_with(_PpTable.sgen)
+
+def test_pp_gens_output():
+    # Arrange
+    converter = MagicMock()
+
+    # Act
+    PandaPowerConverter._pp_gens_output(self=converter)  # type: ignore
+
+    # Assert
+    converter._pp_sym_generators_output.assert_called_once_with(_PpTable.gen)
 
 def test_output_trafos__current(converter):
     # Arrange
