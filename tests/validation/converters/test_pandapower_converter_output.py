@@ -45,7 +45,7 @@ else:
         PGM_PP_TEST_DATA / "v3.2.0" / "pp_v2_net_3ph_output_current_loading.json"
     )
 PV_NODE_PGM_OUTPUT_FILE = PGM_PP_TEST_DATA / "pv-node" / "pv-node3" / "sym_output.json"
-PV_NODE_PP_OUTPUT_FILE = PGM_PP_TEST_DATA / "pp_net_pv_node3_output.json"
+PV_NODE_PP_OUTPUT_FILE = PGM_PP_TEST_DATA / "pv-node" / "pv-node3" / "pp_net_pv_node3_output.json"
 
 
 @contextmanager

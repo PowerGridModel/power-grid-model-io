@@ -172,7 +172,6 @@ def test_pgm_input_lines__cnf_zero():
 @pytest.mark.filterwarnings("error")
 def test_simple_example():
     pp_net = example_simple()
-    pp_net[_PpTable.gen] = pp_net[_PpTable.gen].iloc[:0]
     pp_converter = PandaPowerConverter()
     _, _ = pp_converter.load_input_data(pp_net)
 
@@ -180,13 +179,13 @@ def test_simple_example():
 @pytest.mark.filterwarnings("error")
 def test_simple_example_with_strings():
     pp_net = example_simple()
-    pp_net[_PpTable.gen] = pp_net[_PpTable.gen].iloc[:0]
 
     for table, attrs in {
         _PpTable.bus: [_PpAttr.type],
         _PpTable.load: [_PpAttr.type],
         _PpTable.asymmetric_load: [_PpAttr.type],
         _PpTable.sgen: [_PpAttr.type],
+        _PpTable.gen: [_PpAttr.type],
         _PpTable.line: [_PpAttr.type],
         _PpTable.trafo: [_PpAttr.vector_group, _PpAttr.tap_side],
         _PpTable.trafo3w: [_PpAttr.tap_side],
@@ -202,7 +201,6 @@ def test_simple_example_with_strings():
 @pytest.mark.filterwarnings("error")
 def test_simple_example_with_na():
     pp_net = example_simple()
-    pp_net[_PpTable.gen] = pp_net[_PpTable.gen].iloc[:0]
 
     for table, attrs in {
         _PpTable.line: [_PpAttr.type],
@@ -268,7 +266,6 @@ def test_trafo_zero_seq_params_calculation(kwargs):
 
 def test_trafo_negative_tap_step():
     pp_net = example_simple()
-    pp_net[_PpTable.gen] = pp_net[_PpTable.gen].iloc[:0]
     pp_net[_PpTable.trafo][_PpAttr.tap_step_percent] *= -1
     pp_converter = PandaPowerConverter()
     pgm_data, _ = pp_converter.load_input_data(pp_net)
