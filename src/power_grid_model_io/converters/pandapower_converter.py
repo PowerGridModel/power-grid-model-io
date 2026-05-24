@@ -27,7 +27,7 @@ from power_grid_model import (
     initialize_array,
     power_grid_meta_data,
 )
-from power_grid_model.data_types import Dataset, SingleDataset
+from power_grid_model.data_types import Dataset, SingleArray, SingleDataset
 
 from power_grid_model_io._enum import PandapowerAttribute as _PpAttr, PandapowerTable as _PpTable
 from power_grid_model_io.converters.base_converter import BaseConverter
@@ -644,14 +644,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         ) * (1e6 * scaling)
         pgm_sym_gens[AttributeType.type] = LoadGenType.const_power
 
-        if ComponentType.sym_gen in self.pgm_input_data:
-            symgen_dtype = self.pgm_input_data[ComponentType.sym_gen].dtype
-            self.pgm_input_data[ComponentType.sym_gen] = np.concatenate(  # pylint: disable=unexpected-keyword-arg
-                [self.pgm_input_data[ComponentType.sym_gen], pgm_sym_gens],
-                dtype=symgen_dtype,
-            )
-        else:
-            self.pgm_input_data[ComponentType.sym_gen] = pgm_sym_gens
+        self._append_pgm_input(ComponentType.sym_gen, pgm_sym_gens)
 
     def _create_pgm_input_sgens(self):
         self._create_pgm_input_sym_generators(_PpTable.sgen)
@@ -686,6 +679,16 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_voltage_regulator[AttributeType.q_min] = np.nan  # not yet supported by PGM
         pgm_voltage_regulator[AttributeType.q_max] = np.nan  # not yet supported by PGM
         self.pgm_input_data[ComponentType.voltage_regulator] = pgm_voltage_regulator
+
+    def _append_pgm_input(self, component: ComponentType, pgm_data: SingleArray):
+        if component in self.pgm_input_data:
+            component_dtype = self.pgm_input_data[component].dtype
+            self.pgm_input_data[component] = np.concatenate(  # pylint: disable=unexpected-keyword-arg
+                [self.pgm_input_data[component], pgm_data],
+                dtype=component_dtype,
+            )
+        else:
+            self.pgm_input_data[component] = pgm_data
 
     def _create_pgm_input_asym_gens(self):
         """
@@ -839,7 +842,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_loads[AttributeType.p_specified][-n_loads:] = const_i_p_multiplier * p_mw
         pgm_sym_loads[AttributeType.q_specified][-n_loads:] = const_i_q_multiplier * q_mvar
 
-        self.pgm_input_data[ComponentType.sym_load] = pgm_sym_loads
+        self._append_pgm_input(ComponentType.sym_load, pgm_sym_loads)
 
     def _create_pgm_input_asym_loads(self):
         """
@@ -1314,14 +1317,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         #  If input data of loads has already been filled then extend it with data of wards. If it is empty and there
         #  is no data about loads,then assign ward data to it
-        if ComponentType.sym_load in self.pgm_input_data:
-            symload_dtype = self.pgm_input_data[ComponentType.sym_load].dtype
-            self.pgm_input_data[ComponentType.sym_load] = np.concatenate(  # pylint: disable=unexpected-keyword-arg
-                [self.pgm_input_data[ComponentType.sym_load], pgm_sym_loads_from_ward],
-                dtype=symload_dtype,
-            )
-        else:
-            self.pgm_input_data[ComponentType.sym_load] = pgm_sym_loads_from_ward
+        self._append_pgm_input(ComponentType.sym_load, pgm_sym_loads_from_ward)
 
     def _create_pgm_input_xwards(self):
         pp_xwards = self.pp_input_data[_PpTable.xward]
@@ -1371,14 +1367,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         #  If input data of loads has already been filled then extend it with data of motors. If it is empty and there
         #  is no data about loads,then assign motor data to it
-        if ComponentType.sym_load in self.pgm_input_data:
-            symload_dtype = self.pgm_input_data[ComponentType.sym_load].dtype
-            self.pgm_input_data[ComponentType.sym_load] = np.concatenate(  # pylint: disable=unexpected-keyword-arg
-                [self.pgm_input_data[ComponentType.sym_load], pgm_sym_loads_from_motor],
-                dtype=symload_dtype,
-            )
-        else:
-            self.pgm_input_data[ComponentType.sym_load] = pgm_sym_loads_from_motor
+        self._append_pgm_input(ComponentType.sym_load, pgm_sym_loads_from_motor)
 
     def _create_pgm_input_dclines(self):
         pp_dcline = self.pp_input_data[_PpTable.dcline]
