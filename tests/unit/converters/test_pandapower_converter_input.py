@@ -5,7 +5,6 @@
 import warnings
 from collections.abc import Callable
 from importlib import metadata
-from typing import Any
 from unittest.mock import ANY, MagicMock, call, patch
 
 import numpy as np
@@ -1266,6 +1265,7 @@ def test_create_pgm_input_sym_generators(mock_init_array: MagicMock, two_pp_objs
     # result
     assert converter.pgm_input_data[CT.sym_gen] == mock_init_array.return_value
 
+
 def test_create_pgm_input_sgens():
     # Arrange
     converter = MagicMock()
@@ -1275,6 +1275,7 @@ def test_create_pgm_input_sgens():
 
     # Assert
     converter._create_pgm_input_sym_generators.assert_called_once_with(_PpTable.sgen)
+
 
 def test_create_pgm_input_gens():
     # Arrange
@@ -1286,6 +1287,7 @@ def test_create_pgm_input_gens():
     # Assert
     converter._create_pgm_input_sym_generators.assert_called_once_with(_PpTable.gen)
     converter._create_pgm_input_voltage_regulators.assert_called_once_with()
+
 
 @patch("power_grid_model_io.converters.pandapower_converter.initialize_array")
 def test_create_pgm_input_voltage_regulators(mock_init_array: MagicMock, two_pp_objs, converter):
@@ -1319,8 +1321,10 @@ def test_create_pgm_input_voltage_regulators(mock_init_array: MagicMock, two_pp_
     # result
     assert converter.pgm_input_data[CT.voltage_regulator] == mock_init_array.return_value
 
+
 @pytest.mark.parametrize("pp_table", [_PpTable.sgen, _PpTable.gen])
 def test_create_pgm_input_sym_generators__bad_input(pp_table):
+    # Arrange
     converter = PandaPowerConverter()
     converter.pp_input_data[pp_table] = pd.DataFrame(data={_PpAttr.bus: [101]}, index=[201])
     converter.pgm_input_data[CT.sym_gen] = initialize_array(DatasetType.input, CT.sym_gen, 1)
@@ -1328,9 +1332,8 @@ def test_create_pgm_input_sym_generators__bad_input(pp_table):
     converter.idx[(pp_table, gen_type)] = pd.Series([0], index=[201])
     converter.idx_lookup[(pp_table, gen_type)] = pd.Series([201], index=[0])
 
-    with pytest.raises(
-        ValueError, match=f"Generator component for {pp_table} already exists in pgm_input_data"
-    ):
+    # Act, Assert
+    with pytest.raises(ValueError, match=f"Generator component for {pp_table} already exists in pgm_input_data"):
         converter._create_pgm_input_sym_generators(pp_table)
 
 
@@ -2071,28 +2074,27 @@ def test_create_pgm_input_motors__existing_loads() -> None:
 @pytest.mark.parametrize(
     "create_fn",
     [
-        (PandaPowerConverter._create_pgm_input_sources),
-        (PandaPowerConverter._create_pgm_input_shunts),
-        (PandaPowerConverter._create_pgm_input_lines),
-        (PandaPowerConverter._create_pgm_input_sgens),
-        (PandaPowerConverter._create_pgm_input_gens),
-        (PandaPowerConverter._create_pgm_input_sym_loads),
-        (PandaPowerConverter._create_pgm_input_asym_gens),
-        (PandaPowerConverter._create_pgm_input_asym_loads),
-        (PandaPowerConverter._create_pgm_input_impedances),
-        (PandaPowerConverter._create_pgm_input_links),
-        (PandaPowerConverter._create_pgm_input_motors),
-        (PandaPowerConverter._create_pgm_input_nodes),
-        (PandaPowerConverter._create_pgm_input_storages),
-        (PandaPowerConverter._create_pgm_input_three_winding_transformers),
-        (PandaPowerConverter._create_pgm_input_transformers),
-        (PandaPowerConverter._create_pgm_input_wards),
-        (PandaPowerConverter._create_pgm_input_xwards),
-        (PandaPowerConverter._create_pgm_input_dclines),
+        PandaPowerConverter._create_pgm_input_sources,
+        PandaPowerConverter._create_pgm_input_shunts,
+        PandaPowerConverter._create_pgm_input_lines,
+        PandaPowerConverter._create_pgm_input_sgens,
+        PandaPowerConverter._create_pgm_input_gens,
+        PandaPowerConverter._create_pgm_input_sym_loads,
+        PandaPowerConverter._create_pgm_input_asym_gens,
+        PandaPowerConverter._create_pgm_input_asym_loads,
+        PandaPowerConverter._create_pgm_input_impedances,
+        PandaPowerConverter._create_pgm_input_links,
+        PandaPowerConverter._create_pgm_input_motors,
+        PandaPowerConverter._create_pgm_input_nodes,
+        PandaPowerConverter._create_pgm_input_storages,
+        PandaPowerConverter._create_pgm_input_three_winding_transformers,
+        PandaPowerConverter._create_pgm_input_transformers,
+        PandaPowerConverter._create_pgm_input_wards,
+        PandaPowerConverter._create_pgm_input_xwards,
+        PandaPowerConverter._create_pgm_input_dclines,
     ],
 )
-def test_create_pp_input_object__empty(
-    create_fn: Callable[[PandaPowerConverter], None]):
+def test_create_pp_input_object__empty(create_fn: Callable[[PandaPowerConverter], None]):
     # Arrange: No table
     converter = PandaPowerConverter()
     converter.pp_input_data = pp.create_empty_network()

@@ -53,7 +53,7 @@ def load_and_convert_pp_data() -> tuple[SingleDataset, ExtraInfo]:
 
 
 @lru_cache
-def load_validation_data(file: Path=VALIDATION_FILE) -> tuple[SingleDataset, ExtraInfo]:
+def load_validation_data(file: Path = VALIDATION_FILE) -> tuple[SingleDataset, ExtraInfo]:
     """
     Load the validation data from the json file
     """
@@ -276,6 +276,7 @@ def test_trafo_negative_tap_step():
     assert pgm_data["transformer"][0]["tap_max"] < pgm_data["transformer"][0]["tap_min"]
 
     assert_valid_input_data(pgm_data)
+
 
 def test_create_input_gen__voltage_regultor():
     pp_net = pp_net_pv_node_3()

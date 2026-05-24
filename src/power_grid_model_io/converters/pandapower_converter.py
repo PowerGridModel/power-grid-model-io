@@ -661,31 +661,31 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._create_pgm_input_voltage_regulators()
 
     def _create_pgm_input_voltage_regulators(self):
-            pp_gen = self.pp_input_data[_PpTable.gen]
+        pp_gen = self.pp_input_data[_PpTable.gen]
 
-            if pp_gen.empty:
-                return
+        if pp_gen.empty:
+            return
 
-            if ComponentType.voltage_regulator in self.pgm_input_data:
-                raise ValueError("voltage_regulator component already exists in pgm_input_data")
+        if ComponentType.voltage_regulator in self.pgm_input_data:
+            raise ValueError("voltage_regulator component already exists in pgm_input_data")
 
-            pgm_voltage_regulator = initialize_array(
-                data_type=DatasetType.input, component_type=ComponentType.voltage_regulator, shape=len(pp_gen)
-            )
+        pgm_voltage_regulator = initialize_array(
+            data_type=DatasetType.input, component_type=ComponentType.voltage_regulator, shape=len(pp_gen)
+        )
 
-            pgm_voltage_regulator[AttributeType.id] = self._generate_ids(_PpTable.gen, pp_gen.index, name="regulator")
-            pgm_voltage_regulator[AttributeType.regulated_object] = self._get_pgm_ids(
-                _PpTable.gen, pp_gen.index, name="gen"
-            )
-            pgm_voltage_regulator[AttributeType.status] = self._get_pp_attr(
-                _PpTable.gen, _PpAttr.in_service, expected_type="bool", default=True
-            )
-            pgm_voltage_regulator[AttributeType.u_ref] = self._get_pp_attr(
-                _PpTable.gen, _PpAttr.vm_pu, expected_type="f8", default=1.0
-            )
-            pgm_voltage_regulator[AttributeType.q_min] = np.nan  # not yet supported by PGM
-            pgm_voltage_regulator[AttributeType.q_max] = np.nan  # not yet supported by PGM
-            self.pgm_input_data[ComponentType.voltage_regulator] = pgm_voltage_regulator
+        pgm_voltage_regulator[AttributeType.id] = self._generate_ids(_PpTable.gen, pp_gen.index, name="regulator")
+        pgm_voltage_regulator[AttributeType.regulated_object] = self._get_pgm_ids(
+            _PpTable.gen, pp_gen.index, name="gen"
+        )
+        pgm_voltage_regulator[AttributeType.status] = self._get_pp_attr(
+            _PpTable.gen, _PpAttr.in_service, expected_type="bool", default=True
+        )
+        pgm_voltage_regulator[AttributeType.u_ref] = self._get_pp_attr(
+            _PpTable.gen, _PpAttr.vm_pu, expected_type="f8", default=1.0
+        )
+        pgm_voltage_regulator[AttributeType.q_min] = np.nan  # not yet supported by PGM
+        pgm_voltage_regulator[AttributeType.q_max] = np.nan  # not yet supported by PGM
+        self.pgm_input_data[ComponentType.voltage_regulator] = pgm_voltage_regulator
 
     def _create_pgm_input_asym_gens(self):
         """
@@ -1606,8 +1606,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self.pp_output_data[_PpTable.res_shunt] = pp_output_shunts
 
     def _pp_sym_generators_output(
-            self,
-            pp_output_table: Literal[_PpTable.res_gen, _PpTable.res_sgen] = _PpTable.res_sgen
+        self, pp_output_table: Literal[_PpTable.res_gen, _PpTable.res_sgen] = _PpTable.res_sgen
     ):
         """
         This function converts a power-grid-model Symmetrical Generator output array to a Static Generator or Generator
@@ -1623,35 +1622,37 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             raise ValueError(f"{pp_output_table} already exists in pp_output_data.")
 
         idx_table = _PpTable.sgen if pp_output_table == _PpTable.res_sgen else _PpTable.gen
-        gen_type = None if pp_output_table == _PpTable.res_sgen else "gen"
+        generator_type = None if pp_output_table == _PpTable.res_sgen else "gen"
 
         if (
             ComponentType.sym_gen not in self.pgm_output_data
             or self.pgm_output_data[ComponentType.sym_gen].size == 0
-            or (idx_table, gen_type) not in self.idx
+            or (idx_table, generator_type) not in self.idx
         ):
             return
 
-        gens_ids = self._get_pgm_ids(idx_table, name=gen_type)
-        pgm_output_sym_gens = self.pgm_output_data[ComponentType.sym_gen]
+        generator_ids = self._get_pgm_ids(idx_table, name=generator_type)
+        pgm_output_sym_generators = self.pgm_output_data[ComponentType.sym_gen]
 
-        pp_output_sgens = pd.DataFrame(
+        pp_output_generators = pd.DataFrame(
             columns=[_PpAttr.p_mw, _PpAttr.q_mvar],
-            index=pgm_output_sym_gens[AttributeType.id],
+            index=pgm_output_sym_generators[AttributeType.id],
         )
-        pp_output_sgens[_PpAttr.p_mw] = pgm_output_sym_gens[AttributeType.p] * 1e-6
-        pp_output_sgens[_PpAttr.q_mvar] = pgm_output_sym_gens[AttributeType.q] * 1e-6
+        pp_output_generators[_PpAttr.p_mw] = pgm_output_sym_generators[AttributeType.p] * 1e-6
+        pp_output_generators[_PpAttr.q_mvar] = pgm_output_sym_generators[AttributeType.q] * 1e-6
 
-        pp_output_sgens = pp_output_sgens.loc[gens_ids]
-        pp_output_sgens.index = pd.Index(self._get_pp_ids(idx_table, pp_output_sgens.index, name=gen_type))
+        pp_output_generators = pp_output_generators.loc[generator_ids]
+        pp_output_generators.index = pd.Index(
+            self._get_pp_ids(idx_table, pp_output_generators.index, name=generator_type)
+        )
 
-        self.pp_output_data[pp_output_table] = pp_output_sgens
+        self.pp_output_data[pp_output_table] = pp_output_generators
 
     def _pp_sgens_output(self):
-        self._pp_sym_generators_output(_PpTable.sgen)
+        self._pp_sym_generators_output(_PpTable.res_sgen)
 
     def _pp_gens_output(self):
-        self._pp_sym_generators_output(_PpTable.gen)
+        self._pp_sym_generators_output(_PpTable.res_gen)
 
     def _pp_trafos_output(self):
         """

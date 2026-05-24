@@ -307,6 +307,7 @@ def pp_net_3ph() -> pp.pandapowerNet:
 
     return net
 
+
 @lru_cache
 def pp_net_3ph_minimal_trafo():
     """
@@ -377,6 +378,7 @@ def pp_net_3ph_minimal_trafo():
     )
     return net
 
+
 @lru_cache
 def pp_net_pv_node_3():
     """
@@ -397,13 +399,13 @@ def pp_net_pv_node_3():
     net = pp.create_empty_network(f_hz=50, add_stdtypes=False)
     pp.add_zero_impedance_parameters(net)
 
-    pp.create_bus(net, vn_kv=110., index=0)
-    pp.create_bus(net, vn_kv=110., index=1)
-    pp.create_bus(net, vn_kv=110., index=2)
+    pp.create_bus(net, vn_kv=110.0, index=0)
+    pp.create_bus(net, vn_kv=110.0, index=1)
+    pp.create_bus(net, vn_kv=110.0, index=2)
 
-    pp.create_line_from_parameters(net, 0, 1, 25, 0, 10/25, 238.78/25, np.nan)
-    pp.create_line_from_parameters(net, 0, 2, 25, 0, 10/25, 238.78/25, np.nan)
-    pp.create_line_from_parameters(net, 2, 1, 25, 0, 10/25, 238.78/25, np.nan)
+    pp.create_line_from_parameters(net, 0, 1, 25, 0, 10 / 25, 238.78 / 25, np.nan)
+    pp.create_line_from_parameters(net, 0, 2, 25, 0, 10 / 25, 238.78 / 25, np.nan)
+    pp.create_line_from_parameters(net, 2, 1, 25, 0, 10 / 25, 238.78 / 25, np.nan)
 
     pp.create_ext_grid(net, 2, vm_pu=1.018182, s_sc_max_mva=1e34)
 

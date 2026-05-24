@@ -44,7 +44,9 @@ else:
     PP_V2_NET_3PH_OUTPUT_FILE_CURRENT_LOADING = (
         PGM_PP_TEST_DATA / "v3.2.0" / "pp_v2_net_3ph_output_current_loading.json"
     )
-PV_NODE_OUTPUT_FILE = PGM_PP_TEST_DATA / "pv-node" / "pv-node3" / "sym_output.json"
+PV_NODE_PGM_OUTPUT_FILE = PGM_PP_TEST_DATA / "pv-node" / "pv-node3" / "sym_output.json"
+PV_NODE_PP_OUTPUT_FILE = PGM_PP_TEST_DATA / "pp_net_pv_node3_output.json"
+
 
 @contextmanager
 def temporary_file_cleanup(file_path):
@@ -317,19 +319,20 @@ def test_attributes_3ph(
     # Assert
     pd.testing.assert_series_equal(actual_values, expected_values, atol=5e-4, rtol=1e-4)
 
+
 def test_pp_gen_output():
     pp_net = pp_net_pv_node_3()
-    pgm_output_data = json_deserialize_from_file(PV_NODE_OUTPUT_FILE)
+    pgm_output_data = json_deserialize_from_file(PV_NODE_PGM_OUTPUT_FILE)
 
     converter = PandaPowerConverter()
     converter.load_input_data(pp_net, make_extra_info=False)
     actual_data = converter.convert(data=pgm_output_data)
-    pp.runpp(pp_net)
+    expected_data = pp.file_io.from_json(PV_NODE_PP_OUTPUT_FILE)
 
     for component, attribute in component_attributes_df(actual_data):
         # Act
         actual_values = actual_data[component][attribute]
-        expected_values = pp_net[component][attribute]
+        expected_values = expected_data[component][attribute]
 
         # Assert
         pd.testing.assert_series_equal(actual_values, expected_values, atol=5e-4, rtol=1e-4)

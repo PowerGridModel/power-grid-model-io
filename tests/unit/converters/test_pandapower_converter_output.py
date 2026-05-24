@@ -378,6 +378,7 @@ def test_output_sym_generators__bad_input(converter, pp_output_table):
     with pytest.raises(ValueError, match=f"{pp_output_table} already exists in pp_output_data."):
         converter._pp_sym_generators_output(pp_output_table)
 
+
 def test_pp_sgens_output():
     # Arrange
     converter = MagicMock()
@@ -386,7 +387,8 @@ def test_pp_sgens_output():
     PandaPowerConverter._pp_sgens_output(self=converter)  # type: ignore
 
     # Assert
-    converter._pp_sym_generators_output.assert_called_once_with(_PpTable.sgen)
+    converter._pp_sym_generators_output.assert_called_once_with(_PpTable.res_sgen)
+
 
 def test_pp_gens_output():
     # Arrange
@@ -396,7 +398,8 @@ def test_pp_gens_output():
     PandaPowerConverter._pp_gens_output(self=converter)  # type: ignore
 
     # Assert
-    converter._pp_sym_generators_output.assert_called_once_with(_PpTable.gen)
+    converter._pp_sym_generators_output.assert_called_once_with(_PpTable.res_gen)
+
 
 def test_output_trafos__current(converter):
     # Arrange
