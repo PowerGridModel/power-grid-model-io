@@ -206,8 +206,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._create_pgm_input_sym_loads()
         self._create_pgm_input_shunts()
         self._create_pgm_input_transformers()
-        self._create_pgm_input_sym_gens(_PpTable.sgen)
-        self._create_pgm_input_sym_gens(_PpTable.gen)
+        self._create_pgm_input_sgens()
+        self._create_pgm_input_gens()
         self._create_pgm_input_three_winding_transformers()
         self._create_pgm_input_links()
         self._create_pgm_input_asym_loads()
@@ -604,7 +604,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pgm_input_data[ComponentType.shunt] = pgm_shunts
 
-    def _create_pgm_input_sym_gens(self, pp_table: Literal[_PpTable.gen, _PpTable.sgen] = _PpTable.sgen):
+    def _create_pgm_input_sym_generators(self, pp_table: Literal[_PpTable.gen, _PpTable.sgen] = _PpTable.sgen):
         """
         This function converts a Static Generator or Generator Dataframe of PandaPower to a power-grid-model
         Symmetrical Generator input array.
@@ -615,21 +615,21 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a power-grid-model structured array for the Symmetrical Generator component
         """
-        pp_gens = self.pp_input_data[pp_table]
+        pp_generators = self.pp_input_data[pp_table]
 
-        if pp_gens.empty:
+        if pp_generators.empty:
             return
 
         gen_type = None if pp_table == _PpTable.sgen else "gen"
         if (pp_table, gen_type) in self.idx_lookup:
-            raise ValueError(f"Symmetric generator component for {pp_table} already exists in pgm_input_data")
+            raise ValueError(f"Generator component for {pp_table} already exists in pgm_input_data")
 
         scaling = self._get_pp_attr(pp_table, _PpAttr.scaling, expected_type="f8", default=1.0)
 
         pgm_sym_gens = initialize_array(
-            data_type=DatasetType.input, component_type=ComponentType.sym_gen, shape=len(pp_gens)
+            data_type=DatasetType.input, component_type=ComponentType.sym_gen, shape=len(pp_generators)
         )
-        pgm_sym_gens[AttributeType.id] = self._generate_ids(pp_table, pp_gens.index, name=gen_type)
+        pgm_sym_gens[AttributeType.id] = self._generate_ids(pp_table, pp_generators.index, name=gen_type)
         pgm_sym_gens[AttributeType.node] = self._get_pgm_ids(
             _PpTable.bus, self._get_pp_attr(pp_table, _PpAttr.bus, expected_type="i8")
         )
@@ -653,14 +653,33 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         else:
             self.pgm_input_data[ComponentType.sym_gen] = pgm_sym_gens
 
-        if pp_table == _PpTable.gen:
+    def _create_pgm_input_sgens(self):
+        self._create_pgm_input_sym_generators(_PpTable.sgen)
+
+    def _create_pgm_input_gens(self):
+        self._create_pgm_input_sym_generators(_PpTable.gen)
+        self._create_pgm_input_voltage_regulators()
+
+    def _create_pgm_input_voltage_regulators(self):
+            pp_gen = self.pp_input_data[_PpTable.gen]
+
+            if pp_gen.empty:
+                return
+
+            if ComponentType.voltage_regulator in self.pgm_input_data:
+                raise ValueError("voltage_regulator component already exists in pgm_input_data")
+
             pgm_voltage_regulator = initialize_array(
-                data_type=DatasetType.input, component_type=ComponentType.voltage_regulator, shape=len(pp_gens)
+                data_type=DatasetType.input, component_type=ComponentType.voltage_regulator, shape=len(pp_gen)
             )
 
-            pgm_voltage_regulator[AttributeType.id] = self._generate_ids(_PpTable.gen, pp_gens.index, name="regulator")
-            pgm_voltage_regulator[AttributeType.regulated_object] = pgm_sym_gens[AttributeType.id]
-            pgm_voltage_regulator[AttributeType.status] = pgm_sym_gens[AttributeType.status]
+            pgm_voltage_regulator[AttributeType.id] = self._generate_ids(_PpTable.gen, pp_gen.index, name="regulator")
+            pgm_voltage_regulator[AttributeType.regulated_object] = self._get_pgm_ids(
+                _PpTable.gen, pp_gen.index, name="gen"
+            )
+            pgm_voltage_regulator[AttributeType.status] = self._get_pp_attr(
+                _PpTable.gen, _PpAttr.in_service, expected_type="bool", default=True
+            )
             pgm_voltage_regulator[AttributeType.u_ref] = self._get_pp_attr(
                 _PpTable.gen, _PpAttr.vm_pu, expected_type="f8", default=1.0
             )
