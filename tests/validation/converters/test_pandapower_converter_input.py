@@ -36,7 +36,7 @@ from tests.validation.utils import (
 PANDAPOWER_DATA_DIR = Path(__file__).parents[2] / "data" / "pandapower"
 VALIDATION_FILE = PANDAPOWER_DATA_DIR / "pgm_input_data.json"
 VALIDATION_FILE_ZERO_SEQ = PANDAPOWER_DATA_DIR / "pgm_input_data_trafo_zero_seq.json"
-PV_VALIDATION_FILE = PANDAPOWER_DATA_DIR / "pv-node" / "pv-node3" / "input.json"
+PV_VALIDATION_FILE = PANDAPOWER_DATA_DIR / "pv-node" / "pv-node3" / "pgm_input.json"
 
 mag0_multiplier = 1.0 if PP_CONVERSION_VERSION < PP_COMPATIBILITY_VERSION_3_4_0 else 100.0
 

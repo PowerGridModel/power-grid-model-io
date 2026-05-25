@@ -417,6 +417,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._pp_shunts_output_3ph()
         self._pp_trafos_output_3ph()
         self._pp_sgens_output_3ph()
+        self._pp_gens_output_3ph()
         self._pp_asym_gens_output_3ph()
         self._pp_asym_loads_output_3ph()
 
@@ -2314,7 +2315,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data[_PpTable.res_ext_grid_3ph] = pp_output_ext_grids_3ph
 
-    def _pp_sgens_output_3ph(self):
+    def _pp_sym_generators_output_3ph(
+            self, pp_output_table: Literal[_PpTable.res_gen_3ph, _PpTable.res_sgen_3ph] = _PpTable.res_sgen_3ph
+        ):
         """
         This function converts a power-grid-model Symmetrical Generator output array to a Static Generator Dataframe of
         PandaPower.
@@ -2322,22 +2325,40 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the Static Generator component
         """
-        if _PpTable.res_sgen_3ph in self.pp_output_data:
-            raise ValueError("res_sgen_3ph already exists in pp_output_data.")
+        if pp_output_table in self.pp_output_data:
+            raise ValueError(f"{pp_output_table} already exists in pp_output_data.")
 
-        if ComponentType.sym_gen not in self.pgm_output_data or self.pgm_output_data[ComponentType.sym_gen].size == 0:
+        idx_table = "sgen" if pp_output_table == _PpTable.res_sgen_3ph else "gen"
+        idx_name = None if pp_output_table == _PpTable.res_sgen_3ph else "gen"
+
+        if (
+            ComponentType.sym_gen not in self.pgm_output_data
+            or self.pgm_output_data[ComponentType.sym_gen].size == 0
+            or (idx_table, idx_name) not in self.idx
+        ):
             return
 
-        pgm_output_sym_gens = self.pgm_output_data[ComponentType.sym_gen]
+        generator_pgm_idx = self._get_pgm_ids(pp_table=idx_table, name=idx_name)
 
-        pp_output_sgens = pd.DataFrame(
+        pgm_output_sym_generators = self.pgm_output_data[ComponentType.sym_gen]
+
+        pp_output_sym_generators = pd.DataFrame(
             columns=[_PpAttr.p_mw, _PpAttr.q_mvar],
-            index=self._get_pp_ids(_PpTable.sgen, pgm_output_sym_gens[AttributeType.id]),
+            index=pgm_output_sym_generators[AttributeType.id],
         )
-        pp_output_sgens[_PpAttr.p_mw] = np.sum(pgm_output_sym_gens[AttributeType.p], axis=1) * 1e-6
-        pp_output_sgens[_PpAttr.q_mvar] = np.sum(pgm_output_sym_gens[AttributeType.q], axis=1) * 1e-6
+        pp_output_sym_generators[_PpAttr.p_mw] = np.sum(pgm_output_sym_generators[AttributeType.p], axis=1) * 1e-6
+        pp_output_sym_generators[_PpAttr.q_mvar] = np.sum(pgm_output_sym_generators[AttributeType.q], axis=1) * 1e-6
 
-        self.pp_output_data[_PpTable.res_sgen_3ph] = pp_output_sgens
+        pp_output_sym_generators = pp_output_sym_generators.loc[generator_pgm_idx]
+        pp_output_sym_generators.index = self._get_pp_ids(idx_table, generator_pgm_idx, idx_name)
+
+        self.pp_output_data[pp_output_table] = pp_output_sym_generators
+
+    def _pp_sgens_output_3ph(self):
+        self._pp_sym_generators_output_3ph(_PpTable.res_sgen_3ph)
+
+    def _pp_gens_output_3ph(self):
+        self._pp_sym_generators_output(_PpTable.res_gen_3ph)
 
     def _pp_trafos_output_3ph(self):  # noqa: PLR0915  # pylint: disable=too-many-statements
         """
