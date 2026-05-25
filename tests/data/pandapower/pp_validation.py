@@ -4,7 +4,6 @@
 
 from functools import lru_cache
 
-import numpy as np
 import pandapower as pp
 
 from power_grid_model_io.converters.pandapower_converter import (
@@ -404,13 +403,23 @@ def pp_net_pv_node_3():
     pp.create_bus(net, vn_kv=110.0, index=2)
 
     pp.create_line_from_parameters(
-        net, 0, 1, 25, 0, 10 / 25, 238.78 / 25, 100, r0_ohm_per_km=0, x0_ohm_per_km=10/25, c0_ohm_per_km=238.78 / 25
+        net,
+        0,
+        1,
+        25,
+        0,
+        10 / 25,
+        238.78 / 25,
+        100,
+        r0_ohm_per_km=0,
+        x0_ohm_per_km=10 / 25,
+        c0_nf_per_km=238.78 / 25,
     )
     pp.create_line_from_parameters(
-        net, 0, 2, 25, 0, 10 / 25, 238.78 / 25, 100, r0_ohm_per_km=0, x0_ohm_per_km=10/25, c0_ohm_per_km=238.78 / 25
+        net, 0, 2, 25, 0, 10 / 25, 238.78 / 25, 100, r0_ohm_per_km=0, x0_ohm_per_km=10 / 25, c0_nf_per_km=238.78 / 25
     )
     pp.create_line_from_parameters(
-        net, 2, 1, 25, 0, 10 / 25, 238.78 / 25, 100, r0_ohm_per_km=0, x0_ohm_per_km=10/25, c0_ohm_per_km=238.78 / 25
+        net, 2, 1, 25, 0, 10 / 25, 238.78 / 25, 100, r0_ohm_per_km=0, x0_ohm_per_km=10 / 25, c0_nf_per_km=238.78 / 25
     )
 
     pp.create_ext_grid(net, 2, vm_pu=1.018182, s_sc_max_mva=1e34, rx_max=0.1, x0x_max=1)

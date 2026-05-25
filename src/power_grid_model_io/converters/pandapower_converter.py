@@ -2316,8 +2316,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self.pp_output_data[_PpTable.res_ext_grid_3ph] = pp_output_ext_grids_3ph
 
     def _pp_sym_generators_output_3ph(
-            self, pp_output_table: Literal[_PpTable.res_gen_3ph, _PpTable.res_sgen_3ph] = _PpTable.res_sgen_3ph
-        ):
+        self, pp_output_table: Literal[_PpTable.res_gen_3ph, _PpTable.res_sgen_3ph] = _PpTable.res_sgen_3ph
+    ):
         """
         This function converts a power-grid-model Symmetrical Generator output array to a Static Generator Dataframe of
         PandaPower.

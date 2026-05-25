@@ -60,11 +60,12 @@ def test_create_output_data_3ph():
     PandaPowerConverter._create_output_data_3ph(self=converter)  # type: ignore
 
     # Assert
-    assert len(converter.method_calls) == 11
+    assert len(converter.method_calls) == 12
     converter._pp_buses_output_3ph.assert_called_once_with()
     converter._pp_lines_output_3ph.assert_called_once_with()
     converter._pp_ext_grids_output_3ph.assert_called_once_with()
     converter._pp_sgens_output_3ph.assert_called_once_with()
+    converter._pp_gens_output_3ph.assert_called_once_with()
     converter._pp_trafos_output_3ph.assert_called_once_with()
     expected_calls = [
         call(element="load", symmetric=False),
@@ -1109,16 +1110,25 @@ def test_output_ext_grids_3ph__bad_input(converter):
 
 
 def test_output_sgen_3ph(converter):
+    pass
+
+
+@pytest.mark.parametrize("pp_output_table", [_PpTable.res_gen_3ph, _PpTable.res_sgen_3ph])
+def test_output_sym_generators_3ph(converter, pp_output_table):
     # Arrange
     mock_pgm_array = MagicMock()
     converter.pgm_output_data[CT.sym_gen] = mock_pgm_array
+    idx_table = "sgen" if pp_output_table == _PpTable.res_sgen_3ph else "gen"
+    idx_name = None if pp_output_table == _PpTable.res_sgen_3ph else "gen"
+    converter.idx[(idx_table, idx_name)] = pd.Series([0], [0])
+    converter.idx_lookup[(idx_table, idx_name)] = pd.Series([0], [0])
 
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
         # Act
-        converter._pp_sgens_output_3ph()
+        converter._pp_sym_generators_output_3ph(pp_output_table)
 
         # initialization
-        converter._get_pp_ids.assert_called_once_with("sgen", mock_pgm_array["X"])
+        converter._get_pp_ids.assert_called_once_with(idx_table, ANY, idx_name)
 
         # retrieval
         mock_pgm_array.__getitem__.assert_any_call(AT.id)
@@ -1126,11 +1136,11 @@ def test_output_sgen_3ph(converter):
         mock_pgm_array.__getitem__.assert_any_call(AT.q)
 
         # assignment
-        mock_pp_df.return_value.__setitem__.assert_any_call("p_mw", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("q_mvar", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call(_PpAttr.p_mw, ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call(_PpAttr.q_mvar, ANY)
 
         # result
-        converter.pp_output_data.__setitem__.assert_called_once_with(_PpTable.res_sgen_3ph, mock_pp_df.return_value)
+        converter.pp_output_data.__setitem__.assert_called_once_with(pp_output_table, ANY)
 
 
 def test_output_sgen_3ph__bad_input(converter):
