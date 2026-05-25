@@ -2358,7 +2358,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._pp_sym_generators_output_3ph(_PpTable.res_sgen_3ph)
 
     def _pp_gens_output_3ph(self):
-        self._pp_sym_generators_output(_PpTable.res_gen_3ph)
+        self._pp_sym_generators_output_3ph(_PpTable.res_gen_3ph)
 
     def _pp_trafos_output_3ph(self):  # noqa: PLR0915  # pylint: disable=too-many-statements
         """

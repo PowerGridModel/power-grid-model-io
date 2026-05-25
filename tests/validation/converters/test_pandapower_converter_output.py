@@ -353,7 +353,10 @@ def test_pp_gen_output_3ph():
         # Act
         actual_values = actual_data[component][attribute]
         expected_values = expected_data[component][attribute]
-
+        print(component)
+        print(attribute)
+        print(actual_values)
+        print(expected_values)
         # Assert
         pd.testing.assert_series_equal(actual_values, expected_values, atol=5e-4, rtol=1e-4)
 

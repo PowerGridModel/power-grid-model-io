@@ -1109,8 +1109,26 @@ def test_output_ext_grids_3ph__bad_input(converter):
         converter._pp_ext_grids_output_3ph()
 
 
-def test_output_sgen_3ph(converter):
-    pass
+def test_output_sgens_3ph():
+    # Arrange
+    converter = MagicMock()
+
+    # Act
+    PandaPowerConverter._pp_sgens_output_3ph(self=converter)  # type: ignore
+
+    # Assert
+    converter._pp_sym_generators_output_3ph.assert_called_once_with(_PpTable.res_sgen_3ph)
+
+
+def test_output_gens_3ph():
+    # Arrange
+    converter = MagicMock()
+
+    # Act
+    PandaPowerConverter._pp_gens_output_3ph(self=converter)  # type: ignore
+
+    # Assert
+    converter._pp_sym_generators_output_3ph.assert_called_once_with(_PpTable.res_gen_3ph)
 
 
 @pytest.mark.parametrize("pp_output_table", [_PpTable.res_gen_3ph, _PpTable.res_sgen_3ph])
