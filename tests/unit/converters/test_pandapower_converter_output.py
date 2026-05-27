@@ -11,7 +11,7 @@ import pandas as pd
 import pytest
 from power_grid_model import AttributeType as AT, ComponentType as CT, DatasetType, initialize_array
 
-from power_grid_model_io._enum import PandapowerTable as _PpTable
+from power_grid_model_io._enum import PandapowerAttribute as _PpAttr, PandapowerTable as _PpTable
 from power_grid_model_io.converters.pandapower_converter import PandaPowerConverter, get_loss_params_3ph
 from tests.utils import MockDf
 
@@ -32,12 +32,13 @@ def test_create_output_data():
     PandaPowerConverter._create_output_data(self=converter)  # type: ignore
 
     # Assert
-    assert len(converter.method_calls) == 13
+    assert len(converter.method_calls) == 14
     converter._pp_buses_output.assert_called_once_with()
     converter._pp_lines_output.assert_called_once_with()
     converter._pp_ext_grids_output.assert_called_once_with()
     converter._pp_shunts_output.assert_called_once_with()
     converter._pp_sgens_output.assert_called_once_with()
+    converter._pp_gens_output.assert_called_once_with()
     converter._pp_trafos_output.assert_called_once_with()
     converter._pp_trafos3w_output.assert_called_once_with()
     expected_calls = [
@@ -59,11 +60,12 @@ def test_create_output_data_3ph():
     PandaPowerConverter._create_output_data_3ph(self=converter)  # type: ignore
 
     # Assert
-    assert len(converter.method_calls) == 11
+    assert len(converter.method_calls) == 12
     converter._pp_buses_output_3ph.assert_called_once_with()
     converter._pp_lines_output_3ph.assert_called_once_with()
     converter._pp_ext_grids_output_3ph.assert_called_once_with()
     converter._pp_sgens_output_3ph.assert_called_once_with()
+    converter._pp_gens_output_3ph.assert_called_once_with()
     converter._pp_trafos_output_3ph.assert_called_once_with()
     expected_calls = [
         call(element="load", symmetric=False),
@@ -83,6 +85,7 @@ def test_create_output_data_3ph():
         (PandaPowerConverter._pp_ext_grids_output, "source", {}),
         (PandaPowerConverter._pp_shunts_output, "shunt", {}),
         (PandaPowerConverter._pp_sgens_output, "sym_gen", {}),
+        (PandaPowerConverter._pp_gens_output, "sym_gen", {}),
         (PandaPowerConverter._pp_trafos_output, "transformer", {}),
         (PandaPowerConverter._pp_trafos3w_output, "three_winding_transformer", {}),
         (PandaPowerConverter._pp_load_elements_output, "load", {"symmetric": True, "element": "sym_load"}),
@@ -335,19 +338,24 @@ def test_output_shunt__bad_input(converter):
         converter._pp_shunts_output()
 
 
-def test_output_sgen(converter):
+@pytest.mark.parametrize("pp_output_table", [_PpTable.res_gen, _PpTable.res_sgen])
+def test_output_sym_generators(converter, pp_output_table):
     # Arrange
     mock_pgm_array = MagicMock()
     converter.pgm_output_data[CT.sym_gen] = mock_pgm_array
+    idx_table = _PpTable.sgen if pp_output_table == _PpTable.res_sgen else _PpTable.gen
+    gen_type = None if pp_output_table == _PpTable.res_sgen else "gen"
+    converter.idx[(idx_table, gen_type)] = pd.Series([0], [0])
+    converter.idx_lookup[(idx_table, gen_type)] = pd.Series([0], [0])
 
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
         # Act
-        converter._pp_sgens_output()
+        converter._pp_sym_generators_output(pp_output_table)
 
         # Assert
 
         # initialization
-        converter._get_pp_ids.assert_called_once_with("sgen", mock_pgm_array["X"])
+        converter._get_pp_ids.assert_called_once_with(idx_table, ANY, name=gen_type)
 
         # retrieval
         mock_pgm_array.__getitem__.assert_any_call(AT.id)
@@ -355,20 +363,43 @@ def test_output_sgen(converter):
         mock_pgm_array.__getitem__.assert_any_call(AT.q)
 
         # assignment
-        mock_pp_df.return_value.__setitem__.assert_any_call("p_mw", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("q_mvar", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call(_PpAttr.p_mw, ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call(_PpAttr.q_mvar, ANY)
 
         # result
-        converter.pp_output_data.__setitem__.assert_called_once_with(_PpTable.res_sgen, mock_pp_df.return_value)
+        converter.pp_output_data.__setitem__.assert_called_once_with(pp_output_table, ANY)
 
 
-def test_output_sgen__bad_input(converter):
+@pytest.mark.parametrize("pp_output_table", [_PpTable.res_gen, _PpTable.res_sgen])
+def test_output_sym_generators__bad_input(converter, pp_output_table):
     # Arrange
     converter = PandaPowerConverter()
-    converter.pp_output_data[_PpTable.res_sgen] = pd.DataFrame()
+    converter.pp_output_data[pp_output_table] = pd.DataFrame()
 
-    with pytest.raises(ValueError, match=r"res_sgen already exists in pp_output_data."):
-        converter._pp_sgens_output()
+    with pytest.raises(ValueError, match=f"{pp_output_table} already exists in pp_output_data."):
+        converter._pp_sym_generators_output(pp_output_table)
+
+
+def test_pp_sgens_output():
+    # Arrange
+    converter = MagicMock()
+
+    # Act
+    PandaPowerConverter._pp_sgens_output(self=converter)  # type: ignore
+
+    # Assert
+    converter._pp_sym_generators_output.assert_called_once_with(_PpTable.res_sgen)
+
+
+def test_pp_gens_output():
+    # Arrange
+    converter = MagicMock()
+
+    # Act
+    PandaPowerConverter._pp_gens_output(self=converter)  # type: ignore
+
+    # Assert
+    converter._pp_sym_generators_output.assert_called_once_with(_PpTable.res_gen)
 
 
 def test_output_trafos__current(converter):
@@ -1078,17 +1109,44 @@ def test_output_ext_grids_3ph__bad_input(converter):
         converter._pp_ext_grids_output_3ph()
 
 
-def test_output_sgen_3ph(converter):
+def test_output_sgens_3ph():
+    # Arrange
+    converter = MagicMock()
+
+    # Act
+    PandaPowerConverter._pp_sgens_output_3ph(self=converter)  # type: ignore
+
+    # Assert
+    converter._pp_sym_generators_output_3ph.assert_called_once_with(_PpTable.res_sgen_3ph)
+
+
+def test_output_gens_3ph():
+    # Arrange
+    converter = MagicMock()
+
+    # Act
+    PandaPowerConverter._pp_gens_output_3ph(self=converter)  # type: ignore
+
+    # Assert
+    converter._pp_sym_generators_output_3ph.assert_called_once_with(_PpTable.res_gen_3ph)
+
+
+@pytest.mark.parametrize("pp_output_table", [_PpTable.res_gen_3ph, _PpTable.res_sgen_3ph])
+def test_output_sym_generators_3ph(converter, pp_output_table):
     # Arrange
     mock_pgm_array = MagicMock()
     converter.pgm_output_data[CT.sym_gen] = mock_pgm_array
+    idx_table = "sgen" if pp_output_table == _PpTable.res_sgen_3ph else "gen"
+    idx_name = None if pp_output_table == _PpTable.res_sgen_3ph else "gen"
+    converter.idx[(idx_table, idx_name)] = pd.Series([0], [0])
+    converter.idx_lookup[(idx_table, idx_name)] = pd.Series([0], [0])
 
     with patch("power_grid_model_io.converters.pandapower_converter.pd.DataFrame") as mock_pp_df:
         # Act
-        converter._pp_sgens_output_3ph()
+        converter._pp_sym_generators_output_3ph(pp_output_table)
 
         # initialization
-        converter._get_pp_ids.assert_called_once_with("sgen", mock_pgm_array["X"])
+        converter._get_pp_ids.assert_called_once_with(idx_table, ANY, idx_name)
 
         # retrieval
         mock_pgm_array.__getitem__.assert_any_call(AT.id)
@@ -1096,11 +1154,11 @@ def test_output_sgen_3ph(converter):
         mock_pgm_array.__getitem__.assert_any_call(AT.q)
 
         # assignment
-        mock_pp_df.return_value.__setitem__.assert_any_call("p_mw", ANY)
-        mock_pp_df.return_value.__setitem__.assert_any_call("q_mvar", ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call(_PpAttr.p_mw, ANY)
+        mock_pp_df.return_value.__setitem__.assert_any_call(_PpAttr.q_mvar, ANY)
 
         # result
-        converter.pp_output_data.__setitem__.assert_called_once_with(_PpTable.res_sgen_3ph, mock_pp_df.return_value)
+        converter.pp_output_data.__setitem__.assert_called_once_with(pp_output_table, ANY)
 
 
 def test_output_sgen_3ph__bad_input(converter):

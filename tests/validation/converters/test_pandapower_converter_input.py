@@ -24,7 +24,7 @@ from power_grid_model_io.converters.pandapower_converter import (
 )
 from power_grid_model_io.data_types import ExtraInfo
 from power_grid_model_io.utils.json import JsonEncoder
-from tests.data.pandapower.pp_validation import pp_net, pp_net_3ph_minimal_trafo
+from tests.data.pandapower.pp_validation import pp_net, pp_net_3ph_minimal_trafo, pp_net_pv_node_3
 from tests.validation.utils import (
     compare_extra_info,
     component_attributes,
@@ -33,8 +33,10 @@ from tests.validation.utils import (
     select_values,
 )
 
-VALIDATION_FILE = Path(__file__).parents[2] / "data" / "pandapower" / "pgm_input_data.json"
-VALIDATION_FILE_ZERO_SEQ = Path(__file__).parents[2] / "data" / "pandapower" / "pgm_input_data_trafo_zero_seq.json"
+PANDAPOWER_DATA_DIR = Path(__file__).parents[2] / "data" / "pandapower"
+VALIDATION_FILE = PANDAPOWER_DATA_DIR / "pgm_input_data.json"
+VALIDATION_FILE_ZERO_SEQ = PANDAPOWER_DATA_DIR / "pgm_input_data_trafo_zero_seq.json"
+PV_VALIDATION_FILE = PANDAPOWER_DATA_DIR / "pv-node" / "pv-node3" / "pgm_input.json"
 
 mag0_multiplier = 1.0 if PP_CONVERSION_VERSION < PP_COMPATIBILITY_VERSION_3_4_0 else 100.0
 
@@ -51,14 +53,14 @@ def load_and_convert_pp_data() -> tuple[SingleDataset, ExtraInfo]:
 
 
 @lru_cache
-def load_validation_data() -> tuple[SingleDataset, ExtraInfo]:
+def load_validation_data(file: Path = VALIDATION_FILE) -> tuple[SingleDataset, ExtraInfo]:
     """
     Load the validation data from the json file
     """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
 
-        data, extra_info = load_json_single_dataset(VALIDATION_FILE, data_type=DatasetType.input)
+        data, extra_info = load_json_single_dataset(file, data_type=DatasetType.input)
 
     return data, extra_info
 
@@ -170,7 +172,6 @@ def test_pgm_input_lines__cnf_zero():
 @pytest.mark.filterwarnings("error")
 def test_simple_example():
     pp_net = example_simple()
-    pp_net[_PpTable.gen] = pp_net[_PpTable.gen].iloc[:0]
     pp_converter = PandaPowerConverter()
     _, _ = pp_converter.load_input_data(pp_net)
 
@@ -178,13 +179,13 @@ def test_simple_example():
 @pytest.mark.filterwarnings("error")
 def test_simple_example_with_strings():
     pp_net = example_simple()
-    pp_net[_PpTable.gen] = pp_net[_PpTable.gen].iloc[:0]
 
     for table, attrs in {
         _PpTable.bus: [_PpAttr.type],
         _PpTable.load: [_PpAttr.type],
         _PpTable.asymmetric_load: [_PpAttr.type],
         _PpTable.sgen: [_PpAttr.type],
+        _PpTable.gen: [_PpAttr.type],
         _PpTable.line: [_PpAttr.type],
         _PpTable.trafo: [_PpAttr.vector_group, _PpAttr.tap_side],
         _PpTable.trafo3w: [_PpAttr.tap_side],
@@ -200,7 +201,6 @@ def test_simple_example_with_strings():
 @pytest.mark.filterwarnings("error")
 def test_simple_example_with_na():
     pp_net = example_simple()
-    pp_net[_PpTable.gen] = pp_net[_PpTable.gen].iloc[:0]
 
     for table, attrs in {
         _PpTable.line: [_PpAttr.type],
@@ -223,7 +223,7 @@ def test_trafo_zero_seq_params_conversion():
     net.trafo.shift_degree = 0
     converter = PandaPowerConverter()
     actual_data, _ = converter.load_input_data(net)
-    expected_data, _ = load_json_single_dataset(VALIDATION_FILE_ZERO_SEQ, data_type=DatasetType.input)
+    expected_data, _ = load_validation_data(VALIDATION_FILE_ZERO_SEQ)
     np.testing.assert_allclose(
         actual_data[CT.transformer][AT.i0_zero_sequence],
         expected_data[CT.transformer][AT.i0_zero_sequence],
@@ -266,7 +266,6 @@ def test_trafo_zero_seq_params_calculation(kwargs):
 
 def test_trafo_negative_tap_step():
     pp_net = example_simple()
-    pp_net[_PpTable.gen] = pp_net[_PpTable.gen].iloc[:0]
     pp_net[_PpTable.trafo][_PpAttr.tap_step_percent] *= -1
     pp_converter = PandaPowerConverter()
     pgm_data, _ = pp_converter.load_input_data(pp_net)
@@ -274,3 +273,21 @@ def test_trafo_negative_tap_step():
     assert pgm_data["transformer"][0]["tap_max"] < pgm_data["transformer"][0]["tap_min"]
 
     assert_valid_input_data(pgm_data)
+
+
+def test_create_input_gen__voltage_regultor():
+    pp_net = pp_net_pv_node_3()
+    pp_converter = PandaPowerConverter()
+    actual_data, _ = pp_converter.load_input_data(pp_net)
+
+    expected_data, _ = load_validation_data(PV_VALIDATION_FILE)
+
+    for component, attribute in component_attributes(PV_VALIDATION_FILE, DatasetType.input):
+        # Act
+        actual_values, expected_values = select_values(actual_data, expected_data, component, attribute)
+
+        # Assert
+        if isinstance(actual_values, pd.Series) and isinstance(expected_values, pd.Series):
+            pd.testing.assert_series_equal(actual_values, expected_values)
+        else:
+            pd.testing.assert_frame_equal(actual_values, expected_values)

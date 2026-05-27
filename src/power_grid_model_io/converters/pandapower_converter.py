@@ -10,6 +10,7 @@ import logging
 from collections.abc import MutableMapping
 from functools import lru_cache
 from importlib.metadata import PackageNotFoundError, version
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -26,7 +27,7 @@ from power_grid_model import (
     initialize_array,
     power_grid_meta_data,
 )
-from power_grid_model.data_types import Dataset, SingleDataset
+from power_grid_model.data_types import Dataset, SingleArray, SingleDataset
 
 from power_grid_model_io._enum import PandapowerAttribute as _PpAttr, PandapowerTable as _PpTable
 from power_grid_model_io.converters.base_converter import BaseConverter
@@ -205,7 +206,8 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._create_pgm_input_sym_loads()
         self._create_pgm_input_shunts()
         self._create_pgm_input_transformers()
-        self._create_pgm_input_sym_gens()
+        self._create_pgm_input_sgens()
+        self._create_pgm_input_gens()
         self._create_pgm_input_three_winding_transformers()
         self._create_pgm_input_links()
         self._create_pgm_input_asym_loads()
@@ -215,7 +217,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._create_pgm_input_storages()
         self._create_pgm_input_impedances()
         self._create_pgm_input_xwards()
-        self._create_pgm_input_generators()
         self._create_pgm_input_dclines()
 
     def _fill_pgm_extra_info(self, extra_info: ExtraInfo):
@@ -393,6 +394,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._pp_shunts_output()
         self._pp_trafos_output()
         self._pp_sgens_output()
+        self._pp_gens_output()
         self._pp_trafos3w_output()
         self._pp_asym_gens_output()
         self._pp_asym_loads_output()
@@ -415,6 +417,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         self._pp_shunts_output_3ph()
         self._pp_trafos_output_3ph()
         self._pp_sgens_output_3ph()
+        self._pp_gens_output_3ph()
         self._pp_asym_gens_output_3ph()
         self._pp_asym_loads_output_3ph()
 
@@ -602,43 +605,91 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pgm_input_data[ComponentType.shunt] = pgm_shunts
 
-    def _create_pgm_input_sym_gens(self):
+    def _create_pgm_input_sym_generators(self, pp_table: Literal[_PpTable.gen, _PpTable.sgen] = _PpTable.sgen):
         """
-        This function converts a Static Generator Dataframe of PandaPower to a power-grid-model
+        This function converts a Static Generator or Generator Dataframe of PandaPower to a power-grid-model
         Symmetrical Generator input array.
+
+        Args:
+            pp_table: panadpower Generator table to convert "gen" or "sgen"
 
         Returns:
             a power-grid-model structured array for the Symmetrical Generator component
         """
-        pp_sgens = self.pp_input_data[_PpTable.sgen]
+        pp_generators = self.pp_input_data[pp_table]
 
-        if pp_sgens.empty:
+        if pp_generators.empty:
             return
 
-        if ComponentType.sym_gen in self.pgm_input_data:
-            raise ValueError("Symmetric generator component already exists in pgm_input_data")
+        gen_type = None if pp_table == _PpTable.sgen else "gen"
+        if (pp_table, gen_type) in self.idx_lookup:
+            raise ValueError(f"Generator component for {pp_table} already exists in pgm_input_data")
 
-        scaling = self._get_pp_attr(_PpTable.sgen, _PpAttr.scaling, expected_type="f8", default=1.0)
+        scaling = self._get_pp_attr(pp_table, _PpAttr.scaling, expected_type="f8", default=1.0)
 
         pgm_sym_gens = initialize_array(
-            data_type=DatasetType.input, component_type=ComponentType.sym_gen, shape=len(pp_sgens)
+            data_type=DatasetType.input, component_type=ComponentType.sym_gen, shape=len(pp_generators)
         )
-        pgm_sym_gens[AttributeType.id] = self._generate_ids(_PpTable.sgen, pp_sgens.index)
+        pgm_sym_gens[AttributeType.id] = self._generate_ids(pp_table, pp_generators.index, name=gen_type)
         pgm_sym_gens[AttributeType.node] = self._get_pgm_ids(
-            _PpTable.bus, self._get_pp_attr(_PpTable.sgen, _PpAttr.bus, expected_type="i8")
+            _PpTable.bus, self._get_pp_attr(pp_table, _PpAttr.bus, expected_type="i8")
         )
         pgm_sym_gens[AttributeType.status] = self._get_pp_attr(
-            _PpTable.sgen, _PpAttr.in_service, expected_type="bool", default=True
+            pp_table, _PpAttr.in_service, expected_type="bool", default=True
         )
-        pgm_sym_gens[AttributeType.p_specified] = self._get_pp_attr(_PpTable.sgen, _PpAttr.p_mw, expected_type="f8") * (
+        pgm_sym_gens[AttributeType.p_specified] = self._get_pp_attr(pp_table, _PpAttr.p_mw, expected_type="f8") * (
             1e6 * scaling
         )
         pgm_sym_gens[AttributeType.q_specified] = self._get_pp_attr(
-            _PpTable.sgen, _PpAttr.q_mvar, expected_type="f8", default=0.0
+            pp_table, _PpAttr.q_mvar, expected_type="f8", default=0.0
         ) * (1e6 * scaling)
         pgm_sym_gens[AttributeType.type] = LoadGenType.const_power
 
-        self.pgm_input_data[ComponentType.sym_gen] = pgm_sym_gens
+        self._append_pgm_input(ComponentType.sym_gen, pgm_sym_gens)
+
+    def _create_pgm_input_sgens(self):
+        self._create_pgm_input_sym_generators(_PpTable.sgen)
+
+    def _create_pgm_input_gens(self):
+        self._create_pgm_input_sym_generators(_PpTable.gen)
+        self._create_pgm_input_voltage_regulators()
+
+    def _create_pgm_input_voltage_regulators(self):
+        pp_gen = self.pp_input_data[_PpTable.gen]
+
+        if pp_gen.empty:
+            return
+
+        if ComponentType.voltage_regulator in self.pgm_input_data:
+            raise ValueError("voltage_regulator component already exists in pgm_input_data")
+
+        pgm_voltage_regulator = initialize_array(
+            data_type=DatasetType.input, component_type=ComponentType.voltage_regulator, shape=len(pp_gen)
+        )
+
+        pgm_voltage_regulator[AttributeType.id] = self._generate_ids(_PpTable.gen, pp_gen.index, name="regulator")
+        pgm_voltage_regulator[AttributeType.regulated_object] = self._get_pgm_ids(
+            _PpTable.gen, pp_gen.index, name="gen"
+        )
+        pgm_voltage_regulator[AttributeType.status] = self._get_pp_attr(
+            _PpTable.gen, _PpAttr.in_service, expected_type="bool", default=True
+        )
+        pgm_voltage_regulator[AttributeType.u_ref] = self._get_pp_attr(
+            _PpTable.gen, _PpAttr.vm_pu, expected_type="f8", default=1.0
+        )
+        pgm_voltage_regulator[AttributeType.q_min] = np.nan  # not yet supported by PGM
+        pgm_voltage_regulator[AttributeType.q_max] = np.nan  # not yet supported by PGM
+        self.pgm_input_data[ComponentType.voltage_regulator] = pgm_voltage_regulator
+
+    def _append_pgm_input(self, component: ComponentType, pgm_data: SingleArray):
+        if component in self.pgm_input_data:
+            component_dtype = self.pgm_input_data[component].dtype
+            self.pgm_input_data[component] = np.concatenate(  # pylint: disable=unexpected-keyword-arg
+                [self.pgm_input_data[component], pgm_data],
+                dtype=component_dtype,
+            )
+        else:
+            self.pgm_input_data[component] = pgm_data
 
     def _create_pgm_input_asym_gens(self):
         """
@@ -792,7 +843,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         pgm_sym_loads[AttributeType.p_specified][-n_loads:] = const_i_p_multiplier * p_mw
         pgm_sym_loads[AttributeType.q_specified][-n_loads:] = const_i_q_multiplier * q_mvar
 
-        self.pgm_input_data[ComponentType.sym_load] = pgm_sym_loads
+        self._append_pgm_input(ComponentType.sym_load, pgm_sym_loads)
 
     def _create_pgm_input_asym_loads(self):
         """
@@ -1267,14 +1318,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         #  If input data of loads has already been filled then extend it with data of wards. If it is empty and there
         #  is no data about loads,then assign ward data to it
-        if ComponentType.sym_load in self.pgm_input_data:
-            symload_dtype = self.pgm_input_data[ComponentType.sym_load].dtype
-            self.pgm_input_data[ComponentType.sym_load] = np.concatenate(  # pylint: disable=unexpected-keyword-arg
-                [self.pgm_input_data[ComponentType.sym_load], pgm_sym_loads_from_ward],
-                dtype=symload_dtype,
-            )
-        else:
-            self.pgm_input_data[ComponentType.sym_load] = pgm_sym_loads_from_ward
+        self._append_pgm_input(ComponentType.sym_load, pgm_sym_loads_from_ward)
 
     def _create_pgm_input_xwards(self):
         pp_xwards = self.pp_input_data[_PpTable.xward]
@@ -1324,14 +1368,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         #  If input data of loads has already been filled then extend it with data of motors. If it is empty and there
         #  is no data about loads,then assign motor data to it
-        if ComponentType.sym_load in self.pgm_input_data:
-            symload_dtype = self.pgm_input_data[ComponentType.sym_load].dtype
-            self.pgm_input_data[ComponentType.sym_load] = np.concatenate(  # pylint: disable=unexpected-keyword-arg
-                [self.pgm_input_data[ComponentType.sym_load], pgm_sym_loads_from_motor],
-                dtype=symload_dtype,
-            )
-        else:
-            self.pgm_input_data[ComponentType.sym_load] = pgm_sym_loads_from_motor
+        self._append_pgm_input(ComponentType.sym_load, pgm_sym_loads_from_motor)
 
     def _create_pgm_input_dclines(self):
         pp_dcline = self.pp_input_data[_PpTable.dcline]
@@ -1340,14 +1377,6 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
             return
 
         raise NotImplementedError("DC line is not implemented yet. power-grid-model does not support PV buses yet")
-
-    def _create_pgm_input_generators(self):
-        pp_gen = self.pp_input_data[_PpTable.gen]
-
-        if pp_gen.empty:
-            return
-
-        raise NotImplementedError("Generators is not implemented yet. power-grid-model does not support PV buses yet")
 
     def _pp_buses_output(self):
         """
@@ -1566,30 +1595,54 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data[_PpTable.res_shunt] = pp_output_shunts
 
-    def _pp_sgens_output(self):
+    def _pp_sym_generators_output(
+        self, pp_output_table: Literal[_PpTable.res_gen, _PpTable.res_sgen] = _PpTable.res_sgen
+    ):
         """
-        This function converts a power-grid-model Symmetrical Generator output array to a Static Generator Dataframe of
-        PandaPower.
+        This function converts a power-grid-model Symmetrical Generator output array to a Static Generator or Generator
+        Dataframe of PandaPower.
+
+        Args:
+            pp_table: pp output table to convert
 
         Returns:
             a PandaPower Dataframe for the Static Generator component
         """
-        if _PpTable.res_sgen in self.pp_output_data:
-            raise ValueError("res_sgen already exists in pp_output_data.")
+        if pp_output_table in self.pp_output_data:
+            raise ValueError(f"{pp_output_table} already exists in pp_output_data.")
 
-        if ComponentType.sym_gen not in self.pgm_output_data or self.pgm_output_data[ComponentType.sym_gen].size == 0:
+        idx_table = _PpTable.sgen if pp_output_table == _PpTable.res_sgen else _PpTable.gen
+        generator_type = None if pp_output_table == _PpTable.res_sgen else "gen"
+
+        if (
+            ComponentType.sym_gen not in self.pgm_output_data
+            or self.pgm_output_data[ComponentType.sym_gen].size == 0
+            or (idx_table, generator_type) not in self.idx
+        ):
             return
 
-        pgm_output_sym_gens = self.pgm_output_data[ComponentType.sym_gen]
+        generator_ids = self._get_pgm_ids(idx_table, name=generator_type)
+        pgm_output_sym_generators = self.pgm_output_data[ComponentType.sym_gen]
 
-        pp_output_sgens = pd.DataFrame(
+        pp_output_generators = pd.DataFrame(
             columns=[_PpAttr.p_mw, _PpAttr.q_mvar],
-            index=self._get_pp_ids(_PpTable.sgen, pgm_output_sym_gens[AttributeType.id]),
+            index=pgm_output_sym_generators[AttributeType.id],
         )
-        pp_output_sgens[_PpAttr.p_mw] = pgm_output_sym_gens[AttributeType.p] * 1e-6
-        pp_output_sgens[_PpAttr.q_mvar] = pgm_output_sym_gens[AttributeType.q] * 1e-6
+        pp_output_generators[_PpAttr.p_mw] = pgm_output_sym_generators[AttributeType.p] * 1e-6
+        pp_output_generators[_PpAttr.q_mvar] = pgm_output_sym_generators[AttributeType.q] * 1e-6
 
-        self.pp_output_data[_PpTable.res_sgen] = pp_output_sgens
+        pp_output_generators = pp_output_generators.loc[generator_ids]
+        pp_output_generators.index = pd.Index(
+            self._get_pp_ids(idx_table, pp_output_generators.index, name=generator_type)
+        )
+
+        self.pp_output_data[pp_output_table] = pp_output_generators
+
+    def _pp_sgens_output(self):
+        self._pp_sym_generators_output(_PpTable.res_sgen)
+
+    def _pp_gens_output(self):
+        self._pp_sym_generators_output(_PpTable.res_gen)
 
     def _pp_trafos_output(self):
         """
@@ -2262,7 +2315,9 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data[_PpTable.res_ext_grid_3ph] = pp_output_ext_grids_3ph
 
-    def _pp_sgens_output_3ph(self):
+    def _pp_sym_generators_output_3ph(
+        self, pp_output_table: Literal[_PpTable.res_gen_3ph, _PpTable.res_sgen_3ph] = _PpTable.res_sgen_3ph
+    ):
         """
         This function converts a power-grid-model Symmetrical Generator output array to a Static Generator Dataframe of
         PandaPower.
@@ -2270,22 +2325,40 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the Static Generator component
         """
-        if _PpTable.res_sgen_3ph in self.pp_output_data:
-            raise ValueError("res_sgen_3ph already exists in pp_output_data.")
+        if pp_output_table in self.pp_output_data:
+            raise ValueError(f"{pp_output_table} already exists in pp_output_data.")
 
-        if ComponentType.sym_gen not in self.pgm_output_data or self.pgm_output_data[ComponentType.sym_gen].size == 0:
+        idx_table = "sgen" if pp_output_table == _PpTable.res_sgen_3ph else "gen"
+        idx_name = None if pp_output_table == _PpTable.res_sgen_3ph else "gen"
+
+        if (
+            ComponentType.sym_gen not in self.pgm_output_data
+            or self.pgm_output_data[ComponentType.sym_gen].size == 0
+            or (idx_table, idx_name) not in self.idx
+        ):
             return
 
-        pgm_output_sym_gens = self.pgm_output_data[ComponentType.sym_gen]
+        generator_pgm_idx = self._get_pgm_ids(pp_table=idx_table, name=idx_name)
 
-        pp_output_sgens = pd.DataFrame(
+        pgm_output_sym_generators = self.pgm_output_data[ComponentType.sym_gen]
+
+        pp_output_sym_generators = pd.DataFrame(
             columns=[_PpAttr.p_mw, _PpAttr.q_mvar],
-            index=self._get_pp_ids(_PpTable.sgen, pgm_output_sym_gens[AttributeType.id]),
+            index=pgm_output_sym_generators[AttributeType.id],
         )
-        pp_output_sgens[_PpAttr.p_mw] = np.sum(pgm_output_sym_gens[AttributeType.p], axis=1) * 1e-6
-        pp_output_sgens[_PpAttr.q_mvar] = np.sum(pgm_output_sym_gens[AttributeType.q], axis=1) * 1e-6
+        pp_output_sym_generators[_PpAttr.p_mw] = np.sum(pgm_output_sym_generators[AttributeType.p], axis=1) * 1e-6
+        pp_output_sym_generators[_PpAttr.q_mvar] = np.sum(pgm_output_sym_generators[AttributeType.q], axis=1) * 1e-6
 
-        self.pp_output_data[_PpTable.res_sgen_3ph] = pp_output_sgens
+        pp_output_sym_generators = pp_output_sym_generators.loc[generator_pgm_idx]
+        pp_output_sym_generators.index = self._get_pp_ids(idx_table, generator_pgm_idx, idx_name)
+
+        self.pp_output_data[pp_output_table] = pp_output_sym_generators
+
+    def _pp_sgens_output_3ph(self):
+        self._pp_sym_generators_output_3ph(_PpTable.res_sgen_3ph)
+
+    def _pp_gens_output_3ph(self):
+        self._pp_sym_generators_output_3ph(_PpTable.res_gen_3ph)
 
     def _pp_trafos_output_3ph(self):  # noqa: PLR0915  # pylint: disable=too-many-statements
         """

@@ -307,6 +307,7 @@ def pp_net_3ph() -> pp.pandapowerNet:
     return net
 
 
+@lru_cache
 def pp_net_3ph_minimal_trafo():
     """
     Creates a pandapower net used for validating 3 phase calculations
@@ -374,4 +375,57 @@ def pp_net_3ph_minimal_trafo():
         sn_mva=0,
         type="wye",
     )
+    return net
+
+
+@lru_cache
+def pp_net_pv_node_3():
+    """
+    Creates a pandapower net used for validating pv node
+
+     (load)                ext_grid
+      |                       |
+     [0] -------line-------- [2]
+      |                       |
+      |                       |
+      |---line---[1]---line---|
+                  |
+                (gen) ----- (voltage-regulator)
+
+    Returns:
+
+    """
+    net = pp.create_empty_network(f_hz=50, add_stdtypes=False)
+    pp.add_zero_impedance_parameters(net)
+
+    pp.create_bus(net, vn_kv=110.0, index=0)
+    pp.create_bus(net, vn_kv=110.0, index=1)
+    pp.create_bus(net, vn_kv=110.0, index=2)
+
+    pp.create_line_from_parameters(
+        net,
+        0,
+        1,
+        25,
+        0,
+        10 / 25,
+        238.78 / 25,
+        100,
+        r0_ohm_per_km=0,
+        x0_ohm_per_km=10 / 25,
+        c0_nf_per_km=238.78 / 25,
+    )
+    pp.create_line_from_parameters(
+        net, 0, 2, 25, 0, 10 / 25, 238.78 / 25, 100, r0_ohm_per_km=0, x0_ohm_per_km=10 / 25, c0_nf_per_km=238.78 / 25
+    )
+    pp.create_line_from_parameters(
+        net, 2, 1, 25, 0, 10 / 25, 238.78 / 25, 100, r0_ohm_per_km=0, x0_ohm_per_km=10 / 25, c0_nf_per_km=238.78 / 25
+    )
+
+    pp.create_ext_grid(net, 2, vm_pu=1.018182, s_sc_max_mva=1e34, rx_max=0.1, x0x_max=1)
+
+    pp.create_gen(net, bus=1, p_mw=70, q_mvar=0, vm_pu=1.027273)
+
+    pp.create_load(net, bus=0, p_mw=100, q_mvar=30)
+
     return net
