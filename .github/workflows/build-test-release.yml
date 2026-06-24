@@ -7,6 +7,10 @@ name: Build and Test
 on:
   # run pipeline from another workflow
   workflow_call:
+    outputs:
+      version:
+        description: "The version of the package"
+        value: ${{ jobs.build-python.outputs.version }}
 
   # run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -14,11 +18,6 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-main
   cancel-in-progress: true
-
-outputs:
-  version:
-    description: "The version of the package"
-    value: ${{ jobs.build-python.outputs.version }}
 
 jobs:
   build-python:
