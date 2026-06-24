@@ -59,9 +59,8 @@ jobs:
     # true if the event that triggered this workflow is "workflow_dispatch" and inputs.create_release is true
     # true if the event that triggered this workflow is "push" on main
     # otherwise becomes false
-    # TODO uncomment the following two lines after test
-    # if: (github.event_name == 'workflow_dispatch' && inputs.create_release) || github.event_name == 'push'
-    # environment: release
+    if: (github.event_name == 'workflow_dispatch' && inputs.create_release) || github.event_name == 'push'
+    environment: release
     steps:
       - name: Install uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
