@@ -60,6 +60,7 @@ jobs:
     # true if the event that triggered this workflow is "push" on main
     # otherwise becomes false
     if: (github.event_name == 'workflow_dispatch' && inputs.create_release) || github.event_name == 'push'
+    environment: release
     steps:
       - name: Install uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
@@ -91,6 +92,7 @@ jobs:
   publish:
     name: Publish to PyPI
     runs-on: ubuntu-latest
+    environment: release
     permissions:
       id-token: write  # Required for Trusted Publishing
     needs: github-release
