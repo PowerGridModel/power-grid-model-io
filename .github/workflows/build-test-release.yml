@@ -15,6 +15,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-main
   cancel-in-progress: true
 
+outputs:
+  version:
+    description: "The version of the package"
+    value: ${{ jobs.build-python.outputs.version }}
+
 jobs:
   build-python:
     runs-on: ubuntu-latest

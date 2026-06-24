@@ -72,7 +72,7 @@ jobs:
 
       - name: Get tag
         id: tag
-        run: echo "tag=v${{ needs.build-python.outputs.version }}" >> $GITHUB_OUTPUT
+        run: echo "tag=v${{ needs.build-test-release.outputs.version }}" >> $GITHUB_OUTPUT
 
       - name: Display tag
         run: echo "${{ steps.tag.outputs.tag }}"
