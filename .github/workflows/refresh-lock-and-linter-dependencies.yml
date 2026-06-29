@@ -57,9 +57,7 @@ jobs:
             echo "${pkg}=$version" >> "$GITHUB_OUTPUT"
           }
           grab_installed_version "ruff"
-          grab_installed_version "clang-format"
           grab_installed_version "mypy"
-          grab_installed_version "gersemi"
 
       - name: Update .pre-commit-config.yaml
         uses: cuchi/jinja2-action@8bd801365a8d36a0b20f45ee969161685de7785a # v1.3.0
@@ -68,9 +66,7 @@ jobs:
           output_file: .pre-commit-config.yaml
           variables: |
             ruff=${{ steps.versions.outputs.ruff }}
-            clang_format=${{ steps.versions.outputs.clang-format }}
             mypy=${{ steps.versions.outputs.mypy }}
-            gersemi=${{ steps.versions.outputs.gersemi }}
 
       - name: show changed files
         run: |
