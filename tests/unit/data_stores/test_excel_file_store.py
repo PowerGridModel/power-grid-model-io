@@ -71,18 +71,22 @@ def test_constructor__kwargs():
 
 def test_constructor__too_many_args():
     # Too many (> 1) unnamed arguments
+    a_path = Path("A.xlsx")
+    b_path = Path("B.xls")
     with pytest.raises(TypeError, match=r"1 to 2.*positional arguments.*3.*given"):
-        ExcelFileStore(Path("A.xlsx"), Path("B.xls"))  # type: ignore
+        ExcelFileStore(a_path, b_path)  # type: ignore
 
 
 def test_constructor__invalid_main_file():
+    path = Path("A.docx")
     with pytest.raises(ValueError, match=r"Excel.*\.docx"):
-        ExcelFileStore(Path("A.docx"))
+        ExcelFileStore(path)
 
 
 def test_constructor__invalid_named_file():
+    path = Path("A.xlsx")
     with pytest.raises(ValueError, match=r"Extra.*\.docx"):
-        ExcelFileStore(Path("A.xlsx"), extra=Path("B.docx"))
+        ExcelFileStore(path, extra=Path("B.docx"))
 
 
 def test_files__read_only():
