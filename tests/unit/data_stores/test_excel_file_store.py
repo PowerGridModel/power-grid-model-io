@@ -84,9 +84,10 @@ def test_constructor__invalid_main_file():
 
 
 def test_constructor__invalid_named_file():
-    path = Path("A.xlsx")
+    a_path = Path("A.xlsx")
+    b_path = Path("B.docx")
     with pytest.raises(ValueError, match=r"Extra.*\.docx"):
-        ExcelFileStore(path, extra=Path("B.docx"))
+        ExcelFileStore(a_path, extra=b_path)
 
 
 def test_files__read_only():
