@@ -184,9 +184,10 @@ def test_convert_data(converter: DummyConverter):
 
 
 def test_save_data(converter: DummyConverter):
-    # No destination supplied
+    # No destination supplie
+    data = {"foo": np.array([1])}
     with pytest.raises(ValueError, match="No destination supplied!"):
-        converter.save(data={"foo": np.array([1])})
+        converter.save(data=data)
 
     # Destination supplied as argument
     destination = MagicMock()
