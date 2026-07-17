@@ -102,7 +102,7 @@ class ExcelFileStore(BaseDataStore[TabularData]):
             return sheet_loader
 
         data: dict[str, LazyDataFrame] = {}
-        open_readers: pd.ExcelFile = []
+        open_readers: list[pd.ExcelFile] = []
         for name, path in self._file_paths.items():
             open_readers.append(pd.ExcelFile(path))
             excel_file = open_readers[-1]
