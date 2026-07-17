@@ -59,14 +59,13 @@ def test_load_input_data(converter: DummyConverter):
 
 
 def test_load_input_data__resource_cleanup(converter: DummyConverter):
-    converter._load_data = MagicMock()
+    with patch.object(converter, "_load_data") as load_data:
+        # Act
+        converter.load_input_data(data=None)
 
-    # Act
-    converter.load_input_data(data=None)
-
-    # Assert
-    converter._load_data.return_value.__enter__.assert_called_once()
-    converter._load_data.return_value.__exit__.assert_called_once()
+        # Assert
+        load_data.return_value.__enter__.assert_called_once()
+        load_data.return_value.__exit__.assert_called_once()
 
 
 def test_load_input_data__no_extra_info(converter: DummyConverter):
@@ -105,14 +104,13 @@ def test_load_update_data(converter: DummyConverter):
 
 
 def test_load_update_data__resource_cleanup(converter: DummyConverter):
-    converter._load_data = MagicMock()
+    with patch.object(converter, "_load_data") as load_data:
+        # Act
+        converter.load_update_data(data=None)
 
-    # Act
-    converter.load_update_data(data=None)
-
-    # Assert
-    converter._load_data.return_value.__enter__.assert_called_once()
-    converter._load_data.return_value.__exit__.assert_called_once()
+        # Assert
+        load_data.return_value.__enter__.assert_called_once()
+        load_data.return_value.__exit__.assert_called_once()
 
 
 def test_load_sym_output_data(converter: DummyConverter):
@@ -130,14 +128,13 @@ def test_load_sym_output_data(converter: DummyConverter):
 
 
 def test_load_sym_output_data__resource_cleanup(converter: DummyConverter):
-    converter._load_data = MagicMock()
+    with patch.object(converter, "_load_data") as load_data:
+        # Act
+        converter.load_sym_output_data(data=None)
 
-    # Act
-    converter.load_sym_output_data(data=None)
-
-    # Assert
-    converter._load_data.return_value.__enter__.assert_called_once()
-    converter._load_data.return_value.__exit__.assert_called_once()
+        # Assert
+        load_data.return_value.__enter__.assert_called_once()
+        load_data.return_value.__exit__.assert_called_once()
 
 
 def test_load_asym_output_data(converter: DummyConverter):
@@ -169,14 +166,13 @@ def test_load_sc_output_data(converter: DummyConverter):
 
 
 def test_load_asym_output_data__resource_cleanup(converter: DummyConverter):
-    converter._load_data = MagicMock()
+    with patch.object(converter, "_load_data") as load_data:
+        # Act
+        converter.load_asym_output_data(data=None)
 
-    # Act
-    converter.load_asym_output_data(data=None)
-
-    # Assert
-    converter._load_data.return_value.__enter__.assert_called_once()
-    converter._load_data.return_value.__exit__.assert_called_once()
+        # Assert
+        load_data.return_value.__enter__.assert_called_once()
+        load_data.return_value.__exit__.assert_called_once()
 
 
 def test_convert_data(converter: DummyConverter):

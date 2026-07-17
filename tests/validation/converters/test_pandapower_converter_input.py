@@ -99,7 +99,9 @@ def test_input_data(input_data: tuple[SingleDataset, SingleDataset]):
         assert len(expected) <= len(actual)
 
 
-@pytest.mark.parametrize(("component", "attribute"), list(component_attributes(VALIDATION_FILE, data_type=DatasetType.input)))
+@pytest.mark.parametrize(
+    ("component", "attribute"), list(component_attributes(VALIDATION_FILE, data_type=DatasetType.input))
+)
 def test_attributes(input_data: tuple[SingleDataset, SingleDataset], component: CT, attribute: AT):
     """
     For each attribute, check if the actual values are consistent with the expected values

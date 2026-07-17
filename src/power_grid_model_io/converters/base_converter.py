@@ -69,8 +69,8 @@ class BaseConverter[T](ABC):
         Returns:
 
         """
-        with self._load_data(data) as data:
-            return self._parse_data(data=data, data_type=DatasetType.update, extra_info=None)
+        with self._load_data(data) as loaded_data:
+            return self._parse_data(data=loaded_data, data_type=DatasetType.update, extra_info=None)
 
     def load_sym_output_data(self, data: T | None = None) -> Dataset:
         """Load symmetric output data
@@ -173,15 +173,20 @@ class BaseConverter[T](ABC):
         """
         return self._logger.getEffectiveLevel()
 
-    def _load_data(self, data: T | None) -> T:
+    def _load_data(self, data: T | None) -> contextlib.AbstractContextManager[T]:
         if data is not None:
+
             @contextlib.contextmanager
             def data_context_manager():
                 yield data
+
             return data_context_manager()
 
         if self._source is not None:
-            return self._source.load()
+            loaded = self._source.load()
+            if isinstance(loaded, contextlib.AbstractContextManager):
+                return loaded
+            return contextlib.nullcontext(loaded)
 
         raise ValueError("No data supplied!")
 
