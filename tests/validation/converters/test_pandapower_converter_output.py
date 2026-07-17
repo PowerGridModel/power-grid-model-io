@@ -286,7 +286,7 @@ def test_output_data_3ph(output_data_3ph: tuple[PandaPowerData, PandaPowerData])
     assert all(key in expected for key in actual)
 
 
-@pytest.mark.parametrize(("component", "attribute"), component_attributes_df(load_and_convert_pgm_data()))
+@pytest.mark.parametrize(("component", "attribute"), list(component_attributes_df(load_and_convert_pgm_data())))
 def test_attributes(output_data: tuple[PandaPowerData, PandaPowerData], component: CT, attribute: AT):
     """
     For each attribute, check if the actual values are consistent with the expected values
@@ -302,7 +302,7 @@ def test_attributes(output_data: tuple[PandaPowerData, PandaPowerData], componen
     pd.testing.assert_series_equal(actual_values, expected_values, atol=5e-4, rtol=1e-4)
 
 
-@pytest.mark.parametrize(("component", "attribute"), component_attributes_df(load_and_convert_pgm_data_3ph()))
+@pytest.mark.parametrize(("component", "attribute"), list(component_attributes_df(load_and_convert_pgm_data_3ph())))
 def test_attributes_3ph(
     output_data_3ph: tuple[PandaPowerData, PandaPowerData],
     component: CT,
