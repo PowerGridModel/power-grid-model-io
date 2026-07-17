@@ -102,8 +102,10 @@ class ExcelFileStore(BaseDataStore[TabularData]):
             return sheet_loader
 
         data: dict[str, LazyDataFrame] = {}
+        open_readers: pd.ExcelFile = []
         for name, path in self._file_paths.items():
-            excel_file = pd.ExcelFile(path)
+            open_readers.append(pd.ExcelFile(path))
+            excel_file = open_readers[-1]
             for sheet_name in excel_file.sheet_names:
                 loader = lazy_sheet_loader(excel_file, sheet_name)
                 # If the Excel file is not the main file, prefix the sheet name with the file name
@@ -111,7 +113,8 @@ class ExcelFileStore(BaseDataStore[TabularData]):
                 if main_sheet_name in data:
                     raise ValueError(f"Duplicate sheet name '{main_sheet_name}'")
                 data[main_sheet_name] = loader
-        return TabularData(**data)
+
+        return TabularData(**data, open_readers=open_readers)
 
     def save(self, data: TabularData) -> None:
         """

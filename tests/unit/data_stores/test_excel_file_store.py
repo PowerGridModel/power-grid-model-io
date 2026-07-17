@@ -113,16 +113,18 @@ def test_load(
     mock_handle_duplicate_columns.side_effect = noop
 
     # Act
-    data = fs.load()
+    with fs.load() as data:
+        # Assert
+        mock_excel_file.assert_called_once()
+        assert mock_excel_file.return_value.is_open
+        pd.testing.assert_frame_equal(data["Nodes"], objects_excel["Nodes"])
+        pd.testing.assert_frame_equal(data["Lines"], objects_excel["Lines"])
+        assert mock_remove_unnamed_column_placeholders.call_args_list[0] == call(data=objects_excel["Nodes"])
+        assert mock_remove_unnamed_column_placeholders.call_args_list[1] == call(data=objects_excel["Lines"])
+        assert mock_handle_duplicate_columns.call_args_list[0] == call(data=objects_excel["Nodes"], sheet_name="Nodes")
+        assert mock_handle_duplicate_columns.call_args_list[1] == call(data=objects_excel["Lines"], sheet_name="Lines")
 
-    # Assert
-    mock_excel_file.assert_called_once()
-    pd.testing.assert_frame_equal(data["Nodes"], objects_excel["Nodes"])
-    pd.testing.assert_frame_equal(data["Lines"], objects_excel["Lines"])
-    assert mock_remove_unnamed_column_placeholders.call_args_list[0] == call(data=objects_excel["Nodes"])
-    assert mock_remove_unnamed_column_placeholders.call_args_list[1] == call(data=objects_excel["Lines"])
-    assert mock_handle_duplicate_columns.call_args_list[0] == call(data=objects_excel["Nodes"], sheet_name="Nodes")
-    assert mock_handle_duplicate_columns.call_args_list[1] == call(data=objects_excel["Lines"], sheet_name="Lines")
+    assert not mock_excel_file.return_value.is_open
 
 
 @patch("power_grid_model_io.data_stores.excel_file_store.ExcelFileStore._handle_duplicate_columns")
