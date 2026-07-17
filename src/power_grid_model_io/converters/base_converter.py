@@ -5,6 +5,7 @@
 Abstract converter class
 """
 
+import contextlib
 import logging
 from abc import ABC, abstractmethod
 
@@ -48,14 +49,14 @@ class BaseConverter[T](ABC):
 
         """
 
-        data = self._load_data(data)
-        extra_info: ExtraInfo = {}
-        parsed_data = self._parse_data(
-            data=data, data_type=DatasetType.input, extra_info=extra_info if make_extra_info else None
-        )
-        if isinstance(parsed_data, list):
-            raise TypeError("Input data can not be batch data")
-        return parsed_data, extra_info
+        with self._load_data(data) as loaded_data:
+            extra_info: ExtraInfo = {}
+            parsed_data = self._parse_data(
+                data=loaded_data, data_type=DatasetType.input, extra_info=extra_info if make_extra_info else None
+            )
+            if isinstance(parsed_data, list):
+                raise TypeError("Input data can not be batch data")
+            return parsed_data, extra_info
 
     def load_update_data(self, data: T | None = None) -> Dataset:
         """Load update data
@@ -68,8 +69,8 @@ class BaseConverter[T](ABC):
         Returns:
 
         """
-        data = self._load_data(data)
-        return self._parse_data(data=data, data_type=DatasetType.update, extra_info=None)
+        with self._load_data(data) as data:
+            return self._parse_data(data=data, data_type=DatasetType.update, extra_info=None)
 
     def load_sym_output_data(self, data: T | None = None) -> Dataset:
         """Load symmetric output data
@@ -82,8 +83,8 @@ class BaseConverter[T](ABC):
         Returns:
 
         """
-        data = self._load_data(data)
-        return self._parse_data(data=data, data_type=DatasetType.sym_output, extra_info=None)
+        with self._load_data(data) as loaded_data:
+            return self._parse_data(data=loaded_data, data_type=DatasetType.sym_output, extra_info=None)
 
     def load_asym_output_data(self, data: T | None = None) -> Dataset:
         """Load asymmetric output data
@@ -96,8 +97,8 @@ class BaseConverter[T](ABC):
         Returns:
 
         """
-        data = self._load_data(data)
-        return self._parse_data(data=data, data_type=DatasetType.asym_output, extra_info=None)
+        with self._load_data(data) as loaded_data:
+            return self._parse_data(data=loaded_data, data_type=DatasetType.asym_output, extra_info=None)
 
     def load_sc_output_data(self, data: T | None = None) -> Dataset:
         """Load sc output data
@@ -110,8 +111,8 @@ class BaseConverter[T](ABC):
         Returns:
 
         """
-        data = self._load_data(data)
-        return self._parse_data(data=data, data_type=DatasetType.sc_output, extra_info=None)
+        with self._load_data(data) as loaded_data:
+            return self._parse_data(data=loaded_data, data_type=DatasetType.sc_output, extra_info=None)
 
     def convert(self, data: Dataset, extra_info: ExtraInfo | None = None) -> T:
         """Convert input/update/(a)sym_output data and optionally extra info.
@@ -174,9 +175,14 @@ class BaseConverter[T](ABC):
 
     def _load_data(self, data: T | None) -> T:
         if data is not None:
-            return data
+            @contextlib.contextmanager
+            def data_context_manager():
+                yield data
+            return data_context_manager()
+
         if self._source is not None:
             return self._source.load()
+
         raise ValueError("No data supplied!")
 
     @abstractmethod  # pragma: nocover
