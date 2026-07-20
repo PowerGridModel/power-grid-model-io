@@ -151,6 +151,16 @@ def test_load_asym_output_data(converter: DummyConverter):
     assert data == {"foo": 1}
 
 
+def test_load_asym_output_data__resource_cleanup(converter: DummyConverter):
+    with patch.object(converter, "_load_data") as load_data:
+        # Act
+        converter.load_asym_output_data(data=None)
+
+        # Assert
+        load_data.return_value.__enter__.assert_called_once()
+        load_data.return_value.__exit__.assert_called_once()
+
+
 def test_load_sc_output_data(converter: DummyConverter):
     # Arrange
     converter._parse_data.return_value = {"foo": 1}  # type: ignore
@@ -165,10 +175,10 @@ def test_load_sc_output_data(converter: DummyConverter):
     assert data == {"foo": 1}
 
 
-def test_load_asym_output_data__resource_cleanup(converter: DummyConverter):
+def test_load_sc_output_data__resource_cleanup(converter: DummyConverter):
     with patch.object(converter, "_load_data") as load_data:
         # Act
-        converter.load_asym_output_data(data=None)
+        converter.load_sc_output_data(data=None)
 
         # Assert
         load_data.return_value.__enter__.assert_called_once()
