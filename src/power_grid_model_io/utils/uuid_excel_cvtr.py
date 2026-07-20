@@ -233,21 +233,22 @@ def convert_guid_vision_excel(
     """
     if terms_changed is None:
         terms_changed = {}
-    xls = load_excel_file(excel_file)
-    cvtr = UUID2IntCvtr()
-    excel_file_path = Path(excel_file)
-    dir_name, file_name = excel_file_path.parent, excel_file_path.name
-    new_excel_name = dir_name / f"new_{file_name}"
 
-    for i, sheet_name in enumerate(xls.sheet_names):
-        df = xls.parse(sheet_name)
-        update_column_names(df, terms_changed)
-        guid_columns = get_guid_columns(df)
+    with load_excel_file(excel_file) as xls:
+        cvtr = UUID2IntCvtr()
+        excel_file_path = Path(excel_file)
+        dir_name, file_name = excel_file_path.parent, excel_file_path.name
+        new_excel_name = dir_name / f"new_{file_name}"
 
-        for guid_column in guid_columns:
-            add_guid_values_to_cvtr(df, guid_column, cvtr)
-            insert_or_update_number_column(df, guid_column, sheet_name, cvtr, number)
+        for i, sheet_name in enumerate(xls.sheet_names):
+            df = xls.parse(sheet_name)
+            update_column_names(df, terms_changed)
+            guid_columns = get_guid_columns(df)
 
-        save_df_to_excel(df, new_excel_name, sheet_name, i)
+            for guid_column in guid_columns:
+                add_guid_values_to_cvtr(df, guid_column, cvtr)
+                insert_or_update_number_column(df, guid_column, sheet_name, cvtr, number)
+
+            save_df_to_excel(df, new_excel_name, sheet_name, i)
 
     return new_excel_name

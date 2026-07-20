@@ -6,8 +6,10 @@ The TabularData class is a wrapper around Dict[str, pd.DataFrame | np.ndarray],
 which supports unit conversions and value substitutions
 """
 
+import contextlib
 import logging
 from collections.abc import Callable, Generator, Iterable
+from typing import Protocol
 
 import numpy as np
 import pandas as pd
@@ -19,13 +21,25 @@ from power_grid_model_io.mappings.value_mapping import ValueMapping
 LazyDataFrame = Callable[[], pd.DataFrame]
 
 
+class Closeable(Protocol):
+    """Protocol for objects that expose a close() method."""
+
+    def close(self) -> None:
+        """Close the underlying resource."""
+
+
 class TabularData:
     """
     The TabularData class is a wrapper around Dict[str, pd.DataFrame | np.ndarray],
     which supports unit conversions and value substitutions
     """
 
-    def __init__(self, logger=None, **tables: pd.DataFrame | np.ndarray | LazyDataFrame):
+    def __init__(
+        self,
+        logger=None,
+        open_readers=None,
+        **tables: pd.DataFrame | np.ndarray | LazyDataFrame,
+    ):
         """
         Tabular data can either be a collection of pandas DataFrames and/or numpy structured arrays.
         The key word arguments will define the keys of the data.
@@ -34,6 +48,9 @@ class TabularData:
         tabular_data["foo"] --> foo_data
 
         Args:
+            logger (optional): A structlog logger to use for logging. If None, a default logger will be created.
+            open_readers (optional): A list of readers to be closed when the TabularData instance is closed.
+                These objects must implement a close() method.
             **tables: A collection of pandas DataFrames and/or numpy structured arrays
         """
         if logger is None:
@@ -51,6 +68,28 @@ class TabularData:
         self._data: dict[str, pd.DataFrame | np.ndarray | LazyDataFrame] = tables
         self._units: UnitMapping | None = None
         self._substitution: ValueMapping | None = None
+        self._open_readers: list[Closeable] = open_readers if open_readers is not None else []
+
+    def __new__(cls, *args, **kwargs):  # noqa: ARG004
+        instance = super().__new__(cls)
+        instance._open_readers = None
+        return instance
+
+    def __del__(self):
+        self.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+    def close(self):
+        if self._open_readers:
+            for reader in self._open_readers:
+                with contextlib.suppress(Exception):
+                    reader.close()
+        self._open_readers = None
 
     def set_unit_multipliers(self, units: UnitMapping) -> None:
         """

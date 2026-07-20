@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
-from unittest.mock import ANY, MagicMock
+from unittest.mock import ANY, MagicMock, patch
 
 import numpy as np
 import pytest
@@ -58,6 +58,16 @@ def test_load_input_data(converter: DummyConverter):
     assert extra_info == {1: "Foo"}
 
 
+def test_load_input_data__resource_cleanup(converter: DummyConverter):
+    with patch.object(converter, "_load_data") as load_data:
+        # Act
+        converter.load_input_data(data=None)
+
+        # Assert
+        load_data.return_value.__enter__.assert_called_once()
+        load_data.return_value.__exit__.assert_called_once()
+
+
 def test_load_input_data__no_extra_info(converter: DummyConverter):
     # Arrange
     mock_data = MagicMock()
@@ -93,6 +103,16 @@ def test_load_update_data(converter: DummyConverter):
     assert data == {"foo": 1}
 
 
+def test_load_update_data__resource_cleanup(converter: DummyConverter):
+    with patch.object(converter, "_load_data") as load_data:
+        # Act
+        converter.load_update_data(data=None)
+
+        # Assert
+        load_data.return_value.__enter__.assert_called_once()
+        load_data.return_value.__exit__.assert_called_once()
+
+
 def test_load_sym_output_data(converter: DummyConverter):
     # Arrange
     converter._parse_data.return_value = {"foo": 1}  # type: ignore
@@ -105,6 +125,16 @@ def test_load_sym_output_data(converter: DummyConverter):
         data={CT.node: [{AT.id: 1}, {AT.id: 2}]}, data_type=DatasetType.sym_output, extra_info=None
     )
     assert data == {"foo": 1}
+
+
+def test_load_sym_output_data__resource_cleanup(converter: DummyConverter):
+    with patch.object(converter, "_load_data") as load_data:
+        # Act
+        converter.load_sym_output_data(data=None)
+
+        # Assert
+        load_data.return_value.__enter__.assert_called_once()
+        load_data.return_value.__exit__.assert_called_once()
 
 
 def test_load_asym_output_data(converter: DummyConverter):
@@ -121,6 +151,16 @@ def test_load_asym_output_data(converter: DummyConverter):
     assert data == {"foo": 1}
 
 
+def test_load_asym_output_data__resource_cleanup(converter: DummyConverter):
+    with patch.object(converter, "_load_data") as load_data:
+        # Act
+        converter.load_asym_output_data(data=None)
+
+        # Assert
+        load_data.return_value.__enter__.assert_called_once()
+        load_data.return_value.__exit__.assert_called_once()
+
+
 def test_load_sc_output_data(converter: DummyConverter):
     # Arrange
     converter._parse_data.return_value = {"foo": 1}  # type: ignore
@@ -135,6 +175,16 @@ def test_load_sc_output_data(converter: DummyConverter):
     assert data == {"foo": 1}
 
 
+def test_load_sc_output_data__resource_cleanup(converter: DummyConverter):
+    with patch.object(converter, "_load_data") as load_data:
+        # Act
+        converter.load_sc_output_data(data=None)
+
+        # Assert
+        load_data.return_value.__enter__.assert_called_once()
+        load_data.return_value.__exit__.assert_called_once()
+
+
 def test_convert_data(converter: DummyConverter):
     # Act
     converter.convert(data={"foo": np.array([1])})
@@ -144,9 +194,10 @@ def test_convert_data(converter: DummyConverter):
 
 
 def test_save_data(converter: DummyConverter):
-    # No destination supplied
+    # No destination supplie
+    data = {"foo": np.array([1])}
     with pytest.raises(ValueError, match="No destination supplied!"):
-        converter.save(data={"foo": np.array([1])})
+        converter.save(data=data)
 
     # Destination supplied as argument
     destination = MagicMock()
@@ -166,13 +217,17 @@ def test_load_data(converter: DummyConverter):
         converter._load_data(data=None)
 
     input_data = {"node": [{"id": 1}, {"id": 2}]}
-    output_data = converter._load_data(data=input_data)
-    assert output_data == input_data
+    with converter._load_data(data=input_data) as output_data:
+        assert output_data == input_data
 
     source = MagicMock()
     converter_2 = DummyConverter(source=source)
-    converter_2._load_data(data=None)
+    with converter_2._load_data(data=None):
+        pass
+
     source.load.assert_called_once()
+    source.load.return_value.__enter__.assert_called_once()
+    source.load.return_value.__exit__.assert_called_once()
 
 
 def test_base_converter_log_level():
