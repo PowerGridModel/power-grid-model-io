@@ -17,15 +17,21 @@ from power_grid_model_io.functions._functions import (
     value_or_default,
     value_or_zero,
 )
+from power_grid_model_io.functions import (
+    filters,
+    phase_to_phase,
+)  # This is needed for @allowed_in_mapping to work. Order matters (circular imports).
 
 __all__ = [
     "both_zeros_to_nan",
     "complex_inverse_imaginary_part",
     "complex_inverse_real_part",
     "degrees_to_clock",
+    "filters",
     "get_winding",
     "has_value",
     "is_greater_than",
+    "phase_to_phase",
     "value_or_default",
     "value_or_zero",
 ]

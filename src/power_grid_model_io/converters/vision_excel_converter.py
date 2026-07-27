@@ -43,6 +43,8 @@ class VisionExcelConverter(TabularConverter):
         terms_changed: dict | None = None,
         mapping_file: Path | str | None = None,
         log_level: int = logging.INFO,
+        *,
+        hack: str | None = None
     ):
         _mapping_file = Path(
             mapping_file if mapping_file is not None else str(DEFAULT_MAPPING_FILE).format(language=language)
@@ -55,7 +57,7 @@ class VisionExcelConverter(TabularConverter):
             if source_file
             else None
         )
-        super().__init__(mapping_file=_mapping_file, source=source, log_level=log_level)
+        super().__init__(mapping_file=_mapping_file, source=source, log_level=log_level, hack=hack)
 
     def set_mapping(self, mapping: Mapping[str, Any]) -> None:
         super().set_mapping(mapping)

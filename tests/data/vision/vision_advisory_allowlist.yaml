@@ -1,0 +1,42 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+---
+# Test mapping for new conversion pipeline from Vision Excel to Power Grid Model for allowlist
+id_reference:
+  nodes_table: Nodes
+  number: Number
+  node_number: Node.Number
+  sub_number: Subnumber
+
+grid:
+  Nodes:
+    node:
+      id:
+        auto_id:
+          key: Number
+      u_rated:
+        max:
+          - divide:
+              - Unom
+              - 1.0
+          - power_grid_model_io.functions.value_or_default:
+              value: Unom
+              default: 0.0
+          - 0.0
+      extra:
+        - ID
+        - Name
+        - optional_extra:
+            - GUID
+            - StationID
+      filters:
+        - power_grid_model_io.functions.filters.exclude_value:
+            col: ID
+            value: N002
+
+units:
+  V:
+    kV: 1000.0
+
+substitutions: {}

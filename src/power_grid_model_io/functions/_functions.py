@@ -10,7 +10,9 @@ from typing import Any, TypeVar, cast
 
 import numpy as np
 import structlog
+
 from power_grid_model import WindingType
+from power_grid_model_io.utils.modules import allowed_in_mapping
 
 T = TypeVar("T")
 
@@ -36,6 +38,10 @@ def has_value(value: Any) -> bool:
     return value != ""
 
 
+@allowed_in_mapping(
+    "power_grid_model_io.functions.value_or_default", cel=True
+)  # needed because implementation is in private module _functions.py and python changes this in the __init__
+# cel=True because this function is compatible with CEL and can be used in mapping files directly
 def value_or_default[T](value: T | None, default: T) -> T:
     """
     Return the value, or a default value if no value was supplied.
