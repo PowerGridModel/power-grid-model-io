@@ -121,10 +121,7 @@ class PsseConverter(BaseConverter[RawxData]):
             data_type=DatasetType.input, component_type=ComponentType.node, shape=len(busses)
         )
         pgm_nodes[AttributeType.id] = self._generate_ids(_PsseTable.bus, busses.ibus)
-        pgm_nodes[AttributeType.u_rated] = self.psse_input_data.get_column(
-             table_name=_PsseTable.bus,
-             column_name="baskv"
-        ).to_numpy() * 1e3
+        pgm_nodes[AttributeType.u_rated] = busses.baskv * 1e3   # TODO add unit conversion in data
 
         self.pgm_input_data[ComponentType.node] = pgm_nodes
 
@@ -140,57 +137,28 @@ class PsseConverter(BaseConverter[RawxData]):
         if ComponentType.line in self.pgm_input_data:
             raise ValueError("Line component already exists in pgm_input_data")
 
-        in_service = self._get_pp_attr(_PpTable.line, _PpAttr.in_service, expected_type="bool", default=True)
-        length_km = self._get_pp_attr(_PpTable.line, _PpAttr.length_km, expected_type="f8")
-        parallel = self._get_pp_attr(_PpTable.line, _PpAttr.parallel, expected_type="u4", default=1)
-        c_nf_per_km = self._get_pp_attr(_PpTable.line, _PpAttr.c_nf_per_km, expected_type="f8", default=0)
-        c0_nf_per_km = self._get_pp_attr(_PpTable.line, _PpAttr.c0_nf_per_km, expected_type="f8", default=0)
-        multiplier = length_km / parallel
-
         pgm_lines = initialize_array(
-            data_type=DatasetType.input, component_type=ComponentType.line, shape=len(pp_lines)
+            data_type=DatasetType.input, component_type=ComponentType.line, shape=len(psse_lines)
         )
-        pgm_lines[AttributeType.id] = self._generate_ids(_PpTable.line, pp_lines.index)
+        pgm_lines[AttributeType.id] = self._generate_ids(_PsseTable.acline, psse_lines.index)
         pgm_lines[AttributeType.from_node] = self._get_pgm_ids(
-            _PpTable.bus, self._get_pp_attr(_PpTable.line, _PpAttr.from_bus, expected_type="u4")
+            _PsseTable.bus, psse_lines.ibus
         )
-        pgm_lines[AttributeType.from_status] = in_service & switch_states["from"]
+        pgm_lines[AttributeType.from_status] = psse_lines.stat
         pgm_lines[AttributeType.to_node] = self._get_pgm_ids(
-            _PpTable.bus, self._get_pp_attr(_PpTable.line, _PpAttr.to_bus, expected_type="u4")
+            _PsseTable.bus, psse_lines.jbus
         )
-        pgm_lines[AttributeType.to_status] = in_service & switch_states["to"]
-        pgm_lines[AttributeType.r1] = (
-            self._get_pp_attr(_PpTable.line, _PpAttr.r_ohm_per_km, expected_type="f8") * multiplier
-        )
-        pgm_lines[AttributeType.x1] = (
-            self._get_pp_attr(_PpTable.line, _PpAttr.x_ohm_per_km, expected_type="f8") * multiplier
-        )
-        pgm_lines[AttributeType.c1] = c_nf_per_km * length_km * parallel * 1e-9
-        # The formula for tan1 = R_1 / Xc_1 = (g * 1e-6) / (2 * pi * f * c * 1e-9) = g / (2 * pi * f * c * 1e-3)
-        pgm_lines[AttributeType.tan1] = np.divide(
-            self._get_pp_attr(_PpTable.line, _PpAttr.g_us_per_km, expected_type="f8", default=0),
-            c_nf_per_km * (2 * np.pi * self.system_frequency * 1e-3),
-            where=np.logical_not(np.isclose(c_nf_per_km, 0.0)),
-            out=None,
-        )
-        pgm_lines[AttributeType.i_n] = (
-            (self._get_pp_attr(_PpTable.line, _PpAttr.max_i_ka, expected_type="f8", default=np.nan) * 1e3)
-            * self._get_pp_attr(_PpTable.line, _PpAttr.df, expected_type="f8", default=1)
-            * parallel
-        )
-        pgm_lines[AttributeType.r0] = (
-            self._get_pp_attr(_PpTable.line, _PpAttr.r0_ohm_per_km, expected_type="f8", default=np.nan) * multiplier
-        )
-        pgm_lines[AttributeType.x0] = (
-            self._get_pp_attr(_PpTable.line, _PpAttr.x0_ohm_per_km, expected_type="f8", default=np.nan) * multiplier
-        )
-        pgm_lines[AttributeType.c0] = c0_nf_per_km * length_km * parallel * 1e-9
-        pgm_lines[AttributeType.tan0] = np.divide(
-            self._get_pp_attr(_PpTable.line, _PpAttr.g0_us_per_km, expected_type="f8", default=0),
-            c0_nf_per_km * (2 * np.pi * self.system_frequency * 1e-3),
-            where=np.logical_not(np.isclose(c0_nf_per_km, 0.0)),
-            out=None,
-        )
+        pgm_lines[AttributeType.to_status] = psse_lines.stat
+        pgm_lines[AttributeType.r1] = psse_lines.rpu
+        pgm_lines[AttributeType.x1] = psse_lines.xpu
+        pgm_lines[AttributeType.c1] = psse_lines.bpu #TODO Confirm
+
+        pgm_lines[AttributeType.tan1] = 0
+        pgm_lines[AttributeType.i_n] = psse_lines.rate1 #TODO conversion to A
+        pgm_lines[AttributeType.r0] = 0     # Skip till SC parameters are supported
+        pgm_lines[AttributeType.x0] = 0
+        pgm_lines[AttributeType.c0] = 0
+        pgm_lines[AttributeType.tan0] = 0
 
         self.pgm_input_data[ComponentType.line] = pgm_lines
 
