@@ -354,3 +354,11 @@ class PandapowerAttribute(StrEnum):
     xtf_pu = "xtf_pu"
     z_ohm = "z_ohm"
     zone = "zone"
+
+class PsseTable(StrEnum):
+    bus = "bus"
+    load = "load"
+    fixshunt = "fixshunt"
+    generator = "generator"
+    acline = "acline"
+    transformer = "transformer"
