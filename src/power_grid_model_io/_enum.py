@@ -355,6 +355,7 @@ class PandapowerAttribute(StrEnum):
     z_ohm = "z_ohm"
     zone = "zone"
 
+
 class PsseTable(StrEnum):
     bus = "bus"
     load = "load"

@@ -38,11 +38,7 @@ class PsseConverter(BaseConverter[RawxData]):
             source_file: A rawx file containing the psse data.
         """
 
-        source = (
-            RawxFileStore(file_path=Path(source_file))
-            if source_file
-            else None
-        )
+        source = RawxFileStore(file_path=Path(source_file)) if source_file else None
         super().__init__(source=source, log_level=log_level)
         self.pgm_input_data: SingleDataset = {}
         self.psse_input_data: RawxData = RawxData()
@@ -50,12 +46,7 @@ class PsseConverter(BaseConverter[RawxData]):
         self.idx_lookup: dict[tuple[str, str | None], pd.Series] = {}
         self.next_idx = 0
 
-    def _parse_data(
-        self,
-        data: RawxData,
-        data_type: DatasetType,
-        _: ExtraInfo | None = None
-    ) -> Dataset:
+    def _parse_data(self, data: RawxData, data_type: DatasetType, _: ExtraInfo | None = None) -> Dataset:
         """
         Setup for conversion from PSS/E to power-grid-model.
 
@@ -79,7 +70,7 @@ class PsseConverter(BaseConverter[RawxData]):
         return self.pgm_input_data
 
     def _serialize_data(self, _: Dataset, __: ExtraInfo | None):
-          raise NotImplementedError("Serialize method not implemented for PsseConverter")
+        raise NotImplementedError("Serialize method not implemented for PsseConverter")
 
     def _create_input_data(self):
         """
@@ -117,11 +108,9 @@ class PsseConverter(BaseConverter[RawxData]):
         if ComponentType.node in self.pgm_input_data:
             raise ValueError("Node component already exists in pgm_input_data")
 
-        pgm_nodes = initialize_array(
-            data_type=DatasetType.input, component_type=ComponentType.node, shape=len(busses)
-        )
+        pgm_nodes = initialize_array(data_type=DatasetType.input, component_type=ComponentType.node, shape=len(busses))
         pgm_nodes[AttributeType.id] = self._generate_ids(_PsseTable.bus, busses.ibus)
-        pgm_nodes[AttributeType.u_rated] = busses.baskv * 1e3   # TODO add unit conversion in data
+        pgm_nodes[AttributeType.u_rated] = busses.baskv * 1e3  # TODO add unit conversion in data
 
         self.pgm_input_data[ComponentType.node] = pgm_nodes
 
@@ -141,21 +130,17 @@ class PsseConverter(BaseConverter[RawxData]):
             data_type=DatasetType.input, component_type=ComponentType.line, shape=len(psse_lines)
         )
         pgm_lines[AttributeType.id] = self._generate_ids(_PsseTable.acline, psse_lines.index)
-        pgm_lines[AttributeType.from_node] = self._get_pgm_ids(
-            _PsseTable.bus, psse_lines.ibus
-        )
+        pgm_lines[AttributeType.from_node] = self._get_pgm_ids(_PsseTable.bus, psse_lines.ibus)
         pgm_lines[AttributeType.from_status] = psse_lines.stat
-        pgm_lines[AttributeType.to_node] = self._get_pgm_ids(
-            _PsseTable.bus, psse_lines.jbus
-        )
+        pgm_lines[AttributeType.to_node] = self._get_pgm_ids(_PsseTable.bus, psse_lines.jbus)
         pgm_lines[AttributeType.to_status] = psse_lines.stat
         pgm_lines[AttributeType.r1] = psse_lines.rpu
         pgm_lines[AttributeType.x1] = psse_lines.xpu
-        pgm_lines[AttributeType.c1] = psse_lines.bpu #TODO Confirm
+        pgm_lines[AttributeType.c1] = psse_lines.bpu  # TODO Confirm
 
         pgm_lines[AttributeType.tan1] = 0
-        pgm_lines[AttributeType.i_n] = psse_lines.rate1 #TODO conversion to A
-        pgm_lines[AttributeType.r0] = 0     # Skip till SC parameters are supported
+        pgm_lines[AttributeType.i_n] = psse_lines.rate1  # TODO conversion to A
+        pgm_lines[AttributeType.r0] = 0  # Skip till SC parameters are supported
         pgm_lines[AttributeType.x0] = 0
         pgm_lines[AttributeType.c0] = 0
         pgm_lines[AttributeType.tan0] = 0

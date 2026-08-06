@@ -17,5 +17,5 @@ __all__ = [
     "LazyDataFrame",
     "RawxData",
     "StructuredData",
-    "TabularData"
+    "TabularData",
 ]
