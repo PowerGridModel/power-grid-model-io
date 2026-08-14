@@ -44,3 +44,8 @@ def exclude_all_columns_empty_or_zero(row: pd.Series, cols: list[str]) -> bool:
     This is same as not all(not exclude_value or not exclude_empty)
     """
     return any(exclude_value(row, col, 0) and exclude_empty(row, col) for col in cols)
+
+
+def include_only_empty(row: pd.Series, col: str) -> bool:
+    """Filter for empty rows."""
+    return not exclude_empty(row=row, col=col)

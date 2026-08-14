@@ -7,7 +7,12 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from power_grid_model_io.functions.filters import exclude_all_columns_empty_or_zero, exclude_empty, exclude_value
+from power_grid_model_io.functions.filters import (
+    exclude_all_columns_empty_or_zero,
+    exclude_empty,
+    exclude_value,
+    include_only_empty,
+)
 
 
 @pytest.mark.parametrize(
@@ -71,4 +76,20 @@ def test_exclude_value__invalid_col():
 def test_exclude_all_columns_empty_or_zero(row_value: tuple[float, float], expected: bool):
     row = pd.Series({"foo": row_value[0], "bar": row_value[1]})
     actual = exclude_all_columns_empty_or_zero(row=row, cols=["foo", "bar"])
+    assert actual == expected
+
+
+@pytest.mark.parametrize(
+    ("row_value", "expected"),
+    [
+        (4.0, False),
+        (0.0, False),
+        (pd.Series([0]), False),
+        (pd.Series([3]), False),
+        ("", True),
+    ],
+)
+def test_include_only_empty(row_value: float | pd.Series, expected: bool):
+    row = pd.Series({"foo": row_value})
+    actual = include_only_empty(row=row, col="foo")
     assert actual == expected
