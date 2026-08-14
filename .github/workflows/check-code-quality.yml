@@ -30,12 +30,12 @@ jobs:
 
       - name: Run mypy
         run: |
-          uv run mypy .
+          uv run --frozen mypy .
 
       - name: Run ruff
         run: |
-          uv run ruff check .
-          uv run ruff format .
+          uv run --frozen ruff check .
+          uv run --frozen ruff format .
 
       - name: Install and run markdownlint
         run: |
