@@ -56,6 +56,7 @@ lint = [
     "numpy", # needed for mypy
     "types-pyyaml", # needed for mypy
     "types-requests", # needed for mypy
+    "reuse[charset-normalizer,chardet]", # license checkExpand commentComment on line R47Resolved
 ]
 
 dev = [{ include-group = "test" }, { include-group = "lint" }]
