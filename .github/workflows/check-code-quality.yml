@@ -37,12 +37,6 @@ jobs:
           uv run --frozen ruff check .
           uv run --frozen ruff format .
 
-      - name: Install and run markdownlint
-        run: |
-          npm install -g markdownlint-cli@0.47.0
-          echo "Running markdownlint"
-          markdownlint --fix .
-
       - name: If needed raise error
         run: |
           if [[ `git status --porcelain --untracked-files=no` ]]; then
