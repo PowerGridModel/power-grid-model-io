@@ -2863,7 +2863,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         """
 
         @lru_cache
-        def vector_group_to_winding_types(vector_group: str | None | _PD_NA_TYPE) -> pd.Series:  # type: ignore[valid-type]
+        def vector_group_to_winding_types(vector_group: str | _PD_NA_TYPE | None) -> pd.Series:  # type: ignore[valid-type]
             if pd.isna(vector_group) or vector_group is None or vector_group == _NOT_SET_STR:
                 return pd.Series([np.nan, np.nan])
 
