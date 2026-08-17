@@ -144,11 +144,7 @@ You can use the following `column` definitions:
     from power_grid_model_io.functions.phase_to_phase import reactive_power
 
     q_specified = reactive_power(
-      p=min(
-        table["Pnom"],
-        table["Inverter.Pnom"] if "Inverter.Pnom" in table else table["Inverter.Snom"]
-      ),
-      cos_phi=1.0
+        p=min(table["Pnom"], table["Inverter.Pnom"] if "Inverter.Pnom" in table else table["Inverter.Snom"]), cos_phi=1.0
     )
     ```
 
@@ -216,10 +212,10 @@ Field names that end with `node` are also mapped to corresponding numerical IDs.
 from power_grid_model_io.utils.auto_id import AutoID
 
 auto_id = AutoID()
-a = auto_id("Alpha")   # a = 0
-b = auto_id("Bravo")   # b = 1
-c = auto_id("Alpha")   # c = 0 (because key "Alpha" already existed)
-item = auto_id[1]      # item = "Bravo"
+a = auto_id("Alpha")  # a = 0
+b = auto_id("Bravo")  # b = 1
+c = auto_id("Alpha")  # c = 0 (because key "Alpha" already existed)
+item = auto_id[1]  # item = "Bravo"
  ```
 
 See also {py:class}`power_grid_model_io.utils.AutoID`
