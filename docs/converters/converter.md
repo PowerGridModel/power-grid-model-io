@@ -80,15 +80,21 @@ converters.
 # Examplary usage in your script
 import logging
 from power_grid_model_io.converters import VisionExcelConverter
- 
-logging.basicConfig(level=logging.INFO) # Only levels INFO and above will be logged
- 
-converter_warning = VisionExcelConverter(input_file, log_level=logging.WARNING) # If there is any logs above WARNING, they will be logged
-converter_info = VisionExcelConverter(input_file) # Uses default INFO level
 
-logging.basicConfig(level=logging.WARNING) # Only levels WARNING and above will be logged
-assert converter_info.get_log_level() == logging.INFO # Previously created converters will retain their original log level, regardless of system wide configuration 
+logging.basicConfig(level=logging.INFO)  # Only levels INFO and above will be logged
 
-converter_ = VisionExcelConverter(input_file, log_level=logging.DEBUG) # Any logs on DEBUG and INFO level will not be logged
-converter_.set_log_level(logging.WARNING) # Now the converter's log level is set to WARNING
+converter_warning = VisionExcelConverter(
+    input_file, log_level=logging.WARNING
+)  # If there is any logs above WARNING, they will be logged
+converter_info = VisionExcelConverter(input_file)  # Uses default INFO level
+
+logging.basicConfig(level=logging.WARNING)  # Only levels WARNING and above will be logged
+assert (
+    converter_info.get_log_level() == logging.INFO
+)  # Previously created converters will retain their original log level, regardless of system wide configuration
+
+converter_ = VisionExcelConverter(
+    input_file, log_level=logging.DEBUG
+)  # Any logs on DEBUG and INFO level will not be logged
+converter_.set_log_level(logging.WARNING)  # Now the converter's log level is set to WARNING
 ```

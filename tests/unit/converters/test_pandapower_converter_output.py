@@ -655,7 +655,7 @@ def test_pp_load_result_accumulate__asym():
         ),
     ],
 )
-def test_output_load_types(  # noqa: PLR0913
+def test_output_load_types(  # noqa: PLR0913, PLR0917
     output_fn: Callable[[PandaPowerConverter, str, bool], None],
     element: str,
     symmetric: bool,
