@@ -115,7 +115,9 @@ def test_input_data_custom_yaml():
         assert len(expected) <= len(actual)
 
 
-@pytest.mark.parametrize(("component", "attribute"), component_attributes(VALIDATION_EN, data_type=DatasetType.input))
+@pytest.mark.parametrize(
+    ("component", "attribute"), list(component_attributes(VALIDATION_EN, data_type=DatasetType.input))
+)
 @pytest.mark.parametrize("input_data", LANGUAGES, indirect=True)
 def test_attributes(input_data: tuple[SingleDataset, SingleDataset], component: CT, attribute: AT):
     """
@@ -133,7 +135,7 @@ def test_attributes(input_data: tuple[SingleDataset, SingleDataset], component: 
 
 @pytest.mark.parametrize(
     ("component", "obj_ids"),
-    (pytest.param(component, objects, id=component) for component, objects in component_objects(VALIDATION_EN)),
+    [pytest.param(component, objects, id=component) for component, objects in component_objects(VALIDATION_EN)],
 )
 @pytest.mark.parametrize("extra_info", LANGUAGES, indirect=True)
 def test_extra_info(extra_info: tuple[ExtraInfo, ExtraInfo], component: CT, obj_ids: list[int]):

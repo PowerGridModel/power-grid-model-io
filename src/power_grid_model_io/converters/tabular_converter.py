@@ -146,7 +146,7 @@ class TabularConverter(BaseConverter[TabularData]):
         )
         return input_data
 
-    def _convert_table_to_component(  # noqa: PLR0913  # pylint: disable = too-many-arguments,too-many-positional-arguments
+    def _convert_table_to_component(  # noqa: PLR0913, PLR0917  # pylint: disable = too-many-arguments,too-many-positional-arguments
         self,
         data: TabularData,
         data_type: str | DatasetType,
@@ -231,7 +231,7 @@ class TabularConverter(BaseConverter[TabularData]):
                 table_mask &= cast(pd.DataFrame, data[table]).apply(fn_ptr, axis=1, **kwargs).values
         return table_mask
 
-    def _convert_col_def_to_attribute(  # noqa: PLR0913  # pylint: disable = too-many-arguments,too-many-positional-arguments
+    def _convert_col_def_to_attribute(  # noqa: PLR0913, PLR0917  # pylint: disable = too-many-arguments,too-many-positional-arguments
         self,
         data: TabularData,
         pgm_data: np.ndarray,
@@ -305,7 +305,7 @@ class TabularConverter(BaseConverter[TabularData]):
 
         pgm_data[attr] = attr_data.iloc[:, 0]
 
-    def _handle_extra_info(  # noqa: PLR0913  # pylint: disable = too-many-arguments,too-many-positional-arguments
+    def _handle_extra_info(  # noqa: PLR0913, PLR0917  # pylint: disable = too-many-arguments,too-many-positional-arguments
         self,
         data: TabularData,
         table: str,
@@ -584,7 +584,7 @@ class TabularConverter(BaseConverter[TabularData]):
         except KeyError:
             return data
 
-    def _parse_reference(  # noqa: PLR0913  # pylint: disable = too-many-arguments,too-many-positional-arguments
+    def _parse_reference(  # noqa: PLR0913, PLR0917  # pylint: disable = too-many-arguments,too-many-positional-arguments
         self,
         data: TabularData,
         table: str,
@@ -687,7 +687,7 @@ class TabularConverter(BaseConverter[TabularData]):
             data_frames.append(col_data)
         return pd.concat(data_frames, axis=1)
 
-    def _parse_auto_id(  # noqa: PLR0913  # pylint: disable = too-many-arguments,too-many-positional-arguments
+    def _parse_auto_id(  # noqa: PLR0913, PLR0917  # pylint: disable = too-many-arguments,too-many-positional-arguments
         self,
         data: TabularData,
         table: str,

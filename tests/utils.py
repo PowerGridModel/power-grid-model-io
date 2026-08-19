@@ -275,6 +275,7 @@ class MockDf:
 class MockExcelFile:
     def __init__(self, data: dict[str, pd.DataFrame]):
         self.data = data
+        self._is_open = True
 
     @property
     def sheet_names(self) -> list[str]:
@@ -282,6 +283,13 @@ class MockExcelFile:
 
     def parse(self, sheet_name: str, **_kwargs) -> pd.DataFrame:
         return self.data[sheet_name]
+
+    def close(self):
+        self._is_open = False
+
+    @property
+    def is_open(self):
+        return self._is_open
 
 
 class MockTqdm:

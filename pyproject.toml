@@ -92,7 +92,7 @@ version = {file = "PYPI_VERSION"}
 power_grid_model_io = ["config/**/*.yaml", "py.typed"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests/unit"]
+testpaths = ["tests"]
 addopts = [
     "--cov=power_grid_model_io",
     "--cov-report=term",
