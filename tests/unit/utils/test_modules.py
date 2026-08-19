@@ -5,7 +5,10 @@
 import pytest
 
 from power_grid_model_io.functions import complex_inverse_real_part
-from power_grid_model_io.utils.modules import get_function
+from power_grid_model_io.utils.modules import (
+    get_allowed_function_strict,
+    get_function,
+)
 
 
 def test_get_function__builtins():
@@ -35,3 +38,15 @@ def test_get_function__function_doesnt_exist():
 def test_get_function__builtin_doesnt_exist():
     with pytest.raises(AttributeError, match="Function 'mean' does not exist in module 'builtins'!"):
         assert get_function("mean")
+
+
+def test_get_allowed_function_strict__known():
+    assert (
+        get_allowed_function_strict("power_grid_model_io.functions.complex_inverse_real_part")
+        is complex_inverse_real_part
+    )
+
+
+def test_get_allowed_function_strict__unknown():
+    with pytest.raises(AttributeError, match=r"'no\.such\.fn' is not an allowed mapping function"):
+        get_allowed_function_strict("no.such.fn")

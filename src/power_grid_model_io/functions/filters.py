@@ -7,8 +7,7 @@ These functions can be used in the mapping files to apply filter functions to vi
 
 import pandas as pd
 
-from power_grid_model_io.functions import has_value
-from power_grid_model_io.utils.modules import allowed_in_mapping
+from power_grid_model_io.functions._functions import has_value
 
 
 def exclude_empty(row: pd.Series, col: str) -> bool:
@@ -25,10 +24,6 @@ def exclude_empty(row: pd.Series, col: str) -> bool:
     return has_value(col_value)
 
 
-@allowed_in_mapping(
-    "power_grid_model_io.functions.filters.exclude_value", cel=False
-)  # needed because implementation is in private module _functions.py and python changes this in the __init__
-# cel=False because this function isn't directly compatible as it expects a pd column
 def exclude_value(row: pd.Series, col: str, value: float | str) -> bool:
     """
     filter out by match value

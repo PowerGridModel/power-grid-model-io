@@ -7,7 +7,7 @@ Tabular Data Converter: Load data from multiple tables and use a mapping file to
 
 import inspect
 import logging
-from collections.abc import Callable, Collection, Mapping
+from collections.abc import Collection, Mapping
 from enum import Enum
 from pathlib import Path
 from typing import Any, cast
@@ -15,8 +15,6 @@ from typing import Any, cast
 import numpy as np
 import pandas as pd
 import yaml
-from cel_expr_python import cel
-from cel_expr_python.ext import ext_math
 from power_grid_model import AttributeType, ComponentType, DatasetType, initialize_array
 from power_grid_model.data_types import Dataset
 
@@ -27,7 +25,7 @@ from power_grid_model_io.mappings.multiplier_mapping import MultiplierMapping, M
 from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes, Tables, TabularMapping
 from power_grid_model_io.mappings.unit_mapping import UnitMapping, Units
 from power_grid_model_io.mappings.value_mapping import ValueMapping, Values
-from power_grid_model_io.utils.modules import _ALLOWED_CEL_FUNCTIONS, get_allowed_function_strict, get_function
+from power_grid_model_io.utils.modules import get_allowed_function_strict
 
 TWO_KEYS = 2
 
@@ -41,8 +39,6 @@ class TabularConverter(BaseConverter[TabularData]):
         source: BaseDataStore[TabularData] | None = None,
         destination: BaseDataStore[TabularData] | None = None,
         log_level: int = logging.INFO,
-        *,
-        hack: str | None = None,
     ):
         """
         Prepare some member variables and optionally load a mapping file
@@ -55,12 +51,8 @@ class TabularConverter(BaseConverter[TabularData]):
         self._units: UnitMapping | None = None
         self._substitutions: ValueMapping | None = None
         self._multipliers: MultiplierMapping | None = None
-        self._cel_definitions: dict[str, dict[str, Any]] | str = {}
         if mapping_file is not None:
             self.set_mapping_file(mapping_file=mapping_file)
-        self.hack = hack
-        self.expression_str: str = "expression"
-        self.variables_str: str = "variables"
 
     def set_mapping_file(self, mapping_file: Path) -> None:
         """Read, parse and interpret a mapping file.
@@ -100,10 +92,6 @@ class TabularConverter(BaseConverter[TabularData]):
             self._substitutions = ValueMapping(cast(Values, mapping["substitutions"]), logger=self._log)
         if "multipliers" in mapping:
             self._multipliers = MultiplierMapping(cast(Multipliers, mapping["multipliers"]), logger=self._log)
-        if "cel_definitions" in mapping:
-            self._cel_definitions = cast(
-                dict[str, dict[str, Any]], mapping["cel_definitions"]
-            )  # a proper data structure may be a good idea
 
     def _parse_data(self, data: TabularData, data_type: DatasetType, extra_info: ExtraInfo | None) -> Dataset:
         """This function parses tabular data and returns power-grid-model data
@@ -195,18 +183,7 @@ class TabularConverter(BaseConverter[TabularData]):
             return None
 
         if "filters" in attributes:
-            if self.hack == "cel":
-                table_mask = self._parse_table_filter_cel(
-                    data=data, table=table, filtering_functions=attributes["filters"]
-                )
-            elif self.hack == "allowlist":
-                table_mask = self._parse_table_filters_allowlist(
-                    data=data, table=table, filtering_functions=attributes["filters"]
-                )
-            else:
-                table_mask = self._parse_table_filters(
-                    data=data, table=table, filtering_functions=attributes["filters"]
-                )
+            table_mask = self._parse_table_filters(data=data, table=table, filtering_functions=attributes["filters"])
             if table_mask is not None and not table_mask.any():
                 return None
         else:
@@ -243,118 +220,6 @@ class TabularConverter(BaseConverter[TabularData]):
 
         return pgm_data
 
-    def _parse_table_filter_cel(self, data: TabularData, table: str, filtering_functions: Any) -> np.ndarray | None:
-        if not isinstance(data[table], pd.DataFrame):
-            return None
-
-        table_mask = np.ones(len(data[table]), dtype=bool)
-        for filtering_fn in filtering_functions:
-            for fn_name, col_def in filtering_fn.items():
-                if fn_name != "CEL":
-                    raise ValueError(
-                        f"Unsupported filter key '{fn_name}'. Arbitrary function-name imports are no longer "
-                        "supported for security reasons; use 'CEL: {expression: ..., variables: {...}}' instead."
-                    )
-
-                processed_col_def = self._resolve_cel_definition(col_def)
-
-                key_words, sub_def = self._cel_pre_processor(processed_col_def)
-                col_data = self._parse_col_def(
-                    data=data, table=table, col_def=sub_def, table_mask=None, extra_info=None
-                )
-                if col_data.empty:
-                    raise ValueError("Cannot apply a CEL filter expression to an empty DataFrame")
-                table_mask &= col_data.apply(
-                    self._cel_evaluator(
-                        key_words=key_words,
-                        raw_expression=processed_col_def[self.expression_str],
-                        table=table,
-                        expect_bool=True,
-                    ),
-                    axis=1,
-                    raw=True,
-                ).to_numpy(dtype=bool)
-        return table_mask
-
-    def _cel_pre_processor(self, col_def: dict[str, Any]) -> tuple[list[str], list[Any]]:
-        if self.expression_str not in col_def:
-            raise ValueError(f"Invalid 'CEL' definition, missing '{self.expression_str}': {col_def}")
-
-        unknown_keys = set(col_def) - {self.expression_str, self.variables_str}
-        if unknown_keys:
-            raise ValueError(
-                f"Invalid 'CEL' definition, unknown key(s) {sorted(unknown_keys)}; "
-                f"only '{self.expression_str}' and '{self.variables_str}' are supported"
-            )
-
-        defs = col_def.get(self.variables_str, {})
-        if not isinstance(defs, dict):
-            raise TypeError(
-                f"The '{self.variables_str}' section of a 'CEL' definition must be a mapping, got {type(defs).__name__}"
-            )
-        return list(defs.keys()), list(defs.values())
-
-    def _build_allowed_functions_extension(self) -> cel.CelExtension:
-        overloads = []
-        for full_name, fn in dict(_ALLOWED_CEL_FUNCTIONS).items():
-            cel_name = full_name.rsplit(".", 1)[-1]
-            overloads.append(
-                cel.FunctionDecl(
-                    cel_name,
-                    [cel.Overload(signature=f"{cel_name}(dyn, dyn)", return_type=cel.Type("dyn"), impl=fn)],
-                )
-            )
-        return cel.CelExtension("pgm_io_allowed_functions", functions=overloads)
-
-    def _cel_evaluator(
-        self, key_words: list[str], raw_expression: str, table: str, expect_bool: bool = False
-    ) -> Callable[[np.ndarray], Any]:
-        """
-        Evaluate a CEL expression per row, using named columns as CEL variables.
-
-        This never imports or calls arbitrary Python code: CEL expressions can only reference the variables explicitly
-        bound here and CEL's own built-in operators/functions.
-        """
-        if not isinstance(raw_expression, str):
-            raise TypeError(f"'CEL' expression must be a string, got {type(raw_expression).__name__}")
-
-        cel_env = cel.NewEnv(
-            variables={kw: cel.Type("dyn") for kw in key_words},
-            extensions=[ext_math.ExtMath(), self._build_allowed_functions_extension()],
-        )
-        try:
-            cel_expression = cel_env.compile(raw_expression)
-        except RuntimeError as ex:  # CEL compilation errors are raised as RuntimeError in the Python binding
-            raise ValueError(f"Invalid CEL expression '{cel_expression}' for table '{table}': {ex}") from ex
-
-        def evaluate(row: np.ndarray):
-            result = cel_expression.eval(data=dict(zip(key_words, row.tolist())))
-            if result.type() == cel.Type.ERROR:
-                raise ValueError(f"CEL evaluation error in '{cel_expression}': {result.value()}")
-            value = result.value()
-            if expect_bool and not isinstance(value, bool):
-                raise ValueError(
-                    f"CEL filter expression '{raw_expression}' must evaluate to a boolean, got {type(value).__name__}"
-                )
-            return value
-
-        return evaluate
-
-    def _parse_table_filters_allowlist(
-        self, data: TabularData, table: str, filtering_functions: Any
-    ) -> np.ndarray | None:
-        if not isinstance(data[table], pd.DataFrame):
-            return None
-
-        table_mask = np.ones(len(data[table]), dtype=bool)
-        for filtering_fn in filtering_functions:
-            for fn_name, kwargs in filtering_fn.items():
-                fn_ptr = get_allowed_function_strict(
-                    fn_name
-                )  # this is the only difference compared to _parse_function, which uses get_function
-                table_mask &= cast(pd.DataFrame, data[table]).apply(fn_ptr, axis=1, **kwargs).values
-        return table_mask
-
     def _parse_table_filters(self, data: TabularData, table: str, filtering_functions: Any) -> np.ndarray | None:
         if not isinstance(data[table], pd.DataFrame):
             return None
@@ -362,7 +227,7 @@ class TabularConverter(BaseConverter[TabularData]):
         table_mask = np.ones(len(data[table]), dtype=bool)
         for filtering_fn in filtering_functions:
             for fn_name, kwargs in filtering_fn.items():
-                fn_ptr = get_function(fn_name)
+                fn_ptr = get_allowed_function_strict(fn_name)
                 table_mask &= cast(pd.DataFrame, data[table]).apply(fn_ptr, axis=1, **kwargs).values
         return table_mask
 
@@ -809,36 +674,14 @@ class TabularConverter(BaseConverter[TabularData]):
                     fn_name=name,
                     col_def=sub_def,
                 )
-            elif isinstance(sub_def, dict) or (sub_def in self._cel_definitions):
-                if self.hack == "cel":
-                    if name == "CEL":
-                        col_data = self._parse_function_cel(
-                            data=data,
-                            table=table,
-                            table_mask=table_mask,
-                            col_def=sub_def,
-                        )
-                    else:
-                        raise ValueError(
-                            f"Unsupported column definition key '{name}'. Arbitrary function-name imports are no longer"
-                            " supported for security reasons; use 'CEL: {expression: ..., variables: {...}}' instead."
-                        )
-                elif self.hack == "allowlist":
-                    col_data = self._parse_function_allowlist(
-                        data=data,
-                        table=table,
-                        table_mask=table_mask,
-                        function=name,
-                        col_def=sub_def,
-                    )
-                else:
-                    col_data = self._parse_function(
-                        data=data,
-                        table=table,
-                        table_mask=table_mask,
-                        function=name,
-                        col_def=sub_def,
-                    )
+            elif isinstance(sub_def, dict):
+                col_data = self._parse_function(
+                    data=data,
+                    table=table,
+                    table_mask=table_mask,
+                    function=name,
+                    col_def=sub_def,
+                )
             else:
                 raise TypeError(f"Invalid {name} definition: {sub_def}")
             data_frames.append(col_data)
@@ -980,86 +823,6 @@ class TabularConverter(BaseConverter[TabularData]):
 
         return pd.DataFrame(fn_ptr(axis=1))
 
-    def _resolve_cel_definition(self, col_def: Any) -> dict[str, Any]:
-        """
-        Resolve a CEL definition. This is for reusable "functions" in the conversion yaml file.
-        """
-        if isinstance(col_def, str):
-            try:
-                return self._cel_definitions[col_def]
-            except KeyError as ex:
-                raise KeyError(
-                    f"Unknown CEL definition '{col_def}'; expected one of {sorted(self._cel_definitions)} "
-                    "or an inline {expression: ..., variables: {...}} definition"
-                ) from ex
-        if isinstance(col_def, dict):
-            return col_def
-        raise TypeError(f"Invalid 'CEL' definition, expected a dict or a string name, got {type(col_def).__name__}")
-
-    def _parse_function_cel(  # pylint: disable = too-many-arguments,too-many-positional-arguments
-        self,
-        data: TabularData,
-        table: str,
-        col_def: dict[str, Any],
-        table_mask: np.ndarray | None,
-    ) -> pd.DataFrame:
-
-        col_def = self._resolve_cel_definition(col_def)
-
-        key_words, sub_def = self._cel_pre_processor(col_def)
-        col_data = self._parse_col_def(
-            data=data,
-            table=table,
-            col_def=sub_def,
-            table_mask=table_mask,
-            extra_info=None,
-        )
-
-        if col_data.empty:
-            raise ValueError("Cannot apply a CEL filter expression to an empty DataFrame")
-
-        return pd.DataFrame(
-            col_data.apply(
-                self._cel_evaluator(
-                    key_words=key_words,
-                    raw_expression=col_def[self.expression_str],
-                    table=table,
-                ),
-                axis=1,
-                raw=True,
-            )
-        )
-
-    def _parse_function_allowlist(  # pylint: disable = too-many-arguments,too-many-positional-arguments
-        self,
-        data: TabularData,
-        table: str,
-        function: str,
-        col_def: dict[str, Any],
-        table_mask: np.ndarray | None,
-    ) -> pd.DataFrame:
-        if not isinstance(col_def, dict):
-            raise TypeError(f"col_def must be dict, got {type(col_def).__name__}")
-
-        fn_ptr = get_allowed_function_strict(
-            function
-        )  # this is the only difference compared to _parse_function, which uses get_function
-        key_words = list(col_def.keys())
-        sub_def = list(col_def.values())
-        col_data = self._parse_col_def(
-            data=data,
-            table=table,
-            col_def=sub_def,
-            table_mask=table_mask,
-            extra_info=None,
-        )
-
-        if col_data.empty:
-            raise ValueError(f"Cannot apply function {function} to an empty DataFrame")
-
-        col_data = col_data.apply(lambda row, fn=fn_ptr: fn(**dict(zip(key_words, row))), axis=1, raw=True)
-        return pd.DataFrame(col_data)
-
     def _parse_function(  # pylint: disable = too-many-arguments,too-many-positional-arguments
         self,
         data: TabularData,
@@ -1083,7 +846,7 @@ class TabularConverter(BaseConverter[TabularData]):
         if not isinstance(col_def, dict):
             raise TypeError(f"col_def must be dict, got {type(col_def).__name__}")
 
-        fn_ptr = get_function(function)
+        fn_ptr = get_allowed_function_strict(function)
         key_words = list(col_def.keys())
         sub_def = list(col_def.values())
         col_data = self._parse_col_def(

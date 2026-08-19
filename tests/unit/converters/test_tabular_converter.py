@@ -1043,7 +1043,7 @@ def test_parse_pandas_function__invalid(mock_parse_col_def: MagicMock, converter
         converter._parse_pandas_function(data=MagicMock(), table="foo", fn_name="apply", col_def=[], table_mask=None)
 
 
-@patch("power_grid_model_io.converters.tabular_converter.get_function")
+@patch("power_grid_model_io.converters.tabular_converter.get_allowed_function_strict")
 @patch("power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def")
 def test_parse_function(
     mock_parse_col_def: MagicMock,
@@ -1067,7 +1067,7 @@ def test_parse_function(
     assert_frame_equal(multiplied_data, pd.DataFrame([4, 8, 10]))
 
 
-@patch("power_grid_model_io.converters.tabular_converter.get_function")
+@patch("power_grid_model_io.converters.tabular_converter.get_allowed_function_strict")
 @patch("power_grid_model_io.converters.tabular_converter.TabularConverter._parse_col_def")
 def test_parse_function__no_data(
     mock_parse_col_def: MagicMock,
@@ -1319,7 +1319,7 @@ def test_lookup_ids__duplicate_keys(converter: TabularConverter):
     ("bool_fn", "expected"),
     [((True), np.array([True, True])), ((False), np.array([False, False]))],
 )
-@patch("power_grid_model_io.converters.tabular_converter.get_function")
+@patch("power_grid_model_io.converters.tabular_converter.get_allowed_function_strict")
 def test_parse_table_filters(
     mock_get_function: MagicMock,
     converter: TabularConverter,

@@ -20,6 +20,7 @@ from power_grid_model_io.functions.phase_to_phase import (
     reactive_power_to_susceptance,
     relative_no_load_current,
 )
+from power_grid_model_io.utils.modules import get_allowed_function_strict
 
 
 @pytest.mark.parametrize(
@@ -405,3 +406,25 @@ def test_reactive_power_to_susceptance(q_var: float, u_nom: float, expected: flo
 def test_pvs_power_adjustment(p: float, efficiency_type: str, expected: float):
     actual = pvs_power_adjustment(p, efficiency_type)
     assert actual == pytest.approx(expected) or (np.isnan(actual) and np.isnan(expected))
+
+
+@pytest.mark.parametrize(
+    ("name", "fn"),
+    [
+        ("power_grid_model_io.functions.phase_to_phase.relative_no_load_current", relative_no_load_current),
+        ("power_grid_model_io.functions.phase_to_phase.reactive_power", reactive_power),
+        ("power_grid_model_io.functions.phase_to_phase.power_wind_speed", power_wind_speed),
+        ("power_grid_model_io.functions.phase_to_phase.get_winding_from", get_winding_from),
+        ("power_grid_model_io.functions.phase_to_phase.get_winding_to", get_winding_to),
+        ("power_grid_model_io.functions.phase_to_phase.get_winding_1", get_winding_1),
+        ("power_grid_model_io.functions.phase_to_phase.get_winding_2", get_winding_2),
+        ("power_grid_model_io.functions.phase_to_phase.get_winding_3", get_winding_3),
+        ("power_grid_model_io.functions.phase_to_phase.get_clock", get_clock),
+        ("power_grid_model_io.functions.phase_to_phase.get_clock_12", get_clock_12),
+        ("power_grid_model_io.functions.phase_to_phase.get_clock_13", get_clock_13),
+        ("power_grid_model_io.functions.phase_to_phase.reactive_power_to_susceptance", reactive_power_to_susceptance),
+        ("power_grid_model_io.functions.phase_to_phase.pvs_power_adjustment", pvs_power_adjustment),
+    ],
+)
+def test_phase_to_phase_fn_is_in_allowlist(name: str, fn):
+    assert get_allowed_function_strict(name) is fn

@@ -6,6 +6,10 @@
 These functions can be used in the mapping files to apply functions to tabular data
 """
 
+from power_grid_model_io.functions import (
+    filters,
+    phase_to_phase,
+)
 from power_grid_model_io.functions._functions import (
     both_zeros_to_nan,
     complex_inverse_imaginary_part,
@@ -17,10 +21,6 @@ from power_grid_model_io.functions._functions import (
     value_or_default,
     value_or_zero,
 )
-from power_grid_model_io.functions import (
-    filters,
-    phase_to_phase,
-)  # This is needed for @allowed_in_mapping to work. Order matters (circular imports).
 
 __all__ = [
     "both_zeros_to_nan",
