@@ -18,7 +18,7 @@ from power_grid_model_io.functions import (
     value_or_default,
     value_or_zero,
 )
-from power_grid_model_io.utils.modules import get_allowed_function_strict
+from power_grid_model_io.utils.modules import get_function
 
 
 @pytest.mark.parametrize(
@@ -36,7 +36,7 @@ from power_grid_model_io.utils.modules import get_allowed_function_strict
     ],
 )
 def test_function_is_in_allowlist(name: str, fn):
-    assert get_allowed_function_strict(name) is fn
+    assert get_function(name) is fn
 
 
 @pytest.mark.parametrize(

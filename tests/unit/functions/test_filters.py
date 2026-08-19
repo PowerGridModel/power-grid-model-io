@@ -13,7 +13,7 @@ from power_grid_model_io.functions.filters import (
     exclude_value,
     include_only_empty,
 )
-from power_grid_model_io.utils.modules import get_allowed_function_strict
+from power_grid_model_io.utils.modules import get_function
 
 
 @pytest.mark.parametrize(
@@ -89,7 +89,7 @@ def test_exclude_all_columns_empty_or_zero(row_value: tuple[float, float], expec
     ],
 )
 def test_filter_is_in_allowlist(name: str, fn):
-    assert get_allowed_function_strict(name) is fn
+    assert get_function(name) is fn
 
 
 @pytest.mark.parametrize(

@@ -6,30 +6,10 @@ Module utilities, expecially useful for loading optional dependencies
 """
 
 from collections.abc import Callable
-from importlib import import_module
 
 import power_grid_model_io.functions._functions as _fn
 import power_grid_model_io.functions.filters as _filters
 import power_grid_model_io.functions.phase_to_phase as _p2p
-
-
-def get_function(fn_name: str) -> Callable:
-    """
-    Get a function pointer by name
-    """
-    parts = fn_name.split(".")
-    function_name = parts.pop()
-    module_path = ".".join(parts) if parts else "builtins"
-    try:
-        module = import_module(module_path)
-    except ModuleNotFoundError as ex:
-        raise AttributeError(f"Module '{module_path}' does not exist (tried to resolve function '{fn_name}')!") from ex
-    try:
-        fn_ptr = getattr(module, function_name)
-    except AttributeError as ex:
-        raise AttributeError(f"Function '{function_name}' does not exist in module '{module_path}'!") from ex
-    return fn_ptr
-
 
 # Explicit allowlist: only these functions may be referenced by name in mapping files.
 _ALLOWED_FUNCTIONS: dict[str, Callable] = {
@@ -61,7 +41,7 @@ _ALLOWED_FUNCTIONS: dict[str, Callable] = {
 }
 
 
-def get_allowed_function_strict(fn_name: str) -> Callable:
+def get_function(fn_name: str) -> Callable:
     try:
         return _ALLOWED_FUNCTIONS[fn_name]
     except KeyError as ex:

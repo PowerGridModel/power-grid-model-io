@@ -20,7 +20,7 @@ from power_grid_model_io.functions.phase_to_phase import (
     reactive_power_to_susceptance,
     relative_no_load_current,
 )
-from power_grid_model_io.utils.modules import get_allowed_function_strict
+from power_grid_model_io.utils.modules import get_function
 
 
 @pytest.mark.parametrize(
@@ -427,4 +427,4 @@ def test_pvs_power_adjustment(p: float, efficiency_type: str, expected: float):
     ],
 )
 def test_phase_to_phase_fn_is_in_allowlist(name: str, fn):
-    assert get_allowed_function_strict(name) is fn
+    assert get_function(name) is fn

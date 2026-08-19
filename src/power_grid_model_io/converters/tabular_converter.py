@@ -25,7 +25,7 @@ from power_grid_model_io.mappings.multiplier_mapping import MultiplierMapping, M
 from power_grid_model_io.mappings.tabular_mapping import InstanceAttributes, Tables, TabularMapping
 from power_grid_model_io.mappings.unit_mapping import UnitMapping, Units
 from power_grid_model_io.mappings.value_mapping import ValueMapping, Values
-from power_grid_model_io.utils.modules import get_allowed_function_strict
+from power_grid_model_io.utils.modules import get_function
 
 TWO_KEYS = 2
 
@@ -227,7 +227,7 @@ class TabularConverter(BaseConverter[TabularData]):
         table_mask = np.ones(len(data[table]), dtype=bool)
         for filtering_fn in filtering_functions:
             for fn_name, kwargs in filtering_fn.items():
-                fn_ptr = get_allowed_function_strict(fn_name)
+                fn_ptr = get_function(fn_name)
                 table_mask &= cast(pd.DataFrame, data[table]).apply(fn_ptr, axis=1, **kwargs).values
         return table_mask
 
@@ -846,7 +846,7 @@ class TabularConverter(BaseConverter[TabularData]):
         if not isinstance(col_def, dict):
             raise TypeError(f"col_def must be dict, got {type(col_def).__name__}")
 
-        fn_ptr = get_allowed_function_strict(function)
+        fn_ptr = get_function(function)
         key_words = list(col_def.keys())
         sub_def = list(col_def.values())
         col_data = self._parse_col_def(
