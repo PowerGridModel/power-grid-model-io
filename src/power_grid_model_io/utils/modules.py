@@ -44,7 +44,7 @@ _ALLOWED_FUNCTIONS: dict[str, Callable] = {
     "power_grid_model_io.functions.both_zeros_to_nan": _fn.both_zeros_to_nan,
     "power_grid_model_io.functions.filters.exclude_empty": _filters.exclude_empty,
     "power_grid_model_io.functions.filters.exclude_value": _filters.exclude_value,
-    "power_grid_model_io.functions.filters.exclude_all_columns_empty_or_zero": _filters.exclude_all_columns_empty_or_zero,
+    "power_grid_model_io.functions.filters.exclude_all_columns_empty_or_zero": _filters.exclude_all_columns_empty_or_zero, # noqa: E501
     "power_grid_model_io.functions.phase_to_phase.relative_no_load_current": _p2p.relative_no_load_current,
     "power_grid_model_io.functions.phase_to_phase.reactive_power": _p2p.reactive_power,
     "power_grid_model_io.functions.phase_to_phase.power_wind_speed": _p2p.power_wind_speed,
@@ -66,4 +66,3 @@ def get_allowed_function_strict(fn_name: str) -> Callable:
         return _ALLOWED_FUNCTIONS[fn_name]
     except KeyError as ex:
         raise AttributeError(f"'{fn_name}' is not an allowed mapping function") from ex
-
