@@ -1035,12 +1035,16 @@ def test_parse_pandas_function__invalid(mock_parse_col_def: MagicMock, converter
         )  # type: ignore
 
     # Act / Assert
-    with pytest.raises(ValueError, match="Pandas DataFrame has no function 'bar'"):
+    with pytest.raises(ValueError, match="Pandas DataFrame function 'bar' is not allowed"):
         converter._parse_pandas_function(data=MagicMock(), table="foo", fn_name="bar", col_def=[], table_mask=None)
 
-    # Act / Assert
-    with pytest.raises(ValueError, match=r"Invalid pandas function DataFrame.apply"):
+    # Act / Assert: an existing but non-allowlisted function is rejected
+    with pytest.raises(ValueError, match="Pandas DataFrame function 'apply' is not allowed"):
         converter._parse_pandas_function(data=MagicMock(), table="foo", fn_name="apply", col_def=[], table_mask=None)
+
+    # Act / Assert: a function that could mutate the original data is rejected
+    with pytest.raises(ValueError, match="Pandas DataFrame function 'update' is not allowed"):
+        converter._parse_pandas_function(data=MagicMock(), table="foo", fn_name="update", col_def=[], table_mask=None)
 
 
 @patch("power_grid_model_io.converters.tabular_converter.get_function")

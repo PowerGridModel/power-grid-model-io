@@ -13,6 +13,7 @@ from power_grid_model_io.functions.filters import (
     exclude_value,
     include_only_empty,
 )
+from power_grid_model_io.utils.modules import get_function
 
 
 @pytest.mark.parametrize(
@@ -77,6 +78,18 @@ def test_exclude_all_columns_empty_or_zero(row_value: tuple[float, float], expec
     row = pd.Series({"foo": row_value[0], "bar": row_value[1]})
     actual = exclude_all_columns_empty_or_zero(row=row, cols=["foo", "bar"])
     assert actual == expected
+
+
+@pytest.mark.parametrize(
+    ("name", "fn"),
+    [
+        ("power_grid_model_io.functions.filters.exclude_empty", exclude_empty),
+        ("power_grid_model_io.functions.filters.exclude_value", exclude_value),
+        ("power_grid_model_io.functions.filters.exclude_all_columns_empty_or_zero", exclude_all_columns_empty_or_zero),
+    ],
+)
+def test_filter_is_in_allowlist(name: str, fn):
+    assert get_function(name) is fn
 
 
 @pytest.mark.parametrize(

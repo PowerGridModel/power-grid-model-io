@@ -7,7 +7,7 @@ These functions can be used in the mapping files to apply filter functions to vi
 
 import pandas as pd
 
-from power_grid_model_io.functions import has_value
+from power_grid_model_io.functions._functions import has_value
 
 
 def exclude_empty(row: pd.Series, col: str) -> bool:

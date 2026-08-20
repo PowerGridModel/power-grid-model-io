@@ -18,6 +18,25 @@ from power_grid_model_io.functions import (
     value_or_default,
     value_or_zero,
 )
+from power_grid_model_io.utils.modules import get_function
+
+
+@pytest.mark.parametrize(
+    ("name", "fn"),
+    [
+        ("power_grid_model_io.functions.has_value", has_value),
+        ("power_grid_model_io.functions.value_or_default", value_or_default),
+        ("power_grid_model_io.functions.value_or_zero", value_or_zero),
+        ("power_grid_model_io.functions.complex_inverse_real_part", complex_inverse_real_part),
+        ("power_grid_model_io.functions.complex_inverse_imaginary_part", complex_inverse_imaginary_part),
+        ("power_grid_model_io.functions.get_winding", get_winding),
+        ("power_grid_model_io.functions.degrees_to_clock", degrees_to_clock),
+        ("power_grid_model_io.functions.is_greater_than", is_greater_than),
+        ("power_grid_model_io.functions.both_zeros_to_nan", both_zeros_to_nan),
+    ],
+)
+def test_function_is_in_allowlist(name: str, fn):
+    assert get_function(name) is fn
 
 
 @pytest.mark.parametrize(

@@ -6,6 +6,10 @@
 These functions can be used in the mapping files to apply functions to tabular data
 """
 
+from power_grid_model_io.functions import (
+    filters,
+    phase_to_phase,
+)
 from power_grid_model_io.functions._functions import (
     both_zeros_to_nan,
     complex_inverse_imaginary_part,
@@ -23,9 +27,11 @@ __all__ = [
     "complex_inverse_imaginary_part",
     "complex_inverse_real_part",
     "degrees_to_clock",
+    "filters",
     "get_winding",
     "has_value",
     "is_greater_than",
+    "phase_to_phase",
     "value_or_default",
     "value_or_zero",
 ]

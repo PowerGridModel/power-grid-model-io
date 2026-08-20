@@ -29,6 +29,45 @@ from power_grid_model_io.utils.modules import get_function
 
 TWO_KEYS = 2
 
+# Explicit allowlist of pandas DataFrame functions that may be referenced by name in a mapping file.
+_ALLOWED_PANDAS_FUNCTIONS: frozenset[str] = frozenset(
+    {
+        "sum",
+        "prod",
+        "product",
+        "min",
+        "max",
+        "mean",
+        "median",
+        "std",
+        "var",
+        "sem",
+        "count",
+        "nunique",
+        "skew",
+        "kurt",
+        "kurtosis",
+        "all",
+        "any",
+        "add",
+        "radd",
+        "sub",
+        "subtract",
+        "rsub",
+        "mul",
+        "div",
+        "divide",
+        "truediv",
+        "rtruediv",
+        "floordiv",
+        "rfloordiv",
+        "mod",
+        "rmod",
+        "pow",
+        "rpow",
+    }
+)
+
 
 class TabularConverter(BaseConverter[TabularData]):
     """Tabular Data Converter: Load data from multiple tables and use a mapping file to convert the data to PGM"""
@@ -794,6 +833,10 @@ class TabularConverter(BaseConverter[TabularData]):
         if fn_name == "multiply":
             fn_name = "prod"
 
+        # Only allow an explicit set of non-mutating pandas functions to be referenced by name.
+        if fn_name not in _ALLOWED_PANDAS_FUNCTIONS:
+            raise ValueError(f"Pandas DataFrame function '{fn_name}' is not allowed")
+
         col_data = self._parse_col_def(
             data=data,
             table=table,
@@ -802,10 +845,7 @@ class TabularConverter(BaseConverter[TabularData]):
             extra_info=None,
         )
 
-        try:
-            fn_ptr = getattr(col_data, fn_name)
-        except AttributeError as ex:
-            raise ValueError(f"Pandas DataFrame has no function '{fn_name}'") from ex
+        fn_ptr = getattr(col_data, fn_name)
 
         # If the function expects an 'other' argument, apply the function per column (e.g. divide)
         empty = inspect.Parameter.empty
@@ -816,10 +856,6 @@ class TabularConverter(BaseConverter[TabularData]):
             for i in range(1, n_columns):
                 result = getattr(result, fn_name)(other=col_data.iloc[:, i])
             return pd.DataFrame(result)
-
-        # If the function expects any argument
-        if any(param.default == empty for name, param in fn_sig.parameters.items() if name != "kwargs"):
-            raise ValueError(f"Invalid pandas function DataFrame.{fn_name}")
 
         return pd.DataFrame(fn_ptr(axis=1))
 

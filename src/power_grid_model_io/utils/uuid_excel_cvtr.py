@@ -65,7 +65,7 @@ class UUID2IntCvtr:
             uuids = []
         self._uuids_int: dict[str, int] = {}
         self._counter: int = 0
-        for uuid in set(uuids):
+        for uuid in dict.fromkeys(uuids):
             self.add(uuid)
 
     def add_list(self, uuids: list) -> None:
@@ -74,7 +74,7 @@ class UUID2IntCvtr:
         Args:
             uuids (list): GUID's in Vision excel
         """
-        for uuid in set(uuids):
+        for uuid in dict.fromkeys(uuids):
             self.add(uuid)
 
     def add(self, uuid: str) -> None:
