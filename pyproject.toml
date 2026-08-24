@@ -46,6 +46,7 @@ test = [
     "pytest-cov",
     "pydantic>2", # Used in unit tests
     "pandapower>2.11.1",
+    "pandas<3.0",  # pandapower does not yet support pandas 3.x https://github.com/e2nIEE/pandapower/issues/2861
     "lxml", # missing pandapower dependency
 ]
 
@@ -64,6 +65,7 @@ dev = [{ include-group = "test" }, { include-group = "lint" }]
 examples = [
     "power-grid-model>=1.13.27",
     "pandapower>2.11.1",
+    "pandas<3.0",  # pandapower does not yet support pandas 3.x https://github.com/e2nIEE/pandapower/issues/2861
     "pyarrow", # Pyarrow support for Python 3.12 scheduled for 14.0.0: https://github.com/apache/arrow/issues/37880
 ]
 
