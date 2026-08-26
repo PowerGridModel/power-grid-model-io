@@ -28,6 +28,7 @@ updates:
           - "*"
     ignore:
       # pandapower does not yet support pandas 3.x https://github.com/e2nIEE/pandapower/issues/2861
+      # Corresponding PGM-IO issue https://github.com/PowerGridModel/power-grid-model-io/issues/483
       - dependency-name: "pandas"
         update-types: ["version-update:semver-major"]
     cooldown:
