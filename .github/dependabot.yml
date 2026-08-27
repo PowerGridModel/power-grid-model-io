@@ -16,18 +16,6 @@ updates:
           - "*"
     cooldown:
       default-days: 7
-      
-  - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "cron"
-      cronjob: "0 4 * * 2" # Every Tuesday at 4:00 UTC
-    groups:
-      all-dependencies:
-        patterns:
-          - "*"
-    cooldown:
-      default-days: 7
 
   - package-ecosystem: "uv"
     directory: "/"
@@ -38,5 +26,10 @@ updates:
       all-dependencies:
         patterns:
           - "*"
+    ignore:
+      # pandapower does not yet support pandas 3.x https://github.com/e2nIEE/pandapower/issues/2861
+      # Corresponding PGM-IO issue https://github.com/PowerGridModel/power-grid-model-io/issues/483
+      - dependency-name: "pandas"
+        update-types: ["version-update:semver-major"]
     cooldown:
       default-days: 7
