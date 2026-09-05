@@ -8,8 +8,11 @@ import pandapower as pp
 
 from power_grid_model_io.converters.pandapower_converter import (
     PP_COMPATIBILITY_VERSION_3_2_0,
+    PP_COMPATIBILITY_VERSION_3_4_0,
     PP_CONVERSION_VERSION,
 )
+
+mag0_multiplier = 1.0 if PP_CONVERSION_VERSION < PP_COMPATIBILITY_VERSION_3_4_0 else 100.0
 
 
 @lru_cache
@@ -61,7 +64,7 @@ def pp_net() -> pp.pandapowerNet:
         tap_neutral=1,
         parallel=2,
         vk0_percent=17.8,
-        mag0_percent=100.0,
+        mag0_percent=100.0 * mag0_multiplier,
         mag0_rx=0.01,
     )
     pp.create_line(
@@ -228,7 +231,7 @@ def pp_net_3ph() -> pp.pandapowerNet:
         parallel=2,
         vk0_percent=8.9,
         vkr0_percent=4.0,
-        mag0_percent=374531.83520599245,
+        mag0_percent=374531.83520599245 * mag0_multiplier,
         mag0_rx=0.47628073,
         si0_hv_partial=0.9,
         in_service=True,
@@ -359,7 +362,7 @@ def pp_net_3ph_minimal_trafo():
         vector_group="Dyn",
         vk0_percent=4,
         vkr0_percent=0,
-        mag0_percent=100,
+        mag0_percent=100 * mag0_multiplier,
         mag0_rx=0,
         si0_hv_partial=0.9,
     )
