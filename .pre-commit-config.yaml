@@ -25,9 +25,15 @@ repos:
         entry: uv run --frozen mypy
         language: system
         pass_filenames: false
-      - id: pytest
-        name: pytest
-        entry: uv run --frozen pytest
+      - id: pytest_unit
+        name: pytest-Unit
+        entry: uv run --frozen pytest tests/unit
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: pytest_valid
+        name: pytest-Validation
+        entry: uv run --frozen pytest tests/validation --no-cov
         language: system
         pass_filenames: false
         always_run: true

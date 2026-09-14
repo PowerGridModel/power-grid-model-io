@@ -34,7 +34,8 @@ jobs:
       - name: Test and Coverage
         run: |
           uv sync --frozen --no-default-groups --group test
-          uv run --frozen pytest
+          uv run --frozen pytest tests/unit
+          uv run --frozen pytest tests/validation --no-cov
 
           # Fix relative paths in coverage file
           # Known bug: https://community.sonarsource.com/t/sonar-on-github-actions-with-python-coverage-source-issue/36057
