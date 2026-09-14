@@ -82,7 +82,7 @@ jobs:
         run: uv pip install power-grid-model-io==${{ needs.build-python.outputs.version }} --find-links=wheelhouse
 
       - name: Unit test and coverage
-        run: uv run --frozen --only-group test --no-editable pytest --verbose
+        run: uv run --frozen --only-group test --no-editable pytest tests/unit --verbose
 
   validation-tests:
     needs: build-python
