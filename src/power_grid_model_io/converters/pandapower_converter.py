@@ -1624,6 +1624,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         generator_ids = self._get_pgm_ids(idx_table, name=generator_type)
         pgm_output_sym_generators = self.pgm_output_data[ComponentType.sym_gen]
 
+        # TODO: Furqan, add vm_pu, va_pu for gen
         pp_output_generators = pd.DataFrame(
             columns=[_PpAttr.p_mw, _PpAttr.q_mvar],
             index=pgm_output_sym_generators[AttributeType.id],
@@ -2315,9 +2316,7 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data[_PpTable.res_ext_grid_3ph] = pp_output_ext_grids_3ph
 
-    def _pp_sym_generators_output_3ph(
-        self, pp_output_table: Literal[_PpTable.res_gen_3ph, _PpTable.res_sgen_3ph] = _PpTable.res_sgen_3ph
-    ):
+    def _pp_sgens_output_3ph(self):
         """
         This function converts a power-grid-model Symmetrical Generator output array to a Static Generator Dataframe of
         PandaPower.
@@ -2325,40 +2324,31 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the Static Generator component
         """
-        if pp_output_table in self.pp_output_data:
-            raise ValueError(f"{pp_output_table} already exists in pp_output_data.")
-
-        idx_table = "sgen" if pp_output_table == _PpTable.res_sgen_3ph else "gen"
-        idx_name = None if pp_output_table == _PpTable.res_sgen_3ph else "gen"
+        if _PpTable.res_sgen_3ph in self.pp_output_data:
+            raise ValueError("res_sgen_3ph already exists in pp_output_data.")
 
         if (
             ComponentType.sym_gen not in self.pgm_output_data
             or self.pgm_output_data[ComponentType.sym_gen].size == 0
-            or (idx_table, idx_name) not in self.idx
+            or (_PpTable.sgen, None) not in self.idx
         ):
             return
 
-        generator_pgm_idx = self._get_pgm_ids(pp_table=idx_table, name=idx_name)
+        pgm_idx_sym_gens = self._get_pgm_ids(pp_table=_PpTable.sgen)
 
-        pgm_output_sym_generators = self.pgm_output_data[ComponentType.sym_gen]
+        pgm_output_sym_gens = self.pgm_output_data[ComponentType.sym_gen]
 
-        pp_output_sym_generators = pd.DataFrame(
+        pp_output_sgens = pd.DataFrame(
             columns=[_PpAttr.p_mw, _PpAttr.q_mvar],
-            index=pgm_output_sym_generators[AttributeType.id],
+            index=pgm_output_sym_gens[AttributeType.id],
         )
-        pp_output_sym_generators[_PpAttr.p_mw] = np.sum(pgm_output_sym_generators[AttributeType.p], axis=1) * 1e-6
-        pp_output_sym_generators[_PpAttr.q_mvar] = np.sum(pgm_output_sym_generators[AttributeType.q], axis=1) * 1e-6
+        pp_output_sgens[_PpAttr.p_mw] = np.sum(pgm_output_sym_gens[AttributeType.p], axis=1) * 1e-6
+        pp_output_sgens[_PpAttr.q_mvar] = np.sum(pgm_output_sym_gens[AttributeType.q], axis=1) * 1e-6
 
-        pp_output_sym_generators = pp_output_sym_generators.loc[generator_pgm_idx]
-        pp_output_sym_generators.index = self._get_pp_ids(idx_table, generator_pgm_idx, idx_name)
+        pp_output_sgens = pp_output_sgens.loc[pgm_idx_sym_gens]
+        pp_output_sgens.index = self._get_pp_ids(_PpTable.sgen, pgm_idx_sym_gens)
 
-        self.pp_output_data[pp_output_table] = pp_output_sym_generators
-
-    def _pp_sgens_output_3ph(self):
-        self._pp_sym_generators_output_3ph(_PpTable.res_sgen_3ph)
-
-    def _pp_gens_output_3ph(self):
-        self._pp_sym_generators_output_3ph(_PpTable.res_gen_3ph)
+        self.pp_output_data[_PpTable.res_sgen_3ph] = pp_output_sgens
 
     def _pp_trafos_output_3ph(self):  # noqa: PLR0915  # pylint: disable=too-many-statements
         """
@@ -2558,7 +2548,12 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
 
         self.pp_output_data[_PpTable.res_asymmetric_load_3ph] = pp_asym_output_loads_3ph
 
-    def _pp_asym_gens_output_3ph(self):
+    def _pp_asym_generators_output_3ph(
+        self,
+        pp_output_table: Literal[
+            _PpTable.res_gen_3ph, _PpTable.res_asymmetric_sgen_3ph
+        ] = _PpTable.res_asymmetric_sgen_3ph,
+    ):
         """
         This function converts a power-grid-model Asymmetrical Generator output array to an Asymmetric Static Generator
         Dataframe of PandaPower.
@@ -2566,18 +2561,31 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
         Returns:
             a PandaPower Dataframe for the Asymmetric Static Generator component
         """
-        if _PpTable.res_asymmetric_sgen_3ph in self.pp_output_data:
-            raise ValueError("res_asymmetric_sgen_3ph already exists in pp_output_data.")
+        if pp_output_table in self.pp_output_data:
+            raise ValueError(f"{pp_output_table} already exists in pp_output_data.")
 
-        if "asym_gen" not in self.pgm_output_data or self.pgm_output_data[ComponentType.asym_gen].size == 0:
+        pp_table = _PpTable.asymmetric_sgen if pp_output_table == _PpTable.res_asymmetric_sgen_3ph else _PpTable.gen
+        idx_name = None if pp_output_table == _PpTable.res_asymmetric_sgen_3ph else "gen"
+        pgm_component = (
+            ComponentType.asym_gen if pp_output_table == _PpTable.res_asymmetric_sgen_3ph else ComponentType.sym_gen
+        )
+
+        if (
+            pgm_component not in self.pgm_output_data
+            or self.pgm_output_data[pgm_component].size == 0
+            or (pp_table, idx_name) not in self.idx
+        ):
             return
 
-        pgm_output_asym_gens = self.pgm_output_data[ComponentType.asym_gen]
+        pgm_output_generators_3ph = self.pgm_output_data[pgm_component]
 
-        pp_asym_gen_p = pgm_output_asym_gens[AttributeType.p] * 1e-6
-        pp_asym_gen_q = pgm_output_asym_gens[AttributeType.q] * 1e-6
+        pgm_generator_ids = self._get_pgm_ids(pp_table, name=idx_name)
 
-        pp_output_asym_gens_3ph = pd.DataFrame(
+        pp_generator_p_3ph = pgm_output_generators_3ph[AttributeType.p] * 1e-6
+        pp_generator_q_3ph = pgm_output_generators_3ph[AttributeType.q] * 1e-6
+
+        # TODO: Furqan, add vm, va columns for gen
+        pp_output_generators_3ph = pd.DataFrame(
             columns=[
                 _PpAttr.p_a_mw,
                 _PpAttr.q_a_mvar,
@@ -2586,17 +2594,28 @@ class PandaPowerConverter(BaseConverter[PandaPowerData]):
                 _PpAttr.p_c_mw,
                 _PpAttr.q_c_mvar,
             ],
-            index=self._get_pp_ids(_PpTable.asymmetric_sgen, pgm_output_asym_gens[AttributeType.id]),
+            index=pgm_output_generators_3ph[AttributeType.id],
         )
 
-        pp_output_asym_gens_3ph[_PpAttr.p_a_mw] = pp_asym_gen_p[:, 0]
-        pp_output_asym_gens_3ph[_PpAttr.q_a_mvar] = pp_asym_gen_q[:, 0]
-        pp_output_asym_gens_3ph[_PpAttr.p_b_mw] = pp_asym_gen_p[:, 1]
-        pp_output_asym_gens_3ph[_PpAttr.q_b_mvar] = pp_asym_gen_q[:, 1]
-        pp_output_asym_gens_3ph[_PpAttr.p_c_mw] = pp_asym_gen_p[:, 2]
-        pp_output_asym_gens_3ph[_PpAttr.q_c_mvar] = pp_asym_gen_q[:, 2]
+        pp_output_generators_3ph[_PpAttr.p_a_mw] = pp_generator_p_3ph[:, 0]
+        pp_output_generators_3ph[_PpAttr.q_a_mvar] = pp_generator_q_3ph[:, 0]
+        pp_output_generators_3ph[_PpAttr.p_b_mw] = pp_generator_p_3ph[:, 1]
+        pp_output_generators_3ph[_PpAttr.q_b_mvar] = pp_generator_q_3ph[:, 1]
+        pp_output_generators_3ph[_PpAttr.p_c_mw] = pp_generator_p_3ph[:, 2]
+        pp_output_generators_3ph[_PpAttr.q_c_mvar] = pp_generator_q_3ph[:, 2]
 
-        self.pp_output_data[_PpTable.res_asymmetric_sgen_3ph] = pp_output_asym_gens_3ph
+        if pp_output_table == _PpTable.res_gen_3ph:
+            pp_output_generators_3ph = pp_output_generators_3ph.loc[pgm_generator_ids]
+
+        pp_output_generators_3ph.index = self._get_pp_ids(pp_table, pp_output_generators_3ph.index, name=idx_name)
+
+        self.pp_output_data[pp_output_table] = pp_output_generators_3ph
+
+    def _pp_gens_output_3ph(self):
+        self._pp_asym_generators_output_3ph(_PpTable.res_gen_3ph)
+
+    def _pp_asym_gens_output_3ph(self):
+        self._pp_asym_generators_output_3ph(_PpTable.res_asymmetric_sgen_3ph)
 
     def _generate_ids(self, pp_table: str, pp_idx: pd.Index, name: str | None = None) -> np.ndarray:
         """
