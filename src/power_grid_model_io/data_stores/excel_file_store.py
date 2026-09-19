@@ -19,7 +19,6 @@ from power_grid_model_io.data_stores.base_data_store import (
 from power_grid_model_io.data_types import LazyDataFrame, TabularData
 from power_grid_model_io.utils.uuid_excel_cvtr import (
     UUID2IntCvtr,
-    add_guid_values_to_cvtr,
     get_special_key_map,
     special_nodes_en,
     special_nodes_nl,
@@ -232,25 +231,52 @@ class ExcelFileStore(BaseDataStore[TabularData]):
 
     def _process_uuid_columns(self, data: pd.DataFrame, sheet_name: str) -> pd.DataFrame:
         first_level = data.columns.get_level_values(0)
-        guid_columns = first_level[first_level.str.endswith("GUID")]
-
         sheet_key_mapping = get_special_key_map(
             sheet_name=sheet_name, nodes_en=special_nodes_en, nodes_nl=special_nodes_nl
         )
 
-        for guid_column in guid_columns:
+        additions = {}
+        replacements = {}
+        for guid_column_pos, guid_column in enumerate(first_level):
+            if not isinstance(guid_column, str) or not guid_column.endswith("GUID"):
+                continue
+
             nr = VISION_EXCEL_LAN_DICT[self._language][DICT_KEY_NUMBER]
-            add_guid_values_to_cvtr(data, guid_column, self._uuid_cvtr)
+            guid_values = data.iloc[:, guid_column_pos]
+            self._uuid_cvtr.add_list(guid_values.tolist())
             new_column_name = guid_column.replace("GUID", nr)
             if guid_column == "GUID" and sheet_key_mapping not in (None, {}):
                 new_column_name = guid_column.replace("GUID", sheet_key_mapping[DICT_KEY_SUBNUMBER])
-            guid_column_pos = first_level.tolist().index(guid_column)
-            try:
-                data.insert(guid_column_pos + 1, new_column_name, data[guid_column].apply(self._uuid_cvtr.query))
-            except ValueError:
-                data[new_column_name] = data[guid_column].apply(self._uuid_cvtr.query)
 
-        return data
+            values = guid_values.apply(self._uuid_cvtr.query)
+            if new_column_name in first_level:
+                target_pos = next(pos for pos, name in enumerate(first_level) if name == new_column_name)
+                replacements[target_pos] = values
+            else:
+                label: str | tuple[str, ...] = new_column_name
+                if isinstance(data.columns, pd.MultiIndex):
+                    label = (new_column_name, *("" for _ in range(data.columns.nlevels - 1)))
+                additions[guid_column_pos] = (label, values)
+
+        if not additions and not replacements:
+            return data
+
+        columns = []
+        values = []
+        for column_pos, column_name in enumerate(data.columns):
+            columns.append(column_name)
+            values.append(replacements.get(column_pos, data.iloc[:, column_pos]))
+            if column_pos in additions:
+                added_name, added_values = additions[column_pos]
+                columns.append(added_name)
+                values.append(added_values)
+
+        result = pd.concat(values, axis=1)
+        if isinstance(data.columns, pd.MultiIndex):
+            result.columns = pd.MultiIndex.from_tuples(columns, names=data.columns.names)
+        else:
+            result.columns = pd.Index(columns, name=data.columns.name)
+        return result
 
     def _update_column_names(self, data: pd.DataFrame) -> pd.DataFrame:
         update_column_names(data, self._terms_changed)
