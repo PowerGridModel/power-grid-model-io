@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import warnings
 from pathlib import Path
 from unittest.mock import MagicMock, call, patch
 
@@ -300,6 +301,69 @@ def test_remove_unnamed_column_placeholders__empty():
 
     # Assert
     pd.testing.assert_frame_equal(result, data)
+
+
+def test_process_uuid_columns_adds_many_columns_without_fragmentation_warning():
+    data = pd.DataFrame({f"Field{i}GUID": [f"id-{i}"] for i in range(105)})
+    store = ExcelFileStore()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", pd.errors.PerformanceWarning)
+        result = store._process_uuid_columns(data=data, sheet_name="Other")
+
+    assert list(result.columns) == [name for i in range(105) for name in (f"Field{i}GUID", f"Field{i}Number")]
+    assert result.loc[0, "Field0Number"] == 0
+    assert result.loc[0, "Field104Number"] == 104
+
+
+def test_process_uuid_columns_keeps_existing_number_column_position():
+    data = pd.DataFrame({"NodeGUID": ["a", "b"], "Name": ["A", "B"], "NodeNumber": [-1, -1]})
+
+    result = ExcelFileStore()._process_uuid_columns(data=data, sheet_name="Other")
+
+    expected = pd.DataFrame({"NodeGUID": ["a", "b"], "Name": ["A", "B"], "NodeNumber": [0, 1]})
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test_process_uuid_columns_preserves_two_level_column_labels():
+    columns = pd.MultiIndex.from_tuples([("NodeGUID", "id"), ("Name", "text")], names=["field", "unit"])
+    data = pd.DataFrame([["a", "A"]], columns=columns)
+
+    result = ExcelFileStore()._process_uuid_columns(data=data, sheet_name="Other")
+
+    expected_columns = pd.MultiIndex.from_tuples(
+        [("NodeGUID", "id"), ("NodeNumber", ""), ("Name", "text")], names=["field", "unit"]
+    )
+    expected = pd.DataFrame([["a", 0, "A"]], columns=expected_columns)
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test_process_uuid_columns_updates_existing_two_level_number_column():
+    columns = pd.MultiIndex.from_tuples([("NodeGUID", "id"), ("NodeNumber", "value")])
+    data = pd.DataFrame([["a", -1]], columns=columns)
+
+    result = ExcelFileStore()._process_uuid_columns(data=data, sheet_name="Other")
+
+    expected = pd.DataFrame([["a", 0]], columns=columns)
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test_process_uuid_columns_uses_special_sheet_subnumber():
+    data = pd.DataFrame({"GUID": ["a"], "OtherGUID": ["a"]})
+
+    result = ExcelFileStore()._process_uuid_columns(data=data, sheet_name="Sources")
+
+    assert list(result.columns) == ["GUID", "Subnumber", "OtherGUID", "OtherNumber"]
+    assert result.loc[0, "Subnumber"] == result.loc[0, "OtherNumber"] == 0
+
+
+def test_process_uuid_columns_ignores_non_string_column_labels():
+    data = pd.DataFrame([["a", "b"]], columns=[1, "NodeGUID"])
+
+    result = ExcelFileStore()._process_uuid_columns(data=data, sheet_name="Other")
+
+    assert list(result.columns) == [1, "NodeGUID", "NodeNumber"]
+    assert result.loc[0, "NodeNumber"] == 0
 
 
 @patch("power_grid_model_io.data_stores.excel_file_store.ExcelFileStore._check_duplicate_values")
