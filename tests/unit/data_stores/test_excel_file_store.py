@@ -12,6 +12,7 @@ import pytest
 from structlog.testing import capture_logs
 
 from power_grid_model_io.data_stores.excel_file_store import ExcelFileStore
+from power_grid_model_io.data_stores.vision_excel_file_store import VisionExcelFileStore
 from power_grid_model_io.data_types.tabular_data import TabularData
 from tests.utils import MockExcelFile, assert_log_exists
 
@@ -314,6 +315,7 @@ def test_process_uuid_columns_adds_many_columns_without_fragmentation_warning():
     assert list(result.columns) == [name for i in range(105) for name in (f"Field{i}GUID", f"Field{i}Number")]
     assert result.loc[0, "Field0Number"] == 0
     assert result.loc[0, "Field104Number"] == 104
+    pd.testing.assert_frame_equal(result[data.columns], data)
 
 
 def test_process_uuid_columns_keeps_existing_number_column_position():
@@ -364,6 +366,132 @@ def test_process_uuid_columns_ignores_non_string_column_labels():
 
     assert list(result.columns) == [1, "NodeGUID", "NodeNumber"]
     assert result.loc[0, "NodeNumber"] == 0
+
+
+@pytest.mark.parametrize("levels", [1, 2, 3])
+def test_process_uuid_columns_empty_frame_preserves_headers_and_index(levels: int):
+    columns = pd.Index(["NodeGUID", "Name"], name="field")
+    expected_columns = pd.Index(["NodeGUID", "NodeNumber", "Name"], name="field")
+    if levels > 1:
+        columns = pd.MultiIndex.from_tuples(
+            [("NodeGUID", *("id" for _ in range(levels - 1))), ("Name", *("text" for _ in range(levels - 1)))],
+            names=[f"level{i}" for i in range(levels)],
+        )
+        expected_columns = pd.MultiIndex.from_tuples(
+            [columns[0], ("NodeNumber", *("" for _ in range(levels - 1))), columns[1]], names=columns.names
+        )
+    index = pd.Index([], name="row")
+    data = pd.DataFrame(index=index, columns=columns)
+    store = ExcelFileStore()
+
+    result = store._process_uuid_columns(data=data, sheet_name="Other")
+
+    pd.testing.assert_frame_equal(result, pd.DataFrame(index=index, columns=expected_columns))
+    pd.testing.assert_frame_equal(result[data.columns], data)
+    assert store._uuid_cvtr.get_size() == 0
+
+
+def test_process_uuid_columns_preserves_converter_none_and_nan_semantics():
+    data = pd.DataFrame({"NodeGUID": ["a", None, np.nan, "a"]}, index=pd.Index([3, 5, 7, 9], name="row"))
+    store = ExcelFileStore()
+
+    result = store._process_uuid_columns(data=data, sheet_name="Other")
+
+    pd.testing.assert_series_equal(result["NodeGUID"], data["NodeGUID"])
+    pd.testing.assert_series_equal(
+        result["NodeNumber"], pd.Series([0.0, 1.0, np.nan, 0.0], index=data.index, name="NodeNumber")
+    )
+    assert store._uuid_cvtr.get_keys() == ["a", None]
+
+
+def test_process_uuid_columns_reuses_converter_across_sheets():
+    store = ExcelFileStore()
+    nodes = pd.DataFrame({"GUID": ["a", "b"]})
+    sources = pd.DataFrame({"GUID": ["b", "c"]})
+
+    first = store._process_uuid_columns(data=nodes, sheet_name="Other")
+    second = store._process_uuid_columns(data=sources, sheet_name="Sources")
+    again = store._process_uuid_columns(data=nodes, sheet_name="Other")
+
+    assert first["Number"].tolist() == [0, 1]
+    assert second["Subnumber"].tolist() == [1, 2]
+    pd.testing.assert_frame_equal(first, again)
+    assert store._uuid_cvtr.get_keys() == ["a", "b", "c"]
+
+
+@pytest.mark.parametrize("copy_on_write", [False, True])
+def test_process_uuid_columns_does_not_mutate_or_alias_input(copy_on_write: bool):
+    data = pd.DataFrame({"NodeGUID": ["a", "b"], "NodeNumber": [-1, -1], "Name": ["A", "B"]})
+    before = data.copy(deep=True)
+
+    with pd.option_context("mode.copy_on_write", copy_on_write):
+        result = ExcelFileStore()._process_uuid_columns(data=data, sheet_name="Other")
+        pd.testing.assert_frame_equal(data, before)
+        result.loc[0, "NodeGUID"] = "changed"
+        result.loc[0, "NodeNumber"] = 99
+        result.loc[0, "Name"] = "changed"
+        pd.testing.assert_frame_equal(data, before)
+
+
+@pytest.mark.parametrize(
+    "columns",
+    [
+        ["NodeGUID", "NodeGUID"],
+        ["NodeGUID", "NodeNumber", "NodeNumber"],
+        ["GUIDNumberGUID", "NumberGUIDGUID"],
+    ],
+)
+def test_process_uuid_columns_rejects_ambiguous_labels_before_changing_converter(columns: list[str]):
+    data = pd.DataFrame([["a"] * len(columns)], columns=columns)
+    before = data.copy(deep=True)
+    store = ExcelFileStore()
+
+    with pytest.raises(ValueError, match=r"Ambiguous GUID conversion.*Other"):
+        store._process_uuid_columns(data=data, sheet_name="Other")
+
+    pd.testing.assert_frame_equal(data, before)
+    assert store._uuid_cvtr.get_size() == 0
+
+
+@pytest.mark.parametrize("duplicate_guid", ["a", "b"])
+def test_process_uuid_columns_after_duplicate_header_preprocessing(duplicate_guid: str):
+    columns = pd.MultiIndex.from_tuples(
+        [("NodeGUID", "id"), ("NodeGUID", "other"), ("NodeNumber", ""), ("NodeNumber", "other")]
+    )
+    data = pd.DataFrame([["a", duplicate_guid, -1, -2]], columns=columns)
+    store = ExcelFileStore()
+    normalized = store._handle_duplicate_columns(data=data, sheet_name="Other")
+
+    result = store._process_uuid_columns(data=normalized, sheet_name="Other")
+
+    expected_columns = pd.MultiIndex.from_tuples(
+        [("NodeGUID", "id"), ("NodeGUID_2", "other"), ("NodeNumber", ""), ("NodeNumber_2", "other")]
+    )
+    pd.testing.assert_frame_equal(result, pd.DataFrame([["a", duplicate_guid, 0, -2]], columns=expected_columns))
+
+
+def test_vision_sheet_loading_reuses_guid_mapping_and_preserves_original_columns(tmp_path: Path):
+    path = tmp_path / "vision.xlsx"
+    # Write both header rows explicitly, so pandas does not change the duplicate source headings.
+    with pd.ExcelWriter(path) as writer:
+        pd.DataFrame(
+            [["GUID", "NodeGUID", "NodeGUID", "NodeNumber"], ["id", "id", "other", ""], ["a", "b", "c", -1]]
+        ).to_excel(writer, sheet_name="Other", index=False, header=False)
+        pd.DataFrame([["GUID", "Name"], ["id", ""], ["b", "source"]]).to_excel(
+            writer, sheet_name="Sources", index=False, header=False
+        )
+
+    with VisionExcelFileStore(path).load() as sheets:
+        nodes = sheets["Other"]
+        sources = sheets["Sources"]
+
+        assert nodes[("GUID", "id")].tolist() == ["a"]
+        assert nodes[("Number", "")].tolist() == [0]
+        assert nodes[("NodeGUID", "id")].tolist() == ["b"]
+        assert nodes[("NodeGUID_2", "other")].tolist() == ["c"]
+        assert nodes[("NodeNumber", "")].tolist() == [1]
+        assert sources[("GUID", "id")].tolist() == ["b"]
+        assert sources[("Subnumber", "")].tolist() == [1]
 
 
 @patch("power_grid_model_io.data_stores.excel_file_store.ExcelFileStore._check_duplicate_values")

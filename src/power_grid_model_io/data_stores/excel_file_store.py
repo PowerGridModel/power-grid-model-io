@@ -229,28 +229,52 @@ class ExcelFileStore(BaseDataStore[TabularData]):
 
         return to_rename
 
-    def _process_uuid_columns(self, data: pd.DataFrame, sheet_name: str) -> pd.DataFrame:
+    def _plan_uuid_columns(self, data: pd.DataFrame, sheet_name: str) -> dict[str, tuple[int, int | None]]:
+        """Validate source/target positions before modifying the shared converter."""
         first_level = data.columns.get_level_values(0)
         sheet_key_mapping = get_special_key_map(
             sheet_name=sheet_name, nodes_en=special_nodes_en, nodes_nl=special_nodes_nl
         )
 
-        additions = {}
-        replacements = {}
+        positions: dict[str, list[int]] = {}
+        for column_pos, column_name in enumerate(first_level):
+            positions.setdefault(column_name, []).append(column_pos)
+
+        conversion_plan = {}
         for guid_column_pos, guid_column in enumerate(first_level):
             if not isinstance(guid_column, str) or not guid_column.endswith("GUID"):
                 continue
 
             nr = VISION_EXCEL_LAN_DICT[self._language][DICT_KEY_NUMBER]
-            guid_values = data.iloc[:, guid_column_pos]
-            self._uuid_cvtr.add_list(guid_values.tolist())
             new_column_name = guid_column.replace("GUID", nr)
             if guid_column == "GUID" and sheet_key_mapping not in (None, {}):
                 new_column_name = guid_column.replace("GUID", sheet_key_mapping[DICT_KEY_SUBNUMBER])
 
+            if (
+                len(positions[guid_column]) > 1
+                or len(positions.get(new_column_name, [])) > 1
+                or new_column_name in conversion_plan
+            ):
+                raise ValueError(
+                    f"Ambiguous GUID conversion in sheet '{sheet_name}': {guid_column} -> {new_column_name}"
+                )
+            targets = positions.get(new_column_name, [])
+            conversion_plan[new_column_name] = (guid_column_pos, targets[0] if targets else None)
+        return conversion_plan
+
+    def _process_uuid_columns(self, data: pd.DataFrame, sheet_name: str) -> pd.DataFrame:
+        """Convert normalized GUID headers without mutating or sharing the input data.
+
+        ``load`` resolves duplicate source headers first. Remaining ambiguous GUID or derived-number labels are
+        rejected before changing the shared converter, rather than silently overwriting a target column.
+        """
+        additions = {}
+        replacements = {}
+        for new_column_name, (guid_column_pos, target_pos) in self._plan_uuid_columns(data, sheet_name).items():
+            guid_values = data.iloc[:, guid_column_pos]
+            self._uuid_cvtr.add_list(guid_values.tolist())
             values = guid_values.apply(self._uuid_cvtr.query)
-            if new_column_name in first_level:
-                target_pos = next(pos for pos, name in enumerate(first_level) if name == new_column_name)
+            if target_pos is not None:
                 replacements[target_pos] = values
             else:
                 label: str | tuple[str, ...] = new_column_name
