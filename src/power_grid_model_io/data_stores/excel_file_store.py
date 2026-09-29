@@ -295,7 +295,9 @@ class ExcelFileStore(BaseDataStore[TabularData]):
                 columns.append(added_name)
                 values.append(added_values)
 
-        result = pd.concat(values, axis=1)
+        # The labels can be duplicated even after the GUID targets are checked.
+        # Use positional keys to build each dtype block once, then restore labels.
+        result = pd.DataFrame(dict(enumerate(values)), index=data.index, copy=True)
         if isinstance(data.columns, pd.MultiIndex):
             result.columns = pd.MultiIndex.from_tuples(columns, names=data.columns.names)
         else:
