@@ -36,6 +36,20 @@ CASES = {
 }
 MIB = 1024 * 1024
 NUMERIC_COLUMNS = 20
+CONTROLLED_INPUT_COLUMNS = 125
+MATRIX_ROWS = (1_000, 20_000, 100_000)
+MATRIX_GUID_COLUMNS = (1, 8, 32, 105)
+MATRIX_CASES = {
+    f"grid-r{rows}-g{guid_columns}-{distribution}": (
+        rows,
+        guid_columns,
+        min(1_024, max(100, rows // 10)) if distribution == "repeated" else rows,
+    )
+    for rows in MATRIX_ROWS
+    for guid_columns in MATRIX_GUID_COLUMNS
+    for distribution in ("repeated", "unique")
+}
+ALL_CASES = {**CASES, **MATRIX_CASES}
 
 
 def high_water_rss_bytes() -> int:
@@ -89,7 +103,8 @@ def worker(args: argparse.Namespace) -> None:
 
     store_module = importlib.import_module("power_grid_model_io.data_stores.excel_file_store")
     pd.options.mode.copy_on_write = args.copy_on_write == "on"
-    rows, guid_columns, unique_values = CASES[args.case]
+    rows, guid_columns, unique_values = ALL_CASES[args.case]
+    numeric_columns = CONTROLLED_INPUT_COLUMNS - guid_columns if args.case in MATRIX_CASES else NUMERIC_COLUMNS
     row_ids = np.arange(rows) % unique_values
 
     def guid_values(column: int):
@@ -98,7 +113,7 @@ def worker(args: argparse.Namespace) -> None:
 
     def generate():
         columns = {f"Field{i}GUID": guid_values(i) for i in range(guid_columns)}
-        columns.update({f"Numeric{i}": np.arange(rows, dtype=np.int64) + i for i in range(NUMERIC_COLUMNS)})
+        columns.update({f"Numeric{i}": np.arange(rows, dtype=np.int64) + i for i in range(numeric_columns)})
         return pd.DataFrame(columns, copy=False)
 
     data, generation = measure(generate)
@@ -113,12 +128,12 @@ def worker(args: argparse.Namespace) -> None:
             raise AssertionError(f"GUID values changed in column {i}")
         if not np.array_equal(result[f"Field{i}Number"].to_numpy(), i * unique_values + row_ids):
             raise AssertionError(f"Wrong derived numbers in column {i}")
-    for i in range(NUMERIC_COLUMNS):
+    for i in range(numeric_columns):
         if not np.array_equal(result[f"Numeric{i}"].to_numpy(), np.arange(rows) + i):
             raise AssertionError(f"Numeric input changed in column {i}")
     if store._uuid_cvtr.get_size() != guid_columns * unique_values:  # noqa: SLF001
         raise AssertionError("Unexpected converter size")
-    if result.shape != (rows, 2 * guid_columns + NUMERIC_COLUMNS) or not result.columns.is_unique:
+    if result.shape != (rows, 2 * guid_columns + numeric_columns) or not result.columns.is_unique:
         raise AssertionError("Unexpected output shape or duplicate labels")
 
     print(
@@ -127,10 +142,10 @@ def worker(args: argparse.Namespace) -> None:
                 "case": args.case,
                 "rows": rows,
                 "guid_columns": guid_columns,
-                "numeric_columns": NUMERIC_COLUMNS,
+                "numeric_columns": numeric_columns,
                 "unique_guid_ratio": unique_values / rows,
                 "identifier_length": 36,
-                "input_shape": [rows, guid_columns + NUMERIC_COLUMNS],
+                "input_shape": [rows, guid_columns + numeric_columns],
                 "output_shape": list(result.shape),
                 "python": platform.python_version(),
                 "pandas": pd.__version__,
@@ -173,8 +188,9 @@ def main() -> int:
     parser.add_argument("--baseline-checkout", type=Path)
     parser.add_argument("--candidate-checkout", type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument("--output", type=Path)
-    parser.add_argument("--cases", choices=CASES, nargs="+", default=list(CASES))
-    parser.add_argument("--case", choices=CASES)
+    parser.add_argument("--cases", choices=ALL_CASES, nargs="+")
+    parser.add_argument("--matrix", action="store_true", help="Use the fixed-width rows by GUID-columns grid")
+    parser.add_argument("--case", choices=ALL_CASES)
     parser.add_argument("--worker", action="store_true")
     parser.add_argument("--repeats", type=int, default=3)
     parser.add_argument("--memory-limit-mib", type=int, default=4096)
@@ -186,8 +202,11 @@ def main() -> int:
         return 0
     if args.baseline_checkout is None or args.output is None:
         parser.error("--baseline-checkout and --output are required")
+    if args.matrix and args.cases is not None:
+        parser.error("use either --matrix or --cases")
     if args.repeats < 1 or args.memory_limit_mib < 1 or args.timeout_seconds < 1:
         parser.error("repeat and resource limits must be positive")
+    cases = args.cases if args.cases is not None else list(MATRIX_CASES if args.matrix else CASES)
 
     runs: list[dict[str, Any]] = []
     report = {
@@ -202,12 +221,27 @@ def main() -> int:
         "candidate_source_sha256": hashlib.sha256(
             (args.candidate_checkout / "src/power_grid_model_io/data_stores/excel_file_store.py").read_bytes()
         ).hexdigest(),
+        "cases": cases,
+        "matrix_design": {
+            "fixed_input_columns": CONTROLLED_INPUT_COLUMNS,
+            "rows": MATRIX_ROWS,
+            "guid_columns": MATRIX_GUID_COLUMNS,
+            "distributions": ["repeated", "unique"],
+            "case_count": len(MATRIX_CASES),
+            "case_naming": "grid-r<rows>-g<guid-columns>-<distribution>",
+            "trial_order": "baseline then candidate on odd repeats, candidate then baseline on even repeats",
+        }
+        if args.matrix
+        else None,
         "runs": runs,
     }
     env = {**os.environ, "OPENBLAS_NUM_THREADS": "1", "OMP_NUM_THREADS": "1", "MKL_NUM_THREADS": "1"}
-    for case in args.cases:
-        for label, checkout in [("baseline", args.baseline_checkout), ("candidate", args.candidate_checkout)]:
-            for repeat in range(args.repeats):
+    for case in cases:
+        for repeat in range(args.repeats):
+            implementations = [("baseline", args.baseline_checkout), ("candidate", args.candidate_checkout)]
+            if repeat % 2:
+                implementations.reverse()
+            for label, checkout in implementations:
                 command = [
                     sys.executable,
                     str(Path(__file__).resolve()),
