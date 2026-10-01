@@ -313,6 +313,7 @@ def test_process_uuid_columns_adds_many_columns_without_fragmentation_warning():
         result = store._process_uuid_columns(data=data, sheet_name="Other")
 
     assert list(result.columns) == [name for i in range(105) for name in (f"Field{i}GUID", f"Field{i}Number")]
+    assert result.loc[0, "Field104GUID"] == "id-104"
     assert result.loc[0, "Field0Number"] == 0
     assert result.loc[0, "Field104Number"] == 104
     pd.testing.assert_frame_equal(result[data.columns], data)
