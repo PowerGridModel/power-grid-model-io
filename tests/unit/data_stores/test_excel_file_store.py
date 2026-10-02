@@ -63,6 +63,12 @@ def test_constructor__arg_kwargs():
     assert fs.files() == {"": Path("A.xlsx"), "foo": Path("B.xlsx"), "bar": Path("C.xls")}
 
 
+def test_constructor_fragmentation_option_is_not_an_extra_path():
+    fs = ExcelFileStore(Path("A.xlsx"), foo=Path("B.xlsx"), suppress_fragmentation_warning=True)
+
+    assert fs.files() == {"": Path("A.xlsx"), "foo": Path("B.xlsx")}
+
+
 def test_constructor__kwargs():
     # Arrange / Act
     fs = ExcelFileStore(foo=Path("A.xlsx"), bar=Path("B.xls"))
@@ -304,19 +310,41 @@ def test_remove_unnamed_column_placeholders__empty():
     pd.testing.assert_frame_equal(result, data)
 
 
-def test_process_uuid_columns_adds_many_columns_without_fragmentation_warning():
+def test_process_uuid_columns_warns_by_default_and_can_filter_known_fragmentation():
     data = pd.DataFrame({f"Field{i}GUID": [f"id-{i}"] for i in range(105)})
     store = ExcelFileStore()
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", pd.errors.PerformanceWarning)
+    with warnings.catch_warnings(record=True) as emitted:
+        warnings.simplefilter("always", pd.errors.PerformanceWarning)
         result = store._process_uuid_columns(data=data, sheet_name="Other")
 
+    assert result is data
+    assert any(
+        isinstance(item.message, pd.errors.PerformanceWarning)
+        and str(item.message).startswith("DataFrame is highly fragmented.")
+        for item in emitted
+    )
     assert list(result.columns) == [name for i in range(105) for name in (f"Field{i}GUID", f"Field{i}Number")]
     assert result.loc[0, "Field104GUID"] == "id-104"
     assert result.loc[0, "Field0Number"] == 0
     assert result.loc[0, "Field104Number"] == 104
-    pd.testing.assert_frame_equal(result[data.columns], data)
+
+    filtered = ExcelFileStore(suppress_fragmentation_warning=True)
+    filtered_data = pd.DataFrame({f"Field{i}GUID": [f"id-{i}"] for i in range(105)})
+    with warnings.catch_warnings(record=True) as emitted:
+        warnings.simplefilter("always", pd.errors.PerformanceWarning)
+        filtered_result = filtered._process_uuid_columns(data=filtered_data, sheet_name="Other")
+
+    assert filtered_result is filtered_data
+    assert not any(isinstance(item.message, pd.errors.PerformanceWarning) for item in emitted)
+    pd.testing.assert_frame_equal(filtered_result, result)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", pd.errors.PerformanceWarning)
+        with pytest.raises(pd.errors.PerformanceWarning, match="DataFrame is highly fragmented"):
+            ExcelFileStore()._process_uuid_columns(
+                pd.DataFrame({f"Field{i}GUID": [f"id-{i}"] for i in range(105)}), "Other"
+            )
 
 
 def test_process_uuid_columns_keeps_existing_number_column_position():
@@ -421,17 +449,89 @@ def test_process_uuid_columns_reuses_converter_across_sheets():
 
 
 @pytest.mark.parametrize("copy_on_write", [False, True])
-def test_process_uuid_columns_does_not_mutate_or_alias_input(copy_on_write: bool):
+def test_process_uuid_columns_preserves_original_in_place_contract(copy_on_write: bool):
     data = pd.DataFrame({"NodeGUID": ["a", "b"], "NodeNumber": [-1, -1], "Name": ["A", "B"]})
-    before = data.copy(deep=True)
 
     with pd.option_context("mode.copy_on_write", copy_on_write):
         result = ExcelFileStore()._process_uuid_columns(data=data, sheet_name="Other")
-        pd.testing.assert_frame_equal(data, before)
+        assert result is data
+        assert data["NodeNumber"].tolist() == [0, 1]
         result.loc[0, "NodeGUID"] = "changed"
         result.loc[0, "NodeNumber"] = 99
         result.loc[0, "Name"] = "changed"
-        pd.testing.assert_frame_equal(data, before)
+        assert data.loc[0].tolist() == ["changed", 99, "changed"]
+
+
+def test_process_uuid_columns_recalculates_positions_after_each_insertion():
+    data = pd.DataFrame(
+        [["a", "first", "b", -1, "c", "last"]],
+        columns=["AGUID", "Name", "BGUID", "BNumber", "CGUID", "Tail"],
+    )
+
+    result = ExcelFileStore()._process_uuid_columns(data=data, sheet_name="Other")
+
+    assert result is data
+    assert list(result.columns) == ["AGUID", "ANumber", "Name", "BGUID", "BNumber", "CGUID", "CNumber", "Tail"]
+    assert result.loc[0].tolist() == ["a", 0, "first", "b", 1, "c", 2, "last"]
+
+
+def test_fragmentation_option_leaves_other_warnings_visible_and_restores_filters():
+    original_insert = pd.DataFrame.insert
+
+    def insert_with_other_warnings(frame, *args, **kwargs):
+        warnings.warn("another performance warning", pd.errors.PerformanceWarning, stacklevel=2)
+        warnings.warn("a user warning", UserWarning, stacklevel=2)
+        return original_insert(frame, *args, **kwargs)
+
+    with warnings.catch_warnings(record=True) as emitted:
+        warnings.simplefilter("always")
+        original_filters = warnings.filters.copy()
+        with patch.object(pd.DataFrame, "insert", insert_with_other_warnings):
+            ExcelFileStore(suppress_fragmentation_warning=True)._process_uuid_columns(
+                pd.DataFrame({"NodeGUID": ["a"]}), "Other"
+            )
+        assert warnings.filters == original_filters
+
+    assert [str(item.message) for item in emitted] == ["another performance warning", "a user warning"]
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", pd.errors.PerformanceWarning)
+        original_filters = warnings.filters.copy()
+        with (
+            patch.object(pd.DataFrame, "insert", side_effect=RuntimeError("insertion failed")),
+            pytest.raises(RuntimeError, match="insertion failed"),
+        ):
+            ExcelFileStore(suppress_fragmentation_warning=True)._process_uuid_columns(
+                pd.DataFrame({"NodeGUID": ["a"]}), "Other"
+            )
+        assert warnings.filters == original_filters
+
+
+@pytest.mark.parametrize("suppress", [False, True])
+def test_vision_fragmentation_option_applies_when_lazy_sheet_is_consumed(tmp_path: Path, suppress: bool):
+    path = tmp_path / "wide-vision.xlsx"
+    headers = [f"Field{i}GUID" for i in range(105)]
+    with pd.ExcelWriter(path) as writer:
+        pd.DataFrame([headers, ["id"] * len(headers), [f"id-{i}" for i in range(105)]]).to_excel(
+            writer, sheet_name="Other", index=False, header=False
+        )
+
+    store = VisionExcelFileStore(path, suppress_fragmentation_warning=suppress)
+    with warnings.catch_warnings(record=True) as emitted:
+        warnings.simplefilter("always", pd.errors.PerformanceWarning)
+        with store.load() as sheets:
+            assert not any(isinstance(item.message, pd.errors.PerformanceWarning) for item in emitted)
+            result = sheets["Other"]
+
+    fragmented = [
+        item
+        for item in emitted
+        if isinstance(item.message, pd.errors.PerformanceWarning)
+        and str(item.message).startswith("DataFrame is highly fragmented.")
+    ]
+    assert bool(fragmented) is not suppress
+    assert result[("Field104GUID", "id")].iloc[0] == "id-104"
+    assert result[("Field104Number", "")].iloc[0] == 104
 
 
 @pytest.mark.parametrize(

@@ -24,10 +24,20 @@ class VisionExcelFileStore(ExcelFileStore):
         file_path: Path,
         language: str = LANGUAGE_EN,
         terms_changed: dict | None = None,
+        *,
+        suppress_fragmentation_warning: bool = False,
     ):
         """
         Args:
             file_path: The main Vision Excel export file
+            suppress_fragmentation_warning: Hide only pandas' known DataFrame fragmentation warning during GUID
+                column insertion. This does not remove fragmentation. Warning filters may be process-global on
+                supported Python versions; do not rely on this option for concurrent sheet loading.
         """
-        super().__init__(file_path, language=language, terms_changed=terms_changed)
+        super().__init__(
+            file_path,
+            language=language,
+            terms_changed=terms_changed,
+            suppress_fragmentation_warning=suppress_fragmentation_warning,
+        )
         self._header_rows.append(1)  # Units are stored in the row below the column names
