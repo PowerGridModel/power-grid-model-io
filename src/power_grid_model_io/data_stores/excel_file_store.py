@@ -6,6 +6,8 @@ Excel File Store
 """
 
 import re
+import warnings
+from contextlib import nullcontext
 from pathlib import Path
 
 import pandas as pd
@@ -32,10 +34,11 @@ class ExcelFileStore(BaseDataStore[TabularData]):
 
     The first row of each sheet is expected to contain the column names, unless specified differently by an extension
     of this class. Columns with duplicate names (on the same sheet) are either removed (if they contain exactly the
-    same values) or renamed.
+    same values) or renamed. The optional fragmentation-warning filter does not defragment the result. Python's
+    warning filters may be process-global, so this option is not intended for concurrent sheet loading.
     """
 
-    __slots__ = ("_excel_files", "_file_paths", "_header_rows")
+    __slots__ = ("_excel_files", "_file_paths", "_header_rows", "_suppress_fragmentation_warning")
 
     _unnamed_pattern: re.Pattern = re.compile(r"Unnamed: \d+_level_\d+")
 
@@ -45,6 +48,7 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         *,
         language: str = "en",
         terms_changed: dict | None = None,
+        suppress_fragmentation_warning: bool = False,
         **extra_paths: Path,
     ):
         super().__init__()
@@ -66,6 +70,7 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         self._vision_excel_key_mapping = VISION_EXCEL_LAN_DICT[self._language]
         self._terms_changed = terms_changed if terms_changed is not None else {}
         self._uuid_cvtr = UUID2IntCvtr()
+        self._suppress_fragmentation_warning = suppress_fragmentation_warning
 
     def files(self) -> dict[str, Path]:
         """
@@ -263,46 +268,34 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         return conversion_plan
 
     def _process_uuid_columns(self, data: pd.DataFrame, sheet_name: str) -> pd.DataFrame:
-        """Convert normalized GUID headers without mutating or sharing the input data.
+        """Convert normalized GUID headers in place.
 
         ``load`` resolves duplicate source headers first. Remaining ambiguous GUID or derived-number labels are
         rejected before changing the shared converter, rather than silently overwriting a target column.
         """
-        additions = {}
-        replacements = {}
-        for new_column_name, (guid_column_pos, target_pos) in self._plan_uuid_columns(data, sheet_name).items():
-            guid_values = data.iloc[:, guid_column_pos]
-            self._uuid_cvtr.add_list(guid_values.tolist())
-            values = guid_values.apply(self._uuid_cvtr.query)
-            if target_pos is not None:
-                replacements[target_pos] = values
-            else:
+        plan = self._plan_uuid_columns(data, sheet_name)
+        first_level = data.columns.get_level_values(0)
+
+        warning_scope = warnings.catch_warnings() if self._suppress_fragmentation_warning else nullcontext()
+        with warning_scope:
+            if self._suppress_fragmentation_warning:
+                warnings.filterwarnings(
+                    "ignore", message=r"^DataFrame is highly fragmented\.", category=pd.errors.PerformanceWarning
+                )
+            for new_column_name, (guid_column_pos, target_pos) in plan.items():
+                guid_column = first_level[guid_column_pos]
+                current_columns = data.columns.get_level_values(0).tolist()
+                guid_values = data.iloc[:, current_columns.index(guid_column)]
+                self._uuid_cvtr.add_list(guid_values.tolist())
+                values = guid_values.apply(self._uuid_cvtr.query)
+                if target_pos is not None:
+                    data.iloc[:, current_columns.index(new_column_name)] = values
+                    continue
                 label: str | tuple[str, ...] = new_column_name
                 if isinstance(data.columns, pd.MultiIndex):
                     label = (new_column_name, *("" for _ in range(data.columns.nlevels - 1)))
-                additions[guid_column_pos] = (label, values)
-
-        if not additions and not replacements:
-            return data
-
-        columns = []
-        values = []
-        for column_pos, column_name in enumerate(data.columns):
-            columns.append(column_name)
-            values.append(replacements.get(column_pos, data.iloc[:, column_pos]))
-            if column_pos in additions:
-                added_name, added_values = additions[column_pos]
-                columns.append(added_name)
-                values.append(added_values)
-
-        # The labels can be duplicated even after the GUID targets are checked.
-        # Use positional keys to build each dtype block once, then restore labels.
-        result = pd.DataFrame(dict(enumerate(values)), index=data.index, copy=True)
-        if isinstance(data.columns, pd.MultiIndex):
-            result.columns = pd.MultiIndex.from_tuples(columns, names=data.columns.names)
-        else:
-            result.columns = pd.Index(columns, name=data.columns.name)
-        return result
+                data.insert(current_columns.index(guid_column) + 1, label, values)
+        return data
 
     def _update_column_names(self, data: pd.DataFrame) -> pd.DataFrame:
         update_column_names(data, self._terms_changed)
