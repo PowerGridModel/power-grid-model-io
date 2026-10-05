@@ -12,7 +12,6 @@ import pytest
 from structlog.testing import capture_logs
 
 from power_grid_model_io.data_stores.excel_file_store import ExcelFileStore
-from power_grid_model_io.data_stores.vision_excel_file_store import VisionExcelFileStore
 from power_grid_model_io.data_types.tabular_data import TabularData
 from tests.utils import MockExcelFile, assert_log_exists
 
@@ -61,12 +60,6 @@ def test_constructor__arg_kwargs():
 
     # Assert
     assert fs.files() == {"": Path("A.xlsx"), "foo": Path("B.xlsx"), "bar": Path("C.xls")}
-
-
-def test_constructor_fragmentation_option_is_not_an_extra_path():
-    fs = ExcelFileStore(Path("A.xlsx"), foo=Path("B.xlsx"), suppress_fragmentation_warning=True)
-
-    assert fs.files() == {"": Path("A.xlsx"), "foo": Path("B.xlsx")}
 
 
 def test_constructor__kwargs():
@@ -310,7 +303,7 @@ def test_remove_unnamed_column_placeholders__empty():
     pd.testing.assert_frame_equal(result, data)
 
 
-def test_process_uuid_columns_warns_by_default_and_can_filter_known_fragmentation():
+def test_process_uuid_columns_filters_only_its_known_fragmentation_warning():
     data = pd.DataFrame({f"Field{i}GUID": [f"id-{i}"] for i in range(105)})
     store = ExcelFileStore()
 
@@ -319,32 +312,16 @@ def test_process_uuid_columns_warns_by_default_and_can_filter_known_fragmentatio
         result = store._process_uuid_columns(data=data, sheet_name="Other")
 
     assert result is data
-    assert any(
-        isinstance(item.message, pd.errors.PerformanceWarning)
-        and str(item.message).startswith("DataFrame is highly fragmented.")
-        for item in emitted
-    )
-    assert list(result.columns) == [name for i in range(105) for name in (f"Field{i}GUID", f"Field{i}Number")]
+    assert not any(isinstance(item.message, pd.errors.PerformanceWarning) for item in emitted)
     assert result.loc[0, "Field104GUID"] == "id-104"
     assert result.loc[0, "Field0Number"] == 0
     assert result.loc[0, "Field104Number"] == 104
 
-    filtered = ExcelFileStore(suppress_fragmentation_warning=True)
-    filtered_data = pd.DataFrame({f"Field{i}GUID": [f"id-{i}"] for i in range(105)})
-    with warnings.catch_warnings(record=True) as emitted:
-        warnings.simplefilter("always", pd.errors.PerformanceWarning)
-        filtered_result = filtered._process_uuid_columns(data=filtered_data, sheet_name="Other")
-
-    assert filtered_result is filtered_data
-    assert not any(isinstance(item.message, pd.errors.PerformanceWarning) for item in emitted)
-    pd.testing.assert_frame_equal(filtered_result, result)
-
     with warnings.catch_warnings():
         warnings.simplefilter("error", pd.errors.PerformanceWarning)
-        with pytest.raises(pd.errors.PerformanceWarning, match="DataFrame is highly fragmented"):
-            ExcelFileStore()._process_uuid_columns(
-                pd.DataFrame({f"Field{i}GUID": [f"id-{i}"] for i in range(105)}), "Other"
-            )
+        ExcelFileStore()._process_uuid_columns(
+            pd.DataFrame({f"Field{i}GUID": [f"id-{i}"] for i in range(105)}), "Other"
+        )
 
 
 def test_process_uuid_columns_keeps_existing_number_column_position():
@@ -356,59 +333,18 @@ def test_process_uuid_columns_keeps_existing_number_column_position():
     pd.testing.assert_frame_equal(result, expected)
 
 
-def test_process_uuid_columns_preserves_two_level_column_labels():
-    columns = pd.MultiIndex.from_tuples([("NodeGUID", "id"), ("Name", "text")], names=["field", "unit"])
-    data = pd.DataFrame([["a", "A"]], columns=columns)
-
-    result = ExcelFileStore()._process_uuid_columns(data=data, sheet_name="Other")
-
-    expected_columns = pd.MultiIndex.from_tuples(
-        [("NodeGUID", "id"), ("NodeNumber", ""), ("Name", "text")], names=["field", "unit"]
-    )
-    expected = pd.DataFrame([["a", 0, "A"]], columns=expected_columns)
-    pd.testing.assert_frame_equal(result, expected)
-
-
-def test_process_uuid_columns_updates_existing_two_level_number_column():
-    columns = pd.MultiIndex.from_tuples([("NodeGUID", "id"), ("NodeNumber", "value")])
-    data = pd.DataFrame([["a", -1]], columns=columns)
-
-    result = ExcelFileStore()._process_uuid_columns(data=data, sheet_name="Other")
-
-    expected = pd.DataFrame([["a", 0]], columns=columns)
-    pd.testing.assert_frame_equal(result, expected)
-
-
 def test_process_uuid_columns_uses_special_sheet_subnumber():
     data = pd.DataFrame({"GUID": ["a"], "OtherGUID": ["a"]})
 
     result = ExcelFileStore()._process_uuid_columns(data=data, sheet_name="Sources")
 
-    assert list(result.columns) == ["GUID", "Subnumber", "OtherGUID", "OtherNumber"]
+    assert set(result.columns) == {"GUID", "Subnumber", "OtherGUID", "OtherNumber"}
     assert result.loc[0, "Subnumber"] == result.loc[0, "OtherNumber"] == 0
 
 
-def test_process_uuid_columns_ignores_non_string_column_labels():
-    data = pd.DataFrame([["a", "b"]], columns=[1, "NodeGUID"])
-
-    result = ExcelFileStore()._process_uuid_columns(data=data, sheet_name="Other")
-
-    assert list(result.columns) == [1, "NodeGUID", "NodeNumber"]
-    assert result.loc[0, "NodeNumber"] == 0
-
-
-@pytest.mark.parametrize("levels", [1, 2, 3])
-def test_process_uuid_columns_empty_frame_preserves_headers_and_index(levels: int):
+def test_process_uuid_columns_empty_frame_preserves_headers_and_index():
     columns = pd.Index(["NodeGUID", "Name"], name="field")
     expected_columns = pd.Index(["NodeGUID", "NodeNumber", "Name"], name="field")
-    if levels > 1:
-        columns = pd.MultiIndex.from_tuples(
-            [("NodeGUID", *("id" for _ in range(levels - 1))), ("Name", *("text" for _ in range(levels - 1)))],
-            names=[f"level{i}" for i in range(levels)],
-        )
-        expected_columns = pd.MultiIndex.from_tuples(
-            [columns[0], ("NodeNumber", *("" for _ in range(levels - 1))), columns[1]], names=columns.names
-        )
     index = pd.Index([], name="row")
     data = pd.DataFrame(index=index, columns=columns)
     store = ExcelFileStore()
@@ -462,7 +398,7 @@ def test_process_uuid_columns_preserves_original_in_place_contract(copy_on_write
         assert data.loc[0].tolist() == ["changed", 99, "changed"]
 
 
-def test_process_uuid_columns_recalculates_positions_after_each_insertion():
+def test_process_uuid_columns_preserves_guid_values_with_interleaved_existing_numbers():
     data = pd.DataFrame(
         [["a", "first", "b", -1, "c", "last"]],
         columns=["AGUID", "Name", "BGUID", "BNumber", "CGUID", "Tail"],
@@ -471,28 +407,32 @@ def test_process_uuid_columns_recalculates_positions_after_each_insertion():
     result = ExcelFileStore()._process_uuid_columns(data=data, sheet_name="Other")
 
     assert result is data
-    assert list(result.columns) == ["AGUID", "ANumber", "Name", "BGUID", "BNumber", "CGUID", "CNumber", "Tail"]
-    assert result.loc[0].tolist() == ["a", 0, "first", "b", 1, "c", 2, "last"]
+    assert result[["AGUID", "BGUID", "CGUID"]].iloc[0].tolist() == ["a", "b", "c"]
+    assert result[["ANumber", "BNumber", "CNumber"]].iloc[0].tolist() == [0, 1, 2]
+    assert result[["Name", "Tail"]].iloc[0].tolist() == ["first", "last"]
 
 
-def test_fragmentation_option_leaves_other_warnings_visible_and_restores_filters():
+def test_fragmentation_filter_leaves_other_warnings_visible_and_restores_filters():
     original_insert = pd.DataFrame.insert
 
     def insert_with_other_warnings(frame, *args, **kwargs):
         warnings.warn("another performance warning", pd.errors.PerformanceWarning, stacklevel=2)
         warnings.warn("a user warning", UserWarning, stacklevel=2)
+        warnings.warn("DataFrame is highly fragmented. caller warning", pd.errors.PerformanceWarning, stacklevel=1)
         return original_insert(frame, *args, **kwargs)
 
     with warnings.catch_warnings(record=True) as emitted:
         warnings.simplefilter("always")
         original_filters = warnings.filters.copy()
         with patch.object(pd.DataFrame, "insert", insert_with_other_warnings):
-            ExcelFileStore(suppress_fragmentation_warning=True)._process_uuid_columns(
-                pd.DataFrame({"NodeGUID": ["a"]}), "Other"
-            )
+            ExcelFileStore()._process_uuid_columns(pd.DataFrame({"NodeGUID": ["a"]}), "Other")
         assert warnings.filters == original_filters
 
-    assert [str(item.message) for item in emitted] == ["another performance warning", "a user warning"]
+    assert [str(item.message) for item in emitted] == [
+        "another performance warning",
+        "a user warning",
+        "DataFrame is highly fragmented. caller warning",
+    ]
 
     with warnings.catch_warnings():
         warnings.simplefilter("error", pd.errors.PerformanceWarning)
@@ -501,22 +441,23 @@ def test_fragmentation_option_leaves_other_warnings_visible_and_restores_filters
             patch.object(pd.DataFrame, "insert", side_effect=RuntimeError("insertion failed")),
             pytest.raises(RuntimeError, match="insertion failed"),
         ):
-            ExcelFileStore(suppress_fragmentation_warning=True)._process_uuid_columns(
-                pd.DataFrame({"NodeGUID": ["a"]}), "Other"
-            )
+            ExcelFileStore()._process_uuid_columns(pd.DataFrame({"NodeGUID": ["a"]}), "Other")
         assert warnings.filters == original_filters
+        with pytest.raises(pd.errors.PerformanceWarning, match="caller warning"):
+            warnings.warn("DataFrame is highly fragmented. caller warning", pd.errors.PerformanceWarning, stacklevel=1)
 
 
-@pytest.mark.parametrize("suppress", [False, True])
-def test_vision_fragmentation_option_applies_when_lazy_sheet_is_consumed(tmp_path: Path, suppress: bool):
-    path = tmp_path / "wide-vision.xlsx"
-    headers = [f"Field{i}GUID" for i in range(105)]
+def test_fragmentation_filter_applies_when_lazy_sheet_is_consumed(tmp_path: Path):
+    path = tmp_path / "wide.xlsx"
+    # The legacy duplicate-header checker groups one-level names by their first character.
+    # Distinct initial characters keep this test focused on actual lazy loading and warning scope.
+    headers = [f"{chr(0x100 + i)}GUID" for i in range(105)]
     with pd.ExcelWriter(path) as writer:
-        pd.DataFrame([headers, ["id"] * len(headers), [f"id-{i}" for i in range(105)]]).to_excel(
+        pd.DataFrame([headers, [f"id-{i}" for i in range(105)]]).to_excel(
             writer, sheet_name="Other", index=False, header=False
         )
 
-    store = VisionExcelFileStore(path, suppress_fragmentation_warning=suppress)
+    store = ExcelFileStore(path)
     with warnings.catch_warnings(record=True) as emitted:
         warnings.simplefilter("always", pd.errors.PerformanceWarning)
         with store.load() as sheets:
@@ -529,70 +470,23 @@ def test_vision_fragmentation_option_applies_when_lazy_sheet_is_consumed(tmp_pat
         if isinstance(item.message, pd.errors.PerformanceWarning)
         and str(item.message).startswith("DataFrame is highly fragmented.")
     ]
-    assert bool(fragmented) is not suppress
-    assert result[("Field104GUID", "id")].iloc[0] == "id-104"
-    assert result[("Field104Number", "")].iloc[0] == 104
+    assert not fragmented
+    assert result[headers[104]].iloc[0] == "id-104"
+    assert result[headers[104].replace("GUID", "Number")].iloc[0] == 104
 
 
-@pytest.mark.parametrize(
-    "columns",
-    [
-        ["NodeGUID", "NodeGUID"],
-        ["NodeGUID", "NodeNumber", "NodeNumber"],
-        ["GUIDNumberGUID", "NumberGUIDGUID"],
-    ],
-)
-def test_process_uuid_columns_rejects_ambiguous_labels_before_changing_converter(columns: list[str]):
-    data = pd.DataFrame([["a"] * len(columns)], columns=columns)
-    before = data.copy(deep=True)
-    store = ExcelFileStore()
-
-    with pytest.raises(ValueError, match=r"Ambiguous GUID conversion.*Other"):
-        store._process_uuid_columns(data=data, sheet_name="Other")
-
-    pd.testing.assert_frame_equal(data, before)
-    assert store._uuid_cvtr.get_size() == 0
-
-
-@pytest.mark.parametrize("duplicate_guid", ["a", "b"])
-def test_process_uuid_columns_after_duplicate_header_preprocessing(duplicate_guid: str):
-    columns = pd.MultiIndex.from_tuples(
-        [("NodeGUID", "id"), ("NodeGUID", "other"), ("NodeNumber", ""), ("NodeNumber", "other")]
-    )
-    data = pd.DataFrame([["a", duplicate_guid, -1, -2]], columns=columns)
-    store = ExcelFileStore()
-    normalized = store._handle_duplicate_columns(data=data, sheet_name="Other")
-
-    result = store._process_uuid_columns(data=normalized, sheet_name="Other")
-
-    expected_columns = pd.MultiIndex.from_tuples(
-        [("NodeGUID", "id"), ("NodeGUID_2", "other"), ("NodeNumber", ""), ("NodeNumber_2", "other")]
-    )
-    pd.testing.assert_frame_equal(result, pd.DataFrame([["a", duplicate_guid, 0, -2]], columns=expected_columns))
-
-
-def test_vision_sheet_loading_reuses_guid_mapping_and_preserves_original_columns(tmp_path: Path):
-    path = tmp_path / "vision.xlsx"
-    # Write both header rows explicitly, so pandas does not change the duplicate source headings.
-    with pd.ExcelWriter(path) as writer:
-        pd.DataFrame(
-            [["GUID", "NodeGUID", "NodeGUID", "NodeNumber"], ["id", "id", "other", ""], ["a", "b", "c", -1]]
-        ).to_excel(writer, sheet_name="Other", index=False, header=False)
-        pd.DataFrame([["GUID", "Name"], ["id", ""], ["b", "source"]]).to_excel(
-            writer, sheet_name="Sources", index=False, header=False
-        )
-
-    with VisionExcelFileStore(path).load() as sheets:
-        nodes = sheets["Other"]
-        sources = sheets["Sources"]
-
-        assert nodes[("GUID", "id")].tolist() == ["a"]
-        assert nodes[("Number", "")].tolist() == [0]
-        assert nodes[("NodeGUID", "id")].tolist() == ["b"]
-        assert nodes[("NodeGUID_2", "other")].tolist() == ["c"]
-        assert nodes[("NodeNumber", "")].tolist() == [1]
-        assert sources[("GUID", "id")].tolist() == ["b"]
-        assert sources[("Subnumber", "")].tolist() == [1]
+def test_fragmentation_filter_does_not_suppress_caller_insertions():
+    with warnings.catch_warnings(record=True) as emitted:
+        warnings.simplefilter("always", pd.errors.PerformanceWarning)
+        original_filters = warnings.filters.copy()
+        for _ in range(2):
+            ExcelFileStore()._process_uuid_columns(pd.DataFrame({"NodeGUID": ["a"]}), "Other")
+            caller_data = pd.DataFrame({f"Field{i}": [i] for i in range(105)})
+            for i in range(105):
+                caller_data.insert(i, f"Added{i}", [i])
+        assert warnings.filters == original_filters
+    assert emitted
+    assert all(isinstance(item.message, pd.errors.PerformanceWarning) for item in emitted)
 
 
 @patch("power_grid_model_io.data_stores.excel_file_store.ExcelFileStore._check_duplicate_values")

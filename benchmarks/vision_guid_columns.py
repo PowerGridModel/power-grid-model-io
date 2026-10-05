@@ -2,11 +2,16 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-"""Linux-only synthetic GUID conversion stress test; each run uses a fresh process.
+"""Synthetic GUID conversion stress test; each run uses a fresh process.
 
-Example: python benchmarks/vision_guid_columns.py --baseline-checkout ../baseline --output results.json
+Example:
+    uv run --group benchmark python benchmarks/vision_guid_columns.py --baseline-checkout ../base --output results.json
 Both checkouts use the same interpreter and dependencies. Input generation and conversion are measured separately.
 No Excel I/O is included; real sheet loading is covered by the regression tests.
+
+RSS sampling uses psutil on Linux, Windows and macOS. The default 4096 MiB virtual-address-space limit uses
+Linux RLIMIT_AS, not an RSS cap. On Windows and macOS, pass --memory-limit-mib 0 to explicitly run without
+a hard memory limit, and choose bounded --cases. The timeout still applies on every platform.
 """
 
 import argparse
@@ -24,6 +29,8 @@ import warnings
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
+
+import psutil
 
 CASES = {
     "small-repeated": (1_000, 16, 100),
@@ -53,16 +60,26 @@ ALL_CASES = {**CASES, **MATRIX_CASES}
 
 
 def high_water_rss_bytes() -> int:
+    if sys.platform == "win32":
+        return int(psutil.Process().memory_info().peak_wset)
     resource = importlib.import_module("resource")
-    return int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) * 1024
+    unit = 1 if sys.platform == "darwin" else 1024
+    return int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) * unit
 
 
 def rss_bytes() -> int:
-    """Read resident memory without adding a benchmark dependency."""
-    for line in Path("/proc/self/status").read_text().splitlines():
-        if line.startswith("VmRSS:"):
-            return int(line.split()[1]) * 1024
-    raise RuntimeError("VmRSS is unavailable")
+    """Current process resident memory, including native Windows working set."""
+    return int(psutil.Process().memory_info().rss)
+
+
+def set_memory_limit(memory_limit_mib: int) -> str:
+    if memory_limit_mib == 0:
+        return "none; explicitly disabled"
+    if sys.platform != "linux":
+        raise ValueError("RLIMIT_AS is only used on Linux; pass --memory-limit-mib 0 on this platform")
+    resource = importlib.import_module("resource")
+    resource.setrlimit(resource.RLIMIT_AS, (memory_limit_mib * MIB, memory_limit_mib * MIB))
+    return "RLIMIT_AS virtual address space; not an RSS limit"
 
 
 def measure(operation: Callable[[], Any]) -> tuple[Any, dict[str, float | int]]:
@@ -95,8 +112,7 @@ def measure(operation: Callable[[], Any]) -> tuple[Any, dict[str, float | int]]:
 
 
 def worker(args: argparse.Namespace) -> None:
-    resource = importlib.import_module("resource")
-    resource.setrlimit(resource.RLIMIT_AS, (args.memory_limit_mib * MIB, args.memory_limit_mib * MIB))
+    memory_limit_kind = set_memory_limit(args.memory_limit_mib)
     sys.path.insert(0, str(args.candidate_checkout / "src"))
     import numpy as np  # noqa: PLC0415
     import pandas as pd  # noqa: PLC0415
@@ -150,6 +166,8 @@ def worker(args: argparse.Namespace) -> None:
                 "python": platform.python_version(),
                 "pandas": pd.__version__,
                 "numpy": np.__version__,
+                "psutil": psutil.__version__,
+                "rss_kind": "process working set" if sys.platform == "win32" else "process resident set",
                 "copy_on_write": pd.options.mode.copy_on_write,
                 "implementation_file": store_module.__file__,
                 "generation": generation,
@@ -157,7 +175,7 @@ def worker(args: argparse.Namespace) -> None:
                 "performance_warning_count": sum(isinstance(w.message, pd.errors.PerformanceWarning) for w in captured),
                 "validation": "all GUID values, derived numbers, numeric columns, shape and converter size passed",
                 "memory_limit_mib": args.memory_limit_mib,
-                "memory_limit_kind": "RLIMIT_AS virtual address space; not an RSS limit",
+                "memory_limit_kind": memory_limit_kind,
                 "whole_process_high_water_rss_bytes": high_water_rss_bytes(),
             }
         ),
@@ -171,7 +189,7 @@ def git_output(checkout: Path, *arguments: str) -> str:
         raise RuntimeError("git is required to record source revisions")
     command = [executable, "-C", str(checkout)]
     marker = checkout / ".git"
-    if marker.is_file():
+    if marker.is_file() and sys.platform != "win32":
         # A worktree created by Windows Git has a Windows path that Linux Git cannot resolve directly.
         git_dir = marker.read_text().removeprefix("gitdir:").strip()
         if len(git_dir) > 1 and git_dir[1] == ":":
@@ -193,19 +211,25 @@ def main() -> int:
     parser.add_argument("--case", choices=ALL_CASES)
     parser.add_argument("--worker", action="store_true")
     parser.add_argument("--repeats", type=int, default=3)
-    parser.add_argument("--memory-limit-mib", type=int, default=4096)
+    parser.add_argument(
+        "--memory-limit-mib", type=int, default=4096, help="Linux virtual address space cap; 0 explicitly disables it"
+    )
     parser.add_argument("--timeout-seconds", type=int, default=240)
     parser.add_argument("--copy-on-write", choices=["off", "on"], default="off")
     args = parser.parse_args()
+    if args.memory_limit_mib < 0 or args.repeats < 1 or args.timeout_seconds < 1:
+        parser.error("repeats and timeout must be positive; memory limit must be nonnegative")
+    if args.memory_limit_mib and sys.platform != "linux":
+        parser.error("RLIMIT_AS is only used on Linux; pass --memory-limit-mib 0 and select bounded --cases")
     if args.worker:
+        if args.case is None:
+            parser.error("--case is required for a worker")
         worker(args)
         return 0
     if args.baseline_checkout is None or args.output is None:
         parser.error("--baseline-checkout and --output are required")
     if args.matrix and args.cases is not None:
         parser.error("use either --matrix or --cases")
-    if args.repeats < 1 or args.memory_limit_mib < 1 or args.timeout_seconds < 1:
-        parser.error("repeat and resource limits must be positive")
     cases = args.cases if args.cases is not None else list(MATRIX_CASES if args.matrix else CASES)
 
     runs: list[dict[str, Any]] = []
@@ -272,7 +296,7 @@ def main() -> int:
                     }
                 )
                 runs.append(run)
-                args.output.write_text(json.dumps(report, indent=2) + "\n")
+                args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
                 print(f"{case} {label} {repeat + 1}: {run['exit_code']}", flush=True)
                 if run["exit_code"] != 0:
                     return 1
@@ -280,6 +304,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    if sys.platform != "linux":
-        raise SystemExit("This benchmark uses Linux /proc and RLIMIT_AS; run it on Linux or WSL.")
     raise SystemExit(main())

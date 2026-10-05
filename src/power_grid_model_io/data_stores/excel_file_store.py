@@ -7,7 +7,6 @@ Excel File Store
 
 import re
 import warnings
-from contextlib import nullcontext
 from pathlib import Path
 
 import pandas as pd
@@ -21,6 +20,7 @@ from power_grid_model_io.data_stores.base_data_store import (
 from power_grid_model_io.data_types import LazyDataFrame, TabularData
 from power_grid_model_io.utils.uuid_excel_cvtr import (
     UUID2IntCvtr,
+    add_guid_values_to_cvtr,
     get_special_key_map,
     special_nodes_en,
     special_nodes_nl,
@@ -34,11 +34,10 @@ class ExcelFileStore(BaseDataStore[TabularData]):
 
     The first row of each sheet is expected to contain the column names, unless specified differently by an extension
     of this class. Columns with duplicate names (on the same sheet) are either removed (if they contain exactly the
-    same values) or renamed. The optional fragmentation-warning filter does not defragment the result. Python's
-    warning filters may be process-global, so this option is not intended for concurrent sheet loading.
+    same values) or renamed.
     """
 
-    __slots__ = ("_excel_files", "_file_paths", "_header_rows", "_suppress_fragmentation_warning")
+    __slots__ = ("_excel_files", "_file_paths", "_header_rows")
 
     _unnamed_pattern: re.Pattern = re.compile(r"Unnamed: \d+_level_\d+")
 
@@ -48,7 +47,6 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         *,
         language: str = "en",
         terms_changed: dict | None = None,
-        suppress_fragmentation_warning: bool = False,
         **extra_paths: Path,
     ):
         super().__init__()
@@ -70,7 +68,6 @@ class ExcelFileStore(BaseDataStore[TabularData]):
         self._vision_excel_key_mapping = VISION_EXCEL_LAN_DICT[self._language]
         self._terms_changed = terms_changed if terms_changed is not None else {}
         self._uuid_cvtr = UUID2IntCvtr()
-        self._suppress_fragmentation_warning = suppress_fragmentation_warning
 
     def files(self) -> dict[str, Path]:
         """
@@ -234,67 +231,34 @@ class ExcelFileStore(BaseDataStore[TabularData]):
 
         return to_rename
 
-    def _plan_uuid_columns(self, data: pd.DataFrame, sheet_name: str) -> dict[str, tuple[int, int | None]]:
-        """Validate source/target positions before modifying the shared converter."""
+    def _process_uuid_columns(self, data: pd.DataFrame, sheet_name: str) -> pd.DataFrame:
         first_level = data.columns.get_level_values(0)
+        guid_columns = first_level[first_level.str.endswith("GUID")]
         sheet_key_mapping = get_special_key_map(
             sheet_name=sheet_name, nodes_en=special_nodes_en, nodes_nl=special_nodes_nl
         )
 
-        positions: dict[str, list[int]] = {}
-        for column_pos, column_name in enumerate(first_level):
-            positions.setdefault(column_name, []).append(column_pos)
-
-        conversion_plan = {}
-        for guid_column_pos, guid_column in enumerate(first_level):
-            if not isinstance(guid_column, str) or not guid_column.endswith("GUID"):
-                continue
-
-            nr = VISION_EXCEL_LAN_DICT[self._language][DICT_KEY_NUMBER]
-            new_column_name = guid_column.replace("GUID", nr)
-            if guid_column == "GUID" and sheet_key_mapping not in (None, {}):
-                new_column_name = guid_column.replace("GUID", sheet_key_mapping[DICT_KEY_SUBNUMBER])
-
-            if (
-                len(positions[guid_column]) > 1
-                or len(positions.get(new_column_name, [])) > 1
-                or new_column_name in conversion_plan
-            ):
-                raise ValueError(
-                    f"Ambiguous GUID conversion in sheet '{sheet_name}': {guid_column} -> {new_column_name}"
-                )
-            targets = positions.get(new_column_name, [])
-            conversion_plan[new_column_name] = (guid_column_pos, targets[0] if targets else None)
-        return conversion_plan
-
-    def _process_uuid_columns(self, data: pd.DataFrame, sheet_name: str) -> pd.DataFrame:
-        """Convert normalized GUID headers in place.
-
-        ``load`` resolves duplicate source headers first. Remaining ambiguous GUID or derived-number labels are
-        rejected before changing the shared converter, rather than silently overwriting a target column.
-        """
-        plan = self._plan_uuid_columns(data, sheet_name)
-        first_level = data.columns.get_level_values(0)
-
-        warning_scope = warnings.catch_warnings() if self._suppress_fragmentation_warning else nullcontext()
-        with warning_scope:
-            if self._suppress_fragmentation_warning:
-                warnings.filterwarnings(
-                    "ignore", message=r"^DataFrame is highly fragmented\.", category=pd.errors.PerformanceWarning
-                )
-            for new_column_name, (guid_column_pos, target_pos) in plan.items():
-                guid_column = first_level[guid_column_pos]
-                current_columns = data.columns.get_level_values(0).tolist()
-                guid_values = data.iloc[:, current_columns.index(guid_column)]
-                self._uuid_cvtr.add_list(guid_values.tolist())
-                values = guid_values.apply(self._uuid_cvtr.query)
-                if target_pos is not None:
-                    data.iloc[:, current_columns.index(new_column_name)] = values
-                    continue
-                label: str | tuple[str, ...] = new_column_name
-                if isinstance(data.columns, pd.MultiIndex):
-                    label = (new_column_name, *("" for _ in range(data.columns.nlevels - 1)))
-                data.insert(current_columns.index(guid_column) + 1, label, values)
+        with warnings.catch_warnings():
+            # Keep the existing in-place conversion: avoiding fragmentation costs more memory or runtime.
+            # Only this module's known pandas insertion warning is silenced, not caller-space warnings.
+            # See also https://github.com/PowerGridModel/power-grid-model-io/pull/500
+            warnings.filterwarnings(
+                "ignore",
+                message=r"^DataFrame is highly fragmented\.",
+                category=pd.errors.PerformanceWarning,
+                module=rf"^{re.escape(__name__)}$",
+            )
+            for guid_column in guid_columns:
+                nr = VISION_EXCEL_LAN_DICT[self._language][DICT_KEY_NUMBER]
+                add_guid_values_to_cvtr(data, guid_column, self._uuid_cvtr)
+                new_column_name = guid_column.replace("GUID", nr)
+                if guid_column == "GUID" and sheet_key_mapping not in (None, {}):
+                    new_column_name = guid_column.replace("GUID", sheet_key_mapping[DICT_KEY_SUBNUMBER])
+                guid_column_pos = first_level.tolist().index(guid_column)
+                try:
+                    data.insert(guid_column_pos + 1, new_column_name, data[guid_column].apply(self._uuid_cvtr.query))
+                except ValueError:
+                    data[new_column_name] = data[guid_column].apply(self._uuid_cvtr.query)
         return data
 
     def _update_column_names(self, data: pd.DataFrame) -> pd.DataFrame:
