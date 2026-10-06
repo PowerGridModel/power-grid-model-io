@@ -6,6 +6,7 @@ Excel File Store
 """
 
 import re
+import warnings
 from pathlib import Path
 
 import pandas as pd
@@ -233,23 +234,31 @@ class ExcelFileStore(BaseDataStore[TabularData]):
     def _process_uuid_columns(self, data: pd.DataFrame, sheet_name: str) -> pd.DataFrame:
         first_level = data.columns.get_level_values(0)
         guid_columns = first_level[first_level.str.endswith("GUID")]
-
         sheet_key_mapping = get_special_key_map(
             sheet_name=sheet_name, nodes_en=special_nodes_en, nodes_nl=special_nodes_nl
         )
 
-        for guid_column in guid_columns:
-            nr = VISION_EXCEL_LAN_DICT[self._language][DICT_KEY_NUMBER]
-            add_guid_values_to_cvtr(data, guid_column, self._uuid_cvtr)
-            new_column_name = guid_column.replace("GUID", nr)
-            if guid_column == "GUID" and sheet_key_mapping not in (None, {}):
-                new_column_name = guid_column.replace("GUID", sheet_key_mapping[DICT_KEY_SUBNUMBER])
-            guid_column_pos = first_level.tolist().index(guid_column)
-            try:
-                data.insert(guid_column_pos + 1, new_column_name, data[guid_column].apply(self._uuid_cvtr.query))
-            except ValueError:
-                data[new_column_name] = data[guid_column].apply(self._uuid_cvtr.query)
-
+        with warnings.catch_warnings():
+            # Keep the existing in-place conversion: avoiding fragmentation costs more memory or runtime.
+            # Only this module's known pandas insertion warning is silenced, not caller-space warnings.
+            # See also https://github.com/PowerGridModel/power-grid-model-io/pull/500
+            warnings.filterwarnings(
+                "ignore",
+                message=r"^DataFrame is highly fragmented\.",
+                category=pd.errors.PerformanceWarning,
+                module=rf"^{re.escape(__name__)}$",
+            )
+            for guid_column in guid_columns:
+                nr = VISION_EXCEL_LAN_DICT[self._language][DICT_KEY_NUMBER]
+                add_guid_values_to_cvtr(data, guid_column, self._uuid_cvtr)
+                new_column_name = guid_column.replace("GUID", nr)
+                if guid_column == "GUID" and sheet_key_mapping not in (None, {}):
+                    new_column_name = guid_column.replace("GUID", sheet_key_mapping[DICT_KEY_SUBNUMBER])
+                guid_column_pos = first_level.tolist().index(guid_column)
+                try:
+                    data.insert(guid_column_pos + 1, new_column_name, data[guid_column].apply(self._uuid_cvtr.query))
+                except ValueError:
+                    data[new_column_name] = data[guid_column].apply(self._uuid_cvtr.query)
         return data
 
     def _update_column_names(self, data: pd.DataFrame) -> pd.DataFrame:
