@@ -238,12 +238,13 @@ def compute_node_complex_voltages(asym_output: dict[str, Any]) -> pd.DataFrame:
     return v_complex
 
 
-def verify_node_voltages(
+def verify_node_voltages(  # noqa: PLR0913, PLR0917
     calculated_complex: pd.DataFrame,
     expected_voltages: dict[int, list[tuple[float, float]]],
     node_winding_types: dict[int, WindingType],
-    mag_tolerance: float = 1.0,
-    angle_tolerance: float = 0.1,
+    rtol: float = 1e-3,
+    v_atol: float = 1.0,
+    angle_atol: float = 0.3,
 ) -> bool:
     """
     Verifies magnitude and phase angle for specified nodes.
@@ -259,25 +260,24 @@ def verify_node_voltages(
 
         cols = ["vab", "vbc", "vca"] if is_line_to_line else ["va", "vb", "vc"]
 
-        # 1. Extract complex vectors and compute magnitudes + angles in degrees
+        # Extract complex vectors and compute magnitudes + angles in degrees
         v_complex_node = calculated_complex.loc[node_idx, cols].to_numpy()
         actual_mag = np.abs(v_complex_node)
         actual_deg = np.rad2deg(np.angle(v_complex_node))
 
-        # 2. Extract expected magnitudes and angles
+        # Extract expected magnitudes and angles
         expected_mag = np.array([exp[0] for exp in expected_phased_data])
         expected_deg = np.array([exp[1] for exp in expected_phased_data])
 
-        # 3. Calculate differences
         mag_diff = np.abs(actual_mag - expected_mag)
-
-        # Wrap angle difference to [-180, 180] to handle boundary wrap-around cleanly
         angle_diff = np.abs((actual_deg - expected_deg + 180) % 360 - 180)
 
-        # 4. Check conditions
-        mag_passed = np.all(mag_diff <= mag_tolerance)
-        angle_passed = np.all(angle_diff <= angle_tolerance)
-        node_passed = mag_passed and angle_passed
+        # comparison
+        mag_passed_mask = np.isclose(actual_mag, expected_mag, rtol=rtol, atol=v_atol)
+        angle_passed_mask = np.isclose(actual_deg, expected_deg, rtol=rtol, atol=angle_atol)
+
+        # Combined check per node
+        node_passed = np.all(mag_passed_mask) and np.all(angle_passed_mask)
 
         if not node_passed:
             all_passed = False
@@ -519,8 +519,9 @@ def main() -> None:
                 calculated_complex=v_complex,
                 expected_voltages=cfg["expected_voltages"],
                 node_winding_types=node_windings,
-                mag_tolerance=1.5,
-                angle_tolerance=0.3,
+                rtol=1e-3,
+                v_atol=1.0,
+                angle_atol=0.3,
             )
         except PowerGridError as e:
             print(e)
