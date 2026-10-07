@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
 
 import numpy as np
 import pandas as pd
@@ -28,6 +28,18 @@ DATA_DIR = root / "src" / "power_grid_model_io" / "networks" / "data" / "ieee" /
 INPUT_FILE = DATA_DIR / "input.json"
 SYM_OUTPUT_FILE = DATA_DIR / "sym_output.json"
 ASYM_OUTPUT_FILE = DATA_DIR / "asym_output.json"
+
+
+class ScenarioConfig(TypedDict):
+    u_primary: float
+    u_secondary: float
+    winding_from: WindingType
+    winding_to: WindingType
+    clock: int
+    p_phases: list[float]
+    pf_phases: list[float]
+    expected_voltages: dict[int, list[tuple[float, float]]]
+
 
 license_content = (
     "# SPDX-FileCopyrightText: Contributors to the Power Grid Model project \n#\n# SPDX-License-Identifier: MPL-2.0\n"
@@ -200,25 +212,31 @@ def create_asym_load(p_phases: list[float], pf_phases: list[float], secondary_3_
     return asym_load
 
 
-def generate_scenario(  # noqa: PLR0913, PLR0917
-    u_primary: float,
-    u_secondary: float,
-    winding_from: WindingType,
-    winding_to: WindingType,
-    clock: int,
-    p_phases: list[float],
-    pf_phases: list[float],
-) -> dict[ComponentType, np.ndarray]:
+def generate_scenario(scenario: ScenarioConfig) -> dict[ComponentType, np.ndarray]:
+    #     u_primary: float,
+    #     u_secondary: float,
+    #     winding_from: WindingType,
+    #     winding_to: WindingType,
+    #     clock: int,
+    #     p_phases: list[float],
+    #     pf_phases: list[float],
+    # ) -> dict[ComponentType, np.ndarray]:
 
-    primary_3_wire = winding_from == WindingType.delta
-    secondary_3_wire = winding_to == WindingType.delta
+    primary_3_wire = scenario["winding_from"] == WindingType.delta
+    secondary_3_wire = scenario["winding_to"] == WindingType.delta
 
     return {
-        ComponentType.node: create_nodes(u_primary, u_secondary, secondary_3_wire),
+        ComponentType.node: create_nodes(scenario["u_primary"], scenario["u_secondary"], secondary_3_wire),
         ComponentType.asym_line: create_asym_lines(primary_3_wire, secondary_3_wire),
-        ComponentType.transformer: create_transformer(u_primary, u_secondary, winding_from, winding_to, clock),
+        ComponentType.transformer: create_transformer(
+            scenario["u_primary"],
+            scenario["u_secondary"],
+            scenario["winding_from"],
+            scenario["winding_to"],
+            scenario["clock"],
+        ),
         ComponentType.source: create_source(),
-        ComponentType.asym_load: create_asym_load(p_phases, pf_phases, secondary_3_wire),
+        ComponentType.asym_load: create_asym_load(scenario["p_phases"], scenario["pf_phases"], secondary_3_wire),
     }
 
 
@@ -304,7 +322,7 @@ def main() -> None:
     p_un_bal = [1.275e6, 1.8e6, 2.375e6]
     pf_un_bal = [0.85, 0.9, 0.95]
 
-    scenarios = {
+    scenarios: dict[str, ScenarioConfig] = {
         "step_down_dyn1_balanced_load": {
             "u_primary": 12.47e3,
             "u_secondary": 4.16e3,
@@ -478,15 +496,7 @@ def main() -> None:
     for scenario_name, cfg in scenarios.items():
         print(f"\n--- Running Scenario: {scenario_name} ---")
 
-        input_data = generate_scenario(
-            u_primary=cfg["u_primary"],
-            u_secondary=cfg["u_secondary"],
-            winding_from=cfg["winding_from"],
-            winding_to=cfg["winding_to"],
-            clock=cfg["clock"],
-            p_phases=cfg["p_phases"],
-            pf_phases=cfg["pf_phases"],
-        )
+        input_data = generate_scenario(cfg)
 
         assert_valid_input_data(input_data=input_data, calculation_type=CalculationType.power_flow)
         assert_valid_input_data(input_data=input_data, calculation_type=CalculationType.power_flow, symmetric=False)
