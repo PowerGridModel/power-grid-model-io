@@ -81,9 +81,23 @@ jobs:
       - name: Install built wheel file
         run: uv pip install power-grid-model-io==${{ needs.build-python.outputs.version }} --find-links=wheelhouse
 
-      - name: Unit test and coverage
-        # pandapower tests are skipped on 3.15, so the coverage gate cannot be met there
-        run: uv run --frozen --only-group test --no-editable pytest tests/unit ${{ matrix.python == '3.15' && '--no-cov' || '' }} --verbose
+      - name: Unit test and coverage (pandas >= 3, no pandapower)
+      # because test-pandapower is not run in 3.15, coverage is not satisfied there
+        run: uv run --frozen --only-group test --no-editable pytest tests/unit ${{ matrix.python == '3.15' && '--no-cov' || '--cov-fail-under=0' }} --verbose
+
+      - name: Unit test (pandas < 3, pandapower)
+      # pandapower tests are skipped on 3.15, so the coverage gate cannot be met there
+        if: matrix.python != '3.15'
+        run: >
+          uv run --frozen --only-group test-pandapower --no-editable pytest
+          tests/unit/converters/test_pandapower_converter_input.py
+          --cov-append --cov-fail-under=0 --verbose
+
+      - name: Combined coverage gate
+        if: matrix.python != '3.15'
+        run: |
+          uv run --frozen --only-group test --no-editable coverage report
+
 
   validation-tests:
     needs: build-python
@@ -115,5 +129,13 @@ jobs:
       - name: Install built wheel file
         run: uv pip install power-grid-model-io==${{ needs.build-python.outputs.version }} --find-links=wheelhouse
 
-      - name: Validation tests
+      - name: Validation tests (no pandapower)
         run: uv run --frozen --only-group test --no-editable pytest tests/validation --no-cov --verbose
+
+      - name: Validation tests (with pandapower)
+        if: matrix.python != '3.15'
+        run: >
+          uv run --frozen --only-group test-pandapower --no-editable pytest
+          tests/validation/converters/test_pandapower_converter_input.py
+          tests/validation/converters/test_pandapower_converter_output.py
+          --no-cov --verbose

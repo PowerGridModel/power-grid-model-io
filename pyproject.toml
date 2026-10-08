@@ -45,6 +45,13 @@ test = [
     "pytest",
     "pytest-cov",
     "pydantic>2", # Used in unit tests
+    "pandas>=3.0",
+]
+
+test-pandapower = [
+    "pytest",
+    "pytest-cov",
+    "pydantic>2", # Used in unit tests
     # pandapower is excluded on 3.15 until its dependency cachebox (PyO3) supports Python 3.15
     "pandapower>2.11.1; python_version < '3.15'",
     "pandas<3.0",  # pandapower does not yet support pandas 3.x https://github.com/e2nIEE/pandapower/issues/2861
@@ -101,10 +108,12 @@ addopts = [
     "--cov=power_grid_model_io",
     "--cov-report=term",
     "--cov-report=html:cov_html",
-    "--cov-report=xml:python_coverage.xml",
-    "--cov-fail-under=98.0",
+    "--cov-report=xml:python_coverage.xml"
 ]
 xfail_strict = true
+
+[tool.coverage.report]
+fail_under = 98.0
 
 [tool.ruff]
 # Same as Black.
@@ -188,3 +197,9 @@ install_types = true
 
 [tool.uv]
 exclude-newer = "7 days"
+conflicts = [
+    [{ group = "test" }, { group = "test-pandapower" }],
+    [{ group = "test" }, { group = "examples" }],
+    [{ group = "dev" }, { group = "test-pandapower" }],
+    [{ group = "dev" }, { group = "examples" }],
+]
