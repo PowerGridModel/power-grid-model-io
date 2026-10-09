@@ -49,6 +49,7 @@ test = [
     # it is up to the user if they want to build numpy and pandas from source but we only want to test on available prebuilt supported binaries
     "numpy>=2.5.2; python_version >= '3.15'",
     "pandas>=3.0.6; python_version >= '3.15'",
+    "pydantic-core>=2.47.0; python_version >= '3.15'",
 ]
 
 test-pandapower = [
