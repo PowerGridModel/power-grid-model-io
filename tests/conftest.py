@@ -12,7 +12,6 @@ from packaging.version import Version
 if find_spec("pandapower") is None:
     # these modules import pandapower at module level
     collect_ignore = [
-        "unit/converters/test_pandapower_converter_input.py",
         "validation/converters/test_pandapower_converter_input.py",
         "validation/converters/test_pandapower_converter_output.py",
     ]
