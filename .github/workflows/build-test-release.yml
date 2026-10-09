@@ -82,7 +82,7 @@ jobs:
         run: uv pip install power-grid-model-io==${{ needs.build-python.outputs.version }} --find-links=wheelhouse
 
       - name: Unit test and coverage (standalone, no pandapower)
-        run: uv run --no-build --frozen --only-group test --no-editable pytest tests/unit --verbose
+        run: uv run --frozen --only-group test --no-editable pytest tests/unit --verbose
 
   validation-tests:
     needs: build-python
@@ -115,8 +115,8 @@ jobs:
         run: uv pip install power-grid-model-io==${{ needs.build-python.outputs.version }} --find-links=wheelhouse
 
       - name: Validation tests (no pandapower)
-        run: uv run --no-build --frozen --only-group test --no-editable pytest tests/validation -m "not pandapower" --no-cov --verbose
+        run: uv run --frozen --only-group test --no-editable pytest tests/validation -m "not pandapower" --no-cov --verbose
 
       - name: Validation tests (with pandapower, pandas < 3)
         if: matrix.python != '3.15'
-        run: uv run --no-build --frozen --only-group test-pandapower --no-editable pytest tests/validation -m pandapower --no-cov --verbose
+        run: uv run --frozen --only-group test-pandapower --no-editable pytest tests/validation -m pandapower --no-cov --verbose
