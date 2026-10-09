@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import csv
 from pathlib import Path
 from typing import Any, TypedDict
 
@@ -22,7 +23,7 @@ from power_grid_model.errors import PowerGridError
 from power_grid_model.utils import json_serialize_to_file
 from power_grid_model.validation import assert_valid_input_data
 
-root = Path(__file__).parent.parent
+root = Path(__file__).parent.parent.parent
 DATA_DIR = root / "src" / "power_grid_model_io" / "networks" / "_data" / "ieee" / "ieee_four_bus"
 
 INPUT_FILE = DATA_DIR / "input.json"
@@ -50,45 +51,6 @@ license_content = (
 
 MILES_TO_FEET = 5.280e3
 
-WIRE_PARAMS = {
-    "3-wire": {
-        "R": {
-            "aa": 0.4013,
-            "ba": 0.0953,
-            "bb": 0.4013,
-            "ca": 0.0953,
-            "cb": 0.0953,
-            "cc": 0.4013,
-        },
-        "X": {
-            "aa": 1.4133,
-            "ba": 0.8515,
-            "bb": 1.4133,
-            "ca": 0.7266,
-            "cb": 0.7802,
-            "cc": 1.4133,
-        },
-    },
-    "4-wire": {
-        "R": {
-            "aa": 0.4576,
-            "ba": 0.1559,
-            "bb": 0.4666,
-            "ca": 0.1535,
-            "cb": 0.1580,
-            "cc": 0.4615,
-        },
-        "X": {
-            "aa": 1.0780,
-            "ba": 0.5017,
-            "bb": 1.0482,
-            "ca": 0.3849,
-            "cb": 0.4236,
-            "cc": 1.0651,
-        },
-    },
-}
-
 
 def create_nodes(u_primary: float, u_secondary: float, secondary_3_wire: bool) -> np.ndarray:
     if secondary_3_wire:
@@ -104,6 +66,7 @@ def create_nodes(u_primary: float, u_secondary: float, secondary_3_wire: bool) -
 
 def create_asym_lines(
     primary_3_wire: bool = True,
+    wire_params: dict = {},
     secondary_3_wire: bool = False,
 ) -> np.ndarray:
     asym_line = initialize_array(DatasetType.input, ComponentType.asym_line, 2)
@@ -116,22 +79,22 @@ def create_asym_lines(
     length_1_feet = 2000
     length_2_feet = 2500
 
-    cfg1 = WIRE_PARAMS["3-wire"] if primary_3_wire else WIRE_PARAMS["4-wire"]
-    cfg2 = WIRE_PARAMS["3-wire"] if secondary_3_wire else WIRE_PARAMS["4-wire"]
+    cfg1 = wire_params["3-wire"] if primary_3_wire else wire_params["4-wire"]
+    cfg2 = wire_params["3-wire"] if secondary_3_wire else wire_params["4-wire"]
 
-    for phase in ["aa", "ba", "bb", "ca", "cb", "cc"]:
-        asym_line[getattr(AttributeType, f"r_{phase}")] = [
-            cfg1["R"][phase] * length_1_feet / MILES_TO_FEET,
-            cfg2["R"][phase] * length_2_feet / MILES_TO_FEET,
+    for attr in ["aa", "ba", "bb", "ca", "cb", "cc"]:
+        asym_line[getattr(AttributeType, f"r_{attr}")] = [
+            cfg1[f"r_{attr}"] * length_1_feet / MILES_TO_FEET,
+            cfg2[f"r_{attr}"] * length_2_feet / MILES_TO_FEET,
         ]
-        asym_line[getattr(AttributeType, f"x_{phase}")] = [
-            cfg1["X"][phase] * length_1_feet / MILES_TO_FEET,
-            cfg2["X"][phase] * length_2_feet / MILES_TO_FEET,
+        asym_line[getattr(AttributeType, f"x_{attr}")] = [
+            cfg1[f"x_{attr}"] * length_1_feet / MILES_TO_FEET,
+            cfg2[f"x_{attr}"] * length_2_feet / MILES_TO_FEET,
         ]
 
-    for phase in ["na", "nb", "nc", "nn"]:
-        asym_line[getattr(AttributeType, f"r_{phase}")] = [np.nan, np.nan]
-        asym_line[getattr(AttributeType, f"x_{phase}")] = [np.nan, np.nan]
+    for attr in ["na", "nb", "nc", "nn"]:
+        asym_line[getattr(AttributeType, f"r_{attr}")] = [np.nan, np.nan]
+        asym_line[getattr(AttributeType, f"x_{attr}")] = [np.nan, np.nan]
 
     asym_line[AttributeType.c0] = [1.0e-40, 1.0e-40]
     asym_line[AttributeType.c1] = [1.0e-40, 1.0e-40]
@@ -214,13 +177,13 @@ def create_asym_load(p_phases: list[float], pf_phases: list[float], secondary_3_
     return asym_load
 
 
-def generate_scenario(scenario: ScenarioConfig) -> dict[ComponentType, np.ndarray]:
+def generate_scenario(scenario: ScenarioConfig, wire_params: dict) -> dict[ComponentType, np.ndarray]:
     primary_3_wire = scenario["winding_from"] == WindingType.delta
     secondary_3_wire = scenario["winding_to"] == WindingType.delta
 
     return {
         ComponentType.node: create_nodes(scenario["u_primary"], scenario["u_secondary"], secondary_3_wire),
-        ComponentType.asym_line: create_asym_lines(primary_3_wire, secondary_3_wire),
+        ComponentType.asym_line: create_asym_lines(primary_3_wire, wire_params, secondary_3_wire),
         ComponentType.transformer: create_transformer(
             scenario["u_primary"],
             scenario["u_secondary"],
@@ -305,9 +268,22 @@ def verify_node_voltages(  # noqa: PLR0913, PLR0917
 
     return all_passed
 
+def load_wire_params_dict(csv_path: Path) -> dict[str, dict[str, float]]:
+    wire_params = {}
+
+    with csv_path.open(encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            wire_type = row.pop("wire_type")
+            wire_params[wire_type] = {k: float(v) for k, v in row.items()}
+
+    return wire_params
 
 def main() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+    file_path = Path(__file__).parent
+    wire_params = load_wire_params_dict(file_path / "wire_data_4_bus.csv")
 
     p_bal = [1.8e6, 1.8e6, 1.8e6]
     pf_bal = [0.9, 0.9, 0.9]
@@ -661,7 +637,7 @@ def main() -> None:
     for scenario_name, cfg in scenarios.items():
         print(f"\n--- Running Scenario: {scenario_name} ---")
 
-        input_data = generate_scenario(cfg)
+        input_data = generate_scenario(cfg, wire_params)
 
         assert_valid_input_data(input_data=input_data, calculation_type=CalculationType.power_flow)
         assert_valid_input_data(input_data=input_data, calculation_type=CalculationType.power_flow, symmetric=False)
