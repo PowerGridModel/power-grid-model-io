@@ -46,6 +46,8 @@ from tests.validation.utils import (
     select_values,
 )
 
+pytestmark = pytest.mark.pandapower
+
 PANDAPOWER_DATA_DIR = Path(__file__).parents[2] / "data" / "pandapower"
 VALIDATION_FILE = PANDAPOWER_DATA_DIR / "pgm_input_data.json"
 VALIDATION_FILE_ZERO_SEQ = PANDAPOWER_DATA_DIR / "pgm_input_data_trafo_zero_seq.json"

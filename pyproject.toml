@@ -110,6 +110,9 @@ addopts = [
     "--cov-report=html:cov_html",
     "--cov-report=xml:python_coverage.xml"
 ]
+markers = [
+    "pandapower: integration tests that require the optional pandapower package (test-pandapower group)",
+]
 xfail_strict = true
 
 [tool.coverage.report]
