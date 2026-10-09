@@ -1199,7 +1199,7 @@ def test_create_pgm_input_transformers__default() -> None:
         warnings.simplefilter("error")
 
         # Arrange
-        tap = {_PpAttr.tap_neutral: 12.0, _PpAttr.tap_pos: 34.0, _PpAttr.tap_step_percent: 1.0}
+        tap: dict[str, float] = {_PpAttr.tap_neutral: 12.0, _PpAttr.tap_pos: 34.0, _PpAttr.tap_step_percent: 1.0}
         converter = PandaPowerConverter()
         converter.pp_input_data = _pp_tables(
             trafo=_trafo_table(
@@ -1674,7 +1674,7 @@ def test_create_pgm_input_transformers3w__default() -> None:
         warnings.simplefilter("error")
 
         # Arrange
-        tap = {_PpAttr.tap_neutral: 12.0, _PpAttr.tap_pos: 34.0, _PpAttr.tap_step_percent: 1.0}
+        tap: dict[str, float] = {_PpAttr.tap_neutral: 12.0, _PpAttr.tap_pos: 34.0, _PpAttr.tap_step_percent: 1.0}
         converter = PandaPowerConverter()
         converter.pp_input_data = _pp_tables(
             trafo3w=_trafo3w_table(
