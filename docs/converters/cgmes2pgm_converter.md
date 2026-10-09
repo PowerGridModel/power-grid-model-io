@@ -63,8 +63,8 @@ import pandas as pd
 from cgmes2pgm_converter import CgmesDataset, CgmesToPgmConverter
 from power_grid_model import ComponentType
 
-# cim_namespace = "http://iec.ch/TC57/2013/CIM-schema-cim16#", # Use this for CIM 2.x
-cim_namespace = "http://iec.ch/TC57/CIM100#", # Use this for CIM 3.x
+# cim_namespace = "http://iec.ch/TC57/2013/CIM-schema-cim16#"  # Use this for CIM 2.x
+cim_namespace = "http://iec.ch/TC57/CIM100#"  # Use this for CIM 3.x
 
 # data set with name ExampleGrid must be uploaded to the graph database (change URL if needed)
 dataset_url = "http://localhost:3030/ExampleGrid"
@@ -92,8 +92,8 @@ from cgmes2pgm_converter import CgmesDataset, CgmesToPgmConverter
 from cgmes2pgm_suite.rdf_store.xml_dir_import import RdfXmlDirectoryImport
 from power_grid_model import ComponentType
 
-# cim_namespace = "http://iec.ch/TC57/2013/CIM-schema-cim16#", # Use this for CIM 2.
-cim_namespace = "http://iec.ch/TC57/CIM100#", # Use this for CIM 3.x
+# cim_namespace = "http://iec.ch/TC57/2013/CIM-schema-cim16#"  # Use this for CIM 2.
+cim_namespace = "http://iec.ch/TC57/CIM100#"  # Use this for CIM 3.x
 
 # XML or ZIP source files containing the CGMES dataset
 input_path = "path/to/ExampleGrid"
