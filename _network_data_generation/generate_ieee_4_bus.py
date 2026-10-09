@@ -39,6 +39,9 @@ class ScenarioConfig(TypedDict):
     p_phases: list[float]
     pf_phases: list[float]
     expected_voltages: dict[int, list[tuple[float, float]]]
+    rtol: float
+    v_atol: float
+    angle_atol: float
 
 
 license_content = (
@@ -326,6 +329,9 @@ def main() -> None:
                 3: [(2249.0, -33.7), (2263.0, -153.4), (2259.0, 86.4)],
                 4: [(1920.0, -39.1), (2054.0, -158.3), (1986.0, 80.9)],
             },
+            "rtol": 3e-4,
+            "v_atol": 0.6,
+            "angle_atol": 0.06,
         },
         "step_down_dyn_unbalanced_load": {
             "u_primary": 12.47e3,
@@ -340,6 +346,9 @@ def main() -> None:
                 3: [(2290.0, -32.4), (2261.0, -153.8), (2214.0, 85.2)],
                 4: [(2157.0, -34.2), (1936.0, -157.0), (1849.0, 73.4)],
             },
+            "rtol": 3e-4,
+            "v_atol": 0.7,
+            "angle_atol": 0.06,
         },
         "step_down_ynyn_balanced_load": {
             "u_primary": 12.47e3,
@@ -354,6 +363,9 @@ def main() -> None:
                 3: [(2247.0, -3.7), (2269.0, -123.5), (2256.0, 116.4)],
                 4: [(1918.0, -9.1), (2061.0, -128.3), (1981.0, 110.9)],
             },
+            "rtol": 3e-4,
+            "v_atol": 0.6,
+            "angle_atol": 0.06,
         },
         "step_down_ynyn_unbalanced_load": {
             "u_primary": 12.47e3,
@@ -368,6 +380,9 @@ def main() -> None:
                 3: [(2305.0, -2.3), (2255.0, -123.6), (2203.0, 114.8)],
                 4: [(2175.0, -4.1), (1930.0, -126.8), (1833.0, 102.8)],
             },
+            "rtol": 3e-4,
+            "v_atol": 0.6,
+            "angle_atol": 0.06,
         },
         "step_down_ynd_balanced_load": {
             "u_primary": 12.47e3,
@@ -382,6 +397,9 @@ def main() -> None:
                 3: [(3906.0, -3.5), (3915.0, -123.6), (3909.0, 116.3)],
                 4: [(3437.0, -7.8), (3497.0, -129.3), (3388.0, 110.6)],
             },
+            "rtol": 2e-4,
+            "v_atol": 0.8,
+            "angle_atol": 0.3,
         },
         "step_down_ynd_unbalanced_load": {
             "u_primary": 12.47e3,
@@ -396,6 +414,9 @@ def main() -> None:
                 3: [(3896.0, -2.8), (3972.0, -123.8), (3874.0, 115.7)],
                 4: [(3425.0, -5.8), (3646.0, -130.3), (3298.0, 108.6)],
             },
+            "rtol": 3e-4,
+            "v_atol": 2.0,
+            "angle_atol": 0.06,
         },
         "step_down_yd_balanced_load": {
             "u_primary": 12.47e3,
@@ -410,6 +431,9 @@ def main() -> None:
                 3: [(3906.0, -3.4), (3915.0, -123.6), (3909.0, 116.3)],
                 4: [(3437.0, -7.8), (3497.0, -129.3), (3388.0, 110.6)],
             },
+            "rtol": 2e-4,
+            "v_atol": 1.0,
+            "angle_atol": 0.3,
         },
         "step_down_yd_unbalanced_load": {
             "u_primary": 12.47e3,
@@ -424,6 +448,9 @@ def main() -> None:
                 3: [(3896.0, -2.8), (3972.0, -123.8), (3874.0, 115.7)],
                 4: [(3425.0, -5.8), (3646.0, -130.3), (3298.0, 108.6)],
             },
+            "rtol": 3e-4,
+            "v_atol": 1.1,
+            "angle_atol": 0.06,
         },
         "step_down_dd_balanced_load": {
             "u_primary": 12.47e3,
@@ -438,6 +465,9 @@ def main() -> None:
                 3: [(3911.0, 26.5), (3914.0, -93.6), (3905.0, 146.4)],
                 4: [(3442.0, 22.3), (3497.0, -99.4), (3384.0, 140.7)],
             },
+            "rtol": 2e-4,
+            "v_atol": 0.5,
+            "angle_atol": 0.06,
         },
         "step_down_dd_unbalanced_load": {
             "u_primary": 12.47e3,
@@ -452,6 +482,9 @@ def main() -> None:
                 3: [(3902.0, 27.2), (3972.0, -93.9), (3871.0, 145.7)],
                 4: [(3431.0, 24.3), (3647.0, -100.4), (3294.0, 138.6)],
             },
+            "rtol": 2e-4,
+            "v_atol": 0.6,
+            "angle_atol": 0.06,
         },
         "step_up_dyn_balanced_load": {
             "u_primary": 12.47e3,
@@ -466,6 +499,9 @@ def main() -> None:
                 3: [(13697.0, 26.7), (13710.0, -93.4), (13681.0, 146.6)],
                 4: [(13653.0, 26.6), (13678.0, -93.5), (13644.0, 146.5)],
             },
+            "rtol": 1e-4,
+            "v_atol": 0.5,
+            "angle_atol": 0.06,
         },
         "step_up_dyn_unbalanced_load": {
             "u_primary": 12.47e3,
@@ -480,6 +516,9 @@ def main() -> None:
                 3: [(13792.0, 27.7), (13733.0, -93.5), (13641.0, 145.4)],
                 4: [(13768.0, 27.7), (13684.0, -93.6), (13600.0, 145.2)],
             },
+            "rtol": 1e-4,
+            "v_atol": 0.6,
+            "angle_atol": 0.06,
         },
         "step_up_ynyn_balanced_load": {
             "u_primary": 12.47e3,
@@ -494,6 +533,9 @@ def main() -> None:
                 3: [(13675.0, -3.3), (13715.0, -123.4), (13698.0, 116.6)],
                 4: [(13631.0, -3.5), (13682.0, -123.5), (13661.0, 116.5)],
             },
+            "rtol": 1e-4,
+            "v_atol": 0.5,
+            "angle_atol": 0.06,
         },
         "step_up_ynyn_unbalanced_load": {
             "u_primary": 12.47e3,
@@ -508,6 +550,9 @@ def main() -> None:
                 3: [(13839.0, -2.1), (13663.0, -123.3), (13655.0, 115.1)],
                 4: [(13815.0, -2.2), (13614.0, -123.4), (13615.0, 114.9)],
             },
+            "rtol": 2e-4,
+            "v_atol": 0.6,
+            "angle_atol": 0.06,
         },
         "step_up_ynd_balanced_load": {
             "u_primary": 12.47e3,
@@ -522,6 +567,9 @@ def main() -> None:
                 3: [(23746.0, 56.7), (23722.0, -63.4), (23698.0, 176.7)],
                 4: [(23680.0, 56.6), (23663.0, -63.6), (23625.0, 176.5)],
             },
+            "rtol": 2e-4,
+            "v_atol": 0.8,
+            "angle_atol": 0.06,
         },
         "step_up_ynd_unbalanced_load": {
             "u_primary": 12.47e3,
@@ -536,6 +584,9 @@ def main() -> None:
                 3: [(23703.0, 57.2), (24040.0, -63.6), (23576.0, 176.1)],
                 4: [(23637.0, 57.1), (23995.0, -63.8), (23495.0, 175.9)],
             },
+            "rtol": 2e-4,
+            "v_atol": 0.9,
+            "angle_atol": 0.06,
         },
         "step_up_yd_balanced_load": {
             "u_primary": 12.47e3,
@@ -550,6 +601,9 @@ def main() -> None:
                 3: [(23746.0, 56.7), (23722.0, -63.4), (23698.0, 176.7)],
                 4: [(23681.0, 56.6), (23664.0, -63.6), (23625.0, 176.5)],
             },
+            "rtol": 2e-4,
+            "v_atol": 0.8,
+            "angle_atol": 0.06,
         },
         "step_up_yd_unbalanced_load": {
             "u_primary": 12.47e3,
@@ -564,6 +618,9 @@ def main() -> None:
                 3: [(23703.0, 57.2), (24040.0, -63.6), (23576.0, 176.1)],
                 4: [(23637.0, 57.1), (23995.0, -63.8), (23495.0, 175.9)],
             },
+            "rtol": 1e-4,
+            "v_atol": 0.5,
+            "angle_atol": 0.06,
         },
         "step_up_dd_balanced_load": {
             "u_primary": 12.47e3,
@@ -578,6 +635,9 @@ def main() -> None:
                 3: [(23723.0, 26.7), (23746.0, -93.4), (23698.0, 146.6)],
                 4: [(23657.0, 26.6), (23688.0, -93.5), (23625.0, 146.5)],
             },
+            "rtol": 1e-4,
+            "v_atol": 0.6,
+            "angle_atol": 0.06,
         },
         "step_up_dd_unbalanced_load": {
             "u_primary": 12.47e3,
@@ -592,6 +652,9 @@ def main() -> None:
                 3: [(23675.0, 27.2), (24060.0, -93.6), (23573.0, 146.0)],
                 4: [(23610.0, 27.2), (24015.0, -93.7), (23492.0, 145.9)],
             },
+            "rtol": 1e-4,
+            "v_atol": 0.6,
+            "angle_atol": 0.06,
         },
     }
 
@@ -631,9 +694,9 @@ def main() -> None:
                 calculated_complex=v_complex,
                 expected_voltages=cfg["expected_voltages"],
                 node_winding_types=node_windings,
-                rtol=1e-3,
-                v_atol=1.0,
-                angle_atol=0.3,
+                rtol=cfg["rtol"],
+                v_atol=cfg["v_atol"],
+                angle_atol=cfg["angle_atol"],
             )
         except PowerGridError as e:
             print(e)
