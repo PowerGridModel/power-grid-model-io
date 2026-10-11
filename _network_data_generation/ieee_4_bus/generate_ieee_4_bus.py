@@ -277,7 +277,7 @@ def generate_variants() -> dict[str, VariantConfig]:
         for load_type in ["balanced", "unbalanced"]:
             expected_results = load_expected_results(curr_directory / f"results_{trafo_type}_{load_type}_load.csv")
             for trafo_connection in ["ynyn", "ynd", "yd", "dyn", "dd"]:
-                variant_name = f"{trafo_type}_{trafo_connection}_{load_type}_load"
+                variant_name = f"{trafo_type}_{trafo_connection}_{load_type}_loading"
                 variant_results = expected_results[trafo_connection]
                 u_secondary = 4.16e3 if trafo_type == "step_down" else 24.9e3
                 winding_from = winding_from_lookup[trafo_connection]

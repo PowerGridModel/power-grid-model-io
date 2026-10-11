@@ -65,6 +65,12 @@ converters/pandapower_converter.md
 ```
 
 ```{toctree}
+:caption: "Networks"
+:maxdepth: 2
+networks/ieee_4_bus.md
+```
+
+```{toctree}
 :caption: "Examples"
 :maxdepth: 2
 examples/pgm_json_example.ipynb

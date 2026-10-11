@@ -30,7 +30,7 @@ def test_ieee_four_bus_default(mock_json_deserialize):
     # Verify input path points to the default scenario input.json file
     call_path = mock_json_deserialize.call_args[0][0]
     assert call_path.name == "input.json"
-    assert str(IeeeFourBusVariant.step_down_dyn_balanced_load) in str(call_path)
+    assert str(IeeeFourBusVariant.step_down_dyn_balanced_loading) in str(call_path)
 
 
 @pytest.mark.parametrize("variant", list(IeeeFourBusVariant) + [s.value for s in IeeeFourBusVariant])

@@ -15,11 +15,12 @@ from power_grid_model_io.networks.enum import IeeeFourBusVariant
 NETWORK_DATA_DIR = Path(__file__).parent / "_data" / "ieee"
 
 
-def ieee_four_bus(variant: str | IeeeFourBusVariant = IeeeFourBusVariant.step_down_dyn_balanced_load) -> Dataset:
+def ieee_four_bus(variant: str | IeeeFourBusVariant = IeeeFourBusVariant.step_down_dyn_balanced_loading) -> Dataset:
     """
+    Load pre-built IEEE 4-bus standard 2-winding test feeder.
 
     Args:
-        variant: (str | IeeeFourBusVariant): IEEE Four bus variant, defaults to step-down Dyn1 balanced load.
+        variant: (str | IeeeFourBusVariant): IEEE Four bus network variant, defaults to step_down_dyn_balanced_loading.
     """
 
     if variant in IeeeFourBusVariant:
