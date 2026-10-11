@@ -4,10 +4,9 @@
 
 import csv
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import TypedDict
 
 import numpy as np
-import pandas as pd
 from power_grid_model import (
     AttributeType,
     CalculationMethod,
@@ -19,6 +18,7 @@ from power_grid_model import (
     WindingType,
     initialize_array,
 )
+from power_grid_model.data_types import Dataset
 from power_grid_model.errors import PowerGridError
 from power_grid_model.utils import json_serialize_to_file
 from power_grid_model.validation import assert_valid_input_data
@@ -26,9 +26,14 @@ from power_grid_model.validation import assert_valid_input_data
 root = Path(__file__).parent.parent.parent
 DATA_DIR = root / "src" / "power_grid_model_io" / "networks" / "_data" / "ieee" / "ieee_four_bus"
 
-INPUT_FILE = DATA_DIR / "input.json"
-SYM_OUTPUT_FILE = DATA_DIR / "sym_output.json"
-ASYM_OUTPUT_FILE = DATA_DIR / "asym_output.json"
+curr_directory = Path(__file__).parent
+
+WIRE_PARAM_FILE = curr_directory / "wire_data_4_bus.csv"
+
+MAX_U_MAG_TOL = 5.0  # Max allowed voltage magnitude error (Volts)
+MAX_U_ANGLE_TOL = 1  # Max allowed voltage phase angle error (Degrees)
+MAX_I_MAG_TOL = 5.0  # Max allowed current magnitude error (Amperes)
+MAX_I_ANGLE_TOL = 1.5  # Max allowed current phase angle error (Degrees)
 
 
 class ScenarioConfig(TypedDict):
@@ -39,10 +44,24 @@ class ScenarioConfig(TypedDict):
     clock: int
     p_phases: list[float]
     pf_phases: list[float]
-    expected_voltages: dict[int, list[tuple[float, float]]]
-    rtol: float
-    v_atol: float
-    angle_atol: float
+    expected_results: dict[str, np.ndarray]
+
+
+winding_from_lookup = {
+    "ynyn": WindingType.wye_n,
+    "ynd": WindingType.wye_n,
+    "yd": WindingType.wye,
+    "dyn": WindingType.delta,
+    "dd": WindingType.delta,
+}
+
+winding_to_lookup = {
+    "ynyn": WindingType.wye_n,
+    "ynd": WindingType.delta,
+    "yd": WindingType.delta,
+    "dyn": WindingType.wye_n,
+    "dd": WindingType.delta,
+}
 
 
 license_content = (
@@ -51,22 +70,105 @@ license_content = (
 
 MILES_TO_FEET = 5.280e3
 
+p_bal = [1.8e6, 1.8e6, 1.8e6]
+pf_bal = [0.9, 0.9, 0.9]
+
+p_un_bal = [1.275e6, 1.8e6, 2.375e6]
+pf_un_bal = [0.85, 0.9, 0.95]
+
+
+def load_wire_params_dict(file_path: Path) -> dict[str, dict[str, float]]:
+    wire_params = {}
+
+    with file_path.open(encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            wire_type = row.pop("wire_type")
+            wire_params[wire_type] = {k: float(v) for k, v in row.items()}
+
+    return wire_params
+
+
+def load_expected_results(csv_path: Path) -> dict[str, dict[str, np.ndarray]]:
+    """Loads CSV results into structured NumPy arrays for 'u' and 'i'.
+
+    Output structure:
+        results = {
+            "ynyn": {
+                "u": np.ndarray(dtype=[("id", int), ("v", "(3,)complex128")]),
+                "i": np.ndarray(dtype=[("id", "U10"), ("i", "(3,)complex128")]),
+            },
+            ...
+        }
+    """
+    results = {}
+
+    # Define structured array dtypes with embedded (3,) 3-phase complex vectors
+    u_dtype = np.dtype([("id", np.int32), ("v", "(3,)complex128")])
+    i_dtype = np.dtype([("id", np.int32), ("i", "(3,)complex128")])
+
+    with csv_path.open(encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+
+        for row in reader:
+            conn = row.pop("Connection").strip()
+
+            v_cols = [k for k in row if k.startswith("V_")]
+            i_cols = [k for k in row if k.startswith("I_")]
+
+            node_ids = sorted(list({int(k.split("_")[1]) for k in v_cols}))
+            branch_ids = sorted(list({k.split("_")[1] for k in i_cols}))
+
+            # 1. Build Node Voltage Array (u)
+            u_arr = np.empty(len(node_ids), dtype=u_dtype)
+            for idx, node_id in enumerate(node_ids):
+                phasors = []
+                for phase in ("a", "b", "c"):
+                    mag_str, ang_str = row[f"V_{node_id}_{phase}"].strip().split("/")
+                    mag = float(mag_str)
+                    ang_rad = np.radians(float(ang_str))
+                    phasors.append(mag * np.exp(1j * ang_rad))
+
+                u_arr[idx]["id"] = node_id
+                u_arr[idx]["v"] = np.array(phasors, dtype=np.complex128)
+
+            # 2. Build Branch Current Array (i)
+            i_arr = np.empty(len(branch_ids), dtype=i_dtype)
+            for idx, branch_name in enumerate(branch_ids):
+                phasors = []
+                for phase in ("a", "b", "c"):
+                    mag_str, ang_str = row[f"I_{branch_name}_{phase}"].strip().split("/")
+                    mag = float(mag_str)
+                    ang_rad = np.radians(float(ang_str))
+                    phasors.append(mag * np.exp(1j * ang_rad))
+
+                branch_id = 5 if branch_name == "12" else 6
+                i_arr[idx]["id"] = branch_id
+                i_arr[idx]["i"] = np.array(phasors, dtype=np.complex128)
+
+            results[conn] = {"u": u_arr, "i": i_arr}
+
+    return results
+
 
 def create_nodes(u_primary: float, u_secondary: float, secondary_3_wire: bool) -> np.ndarray:
+    num_nodes = 4
+    ids = [1, 2, 3, 4]
+    u = [u_primary, u_primary, u_secondary, u_secondary]
     if secondary_3_wire:
-        node = initialize_array(DatasetType.input, ComponentType.node, 5)
-        node[AttributeType.id] = [1, 2, 3, 4, 10]
-        node[AttributeType.u_rated] = [u_primary, u_primary, u_secondary, u_secondary, u_secondary]
-    else:
-        node = initialize_array(DatasetType.input, ComponentType.node, 4)
-        node[AttributeType.id] = [1, 2, 3, 4]
-        node[AttributeType.u_rated] = [u_primary, u_primary, u_secondary, u_secondary]
+        num_nodes = 5
+        ids += [10]
+        u += [u_secondary]
+
+    node = initialize_array(DatasetType.input, ComponentType.node, num_nodes)
+    node[AttributeType.id] = ids
+    node[AttributeType.u_rated] = u
+
     return node
 
 
 def create_asym_lines(
     primary_3_wire: bool = True,
-    wire_params: dict = {},
     secondary_3_wire: bool = False,
 ) -> np.ndarray:
     asym_line = initialize_array(DatasetType.input, ComponentType.asym_line, 2)
@@ -78,6 +180,8 @@ def create_asym_lines(
 
     length_1_feet = 2000
     length_2_feet = 2500
+
+    wire_params = load_wire_params_dict(WIRE_PARAM_FILE)
 
     cfg1 = wire_params["3-wire"] if primary_3_wire else wire_params["4-wire"]
     cfg2 = wire_params["3-wire"] if secondary_3_wire else wire_params["4-wire"]
@@ -110,47 +214,36 @@ def create_transformer(
         transformer[AttributeType.id] = [7]
         transformer[AttributeType.from_node] = [2]
         transformer[AttributeType.to_node] = [3]
-        transformer[AttributeType.from_status] = [1]
-        transformer[AttributeType.to_status] = [1]
         transformer[AttributeType.u1] = [u1]
-        transformer[AttributeType.u2] = [u2]
-        transformer[AttributeType.sn] = [6e6]
         transformer[AttributeType.uk] = [np.sqrt(np.square(6.0e-2) + np.square(1.0e-2))]
         transformer[AttributeType.pk] = [6e6 * 0.01]
-        transformer[AttributeType.i0] = [0.0]
-        transformer[AttributeType.p0] = [0.0]
         transformer[AttributeType.winding_from] = [winding_from]
         transformer[AttributeType.winding_to] = [winding_to]
         transformer[AttributeType.clock] = [clock]
-        transformer[AttributeType.tap_side] = [0]
-        transformer[AttributeType.tap_pos] = [1]
-        transformer[AttributeType.tap_nom] = [1]
-        transformer[AttributeType.tap_min] = [1]
-        transformer[AttributeType.tap_max] = [1]
-        transformer[AttributeType.tap_size] = [100]
     else:
         transformer = initialize_array(DatasetType.input, ComponentType.transformer, 2)
         transformer[AttributeType.id] = [7, 11]
         transformer[AttributeType.from_node] = [2, 4]
         transformer[AttributeType.to_node] = [3, 10]
-        transformer[AttributeType.from_status] = [1, 1]
-        transformer[AttributeType.to_status] = [1, 1]
         transformer[AttributeType.u1] = [u1, u2]
-        transformer[AttributeType.u2] = [u2, u2]
-        transformer[AttributeType.sn] = [6e6, 6e6]
         transformer[AttributeType.uk] = [np.sqrt(np.square(6.0e-2) + np.square(1.0e-2)), 1e-5]
         transformer[AttributeType.pk] = [6e6 * 0.01, 0.0]
-        transformer[AttributeType.i0] = [0.0, 0.0]
-        transformer[AttributeType.p0] = [0.0, 0.0]
         transformer[AttributeType.winding_from] = [winding_from, WindingType.delta]
         transformer[AttributeType.winding_to] = [winding_to, WindingType.wye_n]
         transformer[AttributeType.clock] = [clock, 11]
-        transformer[AttributeType.tap_side] = [0, 0]
-        transformer[AttributeType.tap_pos] = [1, 1]
-        transformer[AttributeType.tap_nom] = [1, 1]
-        transformer[AttributeType.tap_min] = [1, 1]
-        transformer[AttributeType.tap_max] = [1, 1]
-        transformer[AttributeType.tap_size] = [100, 100]
+
+    transformer[AttributeType.from_status] = [1]
+    transformer[AttributeType.to_status] = [1]
+    transformer[AttributeType.u2] = [u2]
+    transformer[AttributeType.sn] = [6e6]
+    transformer[AttributeType.i0] = [0.0]
+    transformer[AttributeType.p0] = [0.0]
+    transformer[AttributeType.tap_side] = [0]
+    transformer[AttributeType.tap_pos] = [1]
+    transformer[AttributeType.tap_nom] = [1]
+    transformer[AttributeType.tap_min] = [1]
+    transformer[AttributeType.tap_max] = [1]
+    transformer[AttributeType.tap_size] = [100]
     return transformer
 
 
@@ -177,13 +270,46 @@ def create_asym_load(p_phases: list[float], pf_phases: list[float], secondary_3_
     return asym_load
 
 
-def generate_scenario(scenario: ScenarioConfig, wire_params: dict) -> dict[ComponentType, np.ndarray]:
+def generate_scenarios() -> dict[str, ScenarioConfig]:
+    scenarios: dict[str, ScenarioConfig] = {}
+
+    for trafo_type in ["step_down", "step_up"]:
+        for load_type in ["balanced", "unbalanced"]:
+            expected_results = load_expected_results(curr_directory / f"results_{trafo_type}_{load_type}_load.csv")
+            for trafo_connection in ["ynyn", "ynd", "yd", "dyn", "dd"]:
+                scenario_name = f"{trafo_type}_{trafo_connection}_{load_type}_load"
+                scenario_results = expected_results[trafo_connection]
+                u_secondary = 4.16e3 if trafo_type == "step_down" else 24.9e3
+                winding_from = winding_from_lookup[trafo_connection]
+                winding_to = winding_to_lookup[trafo_connection]
+                if trafo_connection in ("ynyn", "dd"):
+                    clock = 0
+                elif trafo_type == "step_down":
+                    clock = 1
+                else:
+                    clock = 11
+                load_p = p_bal if load_type == "balanced" else p_un_bal
+                load_pf = pf_bal if load_type == "balanced" else pf_un_bal
+                scenarios[scenario_name] = {
+                    "u_primary": 12.47e3,
+                    "u_secondary": u_secondary,
+                    "winding_from": winding_from,
+                    "winding_to": winding_to,
+                    "clock": clock,
+                    "p_phases": load_p,
+                    "pf_phases": load_pf,
+                    "expected_results": scenario_results,
+                }
+    return scenarios
+
+
+def generate_scenario_data(scenario: ScenarioConfig) -> Dataset:
     primary_3_wire = scenario["winding_from"] == WindingType.delta
     secondary_3_wire = scenario["winding_to"] == WindingType.delta
 
     return {
         ComponentType.node: create_nodes(scenario["u_primary"], scenario["u_secondary"], secondary_3_wire),
-        ComponentType.asym_line: create_asym_lines(primary_3_wire, wire_params, secondary_3_wire),
+        ComponentType.asym_line: create_asym_lines(primary_3_wire, secondary_3_wire),
         ComponentType.transformer: create_transformer(
             scenario["u_primary"],
             scenario["u_secondary"],
@@ -196,448 +322,182 @@ def generate_scenario(scenario: ScenarioConfig, wire_params: dict) -> dict[Compo
     }
 
 
-def compute_node_complex_voltages(asym_output: dict[str, Any]) -> pd.DataFrame:
-    u = pd.DataFrame(asym_output["node"]["u"], columns=["va", "vb", "vc"], index=asym_output["node"]["id"])
-    u_angle = pd.DataFrame(
-        asym_output["node"]["u_angle"], columns=["va_a", "vb_a", "vc_a"], index=asym_output["node"]["id"]
+def prepare_results(asym_output: Dataset) -> tuple[np.ndarray, np.ndarray]:
+    nodes = asym_output["node"]
+    node_ids = nodes["id"]
+
+    v_ln = nodes["u"] * np.exp(1j * nodes["u_angle"])
+
+    v_ll = np.column_stack(
+        [
+            v_ln[:, 0] - v_ln[:, 1],  # va - vb
+            v_ln[:, 1] - v_ln[:, 2],  # vb - vc
+            v_ln[:, 2] - v_ln[:, 0],  # vc - va
+        ]
     )
 
-    v_complex = pd.DataFrame(index=u.index)
-    v_complex["va"] = u["va"] * np.exp(1j * u_angle["va_a"])
-    v_complex["vb"] = u["vb"] * np.exp(1j * u_angle["vb_a"])
-    v_complex["vc"] = u["vc"] * np.exp(1j * u_angle["vc_a"])
-    v_complex["vab"] = v_complex["va"] - v_complex["vb"]
-    v_complex["vbc"] = v_complex["vb"] - v_complex["vc"]
-    v_complex["vca"] = v_complex["vc"] - v_complex["va"]
-    return v_complex
+    node_dtype = np.dtype(
+        [
+            ("id", node_ids.dtype),
+            ("v_ln", "(3,)complex128"),
+            ("v_ll", "(3,)complex128"),
+        ]
+    )
+
+    u_results = np.empty(len(node_ids), dtype=node_dtype)
+    u_results["id"] = node_ids
+    u_results["v_ln"] = v_ln
+    u_results["v_ll"] = v_ll
+
+    # -------------------------------------------------------------------------
+    # 2. Complex Branch/Line Currents
+    # -------------------------------------------------------------------------
+    lines = asym_output["asym_line"]
+    line_ids = lines["id"]
+
+    # Convert degrees to radians for 'i_from' branch currents
+    s_complex = lines["p_from"] + 1j * lines["q_from"]
+    u_complex = v_ln[[0, 2]]
+    i_complex_phasors = np.conjugate(s_complex / u_complex)
+
+    # Define NumPy structured datatype for branch currents
+    line_dtype = np.dtype(
+        [
+            ("id", line_ids.dtype),
+            ("i", "(3,)complex128"),
+        ]
+    )
+
+    i_results = np.empty(len(line_ids), dtype=line_dtype)
+    i_results["id"] = line_ids
+    i_results["i"] = i_complex_phasors
+
+    return u_results, i_results
 
 
-def verify_node_voltages(  # noqa: PLR0913, PLR0917
-    calculated_complex: pd.DataFrame,
-    expected_voltages: dict[int, list[tuple[float, float]]],
+def verify_results(
+    v_complex: np.ndarray,
+    i_complex: np.ndarray,
+    expected_results: dict[str, np.ndarray],
     node_winding_types: dict[int, WindingType],
-    rtol: float = 1e-3,
-    v_atol: float = 1.0,
-    angle_atol: float = 0.3,
-) -> bool:
-    """
-    Verifies magnitude and phase angle for specified nodes.
+) -> tuple[bool, dict[str, float]]:
+    """Calculates difference/errors between calculated and expected results.
 
-    expected_voltages maps node_id -> list of (magnitude, angle_deg) tuples per phase.
-    Example: {4: [(2175.0, -4.1), (2255.0, -123.6), (2203.0, 114.8)]}
-    """
-    all_passed = True
+    Checks max errors against global threshold constants and prints appropriate
+    failure messages.
 
-    for node_idx, expected_phased_data in expected_voltages.items():
-        winding_type = node_winding_types.get(node_idx)
+    Parameters:
+        v_complex: Structured np.ndarray (fields: 'id', 'v_ln', 'v_ll')
+        i_complex: Structured np.ndarray (fields: 'id', 'i')
+        expected_results: Dict containing 'u' and 'i' structured arrays
+        node_winding_types: Map of node_id -> WindingType (wye=v_ln, delta=v_ll)
+
+    Returns:
+        is_valid (bool): True if all max errors <= global tolerances, else False
+        max_errors (dict): Dictionary containing max errors found across network
+    """
+    max_u_mag_err = 0.0
+    max_u_angle_err = 0.0
+    max_i_mag_err = 0.0
+    max_i_angle_err = 0.0
+
+    expected_u = expected_results["u"]  # fields: 'id', 'v'
+    expected_i = expected_results["i"]  # fields: 'id', 'i'
+
+    # -------------------------------------------------------------------------
+    # 1. Voltage Errors (u)
+    # -------------------------------------------------------------------------
+    for exp_row in expected_u:
+        node_id = exp_row["id"]
+        calc_mask = v_complex["id"] == node_id
+        if not np.any(calc_mask):
+            continue
+
+        calc_row = v_complex[calc_mask][0]
+
+        # Select L-N or L-L based on node winding type
+        winding_type = node_winding_types.get(node_id, WindingType.wye)
         is_line_to_line = winding_type == WindingType.delta
+        v_calc = calc_row["v_ll"] if is_line_to_line else calc_row["v_ln"]
 
-        cols = ["vab", "vbc", "vca"] if is_line_to_line else ["va", "vb", "vc"]
+        v_exp = exp_row["v"]
 
-        # Extract complex vectors and compute magnitudes + angles in degrees
-        v_complex_node = calculated_complex.loc[node_idx, cols].to_numpy()
-        actual_mag = np.abs(v_complex_node)
-        actual_deg = np.rad2deg(np.angle(v_complex_node))
-
-        # Extract expected magnitudes and angles
-        expected_mag = np.array([exp[0] for exp in expected_phased_data])
-        expected_deg = np.array([exp[1] for exp in expected_phased_data])
+        actual_mag, actual_deg = np.abs(v_calc), np.angle(v_calc, deg=True)
+        expected_mag, expected_deg = np.abs(v_exp), np.angle(v_exp, deg=True)
 
         mag_diff = np.abs(actual_mag - expected_mag)
         angle_diff = np.abs((actual_deg - expected_deg + 180) % 360 - 180)
 
-        # comparison
-        mag_passed_mask = np.isclose(actual_mag, expected_mag, rtol=rtol, atol=v_atol)
-        angle_passed_mask = np.isclose(actual_deg, expected_deg, rtol=rtol, atol=angle_atol)
+        max_u_mag_err = max(max_u_mag_err, float(np.max(mag_diff)))
+        max_u_angle_err = max(max_u_angle_err, float(np.max(angle_diff)))
 
-        # Combined check per node
-        node_passed = np.all(mag_passed_mask) and np.all(angle_passed_mask)
+    # -------------------------------------------------------------------------
+    # 2. Current Errors (i)
+    # -------------------------------------------------------------------------
+    for exp_row in expected_i:
+        branch_id = exp_row["id"]
+        calc_mask = i_complex["id"] == branch_id
+        if not np.any(calc_mask):
+            continue
 
-        if not node_passed:
-            all_passed = False
-            v_type = "L-L" if is_line_to_line else "L-N"
-            print(f"\n❌ Validation FAILED at Node {node_idx} ({v_type}):")
+        calc_row = i_complex[calc_mask][0]
+        i_calc = calc_row["i"]
+        i_exp = exp_row["i"]
 
-            for phase_idx, phase_name in enumerate(cols):
-                print(
-                    f"  Phase {phase_name.upper()}: "
-                    f"Actual = {actual_mag[phase_idx]:.0f}∠{actual_deg[phase_idx]:.1f}° | "
-                    f"Expected = {expected_mag[phase_idx]:.0f}∠{expected_deg[phase_idx]:.1f}° | "
-                    f"ΔMag = {mag_diff[phase_idx]:.2f}, ΔAngle = {angle_diff[phase_idx]:.2f}°"
-                )
+        actual_mag, actual_deg = np.abs(i_calc), np.angle(i_calc, deg=True)
+        expected_mag, expected_deg = np.abs(i_exp), np.angle(i_exp, deg=True)
 
-    return all_passed
+        mag_diff = np.abs(actual_mag - expected_mag)
+        angle_diff = np.abs((actual_deg - expected_deg + 180) % 360 - 180)
 
-def load_wire_params_dict(csv_path: Path) -> dict[str, dict[str, float]]:
-    wire_params = {}
+        max_i_mag_err = max(max_i_mag_err, float(np.max(mag_diff)))
+        max_i_angle_err = max(max_i_angle_err, float(np.max(angle_diff)))
 
-    with csv_path.open(encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            wire_type = row.pop("wire_type")
-            wire_params[wire_type] = {k: float(v) for k, v in row.items()}
+    # Compile max error record
+    max_errors = {
+        "max_u_mag_err": max_u_mag_err,
+        "max_u_angle_err": max_u_angle_err,
+        "max_i_mag_err": max_i_mag_err,
+        "max_i_angle_err": max_i_angle_err,
+    }
 
-    return wire_params
+    # -------------------------------------------------------------------------
+    # 3. Validation Against Global Standard Thresholds
+    # -------------------------------------------------------------------------
+    failed_checks = []
+
+    if max_u_mag_err > MAX_U_MAG_TOL:
+        failed_checks.append(f"Voltage Mag Error ({max_u_mag_err:.4f}) exceeded max tolerance ({MAX_U_MAG_TOL})")
+    if max_u_angle_err > MAX_U_ANGLE_TOL:
+        failed_checks.append(
+            f"Voltage Angle Error ({max_u_angle_err:.4f}°) exceeded max tolerance ({MAX_U_ANGLE_TOL}°)"
+        )
+    if max_i_mag_err > MAX_I_MAG_TOL:
+        failed_checks.append(f"Current Mag Error ({max_i_mag_err:.4f}) exceeded max tolerance ({MAX_I_MAG_TOL})")
+    if max_i_angle_err > MAX_I_ANGLE_TOL:
+        failed_checks.append(
+            f"Current Angle Error ({max_i_angle_err:.4f}°) exceeded max tolerance ({MAX_I_ANGLE_TOL}°)"
+        )
+
+    is_valid = len(failed_checks) == 0
+
+    if not is_valid:
+        print("\n❌ Verification FAILED — Max error tolerances exceeded:")
+        for failure_msg in failed_checks:
+            print(f"  • {failure_msg}")
+
+    return is_valid, max_errors
+
 
 def main() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-    file_path = Path(__file__).parent
-    wire_params = load_wire_params_dict(file_path / "wire_data_4_bus.csv")
-
-    p_bal = [1.8e6, 1.8e6, 1.8e6]
-    pf_bal = [0.9, 0.9, 0.9]
-
-    p_un_bal = [1.275e6, 1.8e6, 2.375e6]
-    pf_un_bal = [0.85, 0.9, 0.95]
-
-    scenarios: dict[str, ScenarioConfig] = {
-        "step_down_dyn_balanced_load": {
-            "u_primary": 12.47e3,
-            "u_secondary": 4.16e3,
-            "winding_from": WindingType.delta,
-            "winding_to": WindingType.wye_n,
-            "clock": 1,
-            "p_phases": p_bal,
-            "pf_phases": pf_bal,
-            "expected_voltages": {
-                2: [(12340.0, 29.7), (12349.0, -90.4), (12318.0, 149.6)],
-                3: [(2249.0, -33.7), (2263.0, -153.4), (2259.0, 86.4)],
-                4: [(1920.0, -39.1), (2054.0, -158.3), (1986.0, 80.9)],
-            },
-            "rtol": 3e-4,
-            "v_atol": 0.6,
-            "angle_atol": 0.06,
-        },
-        "step_down_dyn_unbalanced_load": {
-            "u_primary": 12.47e3,
-            "u_secondary": 4.16e3,
-            "winding_from": WindingType.delta,
-            "winding_to": WindingType.wye_n,
-            "clock": 1,
-            "p_phases": p_un_bal,
-            "pf_phases": pf_un_bal,
-            "expected_voltages": {
-                2: [(12350.0, 29.6), (12314.0, -90.4), (12333.0, 149.8)],
-                3: [(2290.0, -32.4), (2261.0, -153.8), (2214.0, 85.2)],
-                4: [(2157.0, -34.2), (1936.0, -157.0), (1849.0, 73.4)],
-            },
-            "rtol": 3e-4,
-            "v_atol": 0.7,
-            "angle_atol": 0.06,
-        },
-        "step_down_ynyn_balanced_load": {
-            "u_primary": 12.47e3,
-            "u_secondary": 4.16e3,
-            "winding_from": WindingType.wye_n,
-            "winding_to": WindingType.wye_n,
-            "clock": 0,
-            "p_phases": p_bal,
-            "pf_phases": pf_bal,
-            "expected_voltages": {
-                2: [(7107.0, -0.3), (7140.0, -120.3), (7121.0, 119.6)],
-                3: [(2247.0, -3.7), (2269.0, -123.5), (2256.0, 116.4)],
-                4: [(1918.0, -9.1), (2061.0, -128.3), (1981.0, 110.9)],
-            },
-            "rtol": 3e-4,
-            "v_atol": 0.6,
-            "angle_atol": 0.06,
-        },
-        "step_down_ynyn_unbalanced_load": {
-            "u_primary": 12.47e3,
-            "u_secondary": 4.16e3,
-            "winding_from": WindingType.wye_n,
-            "winding_to": WindingType.wye_n,
-            "clock": 0,
-            "p_phases": p_un_bal,
-            "pf_phases": pf_un_bal,
-            "expected_voltages": {
-                2: [(7164.0, -0.1), (7110.0, -120.2), (7082.0, 119.3)],
-                3: [(2305.0, -2.3), (2255.0, -123.6), (2203.0, 114.8)],
-                4: [(2175.0, -4.1), (1930.0, -126.8), (1833.0, 102.8)],
-            },
-            "rtol": 3e-4,
-            "v_atol": 0.6,
-            "angle_atol": 0.06,
-        },
-        "step_down_ynd_balanced_load": {
-            "u_primary": 12.47e3,
-            "u_secondary": 4.16e3,
-            "winding_from": WindingType.wye_n,
-            "winding_to": WindingType.delta,
-            "clock": 1,
-            "p_phases": p_bal,
-            "pf_phases": pf_bal,
-            "expected_voltages": {
-                2: [(7113.0, -0.03), (7132.0, -120.3), (7123.0, 119.6)],
-                3: [(3906.0, -3.5), (3915.0, -123.6), (3909.0, 116.3)],
-                4: [(3437.0, -7.8), (3497.0, -129.3), (3388.0, 110.6)],
-            },
-            "rtol": 2e-4,
-            "v_atol": 0.8,
-            "angle_atol": 0.3,
-        },
-        "step_down_ynd_unbalanced_load": {
-            "u_primary": 12.47e3,
-            "u_secondary": 4.16e3,
-            "winding_from": WindingType.wye_n,
-            "winding_to": WindingType.delta,
-            "clock": 1,
-            "p_phases": p_un_bal,
-            "pf_phases": pf_un_bal,
-            "expected_voltages": {
-                2: [(7113.0, -0.2), (7144.0, -120.4), (7112.0, 119.5)],
-                3: [(3896.0, -2.8), (3972.0, -123.8), (3874.0, 115.7)],
-                4: [(3425.0, -5.8), (3646.0, -130.3), (3298.0, 108.6)],
-            },
-            "rtol": 3e-4,
-            "v_atol": 2.0,
-            "angle_atol": 0.06,
-        },
-        "step_down_yd_balanced_load": {
-            "u_primary": 12.47e3,
-            "u_secondary": 4.16e3,
-            "winding_from": WindingType.wye,
-            "winding_to": WindingType.delta,
-            "clock": 1,
-            "p_phases": p_bal,
-            "pf_phases": pf_bal,
-            "expected_voltages": {
-                2: [(7112.0, -0.03), (7133.0, -120.4), (7124.0, 119.6)],
-                3: [(3906.0, -3.4), (3915.0, -123.6), (3909.0, 116.3)],
-                4: [(3437.0, -7.8), (3497.0, -129.3), (3388.0, 110.6)],
-            },
-            "rtol": 2e-4,
-            "v_atol": 1.0,
-            "angle_atol": 0.3,
-        },
-        "step_down_yd_unbalanced_load": {
-            "u_primary": 12.47e3,
-            "u_secondary": 4.16e3,
-            "winding_from": WindingType.wye,
-            "winding_to": WindingType.delta,
-            "clock": 1,
-            "p_phases": p_un_bal,
-            "pf_phases": pf_un_bal,
-            "expected_voltages": {
-                2: [(7112.0, -0.2), (7144.0, -120.4), (7112.0, 119.5)],
-                3: [(3896.0, -2.8), (3972.0, -123.8), (3874.0, 115.7)],
-                4: [(3425.0, -5.8), (3646.0, -130.3), (3298.0, 108.6)],
-            },
-            "rtol": 3e-4,
-            "v_atol": 1.1,
-            "angle_atol": 0.06,
-        },
-        "step_down_dd_balanced_load": {
-            "u_primary": 12.47e3,
-            "u_secondary": 4.16e3,
-            "winding_from": WindingType.delta,
-            "winding_to": WindingType.delta,
-            "clock": 0,
-            "p_phases": p_bal,
-            "pf_phases": pf_bal,
-            "expected_voltages": {
-                2: [(12339.0, 29.7), (12349.0, -90.4), (12321.0, 149.6)],
-                3: [(3911.0, 26.5), (3914.0, -93.6), (3905.0, 146.4)],
-                4: [(3442.0, 22.3), (3497.0, -99.4), (3384.0, 140.7)],
-            },
-            "rtol": 2e-4,
-            "v_atol": 0.5,
-            "angle_atol": 0.06,
-        },
-        "step_down_dd_unbalanced_load": {
-            "u_primary": 12.47e3,
-            "u_secondary": 4.16e3,
-            "winding_from": WindingType.delta,
-            "winding_to": WindingType.delta,
-            "clock": 0,
-            "p_phases": p_un_bal,
-            "pf_phases": pf_un_bal,
-            "expected_voltages": {
-                2: [(12341.0, 29.8), (12370.0, -90.5), (12302.0, 149.5)],
-                3: [(3902.0, 27.2), (3972.0, -93.9), (3871.0, 145.7)],
-                4: [(3431.0, 24.3), (3647.0, -100.4), (3294.0, 138.6)],
-            },
-            "rtol": 2e-4,
-            "v_atol": 0.6,
-            "angle_atol": 0.06,
-        },
-        "step_up_dyn_balanced_load": {
-            "u_primary": 12.47e3,
-            "u_secondary": 24.9e3,
-            "winding_from": WindingType.delta,
-            "winding_to": WindingType.wye_n,
-            "clock": 11,
-            "p_phases": p_bal,
-            "pf_phases": pf_bal,
-            "expected_voltages": {
-                2: [(12361.0, 29.7), (12372.0, -90.4), (12348.0, 149.6)],
-                3: [(13697.0, 26.7), (13710.0, -93.4), (13681.0, 146.6)],
-                4: [(13653.0, 26.6), (13678.0, -93.5), (13644.0, 146.5)],
-            },
-            "rtol": 1e-4,
-            "v_atol": 0.5,
-            "angle_atol": 0.06,
-        },
-        "step_up_dyn_unbalanced_load": {
-            "u_primary": 12.47e3,
-            "u_secondary": 24.9e3,
-            "winding_from": WindingType.delta,
-            "winding_to": WindingType.wye_n,
-            "clock": 11,
-            "p_phases": p_un_bal,
-            "pf_phases": pf_un_bal,
-            "expected_voltages": {
-                2: [(12364.0, 29.8), (12391.0, -90.5), (12333.0, 149.6)],
-                3: [(13792.0, 27.7), (13733.0, -93.5), (13641.0, 145.4)],
-                4: [(13768.0, 27.7), (13684.0, -93.6), (13600.0, 145.2)],
-            },
-            "rtol": 1e-4,
-            "v_atol": 0.6,
-            "angle_atol": 0.06,
-        },
-        "step_up_ynyn_balanced_load": {
-            "u_primary": 12.47e3,
-            "u_secondary": 24.9e3,
-            "winding_from": WindingType.wye_n,
-            "winding_to": WindingType.wye_n,
-            "clock": 0,
-            "p_phases": p_bal,
-            "pf_phases": pf_bal,
-            "expected_voltages": {
-                2: [(7126.0, -0.3), (7145.0, -120.4), (7137.0, 119.6)],
-                3: [(13675.0, -3.3), (13715.0, -123.4), (13698.0, 116.6)],
-                4: [(13631.0, -3.5), (13682.0, -123.5), (13661.0, 116.5)],
-            },
-            "rtol": 1e-4,
-            "v_atol": 0.5,
-            "angle_atol": 0.06,
-        },
-        "step_up_ynyn_unbalanced_load": {
-            "u_primary": 12.47e3,
-            "u_secondary": 24.9e3,
-            "winding_from": WindingType.wye_n,
-            "winding_to": WindingType.wye_n,
-            "clock": 0,
-            "p_phases": p_un_bal,
-            "pf_phases": pf_un_bal,
-            "expected_voltages": {
-                2: [(7161.0, -0.1), (7120.0, -120.3), (7128.0, 119.3)],
-                3: [(13839.0, -2.1), (13663.0, -123.3), (13655.0, 115.1)],
-                4: [(13815.0, -2.2), (13614.0, -123.4), (13615.0, 114.9)],
-            },
-            "rtol": 2e-4,
-            "v_atol": 0.6,
-            "angle_atol": 0.06,
-        },
-        "step_up_ynd_balanced_load": {
-            "u_primary": 12.47e3,
-            "u_secondary": 24.9e3,
-            "winding_from": WindingType.wye_n,
-            "winding_to": WindingType.delta,
-            "clock": 11,
-            "p_phases": p_bal,
-            "pf_phases": pf_bal,
-            "expected_voltages": {
-                2: [(7128.0, -0.3), (7145.0, -120.3), (7137.0, 119.6)],
-                3: [(23746.0, 56.7), (23722.0, -63.4), (23698.0, 176.7)],
-                4: [(23680.0, 56.6), (23663.0, -63.6), (23625.0, 176.5)],
-            },
-            "rtol": 2e-4,
-            "v_atol": 0.8,
-            "angle_atol": 0.06,
-        },
-        "step_up_ynd_unbalanced_load": {
-            "u_primary": 12.47e3,
-            "u_secondary": 24.9e3,
-            "winding_from": WindingType.wye_n,
-            "winding_to": WindingType.delta,
-            "clock": 11,
-            "p_phases": p_un_bal,
-            "pf_phases": pf_un_bal,
-            "expected_voltages": {
-                2: [(7121.0, -0.4), (7147.0, -120.3), (7150.0, 119.5)],
-                3: [(23703.0, 57.2), (24040.0, -63.6), (23576.0, 176.1)],
-                4: [(23637.0, 57.1), (23995.0, -63.8), (23495.0, 175.9)],
-            },
-            "rtol": 2e-4,
-            "v_atol": 0.9,
-            "angle_atol": 0.06,
-        },
-        "step_up_yd_balanced_load": {
-            "u_primary": 12.47e3,
-            "u_secondary": 24.9e3,
-            "winding_from": WindingType.wye,
-            "winding_to": WindingType.delta,
-            "clock": 11,
-            "p_phases": p_bal,
-            "pf_phases": pf_bal,
-            "expected_voltages": {
-                2: [(7127.0, -0.3), (7145.0, -120.4), (7138.0, 119.6)],
-                3: [(23746.0, 56.7), (23722.0, -63.4), (23698.0, 176.7)],
-                4: [(23681.0, 56.6), (23664.0, -63.6), (23625.0, 176.5)],
-            },
-            "rtol": 2e-4,
-            "v_atol": 0.8,
-            "angle_atol": 0.06,
-        },
-        "step_up_yd_unbalanced_load": {
-            "u_primary": 12.47e3,
-            "u_secondary": 24.9e3,
-            "winding_from": WindingType.wye,
-            "winding_to": WindingType.delta,
-            "clock": 11,
-            "p_phases": p_un_bal,
-            "pf_phases": pf_un_bal,
-            "expected_voltages": {
-                2: [(7120.0, -0.4), (7147.0, -120.3), (7150.0, 119.6)],
-                3: [(23703.0, 57.2), (24040.0, -63.6), (23576.0, 176.1)],
-                4: [(23637.0, 57.1), (23995.0, -63.8), (23495.0, 175.9)],
-            },
-            "rtol": 1e-4,
-            "v_atol": 0.5,
-            "angle_atol": 0.06,
-        },
-        "step_up_dd_balanced_load": {
-            "u_primary": 12.47e3,
-            "u_secondary": 24.9e3,
-            "winding_from": WindingType.delta,
-            "winding_to": WindingType.delta,
-            "clock": 0,
-            "p_phases": p_bal,
-            "pf_phases": pf_bal,
-            "expected_voltages": {
-                2: [(12361.0, 29.7), (12372.0, -90.4), (12348.0, 149.6)],
-                3: [(23723.0, 26.7), (23746.0, -93.4), (23698.0, 146.6)],
-                4: [(23657.0, 26.6), (23688.0, -93.5), (23625.0, 146.5)],
-            },
-            "rtol": 1e-4,
-            "v_atol": 0.6,
-            "angle_atol": 0.06,
-        },
-        "step_up_dd_unbalanced_load": {
-            "u_primary": 12.47e3,
-            "u_secondary": 24.9e3,
-            "winding_from": WindingType.delta,
-            "winding_to": WindingType.delta,
-            "clock": 0,
-            "p_phases": p_un_bal,
-            "pf_phases": pf_un_bal,
-            "expected_voltages": {
-                2: [(12362.0, 29.8), (12392.0, -90.4), (12334.0, 149.5)],
-                3: [(23675.0, 27.2), (24060.0, -93.6), (23573.0, 146.0)],
-                4: [(23610.0, 27.2), (24015.0, -93.7), (23492.0, 145.9)],
-            },
-            "rtol": 1e-4,
-            "v_atol": 0.6,
-            "angle_atol": 0.06,
-        },
-    }
+    scenarios = generate_scenarios()
 
     for scenario_name, cfg in scenarios.items():
         print(f"\n--- Running Scenario: {scenario_name} ---")
 
-        input_data = generate_scenario(cfg, wire_params)
+        input_data = generate_scenario_data(cfg)
 
         assert_valid_input_data(input_data=input_data, calculation_type=CalculationType.power_flow)
         assert_valid_input_data(input_data=input_data, calculation_type=CalculationType.power_flow, symmetric=False)
@@ -658,7 +518,8 @@ def main() -> None:
                 max_iterations=200,
                 calculation_method=CalculationMethod.newton_raphson,
             )
-            v_complex = compute_node_complex_voltages(asym_output)
+
+            v_complex, i_complex = prepare_results(asym_output)
             node_windings = {
                 1: cfg["winding_from"],
                 2: cfg["winding_from"],
@@ -666,13 +527,11 @@ def main() -> None:
                 4: cfg["winding_to"],
             }
 
-            passed = verify_node_voltages(
-                calculated_complex=v_complex,
-                expected_voltages=cfg["expected_voltages"],
+            passed, max_errors = verify_results(
+                v_complex=v_complex,
+                i_complex=i_complex,
+                expected_results=cfg["expected_results"],
                 node_winding_types=node_windings,
-                rtol=cfg["rtol"],
-                v_atol=cfg["v_atol"],
-                angle_atol=cfg["angle_atol"],
             )
         except PowerGridError as e:
             print(e)
@@ -680,6 +539,7 @@ def main() -> None:
 
         if passed:
             print(f"✅ Verification passed for {scenario_name}. Saving dataset...")
+            print(f"Max errors: {max_errors}")
             scenario_dir = DATA_DIR / scenario_name
             scenario_dir.mkdir(parents=True, exist_ok=True)
 
