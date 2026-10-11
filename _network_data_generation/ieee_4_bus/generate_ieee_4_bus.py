@@ -539,7 +539,7 @@ def main() -> None:
 
         if passed:
             print(f"✅ Verification passed for {scenario_name}. Saving dataset...")
-            print(f"Max errors: {max_errors}")
+            print(f"Max deviations: {max_errors}")
             scenario_dir = DATA_DIR / scenario_name
             scenario_dir.mkdir(parents=True, exist_ok=True)
 
