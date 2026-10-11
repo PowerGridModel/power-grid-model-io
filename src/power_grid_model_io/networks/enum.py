@@ -5,7 +5,7 @@
 from enum import StrEnum
 
 
-class IeeeFourBusScenario(StrEnum):
+class IeeeFourBusVariant(StrEnum):
     # network scenarios
     step_down_dyn_balanced_load = "step_down_dyn_balanced_load"
     step_down_dyn_unbalanced_load = "step_down_dyn_unbalanced_load"

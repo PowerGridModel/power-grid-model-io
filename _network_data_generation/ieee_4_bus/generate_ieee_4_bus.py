@@ -36,7 +36,7 @@ MAX_I_MAG_TOL = 5.0  # Max allowed current magnitude error (Amperes)
 MAX_I_ANGLE_TOL = 1.5  # Max allowed current phase angle error (Degrees)
 
 
-class ScenarioConfig(TypedDict):
+class VariantConfig(TypedDict):
     u_primary: float
     u_secondary: float
     winding_from: WindingType
@@ -270,15 +270,15 @@ def create_asym_load(p_phases: list[float], pf_phases: list[float], secondary_3_
     return asym_load
 
 
-def generate_scenarios() -> dict[str, ScenarioConfig]:
-    scenarios: dict[str, ScenarioConfig] = {}
+def generate_variants() -> dict[str, VariantConfig]:
+    variants: dict[str, VariantConfig] = {}
 
     for trafo_type in ["step_down", "step_up"]:
         for load_type in ["balanced", "unbalanced"]:
             expected_results = load_expected_results(curr_directory / f"results_{trafo_type}_{load_type}_load.csv")
             for trafo_connection in ["ynyn", "ynd", "yd", "dyn", "dd"]:
-                scenario_name = f"{trafo_type}_{trafo_connection}_{load_type}_load"
-                scenario_results = expected_results[trafo_connection]
+                variant_name = f"{trafo_type}_{trafo_connection}_{load_type}_load"
+                variant_results = expected_results[trafo_connection]
                 u_secondary = 4.16e3 if trafo_type == "step_down" else 24.9e3
                 winding_from = winding_from_lookup[trafo_connection]
                 winding_to = winding_to_lookup[trafo_connection]
@@ -290,7 +290,7 @@ def generate_scenarios() -> dict[str, ScenarioConfig]:
                     clock = 11
                 load_p = p_bal if load_type == "balanced" else p_un_bal
                 load_pf = pf_bal if load_type == "balanced" else pf_un_bal
-                scenarios[scenario_name] = {
+                variants[variant_name] = {
                     "u_primary": 12.47e3,
                     "u_secondary": u_secondary,
                     "winding_from": winding_from,
@@ -298,27 +298,27 @@ def generate_scenarios() -> dict[str, ScenarioConfig]:
                     "clock": clock,
                     "p_phases": load_p,
                     "pf_phases": load_pf,
-                    "expected_results": scenario_results,
+                    "expected_results": variant_results,
                 }
-    return scenarios
+    return variants
 
 
-def generate_scenario_data(scenario: ScenarioConfig) -> Dataset:
-    primary_3_wire = scenario["winding_from"] == WindingType.delta
-    secondary_3_wire = scenario["winding_to"] == WindingType.delta
+def generate_variant_data(variant: VariantConfig) -> Dataset:
+    primary_3_wire = variant["winding_from"] == WindingType.delta
+    secondary_3_wire = variant["winding_to"] == WindingType.delta
 
     return {
-        ComponentType.node: create_nodes(scenario["u_primary"], scenario["u_secondary"], secondary_3_wire),
+        ComponentType.node: create_nodes(variant["u_primary"], variant["u_secondary"], secondary_3_wire),
         ComponentType.asym_line: create_asym_lines(primary_3_wire, secondary_3_wire),
         ComponentType.transformer: create_transformer(
-            scenario["u_primary"],
-            scenario["u_secondary"],
-            scenario["winding_from"],
-            scenario["winding_to"],
-            scenario["clock"],
+            variant["u_primary"],
+            variant["u_secondary"],
+            variant["winding_from"],
+            variant["winding_to"],
+            variant["clock"],
         ),
         ComponentType.source: create_source(),
-        ComponentType.asym_load: create_asym_load(scenario["p_phases"], scenario["pf_phases"], secondary_3_wire),
+        ComponentType.asym_load: create_asym_load(variant["p_phases"], variant["pf_phases"], secondary_3_wire),
     }
 
 
@@ -492,12 +492,12 @@ def verify_results(
 def main() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-    scenarios = generate_scenarios()
+    variants = generate_variants()
 
-    for scenario_name, cfg in scenarios.items():
-        print(f"\n--- Running Scenario: {scenario_name} ---")
+    for variant_name, cfg in variants.items():
+        print(f"\n--- Running Variant: {variant_name} ---")
 
-        input_data = generate_scenario_data(cfg)
+        input_data = generate_variant_data(cfg)
 
         assert_valid_input_data(input_data=input_data, calculation_type=CalculationType.power_flow)
         assert_valid_input_data(input_data=input_data, calculation_type=CalculationType.power_flow, symmetric=False)
@@ -538,20 +538,20 @@ def main() -> None:
             passed = False
 
         if passed:
-            print(f"✅ Verification passed for {scenario_name}. Saving dataset...")
+            print(f"✅ Verification passed for {variant_name}. Saving dataset...")
             print(f"Max deviations: {max_errors}")
-            scenario_dir = DATA_DIR / scenario_name
-            scenario_dir.mkdir(parents=True, exist_ok=True)
+            variant_dir = DATA_DIR / variant_name
+            variant_dir.mkdir(parents=True, exist_ok=True)
 
-            json_serialize_to_file(scenario_dir / "input.json", input_data, DatasetType.input)
-            json_serialize_to_file(scenario_dir / "sym_output.json", sym_output, DatasetType.sym_output)
-            json_serialize_to_file(scenario_dir / "asym_output.json", asym_output, DatasetType.asym_output)
+            json_serialize_to_file(variant_dir / "input.json", input_data, DatasetType.input)
+            json_serialize_to_file(variant_dir / "sym_output.json", sym_output, DatasetType.sym_output)
+            json_serialize_to_file(variant_dir / "asym_output.json", asym_output, DatasetType.asym_output)
             for file_type in ["input", "sym_output", "asym_output"]:
-                license_path = scenario_dir / f"{file_type}.json.license"
+                license_path = variant_dir / f"{file_type}.json.license"
                 if not license_path.exists():
                     license_path.write_text(license_content, encoding="utf-8")
         else:
-            print(f"⚠️ Verification failed for {scenario_name}. Files were NOT saved.")
+            print(f"⚠️ Verification failed for {variant_name}. Files were NOT saved.")
 
 
 if __name__ == "__main__":
