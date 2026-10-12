@@ -41,7 +41,10 @@ dynamic = ["version"]
 
 [dependency-groups]
 
+benchmark = ["psutil>=5.9,<8"]
+
 test = [
+    { include-group = "benchmark" },
     "pytest",
     "pytest-cov",
     "pydantic>2", # Used in unit tests
@@ -57,6 +60,7 @@ lint = [
     "numpy", # needed for mypy
     "types-pyyaml", # needed for mypy
     "types-requests", # needed for mypy
+    "types-psutil", # benchmark memory accounting
     "reuse[charset-normalizer,chardet]", # license check
 ]
 

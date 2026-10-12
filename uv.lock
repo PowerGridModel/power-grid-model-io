@@ -236,7 +236,7 @@ name = "cffi"
 version = "2.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pycparser" },
+    { name = "pycparser", marker = "implementation_name != 'PyPy'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/9e/ef/008a1939e372c06329a3fce4279c02f328488f3526744906eeec3da7ad5f/cffi-2.1.1.tar.gz", hash = "sha256:dd31f52ea1086513bb9df30f8fcee9b8918323ae067a3d5b78bc826a000712be", size = 530807, upload-time = "2026-08-03T21:21:18.939Z" }
 wheels = [
@@ -1603,7 +1603,7 @@ name = "pexpect"
 version = "4.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "ptyprocess" },
+    { name = "ptyprocess", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/42/92/cc564bf6381ff43ce1f4d06852fc19a2f11d180f23dc32d9588bee2f149d/pexpect-4.9.0.tar.gz", hash = "sha256:ee7d41123f3c9911050ea2c2dac107568dc43b2d3b0c7557a33212c398ead30f", size = 166450, upload-time = "2023-11-25T09:07:26.339Z" }
 wheels = [
@@ -1661,6 +1661,9 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
+benchmark = [
+    { name = "psutil" },
+]
 dev = [
     { name = "lxml" },
     { name = "mypy" },
@@ -1668,11 +1671,13 @@ dev = [
     { name = "pandapower" },
     { name = "pandas" },
     { name = "pre-commit" },
+    { name = "psutil" },
     { name = "pydantic" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "reuse", extra = ["chardet", "charset-normalizer"] },
     { name = "ruff" },
+    { name = "types-psutil" },
     { name = "types-pyyaml" },
     { name = "types-requests" },
 ]
@@ -1695,6 +1700,7 @@ lint = [
     { name = "pre-commit" },
     { name = "reuse", extra = ["chardet", "charset-normalizer"] },
     { name = "ruff" },
+    { name = "types-psutil" },
     { name = "types-pyyaml" },
     { name = "types-requests" },
 ]
@@ -1702,6 +1708,7 @@ test = [
     { name = "lxml" },
     { name = "pandapower" },
     { name = "pandas" },
+    { name = "psutil" },
     { name = "pydantic" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -1720,6 +1727,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
+benchmark = [{ name = "psutil", specifier = ">=5.9,<8" }]
 dev = [
     { name = "lxml" },
     { name = "mypy" },
@@ -1727,11 +1735,13 @@ dev = [
     { name = "pandapower", specifier = ">2.11.1" },
     { name = "pandas", specifier = "<3.0" },
     { name = "pre-commit" },
+    { name = "psutil", specifier = ">=5.9,<8" },
     { name = "pydantic", specifier = ">2" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "reuse", extras = ["charset-normalizer", "chardet"] },
     { name = "ruff" },
+    { name = "types-psutil" },
     { name = "types-pyyaml" },
     { name = "types-requests" },
 ]
@@ -1754,6 +1764,7 @@ lint = [
     { name = "pre-commit" },
     { name = "reuse", extras = ["charset-normalizer", "chardet"] },
     { name = "ruff" },
+    { name = "types-psutil" },
     { name = "types-pyyaml" },
     { name = "types-requests" },
 ]
@@ -1761,6 +1772,7 @@ test = [
     { name = "lxml" },
     { name = "pandapower", specifier = ">2.11.1" },
     { name = "pandas", specifier = "<3.0" },
+    { name = "psutil", specifier = ">=5.9,<8" },
     { name = "pydantic", specifier = ">2" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -2662,6 +2674,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b4/de/4420db493fa8fc0856d5e5c1b159c63a323d2de2317babe36b01568928e8/typeguard-4.6.0.tar.gz", hash = "sha256:e7414f09111317de3e335de92cd397c5c0ca00b1cc1676de12e1d444a79b3f21", size = 82330, upload-time = "2026-07-26T08:40:23.207Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8f/eb/461d5f167b6f5c7d97696f397c82f82e3480e003fce3f0a1cd1dd26e2eb2/typeguard-4.6.0-py3-none-any.whl", hash = "sha256:79878165bb86f2cf5d41d159a0ff1792a796cf496882d2fe1b1c6c7049b9cdd7", size = 36884, upload-time = "2026-07-26T08:40:21.868Z" },
+]
+
+[[package]]
+name = "types-psutil"
+version = "7.2.2.20260906"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/97/0a/f48b9b0ab5ba8599fd117309e345152bf82c756c72be2ff0f635780c2792/types_psutil-7.2.2.20260906.tar.gz", hash = "sha256:93abf22cf9a62b915f724e433bde702995ac274865425fd4a76d1d9b5828da1a", size = 27396, upload-time = "2026-09-06T06:35:24.499Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/eb/8d/81a86107486e1c23f5ca21bea1e9e5b18a50754242e7a0b82f41f9ae8384/types_psutil-7.2.2.20260906-py3-none-any.whl", hash = "sha256:db00baf7f96c3f63421c4d3d68d373923094a0dfddf13e922c5c5fbc42488159", size = 33383, upload-time = "2026-09-06T06:35:23.575Z" },
 ]
 
 [[package]]
