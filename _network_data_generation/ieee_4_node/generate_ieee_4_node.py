@@ -24,11 +24,11 @@ from power_grid_model.utils import json_serialize_to_file
 from power_grid_model.validation import assert_valid_input_data
 
 root = Path(__file__).parent.parent.parent
-DATA_DIR = root / "src" / "power_grid_model_io" / "networks" / "_data" / "ieee" / "ieee_four_bus"
+DATA_DIR = root / "src" / "power_grid_model_io" / "networks" / "_data" / "ieee" / "ieee_four_node"
 
 curr_directory = Path(__file__).parent
 
-WIRE_PARAM_FILE = curr_directory / "wire_data_4_bus.csv"
+WIRE_PARAM_FILE = curr_directory / "wire_data_ieee_4_node.csv"
 
 MAX_U_MAG_TOL = 5.0  # Max allowed voltage magnitude error (Volts)
 MAX_U_ANGLE_TOL = 1  # Max allowed voltage phase angle error (Degrees)
@@ -275,7 +275,7 @@ def generate_variants() -> dict[str, VariantConfig]:
 
     for trafo_type in ["step_down", "step_up"]:
         for load_type in ["balanced", "unbalanced"]:
-            expected_results = load_expected_results(curr_directory / f"results_{trafo_type}_{load_type}_load.csv")
+            expected_results = load_expected_results(curr_directory / f"results_{trafo_type}_{load_type}_loading.csv")
             for trafo_connection in ["ynyn", "ynd", "yd", "dyn", "dd"]:
                 variant_name = f"{trafo_type}_{trafo_connection}_{load_type}_loading"
                 variant_results = expected_results[trafo_connection]

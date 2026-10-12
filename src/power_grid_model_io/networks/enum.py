@@ -5,9 +5,9 @@
 from enum import StrEnum
 
 
-class IeeeFourBusVariant(StrEnum):
+class IeeeFourNodeVariant(StrEnum):
     """
-    variants for the IEEE 4-bus standard test feeder.
+    variants for the IEEE 4-node standard test feeder.
 
     Combines transformer type (step-up/down), vector groups, and loadinging (balanced/unbalanced).
     """

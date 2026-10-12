@@ -5,7 +5,7 @@
 Networks
 """
 
-from power_grid_model_io.networks.enum import IeeeFourBusVariant
-from power_grid_model_io.networks.ieee_test_networks import ieee_four_bus
+from power_grid_model_io.networks.enum import IeeeFourNodeVariant
+from power_grid_model_io.networks.ieee_test_networks import ieee_four_node
 
-__all__ = ["IeeeFourBusVariant", "ieee_four_bus"]
+__all__ = ["IeeeFourNodeVariant", "ieee_four_node"]
