@@ -67,6 +67,7 @@ converters/pandapower_converter.md
 ```{toctree}
 :caption: "Networks"
 :maxdepth: 2
+networks/network.md
 networks/ieee_4_bus.md
 ```
 

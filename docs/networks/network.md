@@ -30,3 +30,4 @@ input_data = ieee_four_node(variant=IeeeFourNodeVariant.step_down_dyn_balanced_l
 model = PowerGridModel(input_data)
 
 asym_output = model.calculate_power_flow(symmetric=False, calculation_method=CalculationMethod.newton_raphson)
+```
