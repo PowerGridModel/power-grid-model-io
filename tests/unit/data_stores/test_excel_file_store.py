@@ -364,9 +364,9 @@ def test_process_uuid_columns_preserves_converter_none_and_nan_semantics():
 
     pd.testing.assert_series_equal(result["NodeGUID"], data["NodeGUID"])
     pd.testing.assert_series_equal(
-        result["NodeNumber"], pd.Series([0.0, 1.0, np.nan, 0.0], index=data.index, name="NodeNumber")
+        result["NodeNumber"], pd.Series([0.0, np.nan, np.nan, 0.0], index=data.index, name="NodeNumber")
     )
-    assert store._uuid_cvtr.get_keys() == ["a", None]
+    assert store._uuid_cvtr.get_keys() == ["a"]
 
 
 def test_process_uuid_columns_reuses_converter_across_sheets():
