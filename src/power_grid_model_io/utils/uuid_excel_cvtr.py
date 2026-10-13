@@ -83,7 +83,7 @@ class UUID2IntCvtr:
         Args:
             uuid (str): A single GUID in Vision excel
         """
-        if uuid not in self._uuids_int and str(uuid).lower() != "nan":
+        if uuid is not None and uuid not in self._uuids_int and str(uuid).lower() != "nan":
             self._uuids_int[uuid] = self._counter
             self._counter += 1
 
