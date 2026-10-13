@@ -3,17 +3,22 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import warnings
+from importlib.metadata import version
 from pathlib import Path
 from unittest.mock import MagicMock, call, patch
 
 import numpy as np
 import pandas as pd
 import pytest
+from packaging.version import Version
 from structlog.testing import capture_logs
 
 from power_grid_model_io.data_stores.excel_file_store import ExcelFileStore
 from power_grid_model_io.data_types.tabular_data import TabularData
 from tests.utils import MockExcelFile, assert_log_exists
+
+PD_COMPATIBILITY_VERSION_3 = Version("3")
+PD_VERSION = Version(version("pandas"))
 
 PandasExcelData = dict[str, pd.DataFrame]
 
@@ -363,10 +368,19 @@ def test_process_uuid_columns_preserves_converter_none_and_nan_semantics():
     result = store._process_uuid_columns(data=data, sheet_name="Other")
 
     pd.testing.assert_series_equal(result["NodeGUID"], data["NodeGUID"])
+
+    # See https://pandas.pydata.org/docs/whatsnew/v3.0.0.html#changed-treatment-of-nan-values-in-pyarrow-and-numpy-nullable-floating-dtypes
+    if PD_VERSION < PD_COMPATIBILITY_VERSION_3:
+        expected_values = [0.0, 1.0, np.nan, 0.0]
+        expected_keys = ["a", None]
+    else:
+        expected_values = [0.0, np.nan, np.nan, 0.0]
+        expected_keys = ["a"]
+
     pd.testing.assert_series_equal(
-        result["NodeNumber"], pd.Series([0.0, 1.0, np.nan, 0.0], index=data.index, name="NodeNumber")
+        result["NodeNumber"], pd.Series(expected_values, index=data.index, name="NodeNumber")
     )
-    assert store._uuid_cvtr.get_keys() == ["a", None]
+    assert store._uuid_cvtr.get_keys() == expected_keys
 
 
 def test_process_uuid_columns_reuses_converter_across_sheets():
