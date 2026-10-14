@@ -7,6 +7,7 @@ from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
+import pandapower as pp
 import pandapower.networks as pp_networks
 import pandas as pd
 import pytest
@@ -26,8 +27,7 @@ from power_grid_model_io.converters.pandapower_converter import (
 from tests.data.pandapower.pp_validation import pp_net, pp_net_3ph, pp_net_3ph_minimal_trafo, pp_net_pv_node_3
 from tests.validation.utils import component_attributes_df
 
-pp = pytest.importorskip("pandapower", reason="pandapower is not installed")
-# we add this to enable python 3.13 testing even though pandapower 3.0 is not yet compatible with it
+pytestmark = pytest.mark.pandapower
 
 PGM_PP_TEST_DATA = Path(__file__).parents[2] / "data" / "pandapower"
 PGM_OUTPUT_FILE = PGM_PP_TEST_DATA / "pgm_output_data.json"
