@@ -7,25 +7,31 @@ resolution-markers = [
     "python_full_version >= '3.15' and extra != 'group-19-power-grid-model-io-dev' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower'",
     "python_full_version < '3.15' and extra != 'group-19-power-grid-model-io-dev' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower'",
     "python_full_version >= '3.15' and sys_platform == 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version >= '3.15' and sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version >= '3.15' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
     "python_full_version == '3.14.*' and sys_platform == 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
+    "python_full_version >= '3.15' and sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
     "python_full_version == '3.14.*' and sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
+    "python_full_version >= '3.15' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
     "python_full_version == '3.14.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.14' and sys_platform == 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
+    "python_full_version < '3.13' and sys_platform == 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
+    "python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
+    "python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
     "python_full_version >= '3.15' and extra != 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
     "python_full_version < '3.15' and extra != 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
     "python_full_version >= '3.15' and sys_platform == 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version >= '3.15' and sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version >= '3.15' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
     "python_full_version == '3.14.*' and sys_platform == 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
+    "python_full_version >= '3.15' and sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
     "python_full_version == '3.14.*' and sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
+    "python_full_version >= '3.15' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
     "python_full_version == '3.14.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.14' and sys_platform == 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
+    "python_full_version < '3.13' and sys_platform == 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
+    "python_full_version < '3.13' and sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
+    "python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
 ]
 conflicts = [[
     { package = "power-grid-model-io", group = "test" },
@@ -793,11 +799,11 @@ wheels = [
 
 [[package]]
 name = "iniconfig"
-version = "2.3.0"
+version = "2.3.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/72/34/14ca021ce8e5dfedc35312d08ba8bf51fdd999c576889fc2c24cb97f4f10/iniconfig-2.3.0.tar.gz", hash = "sha256:c76315c77db068650d49c5b56314774a7804df16fee4402c1f19d6d15d8c4730", size = 20503, upload-time = "2025-10-18T21:55:43.219Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/01/e1/2069291243c926a2ff1cd706c7f3eeb9b62144bf60f77c9fb9ff2fb26bd3/iniconfig-2.3.1.tar.gz", hash = "sha256:67f4b9c50da0dedf52af349e7749a80a9057a5031199791b906c3bb3ae878960", size = 21209, upload-time = "2026-10-06T22:48:38.076Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cb/b1/3846dd7f199d53cb17f49cba7e651e9ce294d8497c8c150530ed11865bb8/iniconfig-2.3.0-py3-none-any.whl", hash = "sha256:f631c04d2c48c52b84d0d0549c99ff3859c98df65b3101406327ecc7d53fbf12", size = 7484, upload-time = "2025-10-18T21:55:41.639Z" },
+    { url = "https://files.pythonhosted.org/packages/56/43/4ca9e49d27a1fcf6bece6f6aec0ea46bb9112489b93d4b688fb415457bdb/iniconfig-2.3.1-py3-none-any.whl", hash = "sha256:9121e2c1fdb355232495be3194c8dfe87ccc2d5dee45947b78e68f499790d7a7", size = 7552, upload-time = "2026-10-06T22:48:36.959Z" },
 ]
 
 [[package]]
@@ -1500,24 +1506,8 @@ name = "numpy"
 version = "2.4.6"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.15' and extra != 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.15' and extra != 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version >= '3.15' and extra != 'group-19-power-grid-model-io-dev' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.15' and extra != 'group-19-power-grid-model-io-dev' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version == '3.14.*' and sys_platform == 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version == '3.14.*' and sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version == '3.14.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.14' and sys_platform == 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version >= '3.15' and extra != 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.15' and extra != 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version == '3.14.*' and sys_platform == 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version == '3.14.*' and sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version == '3.14.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.14' and sys_platform == 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
+    "python_full_version >= '3.15'",
+    "python_full_version < '3.15'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d0/ad/fed0499ce6a338d2a03ebae59cd15093910c8875328855781952abf6c2fe/numpy-2.4.6.tar.gz", hash = "sha256:f3a3570c4a2a16746ac2c31a7c7c7b0c186b95ce902e33db6f28094ed7387dda", size = 20735807, upload-time = "2026-05-18T23:37:14.07Z" }
 wheels = [
@@ -1582,8 +1572,17 @@ version = "2.5.3"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version >= '3.15' and sys_platform == 'win32'",
+    "python_full_version == '3.14.*' and sys_platform == 'win32'",
     "python_full_version >= '3.15' and sys_platform == 'emscripten'",
+    "python_full_version == '3.14.*' and sys_platform == 'emscripten'",
     "python_full_version >= '3.15' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.14.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version < '3.13' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/13/01/11703282db468b85f6f7b8c7f22d058de5970d5c7e60a3a8aaa313c3de36/numpy-2.5.3.tar.gz", hash = "sha256:df2d5874ff183595a4ba404edd04f6bd9b5505c1d7708573f6a6c17489a67563", size = 20791231, upload-time = "2026-09-06T16:27:47.073Z" }
 wheels = [
@@ -1698,7 +1697,7 @@ wheels = [
 
 [[package]]
 name = "pandapower"
-version = "3.5.5"
+version = "3.5.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama" },
@@ -1713,9 +1712,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e5/cc/db1221f257272ca6068b4106b3a3454bc63d4c09b5813929b9fdffd7d1f2/pandapower-3.5.5.tar.gz", hash = "sha256:dc22b277afd90edd21a949da6d7f6565901fbef995bd5258ad55e7690554acf6", size = 5345056, upload-time = "2026-09-22T09:57:02.568Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ee/07/41967aecca7b1dbe3a6463f94b376ec53211c1421d85d06ea9be5bec29b8/pandapower-3.5.6.tar.gz", hash = "sha256:41820e7f365ed76e71d82adb7063006a44c4b4d21c3012fc382e83e8f5e32cd8", size = 5345259, upload-time = "2026-10-07T11:00:05.501Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/20/94/385fd8f85ed6d714fdee4a27154f750e0ce533433b386913822534f8efa9/pandapower-3.5.5-py3-none-any.whl", hash = "sha256:119f1034e015fb59ef040542ca932592442afc6268e6788d7bf6cbc783bc39a5", size = 5664053, upload-time = "2026-09-22T09:57:00.133Z" },
+    { url = "https://files.pythonhosted.org/packages/76/e3/376368d2b3f2cfbf9273d7a9d233bd6df831d6ceb1451d21b2df9f8ddbb5/pandapower-3.5.6-py3-none-any.whl", hash = "sha256:b6d15d0d506136fd0b8d58a18c2e05ad4947fe1c8d5db2b74c9615cbb473c877", size = 5664256, upload-time = "2026-10-07T11:00:03.329Z" },
 ]
 
 [[package]]
@@ -1775,18 +1774,20 @@ version = "3.0.6"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version >= '3.15' and sys_platform == 'win32'",
-    "python_full_version >= '3.15' and sys_platform == 'emscripten'",
-    "python_full_version >= '3.15' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version == '3.14.*' and sys_platform == 'win32'",
+    "python_full_version >= '3.15' and sys_platform == 'emscripten'",
     "python_full_version == '3.14.*' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.15' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version == '3.14.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
-    "python_full_version < '3.14' and sys_platform == 'win32'",
-    "python_full_version < '3.14' and sys_platform == 'emscripten'",
-    "python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version < '3.13' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.15' and extra == 'group-19-power-grid-model-io-dev') or (python_full_version < '3.15' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test') or (python_full_version < '3.15' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples') or (extra == 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test') or (extra == 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower')" },
-    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.15' and extra == 'group-19-power-grid-model-io-dev') or (python_full_version >= '3.15' and extra == 'group-19-power-grid-model-io-test') or (python_full_version >= '3.15' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples') or (extra == 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test')" },
+    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" } },
     { name = "python-dateutil" },
     { name = "tzdata", marker = "(sys_platform == 'emscripten' and extra == 'group-19-power-grid-model-io-dev') or (sys_platform == 'emscripten' and extra == 'group-19-power-grid-model-io-test') or (sys_platform == 'win32' and extra == 'group-19-power-grid-model-io-dev') or (sys_platform == 'win32' and extra == 'group-19-power-grid-model-io-test') or (sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test-pandapower') or (sys_platform == 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples') or (extra == 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test')" },
 ]
@@ -1845,7 +1846,7 @@ wheels = [
 
 [[package]]
 name = "pandera"
-version = "0.34.0"
+version = "0.34.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "packaging" },
@@ -1854,9 +1855,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "typing-inspect" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f9/c3/e3436de25d5d592dacf5a343132f0f20f25499f7b6e8f2b3c99db8f6bc29/pandera-0.34.0.tar.gz", hash = "sha256:f722e08c5749f1dec12a6630ab27e6db871cf6a7bb21bd7f9c5d68ce87c53cfd", size = 1054574, upload-time = "2026-10-05T15:51:46.763Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/bf/56/6c86add6272b295ea77f629757c6d79a12ec30ac51e01a0428d6ff11224c/pandera-0.34.1.tar.gz", hash = "sha256:8907a976403757c5e05a73022d4c447c74844d01c6053667b9a2ca63f26c2fa6", size = 1066371, upload-time = "2026-10-06T15:16:29.118Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/67/29/db3eb2998200577b3ab680af8c72be6031300592b23e89f620981767ae0d/pandera-0.34.0-py3-none-any.whl", hash = "sha256:37ad021768f6e2b7f2f5d06de5f0dbc9908507526da1a02c59771d31905aa40d", size = 535037, upload-time = "2026-10-05T15:51:45.142Z" },
+    { url = "https://files.pythonhosted.org/packages/53/e2/f86fdba3312c977beb39e7c3b29d1cdb43c508ed8278ff40aa329aa10611/pandera-0.34.1-py3-none-any.whl", hash = "sha256:fbcbd0aafeb8d69d7db0ab7990e89cbea31c2c5b8a5e9bde8b3a33f8678975a4", size = 535038, upload-time = "2026-10-06T15:16:27.372Z" },
 ]
 
 [[package]]
@@ -1909,29 +1910,29 @@ wheels = [
 
 [[package]]
 name = "power-grid-model"
-version = "1.13.185"
+version = "1.13.193"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.15' or extra == 'group-19-power-grid-model-io-examples' or extra == 'group-19-power-grid-model-io-test-pandapower'" },
-    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.15' and extra == 'group-19-power-grid-model-io-dev') or (python_full_version >= '3.15' and extra == 'group-19-power-grid-model-io-test') or (python_full_version >= '3.15' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples') or (extra == 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test')" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-19-power-grid-model-io-examples' or extra == 'group-19-power-grid-model-io-test-pandapower'" },
+    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-19-power-grid-model-io-dev' or extra == 'group-19-power-grid-model-io-test' or (extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test-pandapower')" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/74/37/e9a4741077e51eccfbe9304d4bca9cc045c0dd57165e1de2c7af1ebe275a/power_grid_model-1.13.185.tar.gz", hash = "sha256:663c72f36f0bfa9c428ee466e275673e8adae51c804e8f8774e837cbd0a19e47", size = 1659472, upload-time = "2026-10-05T09:02:08.875Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e9/0c/1b8dc45b19121afa13d00bd84a61379df85286fb42cae399206044521e16/power_grid_model-1.13.193.tar.gz", hash = "sha256:63121045d700c9b3ddde38482109cadf95cee5a9be2f3bbee41677d478d01ce6", size = 1667331, upload-time = "2026-10-07T11:57:42.494Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/91/4f/7cdbc115b4aa9a12a09040d92dee5de74c0863463bbfdd527ce6aff767f3/power_grid_model-1.13.185-py3-none-macosx_13_0_arm64.whl", hash = "sha256:7b3101ba00617683bc9da59e2ff0df44810cb9da88b5e74a6660255ff5e13dca", size = 2295569, upload-time = "2026-10-05T09:01:54.885Z" },
-    { url = "https://files.pythonhosted.org/packages/5a/5e/6102c0192e560cc70f76ec50a65e5ea133b80b42ad13c3adf3b10a233279/power_grid_model-1.13.185-py3-none-macosx_13_0_x86_64.whl", hash = "sha256:a9c1987b9c6d2a88606caa6ffb521ac79a7324cbcb8099916407bca3f0377831", size = 2599838, upload-time = "2026-10-05T09:01:58.426Z" },
-    { url = "https://files.pythonhosted.org/packages/2a/ec/53a394ae7f1356b44cd5bcc4ac566f770aedb7255b1544968de9b55bace9/power_grid_model-1.13.185-py3-none-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:1ae273e7b7842350a6196cab6d02677cb5ece1a8616e79fad8ffcb31d283b409", size = 3196879, upload-time = "2026-10-05T09:02:00.524Z" },
-    { url = "https://files.pythonhosted.org/packages/79/ea/a7d3a7c1889b34174ab5f81629c95c49e33727c35aee08623f886235b524/power_grid_model-1.13.185-py3-none-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:74b51284040ee2a8540feb126b29d645b246962c31e3ea2cb973f935e2ab58f5", size = 3461614, upload-time = "2026-10-05T09:02:02.196Z" },
-    { url = "https://files.pythonhosted.org/packages/44/bd/acb5ae8203b3fe378d379202fd561f523067ee4804579a14e251d60ac5d8/power_grid_model-1.13.185-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:50920af09ce4fa4e476e85291275c04a930273721e98637796a8815e1153a2ac", size = 3963151, upload-time = "2026-10-05T09:02:03.993Z" },
-    { url = "https://files.pythonhosted.org/packages/9d/60/50d0b9b8e16bba5a6d9473b260e92c3499e78c00193d937330a0ec94855b/power_grid_model-1.13.185-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:29209ae9f24d035ce20ffa8d1c06112e89b7431bc4edb2212617c0e97b35daac", size = 4213294, upload-time = "2026-10-05T09:02:05.757Z" },
-    { url = "https://files.pythonhosted.org/packages/87/96/309150b09668127361507e84e152f5f53e7c3dad4a7ef2de18b1edf34ef7/power_grid_model-1.13.185-py3-none-win_amd64.whl", hash = "sha256:62b3bc9114c5d92384f2885c4b9b00767fbef5ff6334c33f7679c5b42f2eb926", size = 950357, upload-time = "2026-10-05T09:02:07.329Z" },
+    { url = "https://files.pythonhosted.org/packages/00/48/ed3f3544cce7d0159f8071b3ac3215768d74b7c3a7d85622c1dff4b9d75d/power_grid_model-1.13.193-py3-none-macosx_13_0_arm64.whl", hash = "sha256:dbc3dac28825c2b148b201604b40c21dad31358044f356810b5b72044cbed6e5", size = 2298819, upload-time = "2026-10-07T11:57:29.507Z" },
+    { url = "https://files.pythonhosted.org/packages/15/06/2ac9819ef559430d06dde2743298268e275f879dcd2b221ff97e038e92bb/power_grid_model-1.13.193-py3-none-macosx_13_0_x86_64.whl", hash = "sha256:482526104dc176fa0d8f2a7af44d18724c1b8745fb24d396ae9b99b2282ce4b7", size = 2603163, upload-time = "2026-10-07T11:57:32.344Z" },
+    { url = "https://files.pythonhosted.org/packages/e4/da/eef743785ed7fd90251baa60e418c8287e7bea3d9723d9663ec619efc351/power_grid_model-1.13.193-py3-none-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:b8c20b9c2eca330d8606ec7b52423b93d338de3f8c39132b7fe4cafb908923fb", size = 3197432, upload-time = "2026-10-07T11:57:34.011Z" },
+    { url = "https://files.pythonhosted.org/packages/cc/4f/6a51e1d1d81bfea1793d95582bc29ae2c3214e94c14cb44880444bab4e93/power_grid_model-1.13.193-py3-none-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:a1ee2c1628f7297ad4dac55261c58336ce46a37184a668a4c10afb4177f127d1", size = 3466972, upload-time = "2026-10-07T11:57:35.507Z" },
+    { url = "https://files.pythonhosted.org/packages/8e/87/2fb7ce8fb9538953facef8edaa7d642a240e0e4bc6f784dc0539fbccd703/power_grid_model-1.13.193-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:a4054ec6db834f11f078916aaf13168375d619ae15128605bd6eb4753a701947", size = 3964620, upload-time = "2026-10-07T11:57:37.579Z" },
+    { url = "https://files.pythonhosted.org/packages/93/e5/e773c0b93b39a42beba4314ed53fbb15fd307963df756d70e5409f29553e/power_grid_model-1.13.193-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:069a5cb729105cd62c655698909c0e5911bf452ebdca56fedafe220182d8b46d", size = 4210014, upload-time = "2026-10-07T11:57:39.389Z" },
+    { url = "https://files.pythonhosted.org/packages/fc/bb/e1106fcd282e31310b87aad26dffccf5fec4c7009ee46f17c87e436dda15/power_grid_model-1.13.193-py3-none-win_amd64.whl", hash = "sha256:3cdf4b7dbc54e2082e4e3822e6bf46ea2078e1516f1c08dd40fc2c05026ccde6", size = 953156, upload-time = "2026-10-07T11:57:40.856Z" },
 ]
 
 [[package]]
 name = "power-grid-model-io"
 source = { editable = "." }
 dependencies = [
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.15' or extra == 'group-19-power-grid-model-io-examples' or extra == 'group-19-power-grid-model-io-test-pandapower'" },
-    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.15' and extra == 'group-19-power-grid-model-io-dev') or (python_full_version >= '3.15' and extra == 'group-19-power-grid-model-io-test') or (python_full_version >= '3.15' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples') or (extra == 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test')" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-19-power-grid-model-io-examples' or extra == 'group-19-power-grid-model-io-test-pandapower'" },
+    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-19-power-grid-model-io-dev' or extra == 'group-19-power-grid-model-io-test' or (extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test-pandapower')" },
     { name = "openpyxl" },
     { name = "packaging" },
     { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-19-power-grid-model-io-examples' or extra == 'group-19-power-grid-model-io-test-pandapower'" },
@@ -1948,14 +1949,12 @@ benchmark = [
 ]
 dev = [
     { name = "mypy" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.15' and extra == 'group-19-power-grid-model-io-dev') or (python_full_version < '3.15' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test') or (python_full_version < '3.15' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples') or (extra == 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test') or (extra == 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower')" },
-    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.15' and extra == 'group-19-power-grid-model-io-dev') or (python_full_version >= '3.15' and extra == 'group-19-power-grid-model-io-test') or (python_full_version >= '3.15' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples') or (extra == 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test')" },
+    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" } },
     { name = "pandas", version = "3.0.6", source = { registry = "https://pypi.org/simple" } },
     { name = "pre-commit" },
     { name = "psutil" },
-    { name = "pydantic", version = "2.13.5", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.15' and extra == 'group-19-power-grid-model-io-dev') or (python_full_version < '3.15' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test') or (python_full_version < '3.15' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples') or (extra == 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test') or (extra == 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower')" },
-    { name = "pydantic", version = "2.14.0b2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.15' and extra == 'group-19-power-grid-model-io-dev') or (python_full_version >= '3.15' and extra == 'group-19-power-grid-model-io-test') or (python_full_version >= '3.15' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples') or (extra == 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test')" },
-    { name = "pydantic-core", version = "2.49.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.15'" },
+    { name = "pydantic", version = "2.14.0b2", source = { registry = "https://pypi.org/simple" } },
+    { name = "pydantic-core", version = "2.49.0", source = { registry = "https://pypi.org/simple" } },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "reuse", extra = ["chardet", "charset-normalizer"], marker = "extra == 'group-19-power-grid-model-io-dev' or extra == 'group-19-power-grid-model-io-test' or (extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test-pandapower')" },
@@ -1979,8 +1978,8 @@ examples = [
 ]
 lint = [
     { name = "mypy" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.15' or extra == 'group-19-power-grid-model-io-examples' or extra == 'group-19-power-grid-model-io-test-pandapower'" },
-    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.15' and extra == 'group-19-power-grid-model-io-dev') or (python_full_version >= '3.15' and extra == 'group-19-power-grid-model-io-test') or (python_full_version >= '3.15' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples') or (extra == 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test')" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-19-power-grid-model-io-examples' or extra == 'group-19-power-grid-model-io-test-pandapower'" },
+    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-19-power-grid-model-io-dev' or extra == 'group-19-power-grid-model-io-test' or (extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test-pandapower')" },
     { name = "pre-commit" },
     { name = "reuse", extra = ["chardet", "charset-normalizer"] },
     { name = "ruff" },
@@ -1989,12 +1988,11 @@ lint = [
     { name = "types-requests" },
 ]
 test = [
-    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.15'" },
+    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" } },
     { name = "pandas", version = "3.0.6", source = { registry = "https://pypi.org/simple" } },
     { name = "psutil" },
-    { name = "pydantic", version = "2.13.5", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.15' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test') or (python_full_version < '3.15' and extra != 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-test') or (python_full_version >= '3.15' and extra == 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples') or (extra == 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test') or (extra == 'group-19-power-grid-model-io-dev' and extra != 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower') or (extra != 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower')" },
-    { name = "pydantic", version = "2.14.0b2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.15' and extra == 'group-19-power-grid-model-io-test') or (python_full_version < '3.15' and extra == 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test') or (extra == 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples') or (extra != 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower') or (extra == 'group-19-power-grid-model-io-dev' and extra != 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower')" },
-    { name = "pydantic-core", version = "2.49.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.15'" },
+    { name = "pydantic", version = "2.14.0b2", source = { registry = "https://pypi.org/simple" } },
+    { name = "pydantic-core", version = "2.49.0", source = { registry = "https://pypi.org/simple" } },
     { name = "pytest" },
     { name = "pytest-cov" },
 ]
@@ -2024,13 +2022,12 @@ benchmark = [{ name = "psutil", specifier = ">=5.9,<8" }]
 dev = [
     { name = "mypy" },
     { name = "numpy" },
-    { name = "numpy", marker = "python_full_version >= '3.15'", specifier = ">=2.5.2" },
-    { name = "pandas", specifier = ">=3.0" },
-    { name = "pandas", marker = "python_full_version >= '3.15'", specifier = ">=3.0.6" },
+    { name = "numpy", specifier = ">=2.5.2" },
+    { name = "pandas", specifier = ">=3.0.6" },
     { name = "pre-commit" },
     { name = "psutil", specifier = ">=5.9,<8" },
     { name = "pydantic", specifier = ">2" },
-    { name = "pydantic-core", marker = "python_full_version >= '3.15'", specifier = ">=2.47.0" },
+    { name = "pydantic-core", specifier = ">=2.47.0" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "reuse", extras = ["charset-normalizer", "chardet"] },
@@ -2063,12 +2060,11 @@ lint = [
     { name = "types-requests" },
 ]
 test = [
-    { name = "numpy", marker = "python_full_version >= '3.15'", specifier = ">=2.5.2" },
-    { name = "pandas", specifier = ">=3.0" },
-    { name = "pandas", marker = "python_full_version >= '3.15'", specifier = ">=3.0.6" },
+    { name = "numpy", specifier = ">=2.5.2" },
+    { name = "pandas", specifier = ">=3.0.6" },
     { name = "psutil", specifier = ">=5.9,<8" },
     { name = "pydantic", specifier = ">2" },
-    { name = "pydantic-core", marker = "python_full_version >= '3.15'", specifier = ">=2.47.0" },
+    { name = "pydantic-core", specifier = ">=2.47.0" },
     { name = "pytest" },
     { name = "pytest-cov" },
 ]
@@ -2205,30 +2201,14 @@ name = "pydantic"
 version = "2.13.5"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.15' and extra != 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.15' and extra != 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version >= '3.15' and extra != 'group-19-power-grid-model-io-dev' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.15' and extra != 'group-19-power-grid-model-io-dev' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version == '3.14.*' and sys_platform == 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version == '3.14.*' and sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version == '3.14.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.14' and sys_platform == 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version >= '3.15' and extra != 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.15' and extra != 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version == '3.14.*' and sys_platform == 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version == '3.14.*' and sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version == '3.14.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.14' and sys_platform == 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
+    "python_full_version >= '3.15'",
+    "python_full_version < '3.15'",
 ]
 dependencies = [
-    { name = "annotated-types", marker = "python_full_version < '3.15' or extra == 'group-19-power-grid-model-io-examples' or extra == 'group-19-power-grid-model-io-test-pandapower'" },
-    { name = "pydantic-core", version = "2.46.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.15' or extra == 'group-19-power-grid-model-io-examples' or extra == 'group-19-power-grid-model-io-test-pandapower'" },
-    { name = "typing-extensions", marker = "python_full_version < '3.15' or extra == 'group-19-power-grid-model-io-examples' or extra == 'group-19-power-grid-model-io-test-pandapower'" },
-    { name = "typing-inspection", marker = "python_full_version < '3.15' or extra == 'group-19-power-grid-model-io-examples' or extra == 'group-19-power-grid-model-io-test-pandapower'" },
+    { name = "annotated-types" },
+    { name = "pydantic-core", version = "2.46.5", source = { registry = "https://pypi.org/simple" } },
+    { name = "typing-extensions" },
+    { name = "typing-inspection" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/53/ef/fc4f868f4e2cee79f863883abffceff107875f569b848507319842d2a681/pydantic-2.13.5.tar.gz", hash = "sha256:51a9c5f7b2f8e636f04c6cada605d9b6a3bf1348fdf945a3d8869b19bba0ee08", size = 845750, upload-time = "2026-08-28T14:04:00.916Z" }
 wheels = [
@@ -2241,14 +2221,23 @@ version = "2.14.0b2"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version >= '3.15' and sys_platform == 'win32'",
+    "python_full_version == '3.14.*' and sys_platform == 'win32'",
     "python_full_version >= '3.15' and sys_platform == 'emscripten'",
+    "python_full_version == '3.14.*' and sys_platform == 'emscripten'",
     "python_full_version >= '3.15' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.14.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version < '3.13' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "annotated-types", marker = "python_full_version >= '3.15'" },
-    { name = "pydantic-core", version = "2.49.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.15'" },
-    { name = "typing-extensions", marker = "python_full_version >= '3.15'" },
-    { name = "typing-inspection", marker = "python_full_version >= '3.15'" },
+    { name = "annotated-types" },
+    { name = "pydantic-core", version = "2.49.0", source = { registry = "https://pypi.org/simple" } },
+    { name = "typing-extensions" },
+    { name = "typing-inspection" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/71/56/c23c581326c4167c8e5697d9fe3c5df599092f985cc338c812b8e2a0c412/pydantic-2.14.0b2.tar.gz", hash = "sha256:bb3b4bdb0c69e0eb349e43f07eddfd755547cae3aab3df34cc4c95caa44a5077", size = 888412, upload-time = "2026-09-09T21:55:06.583Z" }
 wheels = [
@@ -2260,27 +2249,11 @@ name = "pydantic-core"
 version = "2.46.5"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.15' and extra != 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.15' and extra != 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version >= '3.15' and extra != 'group-19-power-grid-model-io-dev' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.15' and extra != 'group-19-power-grid-model-io-dev' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra == 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version == '3.14.*' and sys_platform == 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version == '3.14.*' and sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version == '3.14.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.14' and sys_platform == 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra == 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version >= '3.15' and extra != 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.15' and extra != 'group-19-power-grid-model-io-dev' and extra == 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version == '3.14.*' and sys_platform == 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version == '3.14.*' and sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version == '3.14.*' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.14' and sys_platform == 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
-    "python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'group-19-power-grid-model-io-examples' and extra != 'group-19-power-grid-model-io-test' and extra != 'group-19-power-grid-model-io-test-pandapower'",
+    "python_full_version >= '3.15'",
+    "python_full_version < '3.15'",
 ]
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.15' or extra == 'group-19-power-grid-model-io-examples' or extra == 'group-19-power-grid-model-io-test-pandapower'" },
+    { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/af/f9/8a06bea35ef8daf588f707784c973a7046e0034c8d8cfb08828eeffb8b75/pydantic_core-2.46.5.tar.gz", hash = "sha256:10416c15b8839ecc4ef4d0885da76da6fd0f67333a0eb8aff6d93c4b8f2910fc", size = 472262, upload-time = "2026-08-28T10:01:31.677Z" }
 wheels = [
@@ -2356,11 +2329,20 @@ version = "2.49.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version >= '3.15' and sys_platform == 'win32'",
+    "python_full_version == '3.14.*' and sys_platform == 'win32'",
     "python_full_version >= '3.15' and sys_platform == 'emscripten'",
+    "python_full_version == '3.14.*' and sys_platform == 'emscripten'",
     "python_full_version >= '3.15' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.14.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version < '3.13' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version >= '3.15'" },
+    { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/0b/31/2de1e4f86615a3c1f598934dc9d557d473d87820c33c23582c7aaa6e145a/pydantic_core-2.49.0.tar.gz", hash = "sha256:67440399d87a2c160ddff9dc013d12812785cfde18b648a295d57043f034a9fb", size = 500092, upload-time = "2026-09-09T21:30:48.931Z" }
 wheels = [
@@ -3228,14 +3210,14 @@ wheels = [
 
 [[package]]
 name = "types-requests"
-version = "2.33.0.20260906"
+version = "2.33.0.20261006"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c0/18/4c2c0290953f8b3b9612adfcb07b57f144ade3ad32a76764fca42b77c5f3/types_requests-2.33.0.20260906.tar.gz", hash = "sha256:76ab8a0fb736744a0c3deee7aa57b2927e301f078d9e61f5391b3e92002416b9", size = 25263, upload-time = "2026-09-06T06:35:47.707Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/57/15/9b7e2e2e7c87d01366185b198b3febc6bc0c973f2bf21a62da4ab7d3495e/types_requests-2.33.0.20261006.tar.gz", hash = "sha256:0652999e9306aea345f40732d58fa49a7f6cade6a0d74d92119c5c8d82eddaf0", size = 25316, upload-time = "2026-10-06T08:15:57.782Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/60/4c/51ec821d22a45b4162fa3f3e9e94ea4c0f8c49e82363b10955baa5438391/types_requests-2.33.0.20260906-py3-none-any.whl", hash = "sha256:9f53622652bd921ead7a54d665be1b8d518165c8b51cc9d68d944cd6b6bfa8fb", size = 21461, upload-time = "2026-09-06T06:35:45.856Z" },
+    { url = "https://files.pythonhosted.org/packages/4d/72/b82789207b3d360ce9f5a4372c790c52cc3dd928aeb7d4faeec652b651b2/types_requests-2.33.0.20261006-py3-none-any.whl", hash = "sha256:26cc8146505cab33cda9737991929e4144c559bebe05078ccc6998f27c4ca2c1", size = 21445, upload-time = "2026-10-06T08:15:56.658Z" },
 ]
 
 [[package]]
