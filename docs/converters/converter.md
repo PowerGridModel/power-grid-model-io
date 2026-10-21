@@ -15,11 +15,14 @@ Use the examples notebooks to understand how to convert data from the respective
 - **VisionExcelConverter** Refer to the [Vision Example](../examples/vision_example.ipynb)
 - **Pandapower Converter:** Converts [pandapower network](https://pandapower.readthedocs.io/en/stable/elements.html)
   (a dictionary of dataframes) to power-grid-model data.
-- **CIM/CGMES Converters:** Converts CIM/CGMES data to a power-grid-model compatible format
-  - Refer to the [CGMES2PGM Converter Description](./cgmes2pgm_converter.md)
-  - Refer to the [Sparlectra.jl Description](./sparlectra_converter.md)
 
 Refer to [converters](../power_grid_model_io.md#converters) in API documentation for more details
+
+## Community supported converters
+
+- **CIM/CGMES Converters:** Converts CIM/CGMES data to a power-grid-model compatible format
+  - Refer to the [CGMES2PGM Converter Description](./community/cgmes2pgm_converter.md)
+  - Refer to the [Sparlectra.jl Description](./community/sparlectra_converter.md)
 
 ## Structure
 
