@@ -82,59 +82,10 @@ print("\nInput data for generic branches:")
 print(pd.DataFrame(input_data[ComponentType.generic_branch]))
 ```
 
-### Example with dataset upload
-
-For more advanced cases, the user might want to store each CIM profile in its own graph within the graph database, rather than using the default graph. Uploading data into separate graphs manually can be cumbersome, therefore the CGMES2PGM Suite provides functionality to automate this process.
-
-```python
-import pandas as pd
-from cgmes2pgm_converter import CgmesDataset, CgmesToPgmConverter
-from cgmes2pgm_suite.rdf_store.xml_dir_import import RdfXmlDirectoryImport
-from power_grid_model import ComponentType
-
-# cim_namespace = "http://iec.ch/TC57/2013/CIM-schema-cim16#"  # Use this for CIM 2.
-cim_namespace = "http://iec.ch/TC57/CIM100#"  # Use this for CIM 3.x
-
-# XML or ZIP source files containing the CGMES dataset
-input_path = "path/to/ExampleGrid"
-
-# upload CGMES data to this dataset (must exist) in the graph database (change URL if needed)
-dataset_url = "http://localhost:3030/ExampleGrid"
-
-# Upload the XML files to the Fuseki graph database if needed.
-# Set initially to true, and change to false for repeated runs with the same dataset.
-upload_files = True
-
-# Keep everything in the default graph or upload each CIM profile into its own graph
-split_profiles = True
-
-dataset = CgmesDataset(base_url=dataset_url, cim_namespace=cim_namespace, split_profiles=split_profiles)
-
-if upload_files:
-    importer = RdfXmlDirectoryImport(
-        dataset=dataset,
-        base_iri=dataset_url,
-        split_profiles=dataset.split_profiles,
-    )
-    full_models = importer.import_directory(input_path)
-    print(f"Imported {len(full_models)} full models from XML files.")
-else:
-    print("Skipping XML file import.")
-
-converter = CgmesToPgmConverter(datasource=dataset)
-
-# input_data is the dataset in the PGM format,
-# extra_info contains additional mapping information.
-input_data, extra_info = converter.convert()
-
-print("\nInput data for nodes:")
-print(pd.DataFrame(input_data[ComponentType.node]))
-print("\nInput data for generic branches:")
-print(pd.DataFrame(input_data[ComponentType.generic_branch]))
-```
-
 ### Other use cases
 
-The examples above convert CGMES data into PGM input data, but they do not run a state estimation calculation. State estimation also requires measurement data. Measurement data will be converted if it is present in the CGMES dataset. Otherwise it must be added manually to the `input_data`. For testing purposes, the CGMES2PGM Suite provides functionality to automatically generate synthetic measurement data based on the provided SV Profile in the CGMES dataset.
+The example above converts CGMES data into PGM input data, but it does not run a state estimation calculation, which also requires measurement data. Measurement data will be converted if it is present in the CGMES dataset. Otherwise it must be added manually to the `input_data`.
+
+For testing purposes, the CGMES2PGM Suite provides functionality to upload datasets and to automatically generate synthetic measurement data based on the provided SV Profile in the CGMES dataset.
 
 For more advanced examples and detailed usage instructions, please refer to the official examples of the [CGMES2PGM Suite](https://github.com/SOPTIM/cgmes2pgm_suite/tree/main/example).
