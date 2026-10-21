@@ -75,4 +75,4 @@ Every transformer is a `generic_branch`: `r1`, `x1`, `g1`, `b1` referenced to th
 
 ## Short circuit
 
-The `generic_branch` carries positive-sequence data only, so a PGM dataset converted this way supports the symmetric (three-phase) short-circuit calculation and no asymmetric faults. This is a limitation of the target component, not of CGMES: the CGMES ShortCircuit profile does carry zero-sequence data for lines, transformer ends, machines and network injections. Sparlectra reads that data and keeps it in its own case format, but the plain PGM export has no place for it.
+The `generic_branch` carries positive-sequence data only, so a PGM dataset converted this way supports the symmetric (three-phase) short-circuit calculation and no asymmetric faults. This is a limitation of the target component, not of CGMES: the CGMES ShortCircuit profile does carry zero-sequence data for lines, transformer ends, machines and network injections. Sparlectra reads that data and keeps it in its own case format, but the `generic_branch` component used for transformers in the PGM export cannot represent their zero-sequence parameters.
