@@ -62,6 +62,8 @@ converters/converter.md
 converters/tabular_converter.md
 converters/vision_converter.md
 converters/pandapower_converter.md
+converters/cgmes2pgm_converter.md
+converters/sparlectra_converter.md
 ```
 
 ```{toctree}
