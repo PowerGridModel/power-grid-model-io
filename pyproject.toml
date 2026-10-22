@@ -203,9 +203,9 @@ install_types = true
 
 [tool.uv]
 exclude-newer = "7 days"
-# certifi 2026.10.19 and virtualenv 21.14.9 are newer than the 7-day cutoff, so it must be exempt for the floor to be satisfiable
-exclude-newer-package = { certifi = false, virtualenv = false }
-constraint-dependencies = ["certifi>=2026.10.19", "virtualenv>=21.14.9"]
+# certifi 2026.10.19 is newer than the 7-day cutoff, so it must be exempt for the floor to be satisfiable
+exclude-newer-package = { certifi = false }
+constraint-dependencies = ["certifi>=2026.10.19"]
 conflicts = [
     [{ group = "test" }, { group = "test-pandapower" }],
     [{ group = "test" }, { group = "examples" }],
