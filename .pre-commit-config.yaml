@@ -22,7 +22,7 @@ repos:
         pass_filenames: false
       - id: mypy
         name: mypy
-        entry: uv run --frozen mypy
+        entry: uv run --frozen mypy .
         language: system
         pass_filenames: false
       - id: pytest_unit

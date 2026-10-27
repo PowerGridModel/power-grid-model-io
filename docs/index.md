@@ -67,6 +67,13 @@ converters/sparlectra_converter.md
 ```
 
 ```{toctree}
+:caption: "Networks"
+:maxdepth: 2
+networks/network.md
+networks/ieee_4_node.md
+```
+
+```{toctree}
 :caption: "Examples"
 :maxdepth: 2
 examples/pgm_json_example.ipynb

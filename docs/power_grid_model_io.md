@@ -16,6 +16,13 @@ SPDX-License-Identifier: MPL-2.0
 .. automodule:: power_grid_model_io.converters.vision_excel_converter
 ```
 
+## networks
+
+```{eval-rst}
+.. automodule:: power_grid_model_io.networks.ieee_test_networks
+.. automodule:: power_grid_model_io.networks.enum
+```
+
 ## data_stores
 
 ```{eval-rst}
