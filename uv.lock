@@ -41,12 +41,6 @@ conflicts = [[
     { package = "power-grid-model-io", group = "examples" },
 ]]
 
-[options.exclude-newer-package]
-certifi = false
-
-[manifest]
-constraints = [{ name = "certifi", specifier = ">=2026.10.19" }]
-
 [[package]]
 name = "alabaster"
 version = "1.0.0"
