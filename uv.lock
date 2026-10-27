@@ -41,16 +41,6 @@ conflicts = [[
     { package = "power-grid-model-io", group = "examples" },
 ]]
 
-[options]
-exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for backwards compatibility when using relative exclude-newer values.
-exclude-newer-span = "P7D"
-
-[options.exclude-newer-package]
-certifi = false
-
-[manifest]
-constraints = [{ name = "certifi", specifier = ">=2026.10.19" }]
-
 [[package]]
 name = "alabaster"
 version = "1.0.0"

@@ -26,7 +26,7 @@ jobs:
 
       - name: Install most linters from uv
         run: |
-          uv sync --group lint
+          uv sync --locked --group lint
 
       - name: Run mypy
         run: |
