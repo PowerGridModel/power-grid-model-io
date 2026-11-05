@@ -39,7 +39,7 @@ jobs:
       - name: Build
         run: |
           cat VERSION
-          uv build --sdist --no-create-gitignore --out-dir wheelhouse .
+          uv build --sdist --wheel --no-create-gitignore --out-dir wheelhouse .
 
       - name: Save version
         id: version
