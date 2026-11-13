@@ -6,7 +6,7 @@ SPDX-License-Identifier: MPL-2.0
 # Vision converter
 
 The Vision Excel converter converts the Excel exports from Vision to PGM data format.
-As mentioned in [Converters](converters/converter.md), Vision Excel converter is an implementation of the tabular
+As mentioned in [Converters](converter.md), Vision Excel converter is an implementation of the tabular
 converter.
 The default mapping of all attributes is stored in the `vision_en.yaml` and `vision_nl.yaml` files in
 [config](https://github.com/PowerGridModel/power-grid-model-io/tree/main/src/power_grid_model_io/config) directory.
@@ -172,4 +172,4 @@ And if the default mapping is modified, it is advised to verify if all required 
 ## Security Considerations
 
 Safe XML parsing is used to process Excel-based inputs, ensuring secure handling of mapping and tabular data.
-See security considerations of the [tabular_converter](converters/tabular_converter.md#security-considerations)
+See security considerations of the [tabular_converter](tabular_converter.md#security-considerations)
