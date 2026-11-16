@@ -41,12 +41,14 @@ class ExcelFileStore(BaseDataStore[TabularData]):
     __slots__ = ("_excel_files", "_file_paths", "_header_rows")
 
     _unnamed_pattern: re.Pattern = re.compile(r"Unnamed: \d+_level_\d+")
+    _normalize_text_columns = False
 
-    @staticmethod
-    def _is_text_column(column: object) -> bool:
+    @classmethod
+    def _is_text_column(cls, column: object) -> bool:
         labels = column if isinstance(column, tuple) else (column,)
         return any(
-            "Name" in str(label) or str(label) == "ID" or str(label).endswith(".ID")
+            "Name" in str(label)
+            or (cls._normalize_text_columns and (str(label) == "ID" or str(label).endswith(".ID")))
             for label in labels
         )
 
@@ -119,7 +121,8 @@ class ExcelFileStore(BaseDataStore[TabularData]):
                     if self._is_text_column(col):
                         dtype[col] = str
                 sheet_data = xls_file.parse(xls_sheet_name, header=self._header_rows, dtype=dtype)
-                sheet_data = self._convert_text_columns(data=sheet_data)
+                if self._normalize_text_columns:
+                    sheet_data = self._convert_text_columns(data=sheet_data)
                 sheet_data = self._remove_unnamed_column_placeholders(data=sheet_data)
                 sheet_data = self._handle_duplicate_columns(data=sheet_data, sheet_name=xls_sheet_name)
                 sheet_data = self._process_uuid_columns(data=sheet_data, sheet_name=xls_sheet_name)
