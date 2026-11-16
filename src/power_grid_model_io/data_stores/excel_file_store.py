@@ -7,6 +7,7 @@ Excel File Store
 
 import re
 import warnings
+from numbers import Number
 from pathlib import Path
 
 import pandas as pd
@@ -40,6 +41,29 @@ class ExcelFileStore(BaseDataStore[TabularData]):
     __slots__ = ("_excel_files", "_file_paths", "_header_rows")
 
     _unnamed_pattern: re.Pattern = re.compile(r"Unnamed: \d+_level_\d+")
+
+    @staticmethod
+    def _is_text_column(column: object) -> bool:
+        labels = column if isinstance(column, tuple) else (column,)
+        return any(
+            "Name" in str(label) or str(label) == "ID" or str(label).endswith(".ID")
+            for label in labels
+        )
+
+    @staticmethod
+    def _as_text(value: object) -> str:
+        if value is None or (isinstance(value, float) and pd.isna(value)):
+            return ""
+        if isinstance(value, Number) and value == int(value):
+            return str(int(value))
+        return str(value)
+
+    @classmethod
+    def _convert_text_columns(cls, data: pd.DataFrame) -> pd.DataFrame:
+        for column in data.columns:
+            if cls._is_text_column(column):
+                data[column] = data[column].map(cls._as_text)
+        return data
 
     def __init__(
         self,
@@ -92,9 +116,10 @@ class ExcelFileStore(BaseDataStore[TabularData]):
                 columns = list(preview.columns)
                 dtype = {}
                 for col in columns:
-                    if "Name" in str(col) or (isinstance(col, tuple) and ("Name" in str(col[0]))):
+                    if self._is_text_column(col):
                         dtype[col] = str
                 sheet_data = xls_file.parse(xls_sheet_name, header=self._header_rows, dtype=dtype)
+                sheet_data = self._convert_text_columns(data=sheet_data)
                 sheet_data = self._remove_unnamed_column_placeholders(data=sheet_data)
                 sheet_data = self._handle_duplicate_columns(data=sheet_data, sheet_name=xls_sheet_name)
                 sheet_data = self._process_uuid_columns(data=sheet_data, sheet_name=xls_sheet_name)
