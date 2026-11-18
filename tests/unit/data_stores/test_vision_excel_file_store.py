@@ -30,7 +30,7 @@ def test_name_column_dtype_conversion(mock_excel_file: MagicMock):
     store = VisionExcelFileStore(file_path=Path("dummy.xlsx"))
     mock_excel_file.return_value.sheet_names = ["test_sheet"]
 
-    preview_df = pd.DataFrame(columns=["Mock.Name", "Other.Column", "ID"])
+    preview_df = pd.DataFrame(columns=["Mock.Name", "Other.Column", "ID", "Number"])
 
     def mock_parse(*_args, **kwargs):
         if kwargs.get("nrows") == 0:
@@ -40,6 +40,7 @@ def test_name_column_dtype_conversion(mock_excel_file: MagicMock):
             "Mock.Name": [12345678900000000000, 987.654],
             "Other.Column": ["value1", "value2"],
             "ID": [1, 2],
+                "Number": [7, 8],
             "ratio": [0.1, 0.2],
         }
         df = pd.DataFrame(actual_data)
@@ -70,7 +71,17 @@ def test_name_column_dtype_conversion(mock_excel_file: MagicMock):
     assert result_df["Mock.Name"][1] == "987.654"  # Float as string
     assert result_df["Other.Column"][0] == "value1"
     assert result_df["Other.Column"][1] == "value2"
-    assert result_df["ID"][0] == 1
-    assert result_df["ID"][1] == 2
+    assert result_df["ID"].tolist() == ["1", "2"]
+    assert result_df["Number"].tolist() == [7, 8]
     assert result_df["ratio"][0] == 0.1
     assert result_df["ratio"][1] == 0.2
+
+
+def test_empty_identifier_columns_are_strings():
+    store = VisionExcelFileStore(file_path=Path("dummy.xlsx"))
+    data = pd.DataFrame({"ID": [float("nan"), float("nan")], "Name": [float("nan"), float("nan")]})
+
+    result = store._convert_text_columns(data)
+
+    assert result.dtypes.to_dict() == {"ID": object, "Name": object}
+    assert result.to_dict("list") == {"ID": ["", ""], "Name": ["", ""]}

@@ -19,6 +19,8 @@ class VisionExcelFileStore(ExcelFileStore):
     Therefore, row 1 (which is row 2 in Excel) is added to the header_rows in the constructor.
     """
 
+    _normalize_text_columns = True
+
     def __init__(
         self,
         file_path: Path,
