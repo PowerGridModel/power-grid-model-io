@@ -58,6 +58,7 @@ test-pandapower = [
     # pandapower is excluded on 3.15 until its dependency cachebox (PyO3) supports Python 3.15
     "pandapower>2.11.1; python_version < '3.15'",
     "pandas<3.0",  # pandapower does not yet support pandas 3.x https://github.com/e2nIEE/pandapower/issues/2861
+    "virtualenv>=21.14.7",  # pandapower version bump results in downgrade to version before security patch
     "lxml; python_version < '3.15'", # missing pandapower dependency
 ]
 
